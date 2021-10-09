@@ -1,4 +1,5 @@
 @echo off
-asm68k /o op+ /o os+ /o ow+ /o oz+ /o oaq+ /o osq+ /o omq+ /p /o ae- s2.asm, s2built.bin
-rompad.exe s2built.bin 255 0
-fixheadr.exe s2built.bin
+
+IF EXIST s2built.bin move /Y s2built.bin s2built.prev.bin >NUL
+asm68k /k /p /o ae-,c+ s2.asm, s2built.bin >s2.log, , s2.lst
+fixheadr.exe s1built.bin
