@@ -2335,13 +2335,13 @@ Music87:	incbin	"sound/music/Invincibility.smps"
 Music88:	incbin	"sound/music/Extra life.smps"
 Music89:	incbin	"sound/music/SS.smps"
 Music8A:	incbin	"sound/music/Title screen.smps"
-Music8B:	incbin	"sound/music/Ending.smps"	; Unused, referenced by inaccessible code
+Music8B:	incbin	"sound/music/Ending.smps"	; Unused, referenced by unused code
 Music8C:	incbin	"sound/music/Boss.smps"
 Music8D:	incbin	"sound/music/FZ.smps"
 Music8E:	incbin	"sound/music/Act clear.smps"
 Music8F:	incbin	"sound/music/Game over.smps"
 Music90:	incbin	"sound/music/Continue.smps"	; Unused
-Music91:	incbin	"sound/music/Credits.smps"	; Unused, referenced by inaccessible code
+Music91:	incbin	"sound/music/Credits.smps"	; Unused, referenced by unused code
 Music92:	incbin	"sound/music/Drowning.smps"
 Music93:	incbin	"sound/music/Emerald.smps"
 ; ---------------------------------------------------------------------------
@@ -2357,115 +2357,53 @@ SoundIndex:	dc.l SoundA0, SoundA1, SoundA2,	SoundA3, SoundA4, SoundA5
 		dc.l SoundC4, SoundC5, SoundC6,	SoundC7, SoundC8, SoundC9
 		dc.l SoundCA, SoundCB, SoundCC,	SoundCD, SoundCE, SoundCF
 SoundD0Index:	dc.l SoundD0		; DATA XREF: ROM:Go_SoundD0o
-SoundA0:	dc.b   0,$16,  1,  1,$80,$80,  0, $A,$F4,  0,$F5,  0,$9E,  5,$F0,  2,  1,$F8,$65,$A3,$15,$F2; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundA1:	dc.b   0,$11,  1,  1,$80,  5,  0, $A,  0,  1,$EF,  0,$BD,  6,$BA,$16,$F2,$3C,  5,  1, $A,  1,$56,$5C,$5C,$5C, $E,$11,$11,$11,  9, $A,  6, $A,$4F,$3F,$3F,$3F,$17,$80,$20,$80; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundA2:	dc.b   0,$1F,  1,  1,$80,$C0,  0, $A,  0,  0,$F0,  1,  1,$F0,  8,$F3,$E7,$C0,  4,$CA,  4,$C0,  1,$EC,  1,$F7,  0,  6,$FF,$F8,$F2,  0; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundA3:	dc.b   0,$19,  1,  1,$80,  5,  0, $A,$F4,  0,$EF,  0,$B0,  7,$E7,$AD,  1,$E6,  1,$F7,  0,$2F,$FF,$F9,$F2,$30,$30,$30,$30,$30,$9E,$D8,$DC,$DC, $E, $A,  4,  5,  8,  8,  8,  8,$BF,$BF,$BF,$BF,$14,$3C,$14,$80; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundA4:	dc.b   0,$35,  1,  2,$80,$A0,  0,$10,$F4,  0,$80,$C0,  0,$22,$F4,  0,$F5,  0,$AF,  1,$80,$AF,$80,  3,$AF,  1,$80,  1,$F7,  0, $B,$FF,$F8,$F2,$F5,  0,$80,  1,$AD,$80,$AD,$80,  3,$AD,  1,$80,  1,$F7,  0, $B,$FF,$F8,$F2,  0; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundA5:	dc.b   0,$13,  1,  1,$80,  5,  0, $A,  0,  0,$EF,  0,$80,  1,$8B, $A,$80,  2,$F2,$FA,$21,$30,$10,$32,$2F,$1F,$2F,$2F,  5,  8,  9,  2,  6, $F,  6,  2,$1F,$2F,$4F,$2F, $F,$1A, $E,$80; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundA6:	dc.b   0,$16,  1,  1,$80,  5,  0, $A,$F2,  0,$EF,  0,$F0,  1,  1,$10,$FF,$CF,  5,$D7,$25,$F2,$3B,$3C,$39,$30,$31,$DF,$1F,$1F,$DF,  4,  5,  4,  1,  4,  4,  4,  2,$FF, $F,$1F,$AF,$29,$20, $F,$80,  0; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundA7:	dc.b   0,$16,  1,  1,$80,  4,  0, $A,  0,  6,$EF,  0,$8F,  7,$80,  2,$8F,  6,$80,$10,$ED,$F2,$FA,$21,$30,$10,$32,$1F,$1F,$1F,$1F,  5,$18,  9,  2,  6, $F,  6,  2,$1F,$2F,$4F,$2F, $F, $E, $E,$80,  0; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundA8:	dc.b   0,$1A,  1,  1,$80,  5,  0, $A,$F2,  4,$EF,  0,$A6,  2,$E7,$A4,  1,$E7,$E9,  2,$F7,  0,$26,$FF,$F5,$F2,$3B,$3C,$39,$30,$31,$DF,$1F,$1F,$DF,  4,  5,  4,  1,  4,  4,  4,  2,$FF, $F,$1F,$AF,$29,$20, $F,$80,  0; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundA9:	dc.b   0,$12,  1,  1,$80,$A0,  0, $A,  0,  0,$F0,  1,  1,$E6,$35,$8E,  6,$F2; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundAA:	dc.b   0,$28,  1,  2,$80,$C0,  0,$10,  0,  0,$80,  5,  0,$23,  0,  3,$F5,  0,$F3,$E7,$C2,  5,$C6,  5,$E7,  7,$EC,  1,$E7,$F7,  0, $F,$FF,$F8,$F2,$EF,  0,$A6,$14,$F2,  0,  0,  3,  2,  0,$D9,$DF,$1F,$1F,$12,$11,$14, $F, $A,  0, $A, $D,$FF,$FF,$FF,$FF,$22,  7,$27; 0
-					; DATA XREF: ROM:SoundIndexo
-		dc.b $80,  0		; 64
-SoundAB:	dc.b   0,$1F,  1,  1,$80,$C0,  0, $A,  0,  0,$F5,  0,$F3,$E7,$C6,  3,$80,  3,$C6,  1,$E7,  1,$EC,  1,$E7,$F7,  0,$15,$FF,$F8,$F2,  0; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundAC:	dc.b   0,$1B,  1,  1,$80,  5,  0, $A,  0,  0,$EF,  0,$F0,  1,  1, $C,  1,$81, $A,$E6,$10,$F7,  0,  4,$FF,$F8,$F2,$F9,$21,$30,$10,$32,$1F,$1F,$1F,$1F,  5,$18,  9,  2, $B,$1F,$10,  5,$1F,$2F,$4F,$2F, $E,  7,  4,$80; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundAD:	dc.b   0,$1D,  1,  1,$80,  5,  0, $A, $E,  0,$EF,  0,$F0,  1,  1,$21,$6E,$A6,  7,$80,  6,$F0,  1,  1,$44,$1E,$AD,  8,$F2,$35,  5,  9,  8,  7,$1E, $D, $D, $E, $C,$15,  3,  6,$16, $E,  9,$10,$2F,$2F,$1F,$1F,$15,$12,$12,$80; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundAE:	dc.b   0,$31,  1,  2,$80,  5,  0,$10,  0,  0,$80,$C0,  0,$1E,  0,  0,$EF,  0,$80,  1,$F0,  1,  1,$40,$48,$83,  6,$85,  2,$F2,$F5,  0,$80, $B,$F3,$E7,$C6,  1,$E7,  2,$EC,  1,$E7,$F7,  0,$10,$FF,$F8,$F2,$FA,  2,  3,  0,  5,$12,$11, $F,$13,  5,$18,  9,  2,  6, $F; 0
-					; DATA XREF: ROM:SoundIndexo
-		dc.b   6,  2,$1F,$2F,$4F,$2F,$2F,$1A, $E,$80; 64
-SoundAF:	dc.b   0,$14,  1,  1,$80,  5,  0, $A, $C,  0,$EF,  0,$80,  1,$A3,  5,$E7,$A4,$26,$F2,$30,$30,$30,$30,$30,$9E,$A8,$AC,$DC, $E, $A,  4,  5,  8,  8,  8,  8,$BF,$BF,$BF,$BF,  4,$2C,$14,$80,  0; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundB0:	dc.b   0,$18,  1,  1,$80,  5,  0, $A,$FB,  5,$EF,  0,$DF,$7F,$DF,  2,$E6,  1,$F7,  0,$1B,$FF,$F8,$F2,$83,$1F,$15,$1F,$1F,$1F,$1F,$1F,$1F,  0,  0,  0,  0,  2,  2,  2,  2,$2F,$2F,$FF,$3F, $B,$16,  1,$82,  0; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundB1:	dc.b   0,$13,  1,  1,$80,  5,  0, $A,$FB,  2,$EF,  0,$B3,  5,$80,  1,$B3,  9,$F2,$83,$12,$10,$13,$1E,$1F,$1F,$1F,$1F,  0,  0,  0,  0,  2,  2,  2,  2,$2F,$2F,$FF,$3F,  5,$10,$34,$87; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundB2:	dc.b   0,$36,  1,  2,$80,  4,  0,$22, $C,  4,$80,  5,  0,$10, $E,  2,$EF,  0,$F0,  1,  1,$83, $C,$8A,  5,  5,$E6,  3,$F7,  0, $A,$FF,$F7,$F2,$80,  6,$EF,  0,$F0,  1,  1,$6F, $E,$8D,  4,  5,$E6,  3,$F7,  0, $A,$FF,$F7,$F2,$35,$14,$1A,  4,  9, $E,$10,$11, $E, $C; 0
-					; DATA XREF: ROM:SoundIndexo
-		dc.b $15,  3,  6,$16, $E,  9,$10,$2F,$2F,$4F,$4F,$2F,$12,$12,$80,  0; 64
-SoundB3:	dc.b   0,$31,  1,  2,$80,  5,  0,$10,  0,  0,$80,$C0,  0,$1E,  0,  0,$EF,  0,$80,  1,$F0,  1,  1,$40,$48,$83,  6,$85,  2,$F2,$F5,  0,$80, $B,$F3,$E7,$A7,$25,$E7,  2,$EC,  1,$E7,$F7,  0,$10,$FF,$F8,$F2,$FA,  2,  3,  0,  5,$12,$11, $F,$13,  5,$18,  9,  2,  6, $F; 0
-					; DATA XREF: ROM:SoundIndexo
-		dc.b   6,  2,$1F,$2F,$4F,$2F,$2F,$1A, $E,$80; 64
-SoundB4:	dc.b   0,$29,  1,  3,$80,  5,  0,$16,  0,  0,$80,  4,  0,$1B,  0,  0,$80,  2,  0,$24,  0,  2,$EF,  0,$F6,  0,  7,$EF,  0,$E1,  7,$80,  1,$BA,$20,$F2,$EF,  1,$9A,  3,$F2,$3C,  5,  1, $A,  1,$56,$5C,$5C,$5C, $E,$11,$11,$11,  9, $A,  6, $A,$4F,$3F,$3F,$3F,$1F,$80; 0
-					; DATA XREF: ROM:SoundIndexo
-		dc.b $2B,$80,  5,  0,  0,  0,  0,$1F,$1F,$1F,$1F,$12, $C, $C, $C,$12,  8,  8,  8,$1F,$5F,$5F,$5F,  7,$80,$80,$80,  0; 64
-SoundB5:	dc.b   0,$15,  1,  1,$80,  5,  0, $A,  0,  5,$EF,  0,$E0,$40,$C1,  5,$C4,  5,$C9,$1B,$F2,  4,$37,$72,$77,$49,$1F,$1F,$1F,$1F,  7, $A,  7, $D,  0, $B,  0, $B,$1F, $F,$1F, $F,$23,$80,$23,$80; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundB6:	dc.b   0,$1D,  1,  1,$80,$C0,  0, $A,  0,  0,$F0,  1,  1,$F0,  8,$F3,$E7,$C1,  7,$D0,  1,$EC,  1,$F7,  0, $C,$FF,$F8,$F2,  0; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundB7:	dc.b   0,$22,  1,  1,$80,  5,  0, $A,  0,  0,$EF,  0,$F0,  1,  1,$20,  8,$8B, $A,$F7,  0,  8,$FF,$FA,$8B,$10,$E6,  3,$F7,  0,  9,$FF,$F8,$F2,$FA,$21,$30,$10,$32,$1F,$1F,$1F,$1F,  5,$18,  9,  2,  6, $F,  6,  2,$1F,$2F,$4F,$2F, $F,$1A, $E,$80,  0; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundB8:	dc.b   0,$1D,  1,  1,$80,$C0,  0, $A,  0,  0,$F0,  1,  1,$F0,  8,$F3,$E7,$B4,  8,$B0,  2,$EC,  1,$F7,  0,  3,$FF,$F8,$F2,  0; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundB9:	dc.b   0,$4A,  1,  4,$80,  2,  0,$1C,$10,  0,$80,  4,  0,$27,  0,  0,$80,  5,  0,$23,$10,  0,$80,$C0,  0,$38,  0,  0,$E0,$40,$80,  2,$F6,  0,  5,$E0,$80,$80,  1,$EF,  0,$F0,  3,  1,$20,  4,$81,$18,$E6, $A,$F7,  0,  6,$FF,$F8,$F2,$F0,  1,  1, $F,  5,$F3,$E7,$B0; 0
-					; DATA XREF: ROM:SoundIndexo
-		dc.b $18,$E7,$EC,  3,$F7,  0,  5,$FF,$F7,$F2,$F9,$21,$30,$10,$32,$1F,$1F,$1F,$1F,  5,$18,  9,  2, $B,$1F,$10,  5,$1F,$2F,$4F,$2F, $E,  7,  4,$80,  0; 64
-SoundBA:	dc.b   0, $F,  1,  1,$80,  5,  0, $A,  0,  7,$EF,  0,$AE,  8,$F2,$1C,$2E,  2, $F,  2,$1F,$1F,$1F,$1F,$18, $F,$14, $E,  0,  0,  0,  0,$FF,$FF,$FF,$FF,$20,$80,$1B,$80; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundBB:	dc.b   0,$12,  1,  1,$80,  5,  0, $A,$F4,  0,$EF,  0,$9B,  4,$80,$A0,  6,$F2,$3C,  0,  0,  0,  0,$1F,$1F,$1F,$1F,  0,$16, $F, $F,  0,  0,  0,  0, $F,$AF,$FF,$FF,  0,$80, $A,$80,  0; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundBC:	dc.b   0,$28,  1,  2,$80,  5,  0,$10,$90,  0,$80,$C0,  0,$1A,  0,  0,$EF,  0,$F0,  1,  1,$C5,$1A,$CD,  7,$F2,$F5,  7,$80,  7,$F0,  1,  2,  5,$FF,$F3,$E7,$BB,$4F,$F2,$FD,  9,  3,  0,  0,$1F,$1F,$1F,$1F,$10, $C, $C, $C, $B,$1F,$10,  5,$1F,$2F,$4F,$2F,  9,$84,$92; 0
-					; DATA XREF: ROM:SoundIndexo
-		dc.b $8E,  0		; 64
-SoundBD:	dc.b   0,$21,  1,  2,$80,  5,  0,$10,$10, $A,$80,  4,  0,$1A,  0,  0,$EF,  0,$F0,  1,  1,$60,  1,$A7,  8,$F2,$80,  8,$EF,  1,$84,$22,$F2,$FA,$21,$3A,$19,$30,$1F,$1F,$1F,$1F,  5,$18,  9,  2, $B,$1F,$10,  5,$1F,$2F,$4F,$2F, $E,  7,  4,$80,$FA,$31,$30,$10,$32,$1F; 0
-					; DATA XREF: ROM:SoundIndexo
-		dc.b $1F,$1F,$1F,  5,$18,  5,$10, $B,$1F,$10,$10,$1F,$2F,$1F,$2F, $D,  0,  1,$80,  0; 64
-SoundBE:	dc.b   0,$21,  1,  1,$80,  4,  0, $A, $C,  5,$EF,  0,$80,  1,$F0,  3,  1,  9,$FF,$CA,$25,$F4,$E7,$E6,  1,$D0,  2,$F7,  0,$2A,$FF,$F7,$F2,$3C,  0,$44,  2,  2,$1F,$1F,$1F,$15,  0,$1F,  0,  0,  0,  0,  0,  0, $F, $F, $F, $F, $D,  0,$28,  0; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundBF:	dc.b   0,$59,  1,  3,$80,  2,  0,$16,$F4,  6,$80,  4,  0,$31,$F4,  6,$80,  5,  0,$46,$F4,  6,$EF,  0,$C9,  7,$CD,$D0,$CB,$CE,$D2,$CD,$D0,$D4,$CE,$D2,$D5,$D0,  7,$D4,$D7,$E6,  5,$F7,  0,  8,$FF,$F6,$F2,$EF,  0,$E1,  1,$80,  7,$CD,$15,$CE,$D0,$D2,$D4,$15,$E6,  5; 0
-					; DATA XREF: ROM:SoundIndexo
-		dc.b $F7,  0,  8,$FF,$F8,$F2,$EF,  0,$E1,  1,$C9,$15,$CB,$CD,$CE,$D0,$15,$E6,  5,$F7,  0,  8,$FF,$F8,$F2,$14,$25,$33,$36,$11,$1F,$1F,$1F,$1F,$15,$18,$1C,$13, $B,  8, $D,  9, $F,$9F,$8F, $F,$24,  5, $A,$80; 64
-SoundC0:	dc.b   0,$15,  1,  1,$80,  5,  0, $A,  0,  3,$EF,  0,$94,  5,$80,  5,$94,  4,$80,  4,$F2,$38,  8,  8,  8,  8,$1F,$1F,$1F, $E,  0,  0,  0,  0,  0,  0,  0,  0, $F, $F, $F,$1F,  0,  0,  0,$80; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundC1:	dc.b   0,$21,  1,  2,$80,  5,  0,$10,  0,  0,$80,$C0,  0,$1A,  0,  2,$F0,  3,  1,$72, $B,$EF,  0,$BA,$16,$F2,$F5,  1,$F3,$E7,$B0,$1B,$F2,$3C, $F,  1,  3,  1,$1F,$1F,$1F,$1F,$19,$12,$19, $E,  5,$12,  0, $F, $F,$7F,$FF,$FF,  0,$80,  0,$80; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundC2:	dc.b   0,$11,  1,  1,$80,  5,  0, $A, $C,  8,$EF,  0,$BA,  8,$BA,$25,$F2,$14,$25,$33,$36,$11,$1F,$1F,$1F,$1F,$15,$18,$1C,$13, $B,  8, $D,  9, $F,$9F,$8F, $F,$24,  5, $A,$80; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundC3:	dc.b   0,$2F,  1,  2,$80,  4,  0,$10, $C,  0,$80,  5,  0,$1C,  0,$13,$EF,  1,$80,  1,$A2,  8,$EF,  0,$E7,$AD,$26,$F2,$EF,  2,$F0,  6,  1,  3,$FF,$80, $A,$C3,  6,$F7,  0,  5,$FF,$FA,$C3,$17,$F2,$30,$30,$5C,$34,$30,$9E,$A8,$AC,$DC, $E, $A,  4,  5,  8,  8,  8,  8; 0
-					; DATA XREF: ROM:SoundIndexo
-		dc.b $BF,$BF,$BF,$BF,$24,$1C,  4,$80,$30,$30,$5C,$34,$30,$9E,$A8,$AC,$DC, $E, $A,  4,  5,  8,  8,  8,  8,$BF,$BF,$BF,$BF,$24,$2C,  4,$80,  4,$37,$72,$77,$49,$1F,$1F,$1F,$1F,  7, $A,  7, $D,  0, $B,  0, $B,$1F, $F,$1F, $F,$13,$81,$13,$88; 64
-SoundC4:	dc.b   0, $F,  1,  1,$80,  5,  0, $A,  0,  0,$EF,  0,$8A,$22,$F2,$FA,$21,$30,$10,$32,$1F,$1F,$1F,$1F,  5,$18,  5,$10, $B,$1F,$10,$10,$1F,$2F,$4F,$2F, $D,  7,  4,$80; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundC5:	dc.b   0,$35,  1,  3,$80,  5,  0,$16,  0,  0,$80,  4,  0,$1F,  0,  0,$80,$C0,  0,$26,  0,  0,$EF,  0,$8A,  8,$80,  2,$8A,  8,$F2,$EF,  1,$80,$12,$C6,$55,$F2,$F5,  2,$F3,$E7,$80,  2,$C2,  5,$C4,  4,$C2,  5,$C4,  4,$F2,$3B,  3,  2,  2,  6,$18,$1A,$1A,$96,$17, $E; 0
-					; DATA XREF: ROM:SoundIndexo
-		dc.b  $A,$10,  0,  0,  0,  0,$FF,$FF,$FF,$FF,  0,$28,$39,$80,  4,$37,$72,$77,$49,$1F,$1F,$1F,$1F,  7, $A,  7, $D,  0, $B,  0, $B,$1F, $F,$1F, $F,$23,$80,$23,$80,  0; 64
-SoundC6:	dc.b   0,$28,  1,  2,$80,  4,  0,$10,  0,  5,$80,  5,  0,$1C,  0,  8,$EF,  0,$C6,  2,  5,  5,  5,  5,  5,  5,$3A,$F2,$EF,  0,$80,  2,$C4,  2,  5,$15,  2,  5,$32,$F2,  4,$37,$72,$77,$49,$1F,$1F,$1F,$1F,  7, $A,  7, $D,  0, $B,  0, $B,$1F, $F,$1F, $F,$23,$80,$23; 0
-					; DATA XREF: ROM:SoundIndexo
-		dc.b $80,  0		; 64
-SoundC7:	dc.b   0,$15,  1,  1,$80,  5,  0, $A,  0,  0,$EF,  0,$BE,  5,$80,  4,$BE,  4,$80,  4,$F2,$28,$2F,$5F,$37,$2B,$1F,$1F,$1F,$1F,$15,$15,$15,$13,$13, $C, $D,$10,$2F,$2F,$3F,$2F,  0,$10,$1F,$80; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundC8:	dc.b   0,$11,  1,  1,$80,$C0,  0, $A,  0,  0,$F5,  0,$F3,$E7,$A7,$25,$F2,  0; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundC9:	dc.b   0,$14,  1,  1,$80,  5,  0, $A, $E,  0,$EF,  0,$F0,  1,  1,$33,$18,$B9,$1A,$F2,$3B, $A,$31,  5,  2,$5F,$5F,$5F,$5F,  4,$14,$16, $C,  0,  4,  0,  0,$1F,$6F,$D8,$FF,  3,$25,  0,$80,  0; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundCA:	dc.b   0,$14,  1,  1,$80,  5,  0, $A,  0,  2,$EF,  0,$F0,  1,  1,$5B,  2,$CC,$65,$F2,$20,$36,$35,$30,$31,$41,$49,$3B,$4B,  9,  6,  9,  8,  1,  3,  2,$A9, $F, $F, $F, $F,$29,$27,$23,$80,  0; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundCB:	dc.b   0,$33,  1,  2,$80,  5,  0,$10,  0,  0,$80,$C0,  0,$21,  0,  0,$EF,  0,$F0,  3,  1,$20,  4,$81,$18,$E6, $A,$F7,  0,  6,$FF,$F8,$F2,$F0,  1,  1, $F,  5,$F3,$E7,$B0,$18,$E7,$EC,  3,$F7,  0,  5,$FF,$F7,$F2,$F9,$21,$30,$10,$32,$1F,$1F,$1F,$1F,  5,$18,  9,  2; 0
-					; DATA XREF: ROM:SoundIndexo
-		dc.b  $B,$1F,$10,  5,$1F,$2F,$4F,$2F, $E,  7,  4,$80; 64
-SoundCC:	dc.b   0,$21,  1,  1,$80,  4,  0, $A,  0,  2,$EF,  0,$80,  1,$F0,  3,  1,$5D, $F,$B0, $C,$F4,$E7,$E6,  2,$BD,  2,$F7,  0,$19,$FF,$F7,$F2,$20,$36,$35,$30,$31,$DF,$DF,$9F,$9F,  7,  6,  9,  6,  7,  6,  6,  8,$2F,$1F,$1F,$FF,$16,$30,$13,$80; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundCD:	dc.b   0, $D,  1,  1,$80,$C0,  0, $A,  0,  0,$BB,  2,$F2,  0; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundCE:	dc.b   0,$15,  1,  1,$80,  4,  0, $A,  0,  5,$EF,  0,$E0,$80,$C1,  4,$C4,  5,$C9,$1B,$F2,  4,$37,$72,$77,$49,$1F,$1F,$1F,$1F,  7, $A,  7, $D,  0, $B,  0, $B,$1F, $F,$1F, $F,$23,$80,$23,$80; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundCF:	dc.b   0,$1E,  1,  2,$80,  4,  0,$10,$27,  3,$80,  5,  0,$12,$27,  0,$80,  4,$EF,  0,$B4,  5,$E6,  2,$F7,  0,$15,$FF,$F8,$F2,$F4,  6,  4, $F, $E,$1F,$1F,$1F,$1F,  0,  0, $B, $B,  0,  0,  5,  8, $F, $F,$FF,$FF, $C,$8B,  3,$80,  0; 0
-					; DATA XREF: ROM:SoundIndexo
-SoundD0:	dc.b   0,$21,  1,  1,$80,  4,  0, $A,  0,$10,$EF,  0,$D0,  2,$E7,  1,$F7,  0,$40,$FF,$FA,$E7,  1,$E6,  1,$F7,  0,$22,$FF,$F8,$80,  1,$EE,$38, $F, $F, $F, $F,$1F,$1F,$1F, $E,  0,  0,  0,  0,  0,  0,  0,  0, $F, $F, $F,$1F,  0,  0,  0,$80; 0
-					; DATA XREF: ROM:SoundD0Indexo
+SoundA0:	incbin	"sound/SFX/Jump.sfx"
+SoundA1:	incbin	"sound/SFX/Checkpoint.sfx"
+SoundA2:	incbin	"sound/SFX/UnkA2.sfx"
+SoundA3:	incbin	"sound/SFX/Death.sfx"
+SoundA4:	incbin	"sound/SFX/Skid.sfx"
+SoundA5:	incbin	"sound/SFX/UnkA5.sfx"
+SoundA6:	incbin	"sound/SFX/Spike.sfx"
+SoundA7:	incbin	"sound/SFX/Push.sfx"
+SoundA8:	incbin	"sound/SFX/Goal.sfx"
+SoundA9:	incbin	"sound/SFX/Action circle.sfx"
+SoundAA:	incbin	"sound/SFX/Splash.sfx"
+SoundAB:	incbin	"sound/SFX/UnkAB.sfx"
+SoundAC:	incbin	"sound/SFX/Boss hit.sfx"
+SoundAD:	incbin	"sound/SFX/Bubble.sfx"
+SoundAE:	incbin	"sound/SFX/Flame ball.sfx"
+SoundAF:	incbin	"sound/SFX/Shield.sfx"
+SoundB0:	incbin	"sound/SFX/Saw.sfx"
+SoundB1:	incbin	"sound/SFX/Electricity.sfx"
+SoundB2:	incbin	"sound/SFX/Drowning.sfx"
+SoundB3:	incbin	"sound/SFX/Flamethrower.sfx"
+SoundB4:	incbin	"sound/SFX/Bumper.sfx"
+SoundB5:	incbin	"sound/SFX/Ring (right).sfx"
+SoundB6:	incbin	"sound/SFX/Moving spikes.sfx"
+SoundB7:	incbin	"sound/SFX/Moving wall.sfx"
+SoundB8:	incbin	"sound/SFX/UnkB8.sfx"
+SoundB9:	incbin	"sound/SFX/Collapse.sfx"
+SoundBA:	incbin	"sound/SFX/Diamond.sfx"
+SoundBB:	incbin	"sound/SFX/Door.sfx"
+SoundBC:	incbin	"sound/SFX/Dash.sfx"
+SoundBD:	incbin	"sound/SFX/Slam.sfx"
+SoundBE:	incbin	"sound/SFX/Roll.sfx"
+SoundBF:	incbin	"sound/SFX/Continue.sfx"
+SoundC0:	incbin	"sound/SFX/Barasan.sfx"
+SoundC1:	incbin	"sound/SFX/Explosion.sfx"
+SoundC2:	incbin	"sound/SFX/Air ding.sfx"
+SoundC3:	incbin	"sound/SFX/Giant ring entry.sfx"
+SoundC4:	incbin	"sound/SFX/Bomb explosion.sfx"
+SoundC5:	incbin	"sound/SFX/Cash register.sfx"
+SoundC6:	incbin	"sound/SFX/Lost rings.sfx"
+SoundC7:	incbin	"sound/SFX/Chain.sfx"
+SoundC8:	incbin	"sound/SFX/Lava.sfx"
+SoundC9:	incbin	"sound/SFX/Point marker.sfx"
+SoundCA:	incbin	"sound/SFX/Special warp.sfx"
+SoundCB:	incbin	"sound/SFX/Smashing wall.sfx"
+SoundCC:	incbin	"sound/SFX/Spring.sfx"
+SoundCD:	incbin	"sound/SFX/Switch.sfx"
+SoundCE:	incbin	"sound/SFX/Ring (left).sfx"
+SoundCF:	incbin	"sound/SFX/Signpost.sfx"
+SoundD0:	incbin	"sound/SFX/Waterfall.sfx"
 SegaPCM:	incbin	"sound/SEGA.pcm"
