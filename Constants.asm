@@ -27,7 +27,7 @@ GameModeID_ContinueScreen:	equ $14										; $14, referenced despite it not exi
 GameModeID_S1Ending:		equ $18										; $18, referenced despite it not existing
 GameModeID_S1Credits:		equ $1C										; $1C, referenced despite it not existing
 GameModeFlag_TitleCard:		equ 7 ; flag bit
-GameModeID_TitleCard:		equ 1<<GameModeFlag_TitleCard			; $80 ; flag mask
+GameModeID_TitleCard:		equ 1<<GameModeFlag_TitleCard			; $80, flag mask
 
 ; ---------------------------------------------------------------------------
 ; 68k RAM
@@ -92,6 +92,12 @@ Current_Act:			equ $FFFFFE11
 Two_player_mode:		equ $FFFFFFE8
 
 Debug_mode_flag:		equ $FFFFFFFA
+
+; ---------------------------------------------------------------------------
+; Z80 RAM
+Z80_RAM:				equ	$A00000
+Z80_Bus:				equ $A11100
+Z80_Reset:				equ $A11200
 
 ; ---------------------------------------------------------------------------
 ; I/O area

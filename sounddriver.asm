@@ -5,10 +5,10 @@
 ; ---------------------------------------------------------------------------
 
 Go_SoundTypes:	dc.l SoundTypes
-Go_SoundD0:	dc.l SoundD0Index
+Go_SoundD0:		dc.l SoundD0Index
 Go_MusicIndex:	dc.l MusicIndex
 Go_SoundIndex:	dc.l SoundIndex
-off_719A0:	dc.l byte_71A94
+off_719A0:		dc.l byte_71A94
 Go_PSGIndex:	dc.l PSG_Index
 ; ---------------------------------------------------------------------------
 ; PSG instruments used in music
@@ -46,15 +46,15 @@ SoundTypes:	dc.b $90,$90,$90,$90,$90,$90,$90,$90,$90,$90,$90,$90,$90,$90,$90,$90
 
 
 sub_71B4C:
-		move.w	#$100,($A11100).l ; stop the Z80
+		move.w	#$100,(Z80_Bus).l ; stop the Z80
 		nop
 		nop
 		nop
 
 loc_71B5A:				; CODE XREF: sub_71B4C+16j
-		btst	#0,($A11100).l
+		btst	#0,(Z80_Bus).l
 		bne.s	loc_71B5A
-		btst	#7,($A01FFD).l
+		btst	#7,(Z80_RAM+$1FFD).l
 		beq.s	loc_71B82
 		startZ80
 		nop
@@ -204,7 +204,7 @@ loc_71C88:				; CODE XREF: sub_71C4E+34j
 		beq.s	locret_71CAA
 		btst	#3,d0
 		bne.s	loc_71CAC
-		move.b	d0,($A01FFF).l
+		move.b	d0,(Z80_RAM+$1FFF).l
 
 locret_71CAA:				; CODE XREF: sub_71C4E+4j
 					; sub_71C4E+42j ...
@@ -214,8 +214,8 @@ locret_71CAA:				; CODE XREF: sub_71C4E+4j
 loc_71CAC:				; CODE XREF: sub_71C4E+54j
 		subi.b	#-$78,d0
 		move.b	byte_71CC4(pc,d0.w),d0
-		move.b	d0,($A000EA).l
-		move.b	#-$7D,($A01FFF).l
+		move.b	d0,(Z80_RAM+$EA).l
+		move.b	#-$7D,(Z80_RAM+$1FFF).l
 		rts
 ; End of function sub_71C4E
 
@@ -2331,7 +2331,7 @@ Music83:	incbin	"sound/music/MZ.smps"
 Music84:	incbin	"sound/music/SLZ.smps"
 Music85:	incbin	"sound/music/SYZ.smps"
 Music86:	incbin	"sound/music/SBZ.smps"
-Music87:	incbin	"sound/music/Invinicibility.smps"
+Music87:	incbin	"sound/music/Invincibility.smps"
 Music88:	incbin	"sound/music/Extra life.smps"
 Music89:	incbin	"sound/music/SS.smps"
 Music8A:	incbin	"sound/music/Title screen.smps"
