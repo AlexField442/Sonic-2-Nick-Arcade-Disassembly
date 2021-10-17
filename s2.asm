@@ -591,8 +591,6 @@ Vint_Title:
 		bsr.w	ProcessDPLC
 		tst.w	(Demo_Time_left).w
 		beq.w	locret_CD0
-
-loc_CCC:
 		subq.w	#1,(Demo_Time_left).w
 
 locret_CD0:
@@ -627,8 +625,6 @@ Vint_Level:
 loc_D24:
 		lea	($C00004).l,a5
 		move.l	#$94009340,(a5)
-
-loc_D30:
 		move.l	#$96FD9540,(a5)
 		move.w	#$977F,(a5)
 		move.w	#$C000,(a5)
@@ -640,8 +636,6 @@ loc_D48:
 		move.w	#$8230,($C00004).l
 		lea	($C00004).l,a5
 		move.l	#$940193C0,(a5)
-
-loc_D60:
 		move.l	#$96F09500,(a5)
 		move.w	#$977F,(a5)
 		move.w	#$7C00,(a5)
@@ -742,8 +736,6 @@ Vint_TitleCard:
 
 loc_EE4:
 		lea	($C00004).l,a5
-
-loc_EEA:
 		move.l	#$94009340,(a5)
 		move.l	#$96FD9540,(a5)
 		move.w	#$977F,(a5)
@@ -927,7 +919,7 @@ PalToCRAM:
 	rept 32
 		move.l	(a0)+,(a1)		; move palette to CRAM (all 64 colors at once)
 	endr
-		move.w	#$8ADF,4(a1)		; write %1101 %1111 to register 10 (interrupt every 224th line)
+		move.w	#$8A00+223,4(a1)		; write %1101 %1111 to register 10 (interrupt every 224th line)
 		movem.l	(sp)+,a0-a1
 		tst.b	(Do_Updates_in_H_int).w
 		bne.s	loc_11F8
@@ -1007,7 +999,7 @@ VDP_Loop:
 		dbf	d7,VDP_Loop
 		move.w	(VDPSetupArray+2).l,d0
 		move.w	d0,($FFFFF60C).w
-		move.w	#$8ADF,(Hint_counter_reserve).w
+		move.w	#$8A00+223,(Hint_counter_reserve).w
 		moveq	#0,d0
 		move.l	#$40000010,($C00004).l
 		move.w	d0,(a1)
