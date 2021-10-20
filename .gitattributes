@@ -1,0 +1,11 @@
+s2.asm text=auto
+Constants.asm text=auto
+Macros.asm text=auto
+sounddriver.asm text=auto
+
+# data
+*.dat binary
+*.unc binary
+*.nem binary
+*.eni binary
+*.pal binary
