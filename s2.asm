@@ -11920,7 +11920,7 @@ loc_882C:				; DATA XREF: ROM:Obj18_Indexo
 		bne.s	loc_8874
 
 loc_8866:				; CODE XREF: ROM:0000885Cj
-		move.l	#Map_Obj18_EHZ,4(a0)
+		move.l	#Map_obj18_EHZ,4(a0)
 		move.w	#$4000,2(a0)
 
 loc_8874:				; CODE XREF: ROM:00008864j
@@ -12252,21 +12252,11 @@ word_8B68:	dc.w $A			; DATA XREF: ROM:00008B44o
 		dc.w   $2A,    8,    2,	   2; 52
 		dc.w $F80F,  $21,  $10,$FFE0; 56
 		dc.w $F80F,  $21,  $10,	   0; 60
-Map_Obj18_EHZ:	dc.w word_8BEE-Map_Obj18_EHZ ; DATA XREF: ROM:loc_8866o
-					; ROM:Map_Obj18_EHZo ...
-		dc.w word_8C00-Map_Obj18_EHZ
-word_8BEE:	dc.w 2			; DATA XREF: ROM:Map_Obj18_EHZo
-		dc.w $F40F,  $56,  $2B,$FFE0; 0
-		dc.w $F40F, $856, $82B,	   0; 4
-word_8C00:	dc.w 8			; DATA XREF: ROM:00008BECo
-		dc.w $F407,   $A,    5,$FFE0; 0
-		dc.w $F40D,  $12,    9,$FFF0; 4
-		dc.w  $40D,  $1A,   $D,$FFF0; 8
-		dc.w $F407,  $22,  $11,	 $10; 12
-		dc.w $140F,  $2A,  $15,$FFE0; 16
-		dc.w $140F, $82A, $815,	   0; 20
-		dc.w $340F,  $3A,  $1D,$FFE0; 24
-		dc.w $340F, $83A, $81D,	   0; 28
+; ---------------------------------------------------------------------------
+; Sprite mappings - EHZ platforms
+; ---------------------------------------------------------------------------
+Map_obj18_EHZ:	incbin	"mappings/sprite/obj18_EHZ.bin"
+
 ; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
 		nop
 
@@ -33114,25 +33104,26 @@ j_ObjectMoveAndFall_4:				; CODE XREF: ROM:0001721Cp
 
 j_ObjectMove_6:				; CODE XREF: ROM:00017282p
 		jmp	ObjectMove
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
 
-Obj53:					; DATA XREF: ROM:Obj_Indexo
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Object 53 - Masher from EHZ
+; ---------------------------------------------------------------------------
+
+Obj53:
 		moveq	#0,d0
-
-loc_174D2:
 		move.b	$24(a0),d0
 		move.w	Obj53_Index(pc,d0.w),d1
 		jsr	Obj53_Index(pc,d1.w)
 		bra.w	loc_175B8
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
-Obj53_Index:	dc.w Obj53_Init-Obj53_Index ; DATA XREF: ROM:Obj53_Indexo
-					; ROM:000174E4o
+; ===========================================================================
+Obj53_Index:	dc.w Obj53_Init-Obj53_Index
 		dc.w Obj53_Main-Obj53_Index
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
+; ===========================================================================
 
-Obj53_Init:				; DATA XREF: ROM:Obj53_Indexo
+Obj53_Init:
 		addq.b	#2,$24(a0)
-		move.l	#Map_Obj53,4(a0)
+		move.l	#Map_obj53,4(a0)
 		move.w	#$41C,2(a0)
 		bsr.w	j_Adjust2PArtPointer
 		move.b	#4,1(a0)
@@ -33142,8 +33133,8 @@ Obj53_Init:				; DATA XREF: ROM:Obj53_Indexo
 		move.w	#$FC00,$12(a0)
 		move.w	$C(a0),$30(a0)
 
-Obj53_Main:				; DATA XREF: ROM:000174E4o
-		lea	(Ani_Obj53).l,a1
+Obj53_Main:
+		lea	(Ani_obj53).l,a1
 		bsr.w	j_AnimateSprite
 		bsr.w	j_ObjectMove
 		addi.w	#$18,$12(a0)
@@ -33153,9 +33144,9 @@ Obj53_Main:				; DATA XREF: ROM:000174E4o
 		move.w	d0,$C(a0)
 		move.w	#$FB00,$12(a0)
 
-loc_17548:				; CODE XREF: ROM:0001753Cj
+loc_17548:
 		move.b	#1,$1C(a0)
-		subi.w	#$C0,d0	; 'А'
+		subi.w	#$C0,d0
 		cmp.w	$C(a0),d0
 		bcc.s	locret_1756A
 		move.b	#0,$1C(a0)
@@ -33163,66 +33154,56 @@ loc_17548:				; CODE XREF: ROM:0001753Cj
 		bmi.s	locret_1756A
 		move.b	#2,$1C(a0)
 
-locret_1756A:				; CODE XREF: ROM:00017556j
-					; ROM:00017562j
+locret_1756A:
 		rts
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
-Ani_Obj53:	dc.w byte_17572-Ani_Obj53 ; DATA XREF: ROM:Obj53_Maino
-					; ROM:Ani_Obj53o ...
-		dc.w byte_17576-Ani_Obj53
-		dc.w byte_1757A-Ani_Obj53
-byte_17572:	dc.b   7,  0,  1,$FF	; 0 ; DATA XREF: ROM:Ani_Obj53o
-byte_17576:	dc.b   3,  0,  1,$FF	; 0 ; DATA XREF: ROM:0001756Eo
-byte_1757A:	dc.b   7,  0,$FF,  0	; 0 ; DATA XREF: ROM:00017570o
-Map_Obj53:	dc.w word_17582-Map_Obj53 ; DATA XREF: ROM:000174EAo
-					; ROM:Map_Obj53o ...
-		dc.w word_1759C-Map_Obj53
-word_17582:	dc.w 3			; DATA XREF: ROM:Map_Obj53o
-		dc.w $F005,    0,    0,$FFF4; 0
-		dc.w $F001,    4,    2,	   4; 4
-		dc.w	 9,   $A,    5,$FFF4; 8
-word_1759C:	dc.w 3			; DATA XREF: ROM:00017580o
-		dc.w $F005,    0,    0,$FFF4; 0
-		dc.w $F005,    6,    3,	   2; 4
-		dc.w	 9,  $10,    8,$FFF4; 8
-		dc.w	 0		; 12
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
+; ===========================================================================
+; animation script
+Ani_obj53:	dc.w byte_17572-Ani_obj53
+		dc.w byte_17576-Ani_obj53
+		dc.w byte_1757A-Ani_obj53
+byte_17572:	dc.b   7,  0,  1,$FF
+byte_17576:	dc.b   3,  0,  1,$FF
+byte_1757A:	dc.b   7,  0,$FF,  0
+		even
+; ---------------------------------------------------------------------------
+; Sprite mappings
+; ---------------------------------------------------------------------------
+Map_obj53:	incbin	"mappings/sprite/obj53.bin"
 
-loc_175B8:				; CODE XREF: ROM:000174DEj
-		jmp	MarkObjGone
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
+; ===========================================================================
 
-j_AnimateSprite:			; CODE XREF: ROM:00017526p
-		jmp	AnimateSprite
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
+loc_175B8:
+		jmp	(MarkObjGone).l
 
-j_Adjust2PArtPointer:			; CODE XREF: ROM:000174F8p
-		jmp	Adjust2PArtPointer
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
+j_AnimateSprite:
+		jmp	(AnimateSprite).l
 
-j_ObjectMove:				; CODE XREF: ROM:0001752Ap
-		jmp	ObjectMove
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
-;----------------------------------------------------
+j_Adjust2PArtPointer:
+		jmp	(Adjust2PArtPointer).l
+
+j_ObjectMove:
+		jmp	(ObjectMove).l
+
+; ===========================================================================
+; ---------------------------------------------------------------------------
 ; Object 54 - Snail badnik from	EHZ
-;----------------------------------------------------
+; ---------------------------------------------------------------------------
 
-Obj54:					; DATA XREF: ROM:Obj_Indexo
+Obj54:
 		moveq	#0,d0
 		move.b	$24(a0),d0
 		move.w	Obj54_Index(pc,d0.w),d1
 		jmp	Obj54_Index(pc,d1.w)
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
-Obj54_Index:	dc.w Obj54_Init-Obj54_Index ; DATA XREF: ROM:Obj54_Indexo
-					; ROM:000175E0o ...
-		dc.w loc_17688-Obj54_Index
+; ===========================================================================
+Obj54_Index:	dc.w Obj54_Init-Obj54_Index
+		dc.w Obj54_Move-Obj54_Index
 		dc.w loc_177B4-Obj54_Index
 		dc.w loc_177EC-Obj54_Index
 		dc.w loc_17772-Obj54_Index
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
+; ===========================================================================
 
-Obj54_Init:				; DATA XREF: ROM:Obj54_Indexo
-		move.l	#Map_Obj54,4(a0)
+Obj54_Init:
+		move.l	#Map_obj54,4(a0)
 		move.w	#$402,2(a0)
 		bsr.w	j_Adjust2PArtPointer_3
 		ori.b	#4,1(a0)
@@ -33233,9 +33214,9 @@ Obj54_Init:				; DATA XREF: ROM:Obj54_Indexo
 		move.b	#$E,$17(a0)
 		bsr.w	j_SingleObjLoad2_1
 		bne.s	loc_17670
-		move.b	#$54,0(a1) ; 'T'
+		move.b	#$54,0(a1)
 		move.b	#6,$24(a1)
-		move.l	#Map_Obj54,4(a1)
+		move.l	#Map_obj54,4(a1)
 		move.w	#$2402,2(a1)
 		bsr.w	j_Adjust2PArtPointer2_0
 		move.b	#3,$18(a1)
@@ -33247,34 +33228,33 @@ Obj54_Init:				; DATA XREF: ROM:Obj54_Indexo
 		move.w	$C(a0),$C(a1)
 		move.b	#2,$1A(a1)
 
-loc_17670:				; CODE XREF: ROM:00017622j
+loc_17670:
 		addq.b	#2,$24(a0)
 		move.w	#$FF80,d0
 		btst	#0,$22(a0)
 		beq.s	loc_17682
 		neg.w	d0
 
-loc_17682:				; CODE XREF: ROM:0001767Ej
+loc_17682:
 		move.w	d0,$10(a0)
 		rts
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
-
-loc_17688:				; DATA XREF: ROM:000175E0o
+; ===========================================================================
+; loc_17688:
+Obj54_Move:
 		bsr.w	sub_176D0
 		bsr.w	j_ObjectMove_7
-		jsr	ObjHitFloor
-		cmpi.w	#$FFF8,d1
-		blt.s	loc_176B4
+		jsr	(ObjHitFloor).l
+		cmpi.w	#-8,d1
+		blt.s	Obj54_Display
 		cmpi.w	#$C,d1
-		bge.s	loc_176B4
+		bge.s	Obj54_Display
 		add.w	d1,$C(a0)
 		lea	(Ani_Obj54).l,a1
 		bsr.w	j_AnimateSprite_8
 		bra.w	loc_1786C
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
-
-loc_176B4:				; CODE XREF: ROM:0001769Aj
-					; ROM:000176A0j
+; ===========================================================================
+; loc_176B4:
+Obj54_Display:
 		addq.b	#2,$24(a0)
 		move.w	#$14,$30(a0)
 		st	$34(a0)
@@ -33346,7 +33326,7 @@ locret_17770:				; CODE XREF: sub_17714+4j
 
 ; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
 
-loc_17772:				; DATA XREF: ROM:000175E6o
+loc_17772:
 		movea.l	$2A(a0),a1
 		cmpi.b	#$54,(a1) ; 'T'
 		bne.w	loc_17854
@@ -33360,7 +33340,7 @@ loc_17772:				; DATA XREF: ROM:000175E6o
 		beq.s	loc_177A2
 		neg.w	d0
 
-loc_177A2:				; CODE XREF: ROM:0001779Ej
+loc_177A2:
 		add.w	d0,8(a0)
 		lea	(Ani_Obj4B).l,a1
 		bsr.w	j_AnimateSprite_8
@@ -33398,22 +33378,17 @@ Ani_Obj54:	dc.w byte_17818-Ani_Obj54 ; DATA XREF: ROM:000176A6o
 		dc.w byte_1781C-Ani_Obj54
 byte_17818:	dc.b   5,  0,  1,$FF	; 0 ; DATA XREF: ROM:Ani_Obj54o
 byte_1781C:	dc.b   1,  0,  1,$FF	; 0 ; DATA XREF: ROM:00017816o
-Map_Obj54:	dc.w word_17826-Map_Obj54 ; DATA XREF: ROM:Obj54_Inito
-					; ROM:00017630o ...
-		dc.w word_17838-Map_Obj54
-		dc.w word_1784A-Map_Obj54
-word_17826:	dc.w 2			; DATA XREF: ROM:Map_Obj54o
-		dc.w $F00F,    0,    0,$FFF0; 0
-		dc.w  $109,  $14,   $A,$FFF4; 4
-word_17838:	dc.w 2			; DATA XREF: ROM:00017822o
-		dc.w $F00F,    0,    0,$FFF0; 0
-		dc.w  $109,$1014,$100A,$FFF4; 4
-word_1784A:	dc.w 1			; DATA XREF: ROM:00017824o
-		dc.w $FA05,  $10,    8,$FFE9; 0
+; ---------------------------------------------------------------------------
+; Sprite mappings
+; ---------------------------------------------------------------------------
+Map_obj54:	incbin	"mappings/sprite/obj54.bin"
+
+
+
+
 ; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
 
-loc_17854:				; CODE XREF: ROM:0001777Aj
-					; ROM:00017782j ...
+loc_17854:
 		jmp	DeleteObject
 ; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
 
@@ -33791,7 +33766,7 @@ off_17C10:	dc.w loc_17C18-off_17C10 ; DATA	XREF: ROM:off_17C10o
 					; ROM:00017C12o ...
 		dc.w loc_17C36-off_17C10
 		dc.w loc_17C96-off_17C10
-		dc.w ProcessDPLC_Pop2-off_17C10
+		dc.w loc_17CC2-off_17C10
 ; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
 
 loc_17C18:				; DATA XREF: ROM:off_17C10o
@@ -33848,7 +33823,7 @@ loc_17C96:				; DATA XREF: ROM:00017C14o
 		bra.w	loc_181A8
 ; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
 
-ProcessDPLC_Pop2:				; DATA XREF: ROM:00017C16o
+loc_17CC2:				; DATA XREF: ROM:00017C16o
 		subq.w	#1,$2A(a0)
 		bpl.w	loc_181A8
 		bsr.w	j_ObjectMoveAndFall_6
@@ -34177,27 +34152,29 @@ j_AnimateSprite_9:			; CODE XREF: ROM:00017B22p
 j_ObjectMoveAndFall_6:				; CODE XREF: ROM:00017C5Cp
 					; ROM:00017CCAp
 		jmp	ObjectMoveAndFall
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Object 55 - EHZ boss
+; ---------------------------------------------------------------------------
 
-Obj55:					; DATA XREF: ROM:Obj_Indexo
+Obj55:
 		moveq	#0,d0
 		move.b	$24(a0),d0
 		move.w	Obj55_Index(pc,d0.w),d1
 		jmp	Obj55_Index(pc,d1.w)
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
-Obj55_Index:	dc.w loc_181E4-Obj55_Index; 0 ;	DATA XREF: ROM:Obj55_Indexo
-					; ROM:Obj55_Index+2o ...
-		dc.w loc_18302-Obj55_Index; 1
-		dc.w loc_18340-Obj55_Index; 2
-		dc.w loc_18372-Obj55_Index; 3
-		dc.w loc_18410-Obj55_Index; 4
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
-
-loc_181E4:				; DATA XREF: ROM:Obj55_Indexo
+; ===========================================================================
+Obj55_Index:	dc.w Obj55_Init-Obj55_Index
+		dc.w loc_18302-Obj55_Index
+		dc.w loc_18340-Obj55_Index
+		dc.w loc_18372-Obj55_Index
+		dc.w loc_18410-Obj55_Index
+; ===========================================================================
+; loc_181E4:
+Obj55_Init:
 		move.l	#Map_Obj55,4(a0)
 		move.w	#$2400,2(a0)
 		ori.b	#4,1(a0)
-		move.b	#$20,$19(a0) ; ' '
+		move.b	#$20,$19(a0)
 		move.b	#3,$18(a0)
 		move.b	#$F,$20(a0)
 		move.b	#8,$21(a0)
@@ -34207,18 +34184,18 @@ loc_181E4:				; DATA XREF: ROM:Obj55_Indexo
 		move.b	$28(a0),d0
 		cmpi.b	#$81,d0
 		bne.s	loc_18230
-		addi.w	#$60,2(a0) ; '`'
+		addi.w	#$60,2(a0)
 
-loc_18230:				; CODE XREF: ROM:00018228j
-		jsr	SingleObjLoad2
+loc_18230:
+		jsr	(SingleObjLoad2).l
 		bne.w	loc_182E8
-		move.b	#$55,0(a1) ; 'U'
+		move.b	#$55,0(a1)
 		move.l	a0,$34(a1)
 		move.l	a1,$34(a0)
 		move.l	#Map_Obj55,4(a1)
 		move.w	#$400,2(a1)
 		move.b	#4,1(a1)
-		move.b	#$20,$19(a1) ; ' '
+		move.b	#$20,$19(a1)
 		move.b	#3,$18(a1)
 		move.l	8(a0),8(a1)
 		move.l	$C(a0),$C(a1)
@@ -34228,14 +34205,14 @@ loc_18230:				; CODE XREF: ROM:00018228j
 		move.b	$28(a0),d0
 		cmpi.b	#$81,d0
 		bne.s	loc_18294
-		addi.w	#$60,2(a1) ; '`'
+		addi.w	#$60,2(a1)
 
-loc_18294:				; CODE XREF: ROM:0001828Cj
+loc_18294:
 		tst.b	$28(a0)
 		bmi.s	loc_182E8
-		jsr	SingleObjLoad2
+		jsr	(SingleObjLoad2).l
 		bne.s	loc_182E8
-		move.b	#$55,0(a1) ; 'U'
+		move.b	#$55,0(a1)
 		move.l	a0,$34(a1)
 
 loc_182AC:
@@ -34245,59 +34222,58 @@ loc_182AC:
 
 loc_182C0:
 		move.b	#4,1(a1)
-		move.b	#$20,$19(a1) ; ' '
+		move.b	#$20,$19(a1)
 		move.b	#3,$18(a1)
 		move.l	8(a0),8(a1)
 		move.l	$C(a0),$C(a1)
 		addq.b	#6,$24(a1)
 		move.b	1(a0),1(a1)
 
-loc_182E8:				; CODE XREF: ROM:00018236j
-					; ROM:00018298j ...
+loc_182E8:
 		move.b	$28(a0),d0
-		andi.w	#$7F,d0	; ''
+		andi.w	#$7F,d0
 		add.w	d0,d0
 		add.w	d0,d0
 		movea.l	dword_182FA(pc,d0.w),a1
 		jmp	(a1)
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
+; ===========================================================================
 dword_182FA:	dc.l 0
 		dc.l loc_17F54
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
+; ===========================================================================
 
-loc_18302:				; DATA XREF: ROM:Obj55_Indexo
+loc_18302:
 		move.b	$28(a0),d0
-		andi.w	#$7F,d0	; ''
+		andi.w	#$7F,d0
 		add.w	d0,d0
 		add.w	d0,d0
 		movea.l	dword_18338(pc,d0.w),a1
 		jsr	(a1)
 		lea	(Ani_Obj55a).l,a1
-		jsr	AnimateSprite
+		jsr	(AnimateSprite).l
 		move.b	$22(a0),d0
 		andi.b	#3,d0
 		andi.b	#$FC,1(a0)
 		or.b	d0,1(a0)
-		jmp	DisplaySprite
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
+		jmp	(DisplaySprite).l
+; ===========================================================================
 dword_18338:	dc.l 0
 		dc.l Obj57
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
+; ===========================================================================
 
-loc_18340:				; DATA XREF: ROM:Obj55_Indexo
+loc_18340:
 		movea.l	$34(a0),a1
 		move.l	8(a1),8(a0)
 		move.l	$C(a1),$C(a0)
 		move.b	$22(a1),$22(a0)
 		move.b	1(a1),1(a0)
 		movea.l	#Ani_Obj55a,a1
-		jsr	AnimateSprite
-		jmp	DisplaySprite
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
+		jsr	(AnimateSprite).l
+		jmp	(DisplaySprite).l
+; ===========================================================================
 byte_1836E:	dc.b   0,$FF,  1,  0	; 0
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
+; ===========================================================================
 
-loc_18372:				; DATA XREF: ROM:Obj55_Indexo
+loc_18372:
 		btst	#7,$22(a0)
 		bne.s	loc_183C6
 		movea.l	$34(a0),a1
@@ -34314,24 +34290,24 @@ loc_18372:				; DATA XREF: ROM:Obj55_Indexo
 		ble.s	loc_183B0
 		moveq	#0,d0
 
-loc_183B0:				; CODE XREF: ROM:000183ACj
+loc_183B0:
 		move.b	byte_1836E(pc,d0.w),$1A(a0)
 		move.b	d0,$2A(a0)
 
-loc_183BA:				; CODE XREF: ROM:0001839Aj
+loc_183BA:
 		cmpi.b	#$FF,$1A(a0)
 		bne.w	loc_185D4
 		rts
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
+; ===========================================================================
 
-loc_183C6:				; CODE XREF: ROM:00018378j
+loc_183C6:
 		movea.l	$34(a0),a1
 		btst	#6,$2E(a1)
 		bne.s	loc_183D4
 		rts
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
+; ===========================================================================
 
-loc_183D4:				; CODE XREF: ROM:000183D0j
+loc_183D4:
 		addq.b	#2,$24(a0)
 		move.l	#Map_Obj55b,4(a0)
 		move.w	#$4D8,2(a0)
@@ -34341,11 +34317,11 @@ loc_183D4:				; CODE XREF: ROM:000183D0j
 		move.w	8(a1),8(a0)
 		move.w	$C(a1),$C(a0)
 		addi.w	#4,$C(a0)
-		subi.w	#$28,8(a0) ; '('
+		subi.w	#$28,8(a0)
 		rts
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
+; ===========================================================================
 
-loc_18410:				; DATA XREF: ROM:Obj55_Indexo
+loc_18410:
 		subq.b	#1,$1E(a0)
 		bpl.s	loc_18452
 		move.b	#5,$1E(a0)
@@ -34359,12 +34335,11 @@ loc_18410:				; DATA XREF: ROM:Obj55_Indexo
 		move.w	8(a1),8(a0)
 		move.w	$C(a1),$C(a0)
 		addi.w	#4,$C(a0)
-		subi.w	#$28,8(a0) ; '('
+		subi.w	#$28,8(a0)
 
-loc_18452:				; CODE XREF: ROM:00018414j
-					; ROM:00018426j
+loc_18452:
 		bra.w	loc_185D4
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
+; ===========================================================================
 
 Obj56:					; DATA XREF: ROM:Obj_Indexo
 		moveq	#0,d0
@@ -34478,290 +34453,72 @@ loc_185D4:				; CODE XREF: ROM:000183C0j
 loc_185DA:				; CODE XREF: ROM:00018436j
 					; ROM:000184B6j
 		jmp	DeleteObject
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Object 8A - "SONIC TEAM PRESENTS" screen and credits
+; ---------------------------------------------------------------------------
 
-Obj8A:					; DATA XREF: ROM:Obj_Indexo
+Obj8A:
 		moveq	#0,d0
-
-loc_185E2:
 		move.b	$24(a0),d0
-		move.w	off_185EE(pc,d0.w),d1
-		jmp	off_185EE(pc,d1.w)
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
-off_185EE:	dc.w loc_185F2-off_185EE ; DATA	XREF: ROM:off_185EEo
-					; ROM:000185F0o
-		dc.w loc_18660-off_185EE
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
-
-loc_185F2:				; DATA XREF: ROM:off_185EEo
+		move.w	Obj8A_Index(pc,d0.w),d1
+		jmp	Obj8A_Index(pc,d1.w)
+; ===========================================================================
+; off_185EE:
+Obj8A_Index:	dc.w Obj8A_Init-Obj8A_Index
+		dc.w Obj8A_Display-Obj8A_Index
+; ===========================================================================
+; loc_185F2:
+Obj8A_Init:
 		addq.b	#2,$24(a0)
 		move.w	#$120,8(a0)
-		move.w	#$F0,$A(a0) ; 'р'
-		move.l	#Map_Obj8A,4(a0)
+		move.w	#$F0,$A(a0)
+		move.l	#Map_obj8A,4(a0)
 		move.w	#$5A0,2(a0)
 		bsr.w	j_Adjust2PArtPointer_4
-		move.w	($FFFFFFF4).w,d0
-		move.b	d0,$1A(a0)
+
+; Obj8A_Credits:
+		move.w	($FFFFFFF4).w,d0	; load credits index number
+		move.b	d0,$1A(a0)		; display appropriate credits
 		move.b	#0,1(a0)
 		move.b	#0,$18(a0)
-		cmpi.b	#GameModeID_TitleScreen,(Game_Mode).w
-		bne.s	loc_18660
+
+		cmpi.b	#GameModeID_TitleScreen,(Game_Mode).w	; is this the title screen?
+		bne.s	Obj8A_Display		; if not, branch
+
+; Obj8A_SonicTeam:
 		move.w	#$300,2(a0)
 		bsr.w	j_Adjust2PArtPointer_4
 		move.b	#$A,$1A(a0)
-		tst.b	($FFFFFFE3).w
-		beq.s	loc_18660
-		cmpi.b	#$72,($FFFFF604).w ; 'r'
-		bne.s	loc_18660
+		tst.b	($FFFFFFE3).w	; is the Sonic 1 hidden credits cheat activated?
+		beq.s	Obj8A_Display	; if not, branch
+		cmpi.b	#$72,($FFFFF604).w	; has the player pressed A+B+C+Down?
+		bne.s	Obj8A_Display	; if not, branch
+		move.w	#$EEE,($FFFFFBC0).w	; 3rd palette, 1st entry = white
+		move.w	#$880,($FFFFFBC2).w	; 2nd palette, 1st entry = cyan
+		jmp	(DeleteObject).l
+; ===========================================================================
+; loc_18660:
+Obj8A_Display:
+		jmp	(DisplaySprite).l
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Sprite mappings
+; ---------------------------------------------------------------------------
+Map_obj8A:	incbin	"mappings/sprite/obj8A.bin"
 
-loc_1864E:
-		move.w	#$EEE,($FFFFFBC0).w
-		move.w	#$880,($FFFFFBC2).w
-		jmp	DeleteObject
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
-
-loc_18660:				; CODE XREF: ROM:0001862Ej
-					; ROM:00018644j ...
-		jmp	DisplaySprite
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
-Map_Obj8A:	dc.w word_1867C-Map_Obj8A ; DATA XREF: ROM:00018602o
-					; ROM:Map_Obj8Ao ...
-		dc.w word_186EE-Map_Obj8A
-		dc.w word_18770-Map_Obj8A
-		dc.w word_187C2-Map_Obj8A
-		dc.w word_18884-Map_Obj8A
-		dc.w word_18926-Map_Obj8A
-		dc.w word_189F8-Map_Obj8A
-		dc.w word_18AB2-Map_Obj8A
-		dc.w word_18BAC-Map_Obj8A
-		dc.w word_18C26-Map_Obj8A
-		dc.w word_18C68-Map_Obj8A
-word_1867C:	dc.w $E			; DATA XREF: ROM:Map_Obj8Ao
-		dc.w $F805,  $2E,  $17,$FF88; 0
-		dc.w $F805,  $26,  $13,$FF98; 4
-		dc.w $F805,  $1A,   $D,$FFA8; 8
-		dc.w $F801,  $46,  $23,$FFB8; 12
-		dc.w $F805,  $1E,   $F,$FFC0; 16
-		dc.w $F805,  $3E,  $1F,$FFD8; 20
-		dc.w $F805,   $E,    7,$FFE8; 24
-		dc.w $F805,    4,    2,$FFF8; 28
-		dc.w $F809,    8,    4,	   8; 32
-		dc.w $F805,  $2E,  $17,	 $28; 36
-		dc.w $F805,  $3E,  $1F,	 $38; 40
-		dc.w $F805,    4,    2,	 $48; 44
-		dc.w $F805,  $5C,  $2E,	 $58; 48
-		dc.w $F805,  $5C,  $2E,	 $68; 52
-word_186EE:	dc.w $10		; DATA XREF: ROM:00018668o
-		dc.w $D805,    0,    0,$FF80; 0
-		dc.w $D805,    4,    2,$FF90; 4
-		dc.w $D809,    8,    4,$FFA0; 8
-		dc.w $D805,   $E,    7,$FFB4; 12
-		dc.w $D805,  $12,    9,$FFD0; 16
-		dc.w $D805,  $16,   $B,$FFE0; 20
-		dc.w $D805,    4,    2,$FFF0; 24
-		dc.w $D805,  $1A,   $D,	   0; 28
-		dc.w  $805,  $1E,   $F,$FFC8; 32
-		dc.w  $805,    4,    2,$FFD8; 36
-		dc.w  $805,  $22,  $11,$FFE8; 40
-		dc.w  $805,  $26,  $13,$FFF8; 44
-		dc.w  $805,  $16,   $B,	   8; 48
-		dc.w  $805,  $2A,  $15,	 $20; 52
-		dc.w  $805,    4,    2,	 $30; 56
-		dc.w  $805,  $2E,  $17,	 $44; 60
-word_18770:	dc.w $A			; DATA XREF: ROM:0001866Ao
-		dc.w $D805,  $12,    9,$FF80; 0
-		dc.w $D805,  $22,  $11,$FF90; 4
-		dc.w $D805,  $26,  $13,$FFA0; 8
-		dc.w $D805,    0,    0,$FFB0; 12
-		dc.w $D805,  $22,  $11,$FFC0; 16
-		dc.w $D805,    4,    2,$FFD0; 20
-		dc.w $D809,    8,    4,$FFE0; 24
-		dc.w  $805,  $2A,  $15,$FFE8; 28
-		dc.w  $805,  $32,  $19,$FFF8; 32
-		dc.w  $805,  $36,  $1B,	   8; 36
-word_187C2:	dc.w $18		; DATA XREF: ROM:0001866Co
-		dc.w $D805,  $1E,   $F,$FF88; 0
-		dc.w $D805,  $3A,  $1D,$FF98; 4
-		dc.w $D805,    4,    2,$FFA8; 8
-		dc.w $D805,  $22,  $11,$FFB8; 12
-		dc.w $D805,    4,    2,$FFC8; 16
-		dc.w $D805,  $1E,   $F,$FFD8; 20
-		dc.w $D805,  $3E,  $1F,$FFE8; 24
-		dc.w $D805,   $E,    7,$FFF8; 28
-		dc.w $D805,  $22,  $11,	   8; 32
-		dc.w $D805,  $42,  $21,	 $20; 36
-		dc.w $D805,   $E,    7,	 $30; 40
-		dc.w $D805,  $2E,  $17,	 $40; 44
-		dc.w $D801,  $46,  $23,	 $50; 48
-		dc.w $D805,    0,    0,	 $58; 52
-		dc.w $D805,  $1A,   $D,	 $68; 56
-		dc.w  $805,  $48,  $24,$FFC0; 60
-		dc.w  $801,  $46,  $23,$FFD0; 64
-		dc.w  $805,    0,    0,$FFD8; 68
-		dc.w  $801,  $46,  $23,$FFE8; 72
-		dc.w  $805,  $2E,  $17,$FFF0; 76
-		dc.w  $805,  $16,   $B,	   0; 80
-		dc.w  $805,    4,    2,	 $10; 84
-		dc.w  $805,  $1A,   $D,	 $20; 88
-		dc.w  $805,  $42,  $21,	 $30; 92
-word_18884:	dc.w $14		; DATA XREF: ROM:0001866Eo
-		dc.w $D005,  $42,  $21,$FFA0; 0
-		dc.w $D005,   $E,    7,$FFB0; 4
-		dc.w $D005,  $2E,  $17,$FFC0; 8
-		dc.w $D001,  $46,  $23,$FFD0; 12
-		dc.w $D005,    0,    0,$FFD8; 16
-		dc.w $D005,  $1A,   $D,$FFE8; 20
-		dc.w	 5,  $4C,  $26,$FFE8; 24
-		dc.w	 1,  $46,  $23,$FFF8; 28
-		dc.w	 5,  $1A,   $D,	   4; 32
-		dc.w	 5,  $2A,  $15,	 $14; 36
-		dc.w	 5,    4,    2,	 $24; 40
-		dc.w $2005,  $12,    9,$FFD0; 44
-		dc.w $2005,  $3A,  $1D,$FFE0; 48
-		dc.w $2005,   $E,    7,$FFF0; 52
-		dc.w $2005,  $1A,   $D,	   0; 56
-		dc.w $2001,  $46,  $23,	 $10; 60
-		dc.w $2005,  $50,  $28,	 $18; 64
-		dc.w $2005,  $22,  $11,	 $30; 68
-		dc.w $2001,  $46,  $23,	 $40; 72
-		dc.w $2005,   $E,    7,	 $48; 76
-word_18926:	dc.w $1A		; DATA XREF: ROM:00018670o
-		dc.w $D805,  $2E,  $17,$FF98; 0
-		dc.w $D805,  $26,  $13,$FFA8; 4
-		dc.w $D805,  $32,  $19,$FFB8; 8
-		dc.w $D805,  $1A,   $D,$FFC8; 12
-		dc.w $D805,  $54,  $2A,$FFD8; 16
-		dc.w $D805,  $12,    9,$FFF8; 20
-		dc.w $D805,  $22,  $11,	   8; 24
-		dc.w $D805,  $26,  $13,	 $18; 28
-		dc.w $D805,  $42,  $21,	 $28; 32
-		dc.w $D805,  $32,  $19,	 $38; 36
-		dc.w $D805,  $1E,   $F,	 $48; 40
-		dc.w $D805,   $E,    7,	 $58; 44
-		dc.w  $809,    8,    4,$FF88; 48
-		dc.w  $805,    4,    2,$FF9C; 52
-		dc.w  $805,  $2E,  $17,$FFAC; 56
-		dc.w  $805,    4,    2,$FFBC; 60
-		dc.w  $805,  $3E,  $1F,$FFCC; 64
-		dc.w  $805,  $26,  $13,$FFDC; 68
-		dc.w  $805,  $1A,   $D,$FFF8; 72
-		dc.w  $805,    4,    2,	   8; 76
-		dc.w  $805,  $58,  $2C,	 $18; 80
-		dc.w  $805,    4,    2,	 $28; 84
-		dc.w  $809,    8,    4,	 $38; 88
-		dc.w  $805,  $32,  $19,	 $4C; 92
-		dc.w  $805,  $22,  $11,	 $5C; 96
-		dc.w  $805,    4,    2,	 $6C; 100
-word_189F8:	dc.w $17		; DATA XREF: ROM:00018672o
-		dc.w $D005,  $2E,  $17,$FF98; 0
-		dc.w $D005,  $26,  $13,$FFA8; 4
-		dc.w $D005,  $32,  $19,$FFB8; 8
-		dc.w $D005,  $1A,   $D,$FFC8; 12
-		dc.w $D005,  $54,  $2A,$FFD8; 16
-		dc.w $D005,  $12,    9,$FFF8; 20
-		dc.w $D005,  $22,  $11,	   8; 24
-		dc.w $D005,  $26,  $13,	 $18; 28
-		dc.w $D005,    0,    0,	 $28; 32
-		dc.w $D005,  $22,  $11,	 $38; 36
-		dc.w $D005,    4,    2,	 $48; 40
-		dc.w $D009,    8,    4,	 $58; 44
-		dc.w	 5,  $4C,  $26,$FFD0; 48
-		dc.w	 1,  $46,  $23,$FFE0; 52
-		dc.w	 9,    8,    4,$FFE8; 56
-		dc.w	 1,  $46,  $23,$FFFC; 60
-		dc.w	 5,  $3E,  $1F,	   4; 64
-		dc.w	 5,    4,    2,	 $14; 68
-		dc.w $2009,    8,    4,$FFD0; 72
-		dc.w $2005,    4,    2,$FFE4; 76
-		dc.w $2005,  $1E,   $F,$FFF4; 80
-		dc.w $2005,  $58,  $2C,	   4; 84
-		dc.w $2005,  $2A,  $15,	 $14; 88
-word_18AB2:	dc.w $1F		; DATA XREF: ROM:00018674o
-		dc.w $D805,  $2E,  $17,$FF80; 0
-		dc.w $D805,  $12,    9,$FF90; 4
-		dc.w $D805,   $E,    7,$FFA0; 8
-		dc.w $D805,  $1E,   $F,$FFB0; 12
-		dc.w $D801,  $46,  $23,$FFC0; 16
-		dc.w $D805,    4,    2,$FFC8; 20
-		dc.w $D805,  $16,   $B,$FFD8; 24
-		dc.w $D805,  $3E,  $1F,$FFF8; 28
-		dc.w $D805,  $3A,  $1D,	   8; 32
-		dc.w $D805,    4,    2,	 $18; 36
-		dc.w $D805,  $1A,   $D,	 $28; 40
-		dc.w $D805,  $58,  $2C,	 $38; 44
-		dc.w $D805,  $2E,  $17,	 $48; 48
-		dc.w	 5,  $5C,  $2E,$FFB0; 52
-		dc.w	 5,  $32,  $19,$FFC0; 56
-		dc.w	 5,  $4C,  $26,$FFD0; 60
-		dc.w	 1,  $46,  $23,$FFE0; 64
-		dc.w	 5,  $26,  $13,$FFE8; 68
-		dc.w	 9,    8,    4,	   0; 72
-		dc.w	 1,  $46,  $23,	 $14; 76
-		dc.w	 5,  $1A,   $D,	 $1C; 80
-		dc.w	 5,   $E,    7,	 $2C; 84
-		dc.w	 5,    0,    0,	 $3C; 88
-		dc.w	 1,  $46,  $23,	 $4C; 92
-		dc.w	 5,  $2E,  $17,	 $54; 96
-		dc.w	 5,  $3A,  $1D,	 $64; 100
-		dc.w	 1,  $46,  $23,	 $74; 104
-		dc.w $2005,  $12,    9,$FFF8; 108
-		dc.w $2005,    4,    2,	   8; 112
-		dc.w $2005,  $12,    9,	 $18; 116
-		dc.w $2005,    4,    2,	 $28; 120
-word_18BAC:	dc.w $F			; DATA XREF: ROM:00018676o
-		dc.w $F805,  $12,    9,$FF80; 0
-		dc.w $F805,  $22,  $11,$FF90; 4
-		dc.w $F805,   $E,    7,$FFA0; 8
-		dc.w $F805,  $2E,  $17,$FFB0; 12
-		dc.w $F805,   $E,    7,$FFC0; 16
-		dc.w $F805,  $1A,   $D,$FFD0; 20
-		dc.w $F805,  $3E,  $1F,$FFE0; 24
-		dc.w $F805,   $E,    7,$FFF0; 28
-		dc.w $F805,  $42,  $21,	   0; 32
-		dc.w $F805,  $48,  $24,	 $18; 36
-		dc.w $F805,  $2A,  $15,	 $28; 40
-		dc.w $F805,  $2E,  $17,	 $40; 44
-		dc.w $F805,   $E,    7,	 $50; 48
-		dc.w $F805,    0,    0,	 $60; 52
-		dc.w $F805,    4,    2,	 $70; 56
-word_18C26:	dc.w 8			; DATA XREF: ROM:00018678o
-		dc.w $3005,  $3E,  $1F,$FFC0; 0
-		dc.w $3005,  $22,  $11,$FFD0; 4
-		dc.w $3005,  $2A,  $15,$FFE0; 8
-		dc.w $3005,    4,    2,$FFF8; 12
-		dc.w $3005,    0,    0,	   8; 16
-		dc.w $3005,    4,    2,	 $18; 20
-		dc.w $3001,  $46,  $23,	 $28; 24
-		dc.w $3005,  $1A,   $D,	 $30; 28
-word_18C68:	dc.w $11		; DATA XREF: ROM:0001867Ao
-		dc.w $E805,  $2E,  $17,$FFB4; 0
-		dc.w $E805,  $26,  $13,$FFC4; 4
-		dc.w $E805,  $1A,   $D,$FFD4; 8
-		dc.w $E801,  $46,  $23,$FFE4; 12
-		dc.w $E805,  $1E,   $F,$FFEC; 16
-		dc.w $E805,  $3E,  $1F,	   4; 20
-		dc.w $E805,   $E,    7,	 $14; 24
-		dc.w $E805,    4,    2,	 $24; 28
-		dc.w $E809,    8,    4,	 $34; 32
-		dc.w	 5,  $12,    9,$FFC0; 36
-		dc.w	 5,  $22,  $11,$FFD0; 40
-		dc.w	 5,   $E,    7,$FFE0; 44
-		dc.w	 5,  $2E,  $17,$FFF0; 48
-		dc.w	 5,   $E,    7,	   0; 52
-		dc.w	 5,  $1A,   $D,	 $10; 56
-		dc.w	 5,  $3E,  $1F,	 $20; 60
-		dc.w	 5,  $2E,  $17,	 $30; 64
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
+; ===========================================================================
 		nop
 
-j_Adjust2PArtPointer_4:		; CODE XREF: ROM:00018610p
-					; ROM:00018636p
-		jmp	Adjust2PArtPointer
-; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
+j_Adjust2PArtPointer_4:	; JmpTo
+		jmp	(Adjust2PArtPointer).l
+
 		align 4
-;----------------------------------------------------
+
+; ===========================================================================
+; ---------------------------------------------------------------------------
 ; Object 3D - GHZ Boss
-;----------------------------------------------------
+; ---------------------------------------------------------------------------
 
 Obj3D:					; DATA XREF: ROM:Obj_Indexo
 		moveq	#0,d0
@@ -39050,9 +38807,9 @@ Debug_EHZ:	dc.w $13		; DATA XREF: ROM:0001BCF2o
 		dc.b   2,  3,$23,$AE	; 0
 		dc.l Map_Obj49+$49000000
 		dc.b   4,  5,$23,$AE	; 0
-		dc.l Map_Obj18_EHZ+$18000000
+		dc.l Map_obj18_EHZ+$18000000
 		dc.b   1,  0,$40,  0	; 0
-		dc.l Map_Obj18_EHZ+$18000000
+		dc.l Map_obj18_EHZ+$18000000
 		dc.b  $A,  1,$40,  0	; 0
 		dc.l Map_Obj36+$36000000
 		dc.b   0,  0,$24,$34	; 0
@@ -39070,9 +38827,9 @@ Debug_EHZ:	dc.w $13		; DATA XREF: ROM:0001BCF2o
 		dc.b $40, $A,  4,$3C	; 0
 		dc.l Map_Obj4B+$4B000000
 		dc.b   0,  0,  3,$E6	; 0
-		dc.l Map_Obj54+$54000000
+		dc.l Map_obj54+$54000000
 		dc.b   0,  0,  4,  2	; 0
-		dc.l Map_Obj53+$53000000
+		dc.l Map_obj53+$53000000
 		dc.b   0,  0,  4,$1C	; 0
 		dc.l Map_Obj4F+$4F000000
 		dc.b   0,  0,  5,  0	; 0
@@ -39101,9 +38858,9 @@ Debug_HTZ:	dc.w $13		; DATA XREF: ROM:0001BCF6o
 		dc.b   1,  0,  4,$7C	; 0
 		dc.l Map_Obj03+$03000000
 		dc.b   0,  0,$26,$BC	; 0
-		dc.l Map_Obj18_EHZ+$18000000
+		dc.l Map_obj18_EHZ+$18000000
 		dc.b   1,  0,$40,  0	; 0
-		dc.l Map_Obj18_EHZ+$18000000
+		dc.l Map_obj18_EHZ+$18000000
 		dc.b  $A,  1,$40,  0	; 0
 		dc.l Map_Obj36+$36000000
 		dc.b   0,  0,$24,$34	; 0
@@ -39127,9 +38884,9 @@ Debug_HTZ:	dc.w $13		; DATA XREF: ROM:0001BCF6o
 		dc.b   5,  2,$43,$E6	; 0
 		dc.l Map_Obj4B+$4B000000
 		dc.b   0,  0,  3,$E6	; 0
-		dc.l Map_Obj54+$54000000
+		dc.l Map_obj54+$54000000
 		dc.b   0,  0,  4,  2	; 0
-		dc.l Map_Obj53+$53000000
+		dc.l Map_obj53+$53000000
 		dc.b   0,  0,  4,$1C	; 0
 Debug_HPZ:	dc.w $F			; DATA XREF: ROM:0001BCF4o
 					; ROM:0001BCF8o
@@ -39356,7 +39113,7 @@ PLC_EHZ2:	dc.w 4			; DATA XREF: ROM:ArtLoadCueso
 		dc.w $7CC0
 		dc.l Nem_Snail
 		dc.w $8040
-		dc.l Nem_EHZ_Piranha
+		dc.l Nem_Masher
 		dc.w $8380
 PLC_HPZ:	dc.w 7			; DATA XREF: ROM:ArtLoadCueso
 		dc.l Nem_HPZ
@@ -39424,7 +39181,7 @@ PLC_HTZ2:	dc.w 0			; DATA XREF: ROM:ArtLoadCueso
 		dc.w $7CC0
 		dc.l Nem_Snail
 		dc.w $8040
-		dc.l Nem_EHZ_Piranha
+		dc.l Nem_Masher
 		dc.w $8380
 PLC_S1TitleCard:dc.w 0			; DATA XREF: ROM:ArtLoadCueso
 		dc.l Nem_S1TitleCard
@@ -51839,25 +51596,8 @@ Nem_Lamppost:	dc.b $80, $A,$80,  3,  2,$14,  9,$24, $A,$72,  0,$81,  3,  3,$15,$
 					; DATA XREF: ROM:0001C09Eo
 		dc.b $6B,$1F,$D0,$8A,$F9,$58,  0,  0,$3F,$C1,$FB,$5F,$13,$E5,$7E,$77,$F8,$1E,$57,$57,$85,$39,$F0,  0,  0,$3F,$C1,$FC,$DD,$FE,$5A,$BF,$32,$BF,$25,$31,$2D,$65,$44,$FA,$B2,$C8,$AF,$C1,  0,  0,  5,$3F,$CF,$67,$F3,$CD,$3D,$75,$30,$51,$F9,$8F,$9F,$75,$F6,$A3,$BA,$98; 64
 		dc.b $6B,$29,$A8,$7A,$61,$FB, $D,$DF,$2F,$96,  4,$EE,$F9,$7C,$B0,$27,$DF,$D4,$46,  9,$F7,$F5,$11,$80,  0,$50,$F4,$F2,$FF,$11,$F3,$F5,$CF,$EF,$75,$D4,$C1,  0; 128
-Nem_Signpost:	dc.b $80,$3A,$80,  3,  0,$15,$13,$25,$14,$36,$33,$46,$36,$56,$34,$66,$35,$74,  2,$81,  4,  4,$16,$38,$58,$F2,$77,$75,$82,  6,$37,$83,  6,$2F,$84,  5, $F,$17,$76,$85,  5,$16,$86,  6,$2E,$17,$78,$48,$F6,$78,$EF,$87,  4,  8,$17,$73,$88,  4,  6,$18,$F5,$89,  6,$32; 0
-					; DATA XREF: ROM:0001C2B0o
-		dc.b $78,$F4,$8A,  5,$15,$8B,  5,$12,$8C,  5, $E,$17,$72,$8D,  5,$18,$18,$F3,$8E,  4,  5,$18,$EE,$78,$F7,$8F,  4,  3,$17,$74,$FF,$22,$9F,$F5,$85,$DE,$59,$27,$4F,$DB,$53,$2F,$DF,$CC,$CB,$43,$22,$22,$22,$22,$22,$22,$22,$22,$22,$22,$11,$A1,$A7,$EE,$3F,$32, $F,$F7; 64
-		dc.b $C1,$3F,$B3,$3F,$22,$EF,$EB,$DF,$FA,$FF,$E1,$E7,$C7,$8C,$DB,$25,$3A,$3B,$29,$A1,$6C,$9A,$3B,$22,$19,$68,$DB,$62,$FD,$B0,$93,$4C,$D3,$6C,$25,$DA,$24,$EF,$CA,$97,$3F,$3C,$23,$F6,$4B,$C7,$41,$51,$7F,$40,$74,$32,$CE,$FD,$9D,$7A,$68,$9B,$E6,$E0,$9A,$DE, $F,$F5; 128
-		dc.b $1D,$B9,$B7,$BF,$A7,$F0,$72,$E7,$B2,$28,$F6,$3A,$BF,$F6,$3D,$82,$78,$FC,$A8,$E0,$7E,$4C,$71,$48,$7A,$67, $B,$84,$A4, $E,$29,$14,$6D,$90,$78,$A2,  5,$E2,$29,$7A,$7E,$49,$23,$64,$DD,  2,$5F,$BA,$4D,$C8,$12,$88,$CE,$40,$99,$B1,$3D,$35,$DD,$28,$C1,$93,$14,$46; 192
-		dc.b $40,$9C,$82,$9E,$F8,$A7,$EB,$13,$7B,$93,$34,$67,$5C,$99,$C8,$3A,$E8,$E3,$3E,$5E,$38,$1D,$2F,$E5,$E0,$C3,$86,$F5,$F1,$EB,$DA,$DF,$AD,$F7,$F4,$EA,$53,$FE,$B0,$BB,$CB,$24,$E9,$FB,$6A,$65,$FB,$59,$99,$68,$64,$44,$44,$44,$44,$44,$44,$44,$44,$44,$42,$34,$34,$FD; 256
-		dc.b $97,$E6,$41,$FE,$F8,$27,$F6,$67,$E4,$5D,$FD,$7F,$6C,$EF,$D3,$7E,$95,$6C,$75,$B6,$7C,$ED,$5C,$FB,$B9,$D2,$4C,$15,$33,$7F,  7,$99,$E5,$AB,$F2,$4D,$8D,$F8,$D5,$E4,$5A,$1B,$C8,$B6,$75,$F8,$CF,$95,$E7,$9B,$83,$97,$67,$1E,$DC,$BF,$27,$9B,$A6,$ED,$39,$68,$EC,$69; 320
-		dc.b $85,$D1,$47,$EC,$BC,$C7,$F3,$92,$9F,$C9,$6B,$9B,$F8,$39,$73,$D9,$14,$7B,$1A,$8E,$BD,$FF,$F5,$3D,$6D,$5E,$9F,$BB,$E6,$1E,$3F,$63,$73,$F8,$9B,$40,$41,$C6,$7C,$4D,$1A,$9F,$A9,  9,$36,$A6,$54,$49,$9A,$E8,$CB,$AC,$68,$D9,$B5,$18,$64,$D4,$E9,$34,$6C,$D7,$58,$34; 384
-		dc.b $DB,$B8,$2F,$13,$5B,$EA,$8A,$69,$3C,$AE,$DD,$E9,$FA,$E7,$F2,$7C,$F8,$50,$9D,  7,$EC,$66,$86,$81, $C,$1A,$29,$AE,$9D,$D7,$34,$34,$7E,$A7,$A9,$4F,$FA,$C2,$EF,$2C,$93,$A7,$ED,$A9,$96,$86,$5A,$19,$11,$6B,$95,$7F,$98,$32,$76,$B7,$72,$2E,$44,$EC,$FF,$79,$3B,$9D; 448
-		dc.b $A5,$DF,$AC,$D7,$F5,$99,$B8,$72,$2D,$50,$B6,$76,$9C,$82,$15,$21,$DB,$1A,$7E,$EF,$F3,$20,$FF,$7C,$13,$FB,$33,$F2,$2E,$FE,$BD,$E4,$44,$44,$44,$5F,$DC,$2E,$44,$44,$44,$ED,$3F,$F8,$A9,$E6,$3F,$5D,$B7,  5,$C4,$F0,$79,$A1,$21, $F,$D8,$8F,$CD,$C7,$EE,$5B,$DF,$D3; 512
-		dc.b $F8,$39,$73,$D9,$14,$7B,$1A,$8E,$BD,$E5,$B7,$EA,$A9,$F9,$AF,$D0,$CE,$BC,$67,$54,$CD,$C5,$54,$1F,$9B,$BC,$3A,$72,$F5,$17,$E8,$93,$BB,$34,$69,$C3,$BF,$51,$2B,$A9,$C9,$AE,$AE,$CF,$C5,$74,$76,$33,$FD,$60,$FD,$E3,$5D,$CC,$7E,$A9,$95,  2,$D6,$75,$DD,$D8, $B,$FA; 576
-		dc.b $A1,$C4,$FF,$5D,$5F,$CD,$A6,$7D,$D3,$4C,$D5,$D3,$E0,$2B,$B6,$5C,$71,$FB,$88,$FD,$57,$BF,$A7,$52,$9B,$5D,$1F,$A6, $C,$BF,$C1,$C8,$C2,$A7,$4B,$B4,$C9,$B6,$31,$2D,$65,$99,$91,$11,$14,$DF,$AA,$EB,$5D,$65,$A9,$EA,$7A,$DF,$AB,$6B,$6D,$6D,$AD,$B5,$B6,$AD,$AD,$FA; 640
-		dc.b $9E,$90,$6C,$12,$66,$8F,$4B,$95,$32,  6,$A1,$19,$1B,$F5,$33,$4F,$CC,$F8,$8D,$94,$D3,$D8,$D7,$AA,$77,$FF,$62,$F6,$12,$12,$9C,$9C,$24,$25,$3A,$B8,$48,$48,$5F,$5C,  9,  9, $B,$FC,$E9,$51,$E6,$EA,$54,$63,$90,$90,$A8,$C3,$8C,$18,$53,$C7,$47,$9C,$2C,$AB,$26,$79; 704
-		dc.b $C6,$1F,$89,$18,$37,$B9,$F8,$63, $E,$91,$BD,$58,$E1,$D2,$38,$56,$3C,$9C,$F3,$8C,$31,$DC,$E8,$38,$C4,$34,$1B,$5F,$1B,$89,$54,$EB,$7B,$D9,$D1,$63,$7A,$BE,$DC,$D8,$DE,$BF,$95,$BA,$FB,$8E,$4B,$FA,$5D,$EA,$72,$5B,$62,$D7,$3C,$DE,$B6,$C5,$AE,$ED,$65,$79,$D9,$64; 768
-		dc.b $72,$7C,$AD,$57,$FB,$FA,$47,$8F,$23,$5D,$91,$4F,$DB,$AF,$7E,$ED,$66,$B3,$59,$AB,$FB,$D9,$60,$79,$B9,$71,$2B,$C6,$1C,$7D,$D8,$BC,$63,$A6,$E6,$B7,$8E,$E3,$DC,$D6,$6B,$71,$AB,$AE,$51,$73,$D0,$F7,$7C,$1C,$5B,$73,$C5,$81,$C5,$9E,$B2,$B0,$51,$D9,$AF,$78,$C8,$DF; 832
-		dc.b $5F,$37,$AC,$39,$AB,$E6,$CB,  7,$EB,$63,$6C,$45,$D1,$EB,$CF,$11,$94,  6,$36,$DE,  4,  3, $D,$7B,$DA,$47,$23,$74,$9F,$7C, $E,$73,$7C,$24,$4E,$3B,$42,$6F,$DA, $E,$D1,$7A,$73,  7,$61,$7F,$E9,  1,$D9,  5,$9F,$67,$AD,$AB,$2A,$9D,$4E,$A7,$EF,$E9,$D4,$BF,$AD,$3F; 896
-		dc.b $2B,$87,$B1,$A6,$5B,$B5,$ED,$BE,$53,$A8,$90,$AD,$24,$24,$25,$49,  9,  9,  3,$12,$D6,$5A,$D4,$57,$6A,$8A,$87,$D2,$AF,$97,$6A,$2B,$DC,$F6,$A2,$C3,$A2,$FA,$62, $E,$25,$47,$3C,$E2,$54,$75,$4D,$9D,$47,$64,$6D,$14,$73,$39,$AD,$47,$43,$A5,$6A,$1B,$2B,$ED,$43,$B2; 960
-		dc.b $BE,$D4,$59,$2D,$9F,$45,$92,$D9,$F4,$5B,$2F,$6A,$2D,$95,$E7,$45,$B1,$BC,$E2,$75,$39,$1C,$96,$7F,$CE,$1E,$88,$13,$C7,$E9,$DA,$6A,$68,$15,$27,$DC,$83,$B8,$36,$8C, $F,$F6,$26,$13,$44,$22,$22,$22,$22,$22,$22,$22,$22,$22,$22,$22,$22,$6D,$19,$32,$FD,$B6,$48,$3D; 1024
-		dc.b $6E,$CB,$D4,$A9,$C1,$A1,$11,$11,$11,$11,$11,$11,$4C,  0; 1088
+Nem_Signpost:	incbin	"art/nemesis/Signpost.bin"
+		even
 Nem_Crocobot:	dc.b   0,$2C,$80,  5,$11,$16,$2A,$26,$30,$36,$33,$47,$76,$58,$EF,$67,$70,$74,  4,$81,  3,  0,$14,  6,$26,$2E,$36,$35,$48,$F2,$57,$6C,$77,$78,$82,  4,  2,$15,$13,$27,$74,$38,$F7,$83,  4,  3,$15, $B,$26,$2B,$47,$6F,$58,$F6,$84,  5,$14,$17,$6E,$85,  6,$31,$17,$6D; 0
 					; DATA XREF: ROM:0001C1E6o
 		dc.b $86,  5,$16,$17,$71,$87,  5, $F,$16,$34,$88,  5, $A,$17,$72,$89,  5,$12,$17,$7A,$8A,  5, $E,$17,$73,$8C,  6,$32,$18,$F3,$8D,  5,$10,$16,$2F,$27,$75,$38,$EE,$FF,$44,$44,$44,$44,$44,$38,$AF,$30,$63,$78,$30,$7F,$B4,$9E,$FB,$47,$F8,$56,$7C,$7F,$C3,$56,$3F,$CD; 64
@@ -52016,41 +51756,10 @@ Nem_UnusedBubbler:dc.b	 0,$18,$80,  3,	 0,$14,	 9,$25,$18,$36,$38,$46,$3B,$56,$3
 		dc.b $76,$D3,$EF,$A6,$9E,$41,$93,$8B,$F5,$7D,$37,$BE,$1A,$77,  7, $C,  8,$7E,$2F,$B3,$83,$83,$E8,$E1,$D6, $F,$9D,$7E,$BA,$9A,$4E,$1A,$4F,$6C, $A,$E8,$A1,$5C,$19,$F9,$46,$24,$CB,$4B,$62,  1,$81,$4D,$18,$89,$2D,$31,$86,  9,$97, $F,$D2,$C2,$70,$BD,$2C,$B6,$71,$52; 384
 		dc.b $EC,$65,  7,$C1,  8,$38,$60,$42,$60,$F2,$E1,$B4,$E1,$D8,$E1,$67,$36,$CF,$2C,$23, $B,$D6,$D1,$DB,$E1, $D,$B1, $F,$2E,$18,$1A, $F,$C3,$43,$8A,$CF,$A3,$D1,  7,$A3,$82,$37,  4,$6E,  8,$32,$41,  4,$19,$20,$83,$24,$11,$FA,$E9,$23,$70,$41,  4,$6F,$C6,$E3,$7F,$47; 448
 		dc.b $39,$CE, $E,$64,$F0,$78,$20,$F4,$46,$F8,$20,$83,$82,$37,  6,$77,$1B,$F0,$41,  6,$48,$20,$E3,$70,$64,$82,  8,$38,$23,$70,$7B,$DF,$39,$C0; 512
-Nem_Snail:	dc.b $80,$1A,$80,  3,  1,$14,  7,$24,  8,$34, $A,$46,$32,$56,$36,$66,$39,$74,  6,$81,  3,  0,$15,$16,$28,$FA,$82,  7,$79,$83,  6,$3A,$84,  6,$37,$85,  5,$18,$86,  6,$35,$87,  7,$77,$88,  3,  2,$17,$76,$89,  5,$12,$17,$7A,$8A,  7,$78,$8C,  5,$13,$16,$38,$28,$F8; 0
-					; DATA XREF: ROM:0001C19Ao
-					; ROM:0001C262o
-		dc.b $8D,  6,$34,$17,$7B,$8E,  6,$33,$8F,  5,$17,$18,$F9,$FF,$66,$75,$28,$D2,  7,$AD,  4,$9F,$3B,$6F,$81,$22,$33,$B8,$37,$B5,$ED,$71,$DE,$E4,$5C,$47,$7D,$F1,$DE,$E4,$1D,  7,$52,$EF,$E3,$7A,$51,$A0,$71,$D6,$5F,$93,$60,$C7,$C5,  7,$D4,$E9,$68,$E0,$CF,$20,$F3,$69; 64
-		dc.b $D0,$89,$B4,$E0,$54,$DA,  3,$59,$AC,$CC,$CC,$D1,$FC,$D3,$EF,$F8,$3A,$5B,$F8,$63,$AF,$12,  7,$F4,$72,$32,$F3,$D1,$1A,$FA,$E9,$EC,$7F,$24,$6C,$43,$F8,$C4,$4F,$73,$AA,$3F, $F,$FC,$C1,$1C,$11,$E7,$21,$E5,$3F,  3,$AE,$DB,$2F,$3B,$E5,$E4,$AA,$E8,$89,$B3,$31,$E0; 128
-		dc.b $30,$21,$FC,$29,$91,$1A,$A8,$13,$3F,$15,$36,$E2,$84,$7E,$F0,$FF,$85,$99,$9B,$F5,$B9,$7D,$7B,$DA,$DE,$E3,$F1,$78,$36,$D0,$8D,$51,  6,$C7,$80,$43,$FC,$40,$FE,$E3,$CE,$3E, $F,$F4,$78,$FC,$9E,$53,$1D,$11,$EE,$67,$CD,$A7,$FA,$69,$8C,$AF,$97,$E7,$84,$E2,$7F,$58; 192
-		dc.b $79,$E3,$F5,$D7,$A0,$E3,$61,$9D,$7C,$E6,$22,$57,$EF,$F9,$57,$99,$D6,$FE,$E2,$6D,$FB,$C6,$6F,$FE,$7F,$C5,$99,$99,$99,$D5,$22,$84,$23,$A0,$79,$2B,$BE,$E5, $C,$CD,$B7,$17,$CC,$67,$21,$B8,$B8,$CE,$B7,$19,$99,$3F,$83,$F9,$49,$3C,$F5,$E6,$71,$A3,$F0,$DB,$71,$B4; 256
-		dc.b $BF,$48,$7C,$23,$7F,$AD,$F5,$CD, $C,$FE,$5C,$7E,$BB,$E5,$FE,$7F,$62,$E0,$8C,$1F,$D4,$61,$4B,$44,$EB,$41,$B0,$3F, $E,$36,$15,$C0,$A9,$DB,$20,$CC,$CC,$D4,$BB,$A3,$AA,$92,$B8,$B8,$BF,$E7,$A5,$A9,  5,$1B,$C5,$BB,$E7,$69, $B,$9D,$42,$2B,$39,$38,$5F,$95, $A,$27; 320
-		dc.b $DA,$B4,$56,$8C,$20,$E2,$78,$42,$30,$B9, $C,$E3,$2C,$23,$FC,$13,$8F,$EC,$3F,$F5,$57,$37,$E6,$FC,$A6,$6E,$71,$CA,$C7,$2B,$1C,$AC,$50,$75,$8A, $E,$B1,$41,$D6, $F,$D5,$63,$FB, $F,$FF,$5D,$AD,$56,$C8,$6C,$23,$B1,$10,$99,$C5,$7E,$A1,$85,$7E,$A1,$88,$85,$42,$15; 384
-		dc.b   8,$55,$66,$FF,$8D,$99,$FF,$F0,$CF,$FB,$87,$EC,$7F,$52,$54,$49,$D6,$5E,$99,$36,$5E,$8A,$7F,$46,$4F,$DB,$F5,$39,$7F,$A1,$BF,$91,$FF,$1B,$35,$A9,$40,$A5,  1,$FB,$50,$32,$69,$64,$1B,$90,$65,$B4,$9F,$B1,  7,$F5,  5, $C,$90,$8E,$D2,$15,$6D,$80,  0,$2A,$80,  5; 448
-		dc.b $12,$16,$2B,$26,$2D,$36,$31,$47,$73,$56,$35,$67,$76,$74,  1,$81,  5, $F,$16,$27,$27,$78,$82,  4,  0,$14,  5,$26,$30,$37,$7A,$83,  4,  4,$16,$26,$26,$2A,$84,  5,$14,$17,$71,$85,  7,$6E,$86,  5,$10,$17,$77,$87,  5,$11,$17,$75,$88,  5, $E,$17,$74,$89,  4,  3; 512
-		dc.b $16,$33,$28,$F7,$8A,  4,  6,$17,$6F,$8B,  4,  2,$16,$2C,$26,$36,$8C,  6,$2F,$17,$72,$27,$79,$8D,  6,$32,$8F,  7,$70,$16,$2E,$26,$34,$38,$F6,$FF,$11,$11,$11,$11,$11,$11,$B7,$77,$7C,$7F,$6B, $A,$E9,$BA,$1F,$A5,$A5,$54,$86,$EE,$22,$22,$22,$22,$22,$23,$DA,$96; 576
-		dc.b $EE,$EF,$BA,$95,$EE,$A6,$EA,$6E,$A4,$B8,$EE,$FD,$26,$EF,$E1,$F1,$41,$11,$11,$11,$11,$11,$87,$6A,$42,$5D,$ED,$A7,$ED,$61,$5C,$DB,$B8,$EE,$49,$7E,$92,$AE,$22,$22,$23,$CF, $B,$56,$AA,$C2,$6E,$37,$88,$88,$8E,$1C,$EA,$5B,$78,$D4,  2,$22,$3D,$82,$6B,$7F,$85,$58; 640
-		dc.b $20,$69,$20,$40,$D3,$21,$EC,$7C,$F3,$6C,$4E,$3D,$21,$52,$C5,$CF,$5A,$96,$FB,$83,$F6,$77,$E5,$A5,$52,  9,$8D,$29,$79,$82,$67,$14,$A3,$81,$27,$84,$51,$C0,$8E,$FD,$37,$40,$40,$74,$5C, $E,$30,$4C,$10,$19,$5C,$15,  1,$B4,$18,$12,$93,$3B,  9,$4C,$70,$72,$92,$4F; 704
-		dc.b   8,$A9,$3A,$3D,$DC,$A4,$9D,$5D,$81,$27,$F0,$88,$E6,  3,  2,$36,$99,$D0,$CD,$9C,$25,$DB,$32,$E6,$6D,$12,$C7,$7B,$CC,$AD,$6E,$8C,$65,$5C,$61,$D1,$8C,$A5,$17,$BB,$3B,$2B,$5F,$6B,$E0,$BA,$65,$7B,$C3,$FB,$8B,$C3,$F9,$8B,$77,$EF,$17,$4F,$2B,$A7,$95,$BB,$2F,$E6; 768
-		dc.b $68,$13,$72,$F6,  4,$FE,$E7,  0,$FE,$65,$C1,$FB,$CD,  3,$CF,$B0,$79,$CB,$40,$FD,$E6,$80,$8B,  6,$25,$48,  4,$48,$D2,$88,$F5,$6F,$D4,$54,  6,$DD,$2A,  2,$F7,$A8,$2C,$7C,$2A,  7,$93,$DD,$50,$78,$65,$28,$31,$BA,$14,$42,$89,$B3,$9F,$FA,$8D,$F9,$97,$4D,$E7,$B7; 832
-		dc.b $BF,$EE,$DF,$17,$ED,$E1,$CF,$2F,$D8,$93,$7E,$C7,$67,$31,$A6,$12,$32,$4A,$5F,$44,  2,$4A,$5F,$FA,$44,$EA,$94,$FD,$9B,$C8,$36,$5D,$B3,$B0, $A,$73,$DA,$5B,$77,$B2,$4B,$76,$5C,$B2,$5B,$B9,$5D,$87, $B,$F4,$96,$1E,$D2,$58,  6,$95,$83,$FD,$5B,$E9,$39,$E1,$C3,$2E; 896
-		dc.b $59,$5C,$1A,$72,$E0,  9,$ED,$7F,  0,$4F,$60,$AB,$40,$9A,  8,$BF,$B3,$7F,$F4,$FF,$E4,$16,$54,  5,$39,$CC,$A5,$E2,$60,$FD,$8C,$A6,  7,$E2,$80,$EC,$CA,$B0,$76,$FC,$CA,$5B,$CE,$CB,$76,$E6,$73,$D8,$6E,$6F,  4,$71,$71,$49,$E4,$71,$73,$DA,$B7,$C9,$E4,$D1,$B5,$E4; 960
-		dc.b $6D,$1A,$EC,$37,$45,$D8,$D8,$6D,$AD,$86,$C7,$39,$D8,$CE,$EB,$BC,$CB,$AC,$22,$E6,$32,$EF,$17,$31,$94,$A2,$ED,$E7,$64,$9D,$BC,$EC,$AD,$B3,$B2,$DD,$84,$44,$47,$1B,$F5,$E5,$CF,$2E,$5C,$FC,$E3,$97,$9C,$7F,$3B,$CB,$1B,$B9,$5A,$17,$65,$7D,$AB,$75,$F6,$E1,$76,$20; 1024
-		dc.b $8B,$88,$4D, $E,$60,$8F,$D5,$44,$44,$44,$44,$44,$44,$44,$75,$5B,$7F,$3B,$CB,$84,$B2,$F3,$95,$DF,$BC,$CB,$4F,$E6,$69,$FD,$CB,$BF,$D9,$C2,$FF,$F7,$E5,$FF,$FF,$EF,$87,$F7,$C1,$3F,$9E,$13,$7B,  5,$57,$2F,$EC,$D7,$F6,$6B,$FC,$35,$7D,$58,$4F,$85,$B3,$EB,$3E,$AF; 1088
-		dc.b $2D,$5E,$5A,$BC,$B5,$79,$6B,$3E,$B3,$F6,$7F,$67,$88,$88,$8A,$C0,$31,$E0, $F,$5B,$6E,  4,$5A,$EE,  9,$96,$57,  5,$41,$2B,$82,$A5,$E0,$B3,$61,$C0,$21,$37,$A4,$7A,$7A,$A9,$77,$85,$40,$64,$E0,$99,$67,$E8,$98,$7E,$99,$C0,$F5,$74,$22,$D3,$E1,$17,$27,$8F,$49,$39; 1152
-		dc.b $41,$82,$69,$C9,$C6,$A7,$3E,$C6,$4E,$9C,$9E,$59,$C6,$72,$9E,$2C,$73,$93,$D9,$D1,$3F,  4,$6D,$39,$78,$FD,$DB,$CB,$FE,$3F,$DB,$FF,$8C,$A7,$C4,$B1,$2C,$DA,$D2,$3D,$EE,$C4,$B3,$6D,$6C,$11,$11,$11,$F5,$8A,$CC,$B5,$82,$52,$FA,$20,$49,$38,$DF,$49,$83,$F6,$7C,$53; 1216
-		dc.b $F8,$4E,$64,$C0,$BA,$B9,$5A,$78,$45,$95,$1D,$D5,$94,$A6,$67,$60,$5F,$D2,$B1,$D8,$6C,$70,$DB,$38,$B1,$37,$EA, $D,$E5,$FB,$A3,$B1,$FE,$F6,$4E,$1F,$B1,$B0,$13,$F9,$6F,$5F,$E0,$F7,$6F,$DD,$9C,$E4,$F2,$F7,$DF,$EE,$DF,$C8,$6E,$9D,$61,$1E,$91,$FD,$34,$5D,$FF,$A6; 1280
-		dc.b $FF,$C8,$88,$8E,$DC,$CB,$32,$C4,$BD,$CA,$D2,$36,$81,$95,$66,$CE,$79,$95,$6D, $E,$AC,$65,$27,$3E,$3B,$CC,$A5,$FD,$92,$93,$C1,  2,$CA,$D2,$97,$A2,$D7,$4B,$F8,$A0,$57,$EA,$88,$12,$D9,$E0,$81,$27,$E6,$4B,$59,$3C,$96,$D3,$2D,$58,$F5,$32,$D4,$87,$B0,  0; 1344
-Nem_EHZ_Piranha:dc.b $80,$16,$80,  3,  1,$14,  8,$24, $A,$35,$19,$45,$17,$56,$38,$68,$F8,$75,$1A,$81,  3,  0,$16,$3A,$82,  7,$78,$83,  7,$7A,$84,  4,  7,$18,$F6,$85,  6,$3B,$86,  5,$12,$87,  5,$13,$88,  4,  4,$89,  5,$18,$18,$FA,$8A,  7,$79,$8B,  4,  5,$8C,  6,$39,$8D,  5,$16; 0
-					; DATA XREF: ROM:0001C1A0o
-					; ROM:0001C268o
-		dc.b $8E,  5,$1B,$8F,  4,  6,$18,$F7,$FF,$D6,$B5,$AF,$8B,$6B,$8B, $D,$5E,$C3,$5E,$B5,$71,$A2,$35,$95,  4,$65,$FE,$3C,$11,$B8,$FC,$EF,$45, $D,$BA,$A4,$B0,$BA,  3,$DA,$D2,$1E,$D2,$5E,$61,$3B,$D9,$42,$A5,$36,$26,$C5,$8A,$11,$1D,$14,$53,$D6,$DE,$BC,$FE,$79,$CF,$30; 64
-		dc.b $3D,$8F,$29,$3F,$44,$56,$C8,$F4,$41,$E7,$F3,$C9,$8F,$54,$98,$4B,$F2,$5A,$6D,$CF,$EB,$46,$26,$B7, $C,$EB,$90,$C2,$E1,$8B,$AD,  6,$E0,$31, $E,$B0,$D3,$E1,$BE,$13,$5F,$A1,$7A,$C6,$F4,$5C,$AC,  2,$F7,$49,$F0,$C9,$6B,$FA,$69,$F9,$5C,$A6,$3F,$2F,$94, $D,$3C,$A0; 128
-		dc.b $69,$E5,  3,$4C,$CA,$65,  3,$4C,$EC,$14, $D,$39,  6,$28,$DB,$2D,$E2,$45,$1B,$95,$F0,$F4,$9E,$7D,$88,$E6,$36,$7A,$29,$24,$DD,$7E,$85,$8B,$F4,$E3,$F3,$D1,$EC,$53,$E9,$AD, $B,$C9,$62,$96,$8B, $F,$D7,$49,$6A,$53,$5A,$94,$F6,$1E,$B7,$D5,$B2,$1B,$C3,$8C,$F8,$71; 192
-		dc.b $9F, $E, $F,$74,$E0,$8C,$82, $A,$E4,$17,$C8,$2E,$B9,$F6,$5E,$17,$85,$D6,$B5, $B,$BB,$7E,$72,$9D,$24,$29,$44,$DC,$8C,$CC,$CA,$9E,$30,$F4,$13,$13,$7E,$3C,$9B,$40,$C4,$2D,$39,$75,$BB,$AF, $B,$C2,$E6,$5C,$48,$5E,$43,$80,$5A,$ED,$B4,$F7,$FC,$E5,$BB,$71,$F9,$3D; 256
-		dc.b $11,$9F,$D0,$C7,$2B,$75,$22,$E0,$A9,$B5,$29,$B4,$5B,$93,$69,$E6,$7C,$C8,$CA,$25, $C,$18,$C8,$89,$19,$47,$45,$A1,$A9,$A1,$37,$82,$C7,$AF,$A4,$60,$9F,$54,$98,$E3,$F5,$D2,$B8,$29,$2B,$8B,$F7,$EC,$12,$51,$FA,$67,$29,$5C,$D9,$7B,$11,$C8,$85,$7F,$85,$89,$E3,$80; 320
-		dc.b $D8,$E0,$36,$38, $D,$8A,$68, $D,$88,$1E,$E4,$34,$61,  7,$BE,$F3,$84,$1C,$2C,$FB,$FC,$E5,$3A,$48,$52,$89,$B9,$10,$E8,$C6,$50,$A0,$8C,$3D,$7E,$60,$CD,$E1,$C8,$3E,$4D,$88,$4A,$58,$E8,$BA,$DD,$D6,$EE,$B4,$85,$D6,$A7,$C2,$6C,$15,$BE,$2E,$98,$D1,$F7,$FC,$E7,$EB; 384
-		dc.b $47,$E4,$F4,$46,$7F,$43,$A8,$E5,$6E,$A4,$1B,$50,$2B,$16,$E4,$A9,$B5,$4B,$9B,$4E,$A7,$18,$18,$33,$6D,$A0,$60,$9B,$14,$33,$FF,$9D,$6B,$8F,$DF,$4B,$3D,$14,$95,$C6,$7B,$FD,$20,$49,$1F,$D3,$2B,$84,$8E,$6C,$55,$C1,$E4,$52,$BF,$C2,$9F,$CB,$F1,$EF,$F9,$7B,$8D,$B4; 448
-		dc.b $F8, $D,$38,$FD,$49,$1B,$BF,$D6,$B1,$A8,  0,  0; 512
+Nem_Snail:	incbin	"art/nemesis/Snail badnik from EHZ.bin"
+		even
+Nem_Masher:	incbin	"art/nemesis/Masher.bin"
+		even
 Nem_BossShip:	dc.b $80,$60,$80,  3,  0,$14,  4,$25, $F,$35,$13,$46,$31,$56,$32,$66,$34,$74,  2,$81,  4,  3,$15,$16,$38,$F2,$82,  6,$2E,$17,$77,$83,  6,$30,$17,$6E,$84,  7,$72,$85,  7,$73,$86,  5,$11,$17,$78,$87,  5,$10,$17,$6F,$88,  5,$15,$17,$75,$89,  4,  5,$16,$38,$28,$F7; 0
 					; DATA XREF: ROM:0001C278o
 					; ROM:0001C28Ao
