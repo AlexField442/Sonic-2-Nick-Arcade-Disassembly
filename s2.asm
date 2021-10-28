@@ -42918,7 +42918,7 @@ ObjPos_HPZ1:	dc.w  $348, $180,$1C21	; 0 ; DATA XREF: ROM:ObjPos_Indexo
 		dc.w $FFFF,    0,    0	; 129
 ObjPos_HPZ2:	dc.w $FFFF,    0,    0
 ObjPos_HPZ3:	dc.w $FFFF,    0,    0
-ObjPos_HTZ1:	incbin	"level/objects/HTZ_1.bin
+ObjPos_HTZ1:	incbin	"level/objects/HTZ_1.bin"
 		dc.w $FFFF,    0,    0
 ObjPos_HTZ2:	dc.w $FFFF,    0,    0
 ObjPos_HTZ3:	incbin	"level/objects/HTZ_3.bin"
