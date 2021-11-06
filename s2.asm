@@ -565,29 +565,8 @@ Error_WaitForC:
 ; End of function Error_WaitForC
 
 ; 컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴�
-Art_Text:	dc.l	     0,	       0,  $FFFF00, $FF00FF0,$FFF0FFF0,$FFFF0FF0,$FF00FF00, $FFFF000,	     0,	       0,   $FFF00,  $F0FF00,	 $FF00,	  $FF000,   $FF000, $FFFFF00; 0
-					; DATA XREF: ShowErrorMsg+10o
-					; ROM:000032BAo ...
-		dc.l	     0,	       0,  $FFF000, $F00FF00,	 $FF00,	  $FF000,  $FF0000, $FFFFF00,	     0,	       0, $FFFFF00,    $FF00,	$FF000,	   $FF00, $F00FF00, $FFFF000; 16
-		dc.l	     0,	       0,   $FFF00,  $F0FF00, $F00F000,$FFFFFFF0,   $FF000,  $FFF000,	     0,	       0,  $FFFF00,  $F00000,  $FFFF00,	    $FF0, $F00FFF0,  $FFFF00; 32
-		dc.l	     0,	       0,   $FFF00,  $FF0000, $FFFF000,$FF00FF00,$FF00FF00,$FFFFF000,	     0,	       0, $FFFFF00, $F00FF00,	$FF000,	 $FF0000, $FF00000,$FFF00000; 48
-		dc.l	     0,	       0,  $FFFF00, $FF00FF0,  $FFFF00,	$FFFF000,$FF00FF00, $FFFF000,	     0,	       0,  $FFFF00, $FF00FF0, $FF00FF0,	 $FFFF00,    $FF00, $FFFF000; 64
-		dc.l	     0,	  $F0000,  $FFFF00, $F0F0000,  $FFF000,	  $F0F00, $FFFF000,   $F0000,	     0,	       0,	 0,	   0, $FFFFFF0,	       0,	 0,	   0; 80
-		dc.l	     0,	       0,	 0, $FFFFFF0,	     0,	$FFFFFF0,	 0,	   0,	     0,	   $F000,    $FF00, $FFFFFF0, $FFFFFF0,	   $FF00,    $F000,	   0; 96
-		dc.l	     0,	   $F000,    $FF00, $FFFFFF0, $FFFFFF0,	   $FF00,    $F000,	   0,	     0,	       0, $FF00FF0, $FF00FF0,  $F0FF00,	 $FFF000, $FFF0000,$FFF00000; 112
-		dc.l	     0,	       0, $FFFFFF0,    $FF00,	$FF000,	 $FF0000, $FF00000,$FFFFFF00,	     0,	       0,    $FFF0,   $F0FF0,  $F00FF0,	 $FFFFF0, $FF00FF0,$FF000FF0; 128
-		dc.l	     0,	       0,  $FFFF00,  $F00FF0, $FFFFF00,	$FFFF000,$FF00FF00,$FFFFF000,	     0,	       0,  $FFFF00, $FF00FF0, $FF00000,$FF000000,$FF00FF00,$FFFFF000; 144
-		dc.l	     0,	       0,  $FFFF00,  $FF0FF0, $FF00FF0,	$FF00FF0,$FF00FF00,$FFFFF000,	     0,	       0,  $FFFFF0,  $FF0000, $FF00000,	$FFFF000,$FF000000,$FFFFFF00; 160
-		dc.l	     0,	       0,  $FFFFF0, $FFF0000, $FF00000,	$FFFFF00,$FFF00000,$FFF00000,	     0,	       0,  $FFFF00, $FFF00F0, $FF00000,$FF00FFF0,$FF00FF00,$FFFFFF00; 176
-		dc.l	     0,	       0,  $FF00F0,  $FF0FF0, $FF00FF0,	$FFFFF00,$FF00FF00,$FF00FF00,	     0,	       0,   $FF000,   $FF000,  $FF0000,	 $FF0000, $FF00000, $FF00000; 192
-		dc.l	     0,	       0,     $FF0,	$FF0, $F00FF00,$FF00FF00,$FFFFF000, $FFF0000,	     0,	       0,  $FF00F0,  $FF0FF0, $FF0FF00,	$FFFF000,$FF00FF00,$FF000FF0; 208
-		dc.l	     0,	       0,   $FF000,  $FF0000, $FF00000,	$FF00000,$FF000000,$FFFFFF00,	     0,	       0,  $FF00F0,  $FF0FF0,  $FFFFF0,	$F0F0FF0, $F000FF0,$FF000FF0; 224
-		dc.l	     0,	       0,  $FF00F0,  $FF00F0,  $FFF0F0,	$F0FFF00, $F00FF00,$FF00FF00,	     0,	       0,  $FFFF00, $FF00FF0,$FFF0FFF0,$FFF0FFF0,$FF00FF00, $FFFF000; 240
-		dc.l	     0,	       0,  $FFFF00,  $FF00F0, $FF00FF0,	$FFFFF00,$FFF00000,$FF000000,	     0,	       0,  $FFFF00, $FF00FF0,$FF000FF0,$FFFFFFF0,$FF00FF00,$FFFFFFF0; 256
-		dc.l	     0,	       0,  $FFFF00,  $FF00F0, $FF00FF0,	$FFFFF00,$FF00FF00,$FF00FFF0,	     0,	       0,  $FFFFF0, $FF00FF0, $FFF0000,	 $FFFF00,$FF00FFF0,$FFFFFF00; 272
-		dc.l	     0,	       0, $FFFFFF0,   $FF000,	$FF000,	 $FF0000,  $FF0000,  $FF0000,	     0,	       0,  $FF00F0,  $FF00F0, $FF00FF0,	$FF00F00,$FFFFFF00,$FFFFF000; 288
-		dc.l	     0,	       0, $FF000F0, $FF000F0, $FF00FF0,	$FF0FF00, $FFFF000,$FFFF0000,	     0,	       0,$FF0000F0,$FF0000F0,$FF0F0FF0,$FFFFFF00,$FF00FF00,$FF00FF00; 304
-		dc.l	     0,	       0, $FF000F0, $FFF0F00,  $FFF000,	  $FF000,  $FFFF00,$FF00FFF0; 320
+Art_Text:	incbin	"art/uncompressed/Level select and Debug Mode text.bin"
+		even
 ; >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ; vertical and horizontal interrupt handlers
 ; VERTICAL INTERRUPT HANDLER:
@@ -3795,76 +3774,40 @@ PalPointers:	palptr	Pal_SegaBG,$FB00,$1F
 		palptr	Pal_EHZ,$FB20,$17
 		palptr	Pal_HPZ,$FB20,$17
 		palptr	Pal_HTZ,$FB20,$17
-		palptr	Pal_SpecialStage,$FB00,$1F
+		palptr	Pal_S1SpecialStage,$FB00,$1F
 		palptr	Pal_HPZWater,$FB00,$1F
-		palptr	Pal_LZ,$FB20,$17
-		palptr	Pal_LZ4,$FB00,$17
+		; the following are leftover Sonic 1 entries
+		palptr	Pal_LZ4,$FB20,$17
+		palptr	Pal_LZ4Water,$FB00,$17
 		palptr	Pal_HTZ,$FB20,$17
 		palptr	Pal_LZSonicWater,$FB00,7
 		palptr	Pal_LZ4SonicWater,$FB00,7
-		palptr	Pal_S1SpecialStageTC,$FB00,$1F
+		palptr	Pal_S1SpeResults,$FB00,$1F
 		palptr	Pal_S1Continue,$FB00,$F
 		palptr	Pal_S1Ending,$FB00,$1F
 ; ---------------------------------------------------------------------------
-Pal_SegaBG:	dc.w  $EEE, $EEE, $EEE,	$EEE, $EEE, $EEE, $EEE,	$EEE, $EEE, $EEE, $EEE,	$EEE, $EEE, $EEE, $EEE,	$EEE; 0
-					; DATA XREF: ROM:PalPointerso
-		dc.w  $EEE, $EEE, $EEE,	$EEE, $EEE, $EEE, $EEE,	$EEE, $EEE, $EEE, $EEE,	$EEE, $EEE, $EEE, $EEE,	$EEE; 16
-		dc.w  $EEE, $EEE, $EEE,	$EEE, $EEE, $EEE, $EEE,	$EEE, $EEE, $EEE, $EEE,	$EEE, $EEE, $EEE, $EEE,	$EEE; 32
-		dc.w  $EEE, $EEE, $EEE,	$EEE, $EEE, $EEE, $EEE,	$EEE, $EEE, $EEE, $EEE,	$EEE, $EEE, $EEE, $EEE,	$EEE; 48
-Pal_Title:	dc.w  $C00,    2, $800,	 $26,  $48,  $6C,  $8E,	 $AE, $4A0,  $40,  $60,	 $80,  $A0, $6A4,    0,	   0; 0
-					; DATA XREF: ROM:0000250Ao
-		dc.w  $C8C, $800,    0,	$A66, $EA8, $ECA, $EEE,	 $AE,  $8E,  $6C, $8CE,	$EEC,  $4A,    6,    0,	   0; 16
-		dc.w  $C00, $C00, $E22,	$E44, $E66, $E88, $EEE,	$AAA, $888, $666,  $24,	$248, $8AE, $68C,    0,	$ECA; 32
-		dc.w  $C00, $600, $C00,	$E44, $E66, $E88, $EEE,	 $AE,  $6A,  $26,  $EE,	$EAA,	$C,    6,    2,	   0; 48
-Pal_LevelSelect:dc.w	 0,    0,    0,	   0,	 0,    0,    0,	   0,	 0,    0,    0,	   0,	 0,    0,    0,	$EEE; 0
-					; DATA XREF: ROM:00002512o
-		dc.w  $C00,  $24, $246,	$468, $68A, $8AC, $ACE,	$8AC, $68A, $468, $ACE,	$ACE, $246,  $24,    0,	   0; 16
-		dc.w  $C00,  $24, $246,	$468, $68A, $8AC, $ACE,	$8AC, $68A, $468,  $24,	$246, $8AC, $68A,    0,	 $EE; 32
-		dc.w  $C00,  $24, $246,	$468, $68A, $8AC, $ACE,	$8AC, $68A, $468, $ACE,	$ACE, $468, $246,    2,	   0; 48
-Pal_SonicTails:	incbin	"art/palettes/Sonic and Tails.bin"
-Pal_GHZ:	dc.w  $800,    0, $242,	$464, $686, $8C8, $EEE,	$AAA, $888, $444, $8EA,	$46A,  $EE,  $88,  $44,	  $E; 0
-					; DATA XREF: ROM:00002522o
-		dc.w  $E80,    2, $EEE,	 $26,  $48,  $6C,  $8E,	 $CE, $A86, $E86, $EA8,	$ECA,  $40,  $60,  $A4,	 $E8; 16
-		dc.w  $C82, $A02, $C42,	$E86, $ECA, $EEC, $EEE,	$EAC, $E8A, $E68,  $E8,	 $A4,	 2,  $26,  $6C,	 $CE; 32
-Pal_HPZWater:	incbin	"art/palettes/HPZ underwater.bin"
-Pal_CPZ:	incbin	"art/palettes/CPZ.bin"
-Pal_EHZ:	incbin	"art/palettes/EHZ.bin"
-Pal_HPZ:	incbin	"art/palettes/HPZ.bin"
-Pal_HTZ:	incbin	"art/palettes/HTZ.bin"
-Pal_SpecialStage:dc.w  $400,	0, $822, $A44, $C66, $E88, $EEE, $AAA, $888, $444, $8AE, $46A,	 $E,	8,    4,  $EE; 0
-					; DATA XREF: ROM:00002552o
-		dc.w  $400,    0,  $24,	 $68,  $AC, $2EE, $EEE,	$AAA, $888, $444, $AE4,	$6A2,  $EE,  $88,  $44,	   0; 16
-		dc.w  $400,    0, $204,	$628, $A4C, $C6E, $ECE,	$800, $C42, $E86, $ECA,	$EEC,	 0, $EE0, $AA0,	$440; 32
-		dc.w  $400,    0,  $60,	 $A0,  $C6,  $EA, $AEC,	$EEA, $EE0, $AA0, $880,	$660, $440, $EE0, $AA0,	$440; 48
-Pal_LZ:		dc.w  $800,    0, $626,	$A2A, $C4C, $E8E, $EEE,	$AAA, $888, $444, $8E0,	$260,  $EE,  $88,  $44,	  $E; 0
-					; DATA XREF: ROM:00002562o
-		dc.w	 0, $444, $666,	$888, $AAA, $CCC, $EEE,	   0, $C8C, $A6A, $848,	$ECE, $E8C, $A48, $826,	$EEE; 16
-		dc.w	 0,    0,  $20,	$240, $462, $882, $CC6,	$EEA, $282, $4A4, $8E8,	$AAA, $666, $222, $684,	$EEE; 32
-Pal_LZ4:	dc.w	 0,    0, $A26,	$C48, $E6A, $E8C, $ECE,	$CAC, $868, $646, $CAE,	$86C, $60C, $426,    4,	 $EE; 0
-					; DATA XREF: ROM:0000256Ao
-		dc.w  $800,    0, $226,	$22A, $44C, $88E, $EEE,	$AAA, $888, $444, $6C0,	$240,  $EA,  $84,  $40,	  $E; 16
-		dc.w	 0, $202, $404,	$626, $848, $A6A, $C8C,	   0, $848, $626, $404,	$ECE, $E8C, $A48, $826,	$EEE; 32
-		dc.w	 0,    0,    0,	$200, $402, $644, $866,	$A88, $264, $486, $6A8,	 $26,  $48,  $6A, $604,	$AAA; 48
-Pal_LZSonicWater:dc.w	  0,	0, $220, $442, $662, $884, $EEE, $AAA, $888, $444, $6AA, $266,	$48,  $24,    2,  $EE; 0
-					; DATA XREF: ROM:0000257Ao
-Pal_LZ4SonicWater:dc.w	   0,	 0, $A26, $C48,	$E6A, $E8C, $ECE, $CAC,	$868, $646, $CAE, $86C,	$60C, $426,    4,  $EE;	0
-					; DATA XREF: ROM:00002582o
-Pal_S1SpecialStageTC:dc.w  $EEE, $EAA, $EAA,  $EE,  $EE,  $EE, $8A0, $AC0, $CE0, $EAA,	$24,  $68,  $AC, $2EE, $EEE, $4C0; 0
-					; DATA XREF: ROM:0000258Ao
-		dc.w  $EEE,    0, $822,	$A44, $C66, $E88, $EEE,	$AAA, $888, $444, $8AE,	$46A,	$E,    8,    4,	   0; 16
-		dc.w  $EEE,    0, $204,	$628, $A4C, $C6E, $ECE,	   0,	 0,    0,    0,	   0,	 0,    0,    0,	   0; 32
-		dc.w  $EEE,    0,  $60,	 $A0,  $C6,  $EA, $AEC,	   0,	 0,    0,    0,	   0,	 0,    0,    0,	   0; 48
-Pal_S1Continue:	dc.w	 0,    0, $822,	$A44, $C66, $E88, $EEE,	$AAA, $888, $444, $8AE,	$46A,	$E,    8,    4,	 $EE; 0
-					; DATA XREF: ROM:00002592o
-		dc.w	 0,    0, $424,	$848, $A6A, $E8E,    0,	   0,	 0,    0,    0,	   0,  $EE,  $88,  $44,	   0; 16
-Pal_S1Ending:	dc.w  $E80,    0, $822,	$A44, $C66, $E88, $EEE,	$AAA, $888, $444, $8AE,	$46A,	$E,    8,    4,	 $EE; 0
-					; DATA XREF: ROM:0000259Ao
-		dc.w  $E80,    0, $608,	$82A, $A4C, $C6E, $EEE,	$AAE, $66C, $22A, $8EA,	$46A,  $EE,  $88,  $44,	  $E; 16
-		dc.w  $E80,    2, $EEE,	 $26,  $48,  $6C,  $8E,	 $CE, $A86, $E86, $EA8,	$ECA,  $40,  $60,  $A4,	 $E8; 32
-		dc.w  $C82, $A02, $C42,	$E86, $ECA, $EEC, $EEE,	$EAC, $E8A, $E68,  $E8,	 $A4,	 2,  $26,  $6C,	 $CE; 48
-; 컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴�
+Pal_SegaBG:		incbin	"art/palettes/Sega screen background.bin"
+Pal_Title:		incbin	"art/palettes/Title screen.bin"
+Pal_LevelSelect:	incbin	"art/palettes/Level select.bin"
+Pal_SonicTails:		incbin	"art/palettes/Sonic and Tails.bin"
+Pal_GHZ:		incbin	"art/palettes/GHZ.bin"
+Pal_HPZWater:		incbin	"art/palettes/HPZ underwater.bin"
+Pal_CPZ:		incbin	"art/palettes/CPZ.bin"
+Pal_EHZ:		incbin	"art/palettes/EHZ.bin"
+Pal_HPZ:		incbin	"art/palettes/HPZ.bin"
+Pal_HTZ:		incbin	"art/palettes/HTZ.bin"
+			; Sonic 1 leftovers
+Pal_S1SpecialStage:	incbin	"art/palettes/S1 Special Stage.bin"
+Pal_LZ4:		incbin	"art/palettes/LZ4.bin"
+Pal_LZ4Water:		incbin	"art/palettes/LZ4 underwater.bin"
+Pal_LZSonicWater:	incbin	"art/palettes/LZ Sonic underwater.bin"
+Pal_LZ4SonicWater:	incbin	"art/palettes/LZ4 Sonic underwater.bin"
+Pal_S1SpeResults:	incbin	"art/palettes/S1 Special Stage results.bin"
+Pal_S1Continue:		incbin	"art/palettes/S1 Continue screen.bin"
+Pal_S1Ending:		incbin	"art/palettes/S1 Ending.bin"
+; ===========================================================================
 		nop
-
+; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Subroutine to perform vertical synchronization
 ; ---------------------------------------------------------------------------
@@ -4713,27 +4656,8 @@ loc_382E:				; CODE XREF: sub_381C+6j
 ; End of function sub_381C
 
 ; 컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴�
-LevelSelect_Text:dc.b $17,$22,$15,$15,$1E,$FF,$18,$19,$1C,$1C,$FF,$10,$1F,$1E,$15,$FF,$FF,$23,$24,$11,$17,$15,$FF,  1
-		dc.b $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$23,$24,$11,$17,$15,$FF,  2; 24
-		dc.b $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$23,$24,$11,$17,$15,$FF,  3; 48
-		dc.b $1D,$11,$22,$12,$1C,$15,$FF,$10,$1F,$1E,$15,$FF,$FF,$FF,$FF,$FF,$FF,$23,$24,$11,$17,$15,$FF,  1; 72
-		dc.b $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$23,$24,$11,$17,$15,$FF,  2; 96
-		dc.b $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$23,$24,$11,$17,$15,$FF,  3; 120
-		dc.b $23,$20,$22,$19,$1E,$17,$FF, $F,$11,$22,$14,$FF,$10,$1F,$1E,$15,$FF,$23,$24,$11,$17,$15,$FF,  1; 144
-		dc.b $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$23,$24,$11,$17,$15,$FF,  2; 168
-		dc.b $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$23,$24,$11,$17,$15,$FF,  3; 192
-		dc.b $1C,$11,$12, $F,$22,$19,$1E,$24,$18,$FF,$10,$1F,$1E,$15,$FF,$FF,$FF,$23,$24,$11,$17,$15,$FF,  1; 216
-		dc.b $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$23,$24,$11,$17,$15,$FF,  2; 240
-		dc.b $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$23,$24,$11,$17,$15,$FF,  3; 264
-		dc.b $23,$24,$11,$22,$FF,$1C,$19,$17,$18,$24,$FF,$10,$1F,$1E,$15,$FF,$FF,$23,$24,$11,$17,$15,$FF,  1; 288
-		dc.b $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$23,$24,$11,$17,$15,$FF,  2; 312
-		dc.b $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$23,$24,$11,$17,$15,$FF,  3; 336
-		dc.b $23,$13,$22,$11,$20,$FF,$12,$22,$11,$19,$1E,$FF,$10,$1F,$1E,$15,$FF,$23,$24,$11,$17,$15,$FF,  1; 360
-		dc.b $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$23,$24,$11,$17,$15,$FF,  2; 384
-		dc.b $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$23,$24,$11,$17,$15,$FF,  3; 408
-		dc.b $16,$19,$1E,$11,$1C,$FF,$10,$1F,$1E,$15,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF; 432
-		dc.b $23,$20,$15,$13,$19,$11,$1C,$FF,$23,$24,$11,$17,$15,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF; 456
-		dc.b $23,$1F,$25,$1E,$14,$FF,$23,$15,$1C,$15,$13,$24,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF; 480
+LevelSelect_Text:	incbin	"mappings/misc/Level select text.bin"
+		even
 ; 컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴�
 
 UnknownSub_1:
