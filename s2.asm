@@ -6680,32 +6680,47 @@ LevelSizeLoad:				; CODE XREF: ROM:00003D30p
 		move.l	d0,($FFFFEECC).w
 		move.l	d0,($FFFFEEC4).w
 		move.w	#$1010,($FFFFEE40).w
-		move.w	#$60,($FFFFEED8).w ; '`'
+		move.w	#$60,($FFFFEED8).w
 		bra.w	LevelSize_CheckLamp
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; ===========================================================================
 LevelSizeArray:
-		dc.w	 0,$24BF,    0,	$300,	 0,$1EBF,    0,	$300; 0
-		dc.w	 0,$2960,    0,	$300,	 0,$2ABF,    0,	$300; 8
-		dc.w	 0,$3FFF,    0,	$720,	 0,$3FFF,    0,	$720; 16
-		dc.w	 0,$3FFF,    0,	$720,	 0,$3FFF,    0,	$720; 24
-		dc.w	 0,$3FFF,    0,	$720,	 0,$3FFF,    0,	$720; 32
-		dc.w	 0,$3FFF,    0,	$720,	 0,$3FFF,    0,	$720; 40
-		dc.w	 0,$29A0,    0,	$320,	 0,$2940,    0,	$420; 48
-		dc.w	 0,$25C0,    0,	$720,	 0,$3FFF,    0,	$720; 56
-		dc.w	 0,$3FFF,    0,	$720,	 0,$3FFF,    0,	$720; 64
-		dc.w	 0,$3FFF,    0,	$720,	 0,$3FFF,    0,	$720; 72
-		dc.w	 0,$3FFF,    0,	$720,	 0,$3FFF,$FF00,	$720; 80
-		dc.w $2080,$3FFF, $510,	$720,	 0,$3FFF,    0,	$720; 88
-		dc.w	 0, $500, $110,	$110,	 0, $DC0, $110,	$110; 96
-		dc.w	 0,$2FFF,    0,	$320,	 0,$2FFF,    0,	$320; 104
-S1EndingStartLoc:dc.w	$50, $3B0, $EA0, $46C,$1750,  $BD, $A00, $62C; 0
-		dc.w  $BB0,  $4C,$1570,	$16C, $1B0, $72C,$1400,	$2AC; 8
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+		dc.w	 0,  $24BF,     0,	$300		; GHZ1
+		dc.w	 0,  $1EBF,     0,	$300		; GHZ2
+		dc.w	 0,  $2960,     0,	$300		; GHZ3
+		dc.w	 0,  $2ABF,     0,	$300		; GHZ4
+		dc.w	 0,  $3FFF,     0,	$720		; LZ1
+		dc.w	 0,  $3FFF,     0,	$720		; LZ2
+		dc.w	 0,  $3FFF,     0,	$720		; LZ3
+		dc.w	 0,  $3FFF,     0,	$720		; LZ4
+		dc.w	 0,  $3FFF,     0,	$720		; CPZ1
+		dc.w	 0,  $3FFF,     0,	$720		; CPZ2
+		dc.w	 0,  $3FFF,     0,	$720		; CPZ3
+		dc.w	 0,  $3FFF,     0,	$720		; CPZ4
+		dc.w	 0,  $29A0,     0,	$320		; EHZ1
+		dc.w	 0,  $2940,     0,	$420		; EHZ2
+		dc.w	 0,  $25C0,     0,	$720		; EHZ3
+		dc.w	 0,  $3FFF,     0,	$720		; EHZ4
+		dc.w	 0,  $3FFF,     0,	$720		; HPZ1
+		dc.w	 0,  $3FFF,     0,	$720		; HPZ2
+		dc.w	 0,  $3FFF,     0,	$720		; HPZ3
+		dc.w	 0,  $3FFF,     0,	$720		; HPZ4
+		dc.w	 0,  $3FFF,     0,	$720		; HTZ1
+		dc.w	 0,  $3FFF, -$100,	$720		; HTZ2
+		dc.w $2080,  $3FFF,  $510,	$720		; HTZ3
+		dc.w	 0,  $3FFF,     0,	$720		; HTZ4
+		dc.w	 0,  $500,   $110,	$110		; S1 Ending 1
+		dc.w	 0,  $DC0,   $110,	$110		; S1 Ending 2
+		dc.w	 0,  $2FFF,     0,	$320		; S1 Ending 3
+		dc.w	 0,  $2FFF,     0,	$320		; S1 Ending 4
+; ===========================================================================
+S1EndingStartLoc:dc.w	$50, $3B0, $EA0, $46C,$1750,  $BD, $A00, $62C
+		dc.w  $BB0,  $4C,$1570,	$16C, $1B0, $72C,$1400,	$2AC
+; ===========================================================================
 
 LevelSize_CheckLamp:			; CODE XREF: LevelSizeLoad+76j
 		tst.b	($FFFFFE30).w
 		beq.s	LevelSize_StartLoc
-		jsr	Lamppost_LoadInfo
+		jsr	(Lamppost_LoadInfo).l
 		move.w	($FFFFB008).w,d1
 		move.w	($FFFFB00C).w,d0
 		bra.s	LevelSize_StartLocLoaded
@@ -6718,6 +6733,7 @@ LevelSize_StartLoc:			; CODE XREF: LevelSizeLoad+17Ej
 		lea	StartLocArray(pc,d0.w),a1
 		tst.w	($FFFFFFF0).w
 		bpl.s	loc_58CE
+
 		move.w	($FFFFFFF4).w,d0
 		subq.w	#1,d0
 		lsl.w	#2,d0
@@ -6762,25 +6778,34 @@ loc_590A:				; CODE XREF: LevelSizeLoad+1E4j
 ; End of function LevelSizeLoad
 
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-StartLocArray:	dc.w   $50, $3B0,  $50,	 $FC,  $50, $3B0,  $80,	 $A8 ; GHZ
-		dc.w   $60,  $6C,  $50,	 $EC,  $50, $2EC, $B80,	   0 ; LZ
+StartLocArray:	dc.w   $50, $3B0		; GHZ1
+		dc.w   $50,  $FC		; GHZ2
+		dc.w   $50, $3B0		; GHZ3
+		dc.w   $80,  $A8		; GHZ4
+		dc.w   $60,  $6C		; LZ1
+		dc.w   $50,  $EC		; LZ2
+		dc.w   $50, $2EC		; LZ3
+		dc.w   $B80,   0		; LZ4
 		incbin	"startpos/CPZ_1.bin"	; CPZ1
 		dc.w   $30, $266		; CPZ2
 		dc.w   $30, $166		; CPZ3
-		dc.w   $80, $A8			; CPZ4
+		dc.w   $80,  $A8		; CPZ4
 		incbin	"startpos/EHZ_1.bin"	; EHZ1
 		incbin	"startpos/EHZ_2.bin"	; EHZ2
 		dc.w   $40, $370		; EHZ3
-		dc.w   $80, $A8			; EHZ4
+		dc.w   $80,  $A8		; EHZ4
 		incbin	"startpos/HPZ_1.bin"	; HPZ1
 		dc.w   $30, $1BD		; HPZ2
-		dc.w   $30, $EC			; HPZ3
-		dc.w   $80, $A8			; HPZ4
+		dc.w   $30,  $EC		; HPZ3
+		dc.w   $80,  $A8		; HPZ4
 		incbin	"startpos/HTZ_1.bin"	; HTZ1
 		incbin	"startpos/HTZ_2.bin"	; HTZ2
 		dc.w $2140, $5AC		; HTZ3
-		dc.w   $80, $A8			; HTZ4
-		dc.w  $620, $16B, $EE0,	$16C,  $80,  $A8,  $80,	 $A8 ; S1 ENDING
+		dc.w   $80,  $A8		; HTZ4
+		dc.w  $620, $16B		; S1 Ending 1
+		dc.w  $EE0, $16C		; S1 Ending 2
+		dc.w   $80,  $A8		; S1 Ending 3
+		dc.w   $80,  $A8		; S1 Ending 4
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
 
@@ -14864,7 +14889,7 @@ loc_AFAE:				; CODE XREF: ROM:0000AF90j
 
 loc_AFBA:				; CODE XREF: ROM:0000AEFCj
 					; ROM:0000AF0Cj ...
-		lea	(Ani_Obj26).l,a1
+		lea	(Ani_obj26).l,a1
 		bsr.w	AnimateSprite
 
 loc_AFC4:				; DATA XREF: ROM:0000AE6Eo
@@ -14903,7 +14928,7 @@ loc_B020:				; CODE XREF: ROM:0000B008j
 		bra.w	DisplaySprite
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 ;----------------------------------------------------
-; Object 2E - contents of monitors
+; Object 2E - monitor contents (code for power-up behavior and rising image)
 ;----------------------------------------------------
 
 Obj2E:					; DATA XREF: ROM:Obj_Indexo
@@ -14925,12 +14950,12 @@ loc_B04E:				; DATA XREF: ROM:Obj2E_Indexo
 		move.b	#$24,1(a0) ; '$'
 		move.b	#3,$18(a0)
 		move.b	#8,$19(a0)
-		move.w	#$FD00,$12(a0)
+		move.w	#-$300,$12(a0)
 		moveq	#0,d0
 		move.b	$1C(a0),d0
 		addq.b	#1,d0
 		move.b	d0,$1A(a0)
-		movea.l	#$B298,a1
+		movea.l	#Map_Obj26,a1
 		add.b	d0,d0
 		adda.w	(a1,d0.w),a1
 		addq.w	#2,a1
@@ -15116,35 +15141,35 @@ loc_B212:				; CODE XREF: Obj26_SolidSides+52j
 		bmi.s	loc_B20A
 		cmp.w	d2,d1
 		bcc.s	loc_B20A
-		moveq	#$FFFFFFFF,d1
+		moveq	#-1,d1
 		rts
 ; End of function Obj26_SolidSides
 
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-Ani_Obj26:	dc.w byte_B246-Ani_Obj26 ; DATA	XREF: ROM:loc_AFBAo
-					; ROM:Ani_Obj26o ...
-		dc.w byte_B24A-Ani_Obj26
-		dc.w byte_B252-Ani_Obj26
-		dc.w byte_B25A-Ani_Obj26
-		dc.w byte_B262-Ani_Obj26
-		dc.w byte_B26A-Ani_Obj26
-		dc.w byte_B272-Ani_Obj26
-		dc.w byte_B27A-Ani_Obj26
-		dc.w byte_B282-Ani_Obj26
-		dc.w byte_B28A-Ani_Obj26
-		dc.w byte_B292-Ani_Obj26
-byte_B246:	dc.b   1,  0,  1,$FF	; 0 ; DATA XREF: ROM:Ani_Obj26o
-byte_B24A:	dc.b   1,  0,  2,  2,  1,  2,  2,$FF; 0	; DATA XREF: ROM:0000B232o
-byte_B252:	dc.b   1,  0,  3,  3,  1,  3,  3,$FF; 0	; DATA XREF: ROM:0000B234o
-byte_B25A:	dc.b   1,  0,  4,  4,  1,  4,  4,$FF; 0	; DATA XREF: ROM:0000B236o
-byte_B262:	dc.b   1,  0,  5,  5,  1,  5,  5,$FF; 0	; DATA XREF: ROM:0000B238o
-byte_B26A:	dc.b   1,  0,  6,  6,  1,  6,  6,$FF; 0	; DATA XREF: ROM:0000B23Ao
-byte_B272:	dc.b   1,  0,  7,  7,  1,  7,  7,$FF; 0	; DATA XREF: ROM:0000B23Co
-byte_B27A:	dc.b   1,  0,  8,  8,  1,  8,  8,$FF; 0	; DATA XREF: ROM:0000B23Eo
-byte_B282:	dc.b   1,  0,  9,  9,  1,  9,  9,$FF; 0	; DATA XREF: ROM:0000B240o
-byte_B28A:	dc.b   1,  0, $A, $A,  1, $A, $A,$FF; 0	; DATA XREF: ROM:0000B242o
-byte_B292:	dc.b   2,  0,  1, $B,$FE,  1; 0	; DATA XREF: ROM:0000B244o
 ; ===========================================================================
+; animation script
+Ani_obj26:	dc.w byte_B246-Ani_obj26
+		dc.w byte_B24A-Ani_obj26
+		dc.w byte_B252-Ani_obj26
+		dc.w byte_B25A-Ani_obj26
+		dc.w byte_B262-Ani_obj26
+		dc.w byte_B26A-Ani_obj26
+		dc.w byte_B272-Ani_obj26
+		dc.w byte_B27A-Ani_obj26
+		dc.w byte_B282-Ani_obj26
+		dc.w byte_B28A-Ani_obj26
+		dc.w byte_B292-Ani_obj26
+byte_B246:	dc.b   1,  0,  1,$FF
+byte_B24A:	dc.b   1,  0,  2,  2,  1,  2,  2,$FF
+byte_B252:	dc.b   1,  0,  3,  3,  1,  3,  3,$FF
+byte_B25A:	dc.b   1,  0,  4,  4,  1,  4,  4,$FF
+byte_B262:	dc.b   1,  0,  5,  5,  1,  5,  5,$FF
+byte_B26A:	dc.b   1,  0,  6,  6,  1,  6,  6,$FF
+byte_B272:	dc.b   1,  0,  7,  7,  1,  7,  7,$FF
+byte_B27A:	dc.b   1,  0,  8,  8,  1,  8,  8,$FF
+byte_B282:	dc.b   1,  0,  9,  9,  1,  9,  9,$FF
+byte_B28A:	dc.b   1,  0, $A, $A,  1, $A, $A,$FF
+byte_B292:	dc.b   2,  0,  1, $B,$FE,  1
+
 ; ---------------------------------------------------------------------------
 ; sprite mappings
 ; ---------------------------------------------------------------------------
@@ -15153,7 +15178,7 @@ Map_Obj26:	incbin	"mappings/sprite/obj26.bin"
 
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 ;----------------------------------------------------
-; Object 0E - Sonic on title screen
+; Object 0E - Sonic and Tails from the title screen
 ;----------------------------------------------------
 
 Obj0E:					; DATA XREF: ROM:Obj_Indexo
@@ -25676,7 +25701,6 @@ LoadTailsTailsDynPLC:
 		bra.s	TPLC_ReadEntry
 ; End of function LoadTailsTailsDynPLC
 
-
 ; ---------------------------------------------------------------------------
 ; Tails pattern loading subroutine
 ; ---------------------------------------------------------------------------
@@ -25718,23 +25742,22 @@ locret_11D7C:
 		rts
 ; End of function LoadTailsDynPLC
 
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-;----------------------------------------------------
+; ===========================================================================
+; ---------------------------------------------------------------------------
 ; Object 05 - Tails' tails
-;----------------------------------------------------
+; ---------------------------------------------------------------------------
 
-Obj05:					; DATA XREF: ROM:Obj_Indexo
+Obj05:
 		moveq	#0,d0
 		move.b	routine(a0),d0
 		move.w	Obj05_Index(pc,d0.w),d1
 		jmp	Obj05_Index(pc,d1.w)
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-Obj05_Index:	dc.w Obj05_Init-Obj05_Index ; DATA XREF: ROM:Obj05_Indexo
-					; ROM:00011D8Eo
+; ===========================================================================
+Obj05_Index:	dc.w Obj05_Init-Obj05_Index
 		dc.w Obj05_Main-Obj05_Index
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; ===========================================================================
 
-Obj05_Init:				; DATA XREF: ROM:Obj05_Indexo
+Obj05_Init:
 		addq.b	#2,routine(a0)
 		move.l	#Map_Tails,4(a0)
 		move.w	#$7B0,2(a0)
@@ -25743,7 +25766,7 @@ Obj05_Init:				; DATA XREF: ROM:Obj05_Indexo
 		move.b	#$18,$19(a0)
 		move.b	#4,1(a0)
 
-Obj05_Main:				; DATA XREF: ROM:00011D8Eo
+Obj05_Main:
 		move.b	($FFFFB066).w,$26(a0)
 		move.b	($FFFFB062).w,$22(a0)
 		move.w	($FFFFB048).w,8(a0)
@@ -25755,11 +25778,10 @@ Obj05_Main:				; DATA XREF: ROM:00011D8Eo
 		move.b	d0,$30(a0)
 		move.b	Obj05_Animations(pc,d0.w),$1C(a0)
 
-loc_11DE6:				; CODE XREF: ROM:00011DDAj
+loc_11DE6:
 		lea	(Obj05_AniData).l,a1
 		bsr.w	Tails_Animate2
-		bsr.w	LoadTailsTailsDynPLC ; loads the tails patterns	in a buffer at F600
-					; as opposed to	the usual F400
+		bsr.w	LoadTailsTailsDynPLC
 		jsr	DisplaySprite
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -26398,6 +26420,7 @@ byte_125EE:	dc.b   0,  4,  4,  0,  4,  0,  0,  5,  5,  0,  5,  0,  0,  6,  6,  0
 		dc.b   6,  0,  0,  7,  7,  0,  7,  0,  0,$FF
 byte_12608:	dc.b   0,  4,  0,  0,  4,  0,  0,  5,  0,  0,  5,  0,  0,  6,  0,  0
 		dc.b   6,  0,  0,  7,  0,  0,  7,  0,  0,$FF
+
 ; ---------------------------------------------------------------------------
 ; sprite mappings
 ; ---------------------------------------------------------------------------
@@ -26407,6 +26430,7 @@ Map_obj38:	incbin	"mappings/sprite/obj38.bin"
 Ani_S1obj4A:	dc.w byte_1278C-Ani_S1obj4A
 byte_1278C:	dc.b   5,  0,  1,  0,  1,  0,  7,  1,  7,  2,  7,  3,  7,  4,  7,  5
 		dc.b   7,  6,  7,$FC
+
 ; ---------------------------------------------------------------------------
 ; sprite mappings
 ; ---------------------------------------------------------------------------
@@ -26415,6 +26439,7 @@ Map_S1obj4A:	incbin	"mappings/sprite/obj4A_S1.bin"
 ; animation script
 Ani_obj08:	dc.w byte_129C2-Ani_obj08
 byte_129C2:	dc.b   4,  0,  1,  2,$FC,  0
+
 ; ---------------------------------------------------------------------------
 ; sprite mappings
 ; ---------------------------------------------------------------------------
@@ -34646,7 +34671,7 @@ loc_1912E:				; CODE XREF: ROM:00019190j
 		move.w	$C(a0),$C(a1)
 		move.b	#$48,0(a1) ; 'H'
 		move.b	#6,routine(a1)
-		move.l	#$852E,4(a1)
+		move.l	#Map_Obj15,4(a1)
 		move.w	#$380,2(a1)
 		bsr.w	j_Adjust2PArtPointer2_1
 		move.b	#1,$1A(a1)
@@ -34666,7 +34691,7 @@ loc_1916A:				; CODE XREF: ROM:0001912Cj
 
 loc_19194:				; CODE XREF: ROM:00019134j
 		move.b	#8,routine(a1)
-		move.l	#$85CA,4(a1)
+		move.l	#Map_Obj48,4(a1)
 		move.w	#$43AA,2(a1)
 		bsr.w	j_Adjust2PArtPointer2_1
 		move.b	#1,$1A(a1)
