@@ -9754,30 +9754,30 @@ locret_7382:				; CODE XREF: MainLevelLoadBlock+10Cj
 		rts
 ; End of function MainLevelLoadBlock
 
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Subroutine to load a level layout from RAM
+; ---------------------------------------------------------------------------
 
-; €€€€€€€€€€€€€€€ S U B	R O U T	I N E €€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 
 
-LevelLayoutLoad:			; CODE XREF: MainLevelLoadBlock:loc_7348p
+LevelLayoutLoad:
 		lea	($FFFF8000).w,a3
 		move.w	#$3FF,d1
 		moveq	#0,d0
 
-loc_738E:				; CODE XREF: LevelLayoutLoad+Cj
+loc_738E:
 		move.l	d0,(a3)+
-		dbf	d1,loc_738E
-		lea	($FFFF8000).w,a3
+		dbf	d1,loc_738E		; fill $8000-$8FFF with 0
+
+		lea	($FFFF8000).w,a3	; load foreground into RAM
 		moveq	#0,d1
 		bsr.w	LevelLayoutLoad2
-		lea	($FFFF8080).w,a3
+		lea	($FFFF8080).w,a3	; load background into RAM
 		moveq	#2,d1
-; End of function LevelLayoutLoad
 
-
-; €€€€€€€€€€€€€€€ S U B	R O U T	I N E €€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€
-
-
-LevelLayoutLoad2:			; CODE XREF: LevelLayoutLoad+16p
+LevelLayoutLoad2:
 		tst.b	(Current_Zone).w
 		beq.s	LevelLayoutLoad_GHZ
 		move.w	(Current_ZoneAndAct).w,d0
@@ -9787,7 +9787,7 @@ LevelLayoutLoad2:			; CODE XREF: LevelLayoutLoad+16p
 		add.w	d0,d0
 		add.w	d2,d0
 		add.w	d1,d0
-		lea	(LevelLayout_Index).l,a1
+		lea	(Level_Index).l,a1
 		move.w	(a1,d0.w),d0
 		lea	(a1,d0.w),a1
 		moveq	#0,d1
@@ -9797,19 +9797,19 @@ LevelLayoutLoad2:			; CODE XREF: LevelLayoutLoad+16p
 		move.l	d1,d5
 		addq.l	#1,d5
 		moveq	#0,d3
-		move.w	#$80,d3	; 'Ä'
+		move.w	#$80,d3
 		divu.w	d5,d3
 		subq.w	#1,d3
 
-loc_73DE:				; CODE XREF: LevelLayoutLoad2+56j
+loc_73DE:
 		movea.l	a3,a0
 		move.w	d3,d4
 
-loc_73E2:				; CODE XREF: LevelLayoutLoad2+4Aj
+loc_73E2:
 		move.l	a1,-(sp)
 		move.w	d1,d0
 
-loc_73E6:				; CODE XREF: LevelLayoutLoad2+44j
+loc_73E6:
 		move.b	(a1)+,(a0)+
 		dbf	d0,loc_73E6
 		movea.l	(sp)+,a1
@@ -9818,9 +9818,12 @@ loc_73E6:				; CODE XREF: LevelLayoutLoad2+44j
 		lea	$100(a3),a3
 		dbf	d2,loc_73DE
 		rts
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+; End of function LevelLayoutLoad
 
-LevelLayoutLoad_GHZ:			; CODE XREF: LevelLayoutLoad2+4j
+; ===========================================================================
+; dynamically converts the Sonic 1 level layout into Sonic 2 Nick Arcade's,
+; read more about it here: https://forums.sonicretro.org/index.php?posts/993641/
+LevelLayoutLoad_GHZ:
 		move.w	(Current_ZoneAndAct).w,d0
 		lsl.b	#6,d0
 		lsr.w	#5,d0
@@ -9828,47 +9831,47 @@ LevelLayoutLoad_GHZ:			; CODE XREF: LevelLayoutLoad2+4j
 		add.w	d0,d0
 		add.w	d2,d0
 		add.w	d1,d0
-		lea	(LevelLayout_Index).l,a1
+		lea	(Level_Index).l,a1
 		move.w	(a1,d0.w),d0
 		lea	(a1,d0.w),a1
 		moveq	#0,d1
 		move.w	d1,d2
-		move.b	(a1)+,d1
-		move.b	(a1)+,d2
+		move.b	(a1)+,d1	; load level width (in tiles)
+		move.b	(a1)+,d2	; load level height (in tiles)
 
-loc_7426:				; CODE XREF: LevelLayoutLoad2+BAj
+loc_7426:
 		move.w	d1,d0
 		movea.l	a3,a0
 
-loc_742A:				; CODE XREF: LevelLayoutLoad2:loc_7456j
+loc_742A:
 		move.b	(a1)+,d3
-		subq.b	#1,d3
-		bcc.s	loc_7440
-		moveq	#0,d3
-		move.b	d3,(a0)+
-		move.b	d3,(a0)+
-		move.b	d3,$FE(a0)
-		move.b	d3,$FF(a0)
+		subq.b	#1,d3		; subtract 1 from chunk ID
+		bcc.s	loc_7440	; if chunk is not $00, branch
+		moveq	#0,d3		; set 'air' chunk to $00
+		move.b	d3,(a0)+	; load first chunk
+		move.b	d3,(a0)+	; load second chunk
+		move.b	d3,$FE(a0)	; load third chunk
+		move.b	d3,$FF(a0)	; load fourth chunk
 		bra.s	loc_7456
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+; ===========================================================================
 
-loc_7440:				; CODE XREF: LevelLayoutLoad2+8Aj
+loc_7440:
 		lsl.b	#2,d3
-		addq.b	#1,d3
-		move.b	d3,(a0)+
-		addq.b	#1,d3
-		move.b	d3,(a0)+
-		addq.b	#1,d3
-		move.b	d3,$FE(a0)
-		addq.b	#1,d3
-		move.b	d3,$FF(a0)
+		addq.b	#1,d3		; add 1 to chunk ID
+		move.b	d3,(a0)+	; load first chunk
+		addq.b	#1,d3		; add 1 to chunk ID
+		move.b	d3,(a0)+	; load second chunk
+		addq.b	#1,d3		; add 1 to chunk ID
+		move.b	d3,$FE(a0)	; load third chunk
+		addq.b	#1,d3		; add 1 to chunk ID
+		move.b	d3,$FF(a0)	; load fourth chunk
 
-loc_7456:				; CODE XREF: LevelLayoutLoad2+9Aj
-		dbf	d0,loc_742A
-		lea	$200(a3),a3
-		dbf	d2,loc_7426
+loc_7456:
+		dbf	d0,loc_742A	; load 1 row
+		lea	$200(a3),a3	; do next row
+		dbf	d2,loc_7426	; repeat for number of rows
 		rts
-; End of function LevelLayoutLoad2
+; End of function LevelLayoutLoad_GHZ
 
 ; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
 
@@ -40272,38 +40275,47 @@ Art_UnkZone_8:	dc.l  $6600666,	$7777777, $8888888,	   0, $6600666,	$7777777, $88
 		dc.l	     0,	$6600666, $7777777, $8888888,	     0,	$6600666, $7777777, $8888888; 8
 		dc.l  $8888888,	       0, $6600666, $7777777, $8888888,	       0, $6600666, $7777777; 16
 		dc.l  $7777777,	$8888888,	 0, $6600666, $7777777,	$8888888,	 0, $6600666; 24
-LevelLayout_Index:dc.w Level_GHZ1-LevelLayout_Index,Level_GHZBg-LevelLayout_Index,Level_Null-LevelLayout_Index;	0
-					; DATA XREF: LevelLayoutLoad2+16o
-					; LevelLayoutLoad2+6Co	...
-		dc.w Level_GHZ2-LevelLayout_Index,Level_GHZBg-LevelLayout_Index,Level_Null-LevelLayout_Index; 3
-		dc.w Level_GHZ3-LevelLayout_Index,Level_GHZBg-LevelLayout_Index,Level_Null-LevelLayout_Index; 6
-		dc.w Level_CPZ1-LevelLayout_Index,Level_CPZBg-LevelLayout_Index,Level_Null-LevelLayout_Index; 9
-		dc.w Level_CPZ1-LevelLayout_Index,Level_CPZBg-LevelLayout_Index,Level_Null-LevelLayout_Index; 12
-		dc.w Level_CPZ1-LevelLayout_Index,Level_CPZBg-LevelLayout_Index,Level_Null-LevelLayout_Index; 15
-		dc.w Level_CPZ1-LevelLayout_Index,Level_CPZBg-LevelLayout_Index,Level_Null-LevelLayout_Index; 18
-		dc.w Level_CPZ1-LevelLayout_Index,Level_CPZBg-LevelLayout_Index,Level_Null-LevelLayout_Index; 21
-		dc.w Level_CPZ1-LevelLayout_Index,Level_CPZBg-LevelLayout_Index,Level_Null-LevelLayout_Index; 24
-		dc.w Level_CPZ1-LevelLayout_Index,Level_CPZBg-LevelLayout_Index,Level_Null-LevelLayout_Index; 27
-		dc.w Level_CPZ1-LevelLayout_Index,Level_CPZBg-LevelLayout_Index,Level_Null-LevelLayout_Index; 30
-		dc.w Level_CPZ1-LevelLayout_Index,Level_CPZBg-LevelLayout_Index,Level_Null-LevelLayout_Index; 33
-		dc.w Level_EHZ1-LevelLayout_Index,Level_EHZBg-LevelLayout_Index,Level_Null-LevelLayout_Index; 36
-		dc.w Level_EHZ2-LevelLayout_Index,Level_EHZBg-LevelLayout_Index,Level_Null-LevelLayout_Index; 39
-		dc.w Level_EHZ1-LevelLayout_Index,Level_EHZBg-LevelLayout_Index,Level_Null-LevelLayout_Index; 42
-		dc.w Level_EHZ2-LevelLayout_Index,Level_EHZBg-LevelLayout_Index,Level_Null-LevelLayout_Index; 45
-		dc.w Level_HPZ1-LevelLayout_Index,Level_HPZBg-LevelLayout_Index,Level_Null-LevelLayout_Index; 48
-		dc.w Level_HPZ1-LevelLayout_Index,Level_HPZBg-LevelLayout_Index,Level_Null-LevelLayout_Index; 51
-		dc.w Level_HPZ1-LevelLayout_Index,Level_HPZBg-LevelLayout_Index,Level_Null-LevelLayout_Index; 54
-		dc.w Level_HPZ1-LevelLayout_Index,Level_HPZBg-LevelLayout_Index,Level_Null-LevelLayout_Index; 57
-		dc.w Level_HTZ1-LevelLayout_Index,Level_HTZBg-LevelLayout_Index,Level_Null-LevelLayout_Index; 60
-		dc.w Level_HTZ2-LevelLayout_Index,Level_HTZBg-LevelLayout_Index,Level_Null-LevelLayout_Index; 63
-		dc.w Level_HTZ1-LevelLayout_Index,Level_HTZBg-LevelLayout_Index,Level_Null-LevelLayout_Index; 66
-		dc.w Level_HTZ2-LevelLayout_Index,Level_HTZBg-LevelLayout_Index,Level_Null-LevelLayout_Index; 69
-		dc.w Level_CPZ1-LevelLayout_Index,Level_CPZBg-LevelLayout_Index,Level_Null-LevelLayout_Index; 72
-		dc.w Level_CPZ1-LevelLayout_Index,Level_CPZBg-LevelLayout_Index,Level_Null-LevelLayout_Index; 75
-		dc.w Level_CPZ1-LevelLayout_Index,Level_CPZBg-LevelLayout_Index,Level_Null-LevelLayout_Index; 78
-		dc.w Level_CPZ1-LevelLayout_Index,Level_CPZBg-LevelLayout_Index,Level_Null-LevelLayout_Index; 81
+
+; ---------------------------------------------------------------------------
+; Level layouts, three entries per act (although the third one is unused)
+; --------------------------------------------------------------------------- 
+Level_Index:	dc.w Level_GHZ1-Level_Index,Level_GHZBg-Level_Index,Level_Null-Level_Index
+		dc.w Level_GHZ2-Level_Index,Level_GHZBg-Level_Index,Level_Null-Level_Index
+		dc.w Level_GHZ3-Level_Index,Level_GHZBg-Level_Index,Level_Null-Level_Index
+		dc.w Level_CPZ1-Level_Index,Level_CPZBg-Level_Index,Level_Null-Level_Index
+
+		dc.w Level_CPZ1-Level_Index,Level_CPZBg-Level_Index,Level_Null-Level_Index
+		dc.w Level_CPZ1-Level_Index,Level_CPZBg-Level_Index,Level_Null-Level_Index
+		dc.w Level_CPZ1-Level_Index,Level_CPZBg-Level_Index,Level_Null-Level_Index
+		dc.w Level_CPZ1-Level_Index,Level_CPZBg-Level_Index,Level_Null-Level_Index
+
+		dc.w Level_CPZ1-Level_Index,Level_CPZBg-Level_Index,Level_Null-Level_Index
+		dc.w Level_CPZ1-Level_Index,Level_CPZBg-Level_Index,Level_Null-Level_Index
+		dc.w Level_CPZ1-Level_Index,Level_CPZBg-Level_Index,Level_Null-Level_Index
+		dc.w Level_CPZ1-Level_Index,Level_CPZBg-Level_Index,Level_Null-Level_Index
+
+		dc.w Level_EHZ1-Level_Index,Level_EHZBg-Level_Index,Level_Null-Level_Index
+		dc.w Level_EHZ2-Level_Index,Level_EHZBg-Level_Index,Level_Null-Level_Index
+		dc.w Level_EHZ1-Level_Index,Level_EHZBg-Level_Index,Level_Null-Level_Index
+		dc.w Level_EHZ2-Level_Index,Level_EHZBg-Level_Index,Level_Null-Level_Index
+
+		dc.w Level_HPZ1-Level_Index,Level_HPZBg-Level_Index,Level_Null-Level_Index
+		dc.w Level_HPZ1-Level_Index,Level_HPZBg-Level_Index,Level_Null-Level_Index
+		dc.w Level_HPZ1-Level_Index,Level_HPZBg-Level_Index,Level_Null-Level_Index
+		dc.w Level_HPZ1-Level_Index,Level_HPZBg-Level_Index,Level_Null-Level_Index
+
+		dc.w Level_HTZ1-Level_Index,Level_HTZBg-Level_Index,Level_Null-Level_Index
+		dc.w Level_HTZ2-Level_Index,Level_HTZBg-Level_Index,Level_Null-Level_Index
+		dc.w Level_HTZ1-Level_Index,Level_HTZBg-Level_Index,Level_Null-Level_Index
+		dc.w Level_HTZ2-Level_Index,Level_HTZBg-Level_Index,Level_Null-Level_Index
+
+		dc.w Level_CPZ1-Level_Index,Level_CPZBg-Level_Index,Level_Null-Level_Index
+		dc.w Level_CPZ1-Level_Index,Level_CPZBg-Level_Index,Level_Null-Level_Index
+		dc.w Level_CPZ1-Level_Index,Level_CPZBg-Level_Index,Level_Null-Level_Index
+		dc.w Level_CPZ1-Level_Index,Level_CPZBg-Level_Index,Level_Null-Level_Index
+
 Level_GHZ1:	dc.b $2F,  4,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 0
-					; DATA XREF: ROM:LevelLayout_Indexo
+					; DATA XREF: ROM:Level_Indexo
 		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,$38,  1,  1,  1,$24,  0,  0; 16
 		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 32
 		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 48
@@ -40320,7 +40332,7 @@ Level_GHZ1:	dc.b $2F,  4,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
 		dc.b  $C, $D,$15,$19,$11,$25,$2D,$2D,$2D,$2D,  0,  0,  0,  0,  0,  0; 224
 		dc.b   0,  0		; 240
 Level_GHZ2:	dc.b $20,  5,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 0
-					; DATA XREF: ROM:LevelLayout_Indexo
+					; DATA XREF: ROM:Level_Indexo
 		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 16
 		dc.b   0,  0,  0, $E,$2B,$16,$1C,  5,$2B,$16,  2,$37,  0,  0,  0,  0; 32
 		dc.b   0,  0,  0,  0,  0,  0,  0,  0,$21,  3,  0,  0,  0,  0,$21,$31; 48
@@ -40334,7 +40346,7 @@ Level_GHZ2:	dc.b $20,  5,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
 		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$1E,$1E,$1E; 176
 		dc.b $1E,$1E,$1E,$1E,$1E,$1E,$1E,  0; 192
 Level_GHZ3:	dc.b $2F,  5,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 0
-					; DATA XREF: ROM:LevelLayout_Indexo
+					; DATA XREF: ROM:Level_Indexo
 		dc.b $2D,$37,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 16
 		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 32
 		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$13,$38; 48
@@ -40354,7 +40366,7 @@ Level_GHZ3:	dc.b $2F,  5,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
 		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 272
 		dc.b   0,  0		; 288
 Level_GHZBg:	dc.b $1F,  0,$3D,$3E,$3A,$3F,$30,$39,$3B,$3D,$3A,$30,$3E,$39,$3D,$3B; 0
-					; DATA XREF: ROM:LevelLayout_Indexo
+					; DATA XREF: ROM:Level_Indexo
 		dc.b $3B,$3D,$3E,$3A,$3F,$3E,$3A,$3F,$30,$39,$3B,$3D,$3A,$30,$3E,$39; 16
 		dc.b $3D,$3B		; 32
 Level_EHZ1:	incbin	"level/layout/EHZ_1.bin"
@@ -40377,7 +40389,8 @@ Level_CPZBg:	incbin	"level/layout/CPZ_BG.bin"
 		even
 Level_HPZBg:	incbin	"level/layout/HPZ_BG.bin"
 		even
-Level_Null:	dc.b   0,  0,  0,  0	; 0 ; DATA XREF: ROM:LevelLayout_Indexo
+Level_Null:	dc.b   0,  0,  0,  0
+
 Art_BigRing:	dc.l	     0,	       0,	 0,	   0,	    $D,	     $DD,    $EDDC,   $EDDCC,	     0,	     $DD,   $DDCCC, $DDCCC6C,$DCCCCCCC,$CCCCCCCC,$CCCDCDDD,$DDCCCCDD; 0
 		dc.l   $CCCCCC,$CCC66666,$66666666,$CCCCCCCC,$CCCCCCCC,$CDDDDDDD,$DDDDDDDD,$DDDEEEEE,$CCCCCC00,$666666CC,$66666666,$66666666,$CCCCC666,$DDDDDCCC,$DDDDDDDD,$EEEEEEEE; 16
 		dc.l	     0,$CC000000,$66CCC000,$66666CC0,$66666666,$CC666666,$DCCCC666,$DDDDCCC6,	     0,	       0,	 0,	   0,$C0000000,$66000000,$666C0000,$66666000; 32
