@@ -2191,111 +2191,117 @@ locret_198A:				; CODE XREF: sub_197C+6j
 		rts
 ; End of function sub_197C
 
+; ---------------------------------------------------------------------------
+; Kosinski Decompression Algorithm
+; LZSS/dictionary-based, only function that stores variables on the stack
 
-; €€€€€€€€€€€€€€€ S U B	R O U T	I N E €€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€
+; ARGUMENTS:
+; a0 = source address
+; a1 = destination address
+
+; MORE INFO:
+; http://info.sonicretro.org/Kosinski_compression
+; ---------------------------------------------------------------------------
+
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 
 
-KosDec:				; CODE XREF: SoundDriverLoad+1Ep
-
-var_2		= -2
-var_1		= -1
-
-		subq.l	#2,sp
-		move.b	(a0)+,2+var_1(sp)
+KosDec:
+		subq.l	#2,sp	; make space for two bytes on the stack
+		move.b	(a0)+,1(sp)
 		move.b	(a0)+,(sp)
-		move.w	(sp),d5
-		moveq	#$F,d4
-
-loc_1998:				; CODE XREF: KosDec+24j
-					; KosDec+8Aj ...
-		lsr.w	#1,d5
+		move.w	(sp),d5	; copy first description field
+		moveq	#$F,d4	; copy 16 bits in a byte
+; loc_1998:
+KosDec_Loop:
+		lsr.w	#1,d5	; bit which is shifted out goes into C flag
 		move	sr,d6
-		dbf	d4,loc_19AA
-		move.b	(a0)+,2+var_1(sp)
+		dbf	d4,KosDec_ChkBit
+		move.b	(a0)+,1(sp)
 		move.b	(a0)+,(sp)
-		move.w	(sp),d5
-		moveq	#$F,d4
-
-loc_19AA:				; CODE XREF: KosDec+10j
-		move	d6,ccr
-		bcc.s	loc_19B2
-		move.b	(a0)+,(a1)+
-		bra.s	loc_1998
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
-
-loc_19B2:				; CODE XREF: KosDec+20j
+		move.w	(sp),d5	; get next descriptor field in neccesary
+		moveq	#$F,d4	; reset bit counter
+; loc_19AA:
+KosDec_ChkBit:
+		move	d6,ccr		; was the bit set?
+		bcc.s	KosDec_Match	; if not, branch (C flag clear means bit was clear)
+		move.b	(a0)+,(a1)+	; otherwise, copy byte as-is
+		bra.s	KosDec_Loop
+; ===========================================================================
+; loc_19B2:
+KosDec_Match:
 		moveq	#0,d3
-		lsr.w	#1,d5
+		lsr.w	#1,d5	; get next bit
 		move	sr,d6
-		dbf	d4,loc_19C6
-		move.b	(a0)+,2+var_1(sp)
+		dbf	d4,KosDec_ChkBit2
+		move.b	(a0)+,1(sp)
 		move.b	(a0)+,(sp)
 		move.w	(sp),d5
 		moveq	#$F,d4
-
-loc_19C6:				; CODE XREF: KosDec+2Cj
-		move	d6,ccr
-		bcs.s	loc_19F6
-		lsr.w	#1,d5
+; loc_19C6:
+KosDec_ChkBit2:
+		move	d6,ccr		; was the bit set?
+		bcs.s	KosDec_FullMatch; if yes, branch
+		lsr.w	#1,d5		; bit which is shifted out goes into X flag
 		dbf	d4,loc_19DA
-		move.b	(a0)+,2+var_1(sp)
+		move.b	(a0)+,1(sp)
 		move.b	(a0)+,(sp)
 		move.w	(sp),d5
 		moveq	#$F,d4
 
-loc_19DA:				; CODE XREF: KosDec+40j
-		roxl.w	#1,d3
+loc_19DA:
+		roxl.w	#1,d3	; get high repeat count bit (shift X flag in)
 		lsr.w	#1,d5
 		dbf	d4,loc_19EC
-		move.b	(a0)+,2+var_1(sp)
+		move.b	(a0)+,1(sp)
 		move.b	(a0)+,(sp)
 		move.w	(sp),d5
 		moveq	#$F,d4
 
-loc_19EC:				; CODE XREF: KosDec+52j
-		roxl.w	#1,d3
-		addq.w	#1,d3
-		moveq	#$FFFFFFFF,d2
-		move.b	(a0)+,d2
-		bra.s	loc_1A0C
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
-
-loc_19F6:				; CODE XREF: KosDec+3Cj
-		move.b	(a0)+,d0
-		move.b	(a0)+,d1
-		moveq	#$FFFFFFFF,d2
+loc_19EC:
+		roxl.w	#1,d3		; get low repeat count bit
+		addq.w	#1,d3		; increment repeat count
+		moveq	#-1,d2
+		move.b	(a0)+,d2	; calculate offset
+		bra.s	KosDec_MatchLoop
+; ===========================================================================
+; loc_19F6:
+KosDec_FullMatch:
+		move.b	(a0)+,d0	; get first byte
+		move.b	(a0)+,d1	; get second byte
+		moveq	#-1,d2
 		move.b	d1,d2
 		lsl.w	#5,d2
-		move.b	d0,d2
-		andi.w	#7,d1
-		beq.s	loc_1A18
-		move.b	d1,d3
-		addq.w	#1,d3
-
-loc_1A0C:				; CODE XREF: KosDec+68j
-					; KosDec+86j ...
+		move.b	d0,d2	; calculate offset
+		andi.w	#7,d1	; does a third byte need to be read?
+		beq.s	KosDec_FullMatch2	; if it does, branch
+		move.b	d1,d3	; copy repeat count
+		addq.w	#1,d3	; and increment it
+; loc_1A0C:
+KosDec_MatchLoop:
 		move.b	(a1,d2.w),d0
-		move.b	d0,(a1)+
-		dbf	d3,loc_1A0C
-		bra.s	loc_1998
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
-
-loc_1A18:				; CODE XREF: KosDec+7Aj
+		move.b	d0,(a1)+	; copy appropriate byte
+		dbf	d3,KosDec_MatchLoop	; and repeat the copying
+		bra.s	KosDec_Loop
+; ===========================================================================
+; loc_1A18:
+KosDec_FullMatch2:
 		move.b	(a0)+,d1
-		beq.s	loc_1A28
+		beq.s	KosDec_Done	; 0 indicates end of compressed data
 		cmpi.b	#1,d1
-		beq.w	loc_1998
-		move.b	d1,d3
-		bra.s	loc_1A0C
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
-
-loc_1A28:				; CODE XREF: KosDec+8Ej
-		addq.l	#2,sp
+		beq.w	KosDec_Loop	; 1 indicates a new description needs to be read
+		move.b	d1,d3		; otherwise, copy repeat count
+		bra.s	KosDec_MatchLoop
+; ===========================================================================
+; loc_1A28:
+KosDec_Done:
+		addq.l	#2,sp	; restore stack pointer to original state
 		rts
 ; End of function KosDec
 
 ; ---------------------------------------------------------------------------
 ; Chameleon Decompression Algorithm
+; LZSS/dictionary-based, uses unrolling for fast decompression speeds
 
 ; ARGUMENTS (I think...):
 ; a0 = starting address
@@ -3925,29 +3931,35 @@ Sine_Data:	dc.w	  0,	 6,    $C,   $12,   $19,   $1F,	  $25,	 $2B; 0
 		dc.w	$EC,   $EE,   $F1,   $F3,   $F4,   $F6,	  $F8,	 $F9; 304
 		dc.w	$FB,   $FC,   $FD,   $FE,   $FE,   $FF,	  $FF,	 $FF; 312
 
-; €€€€€€€€€€€€€€€ S U B	R O U T	I N E €€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€
+; ---------------------------------------------------------------------------
+; Subroutine to calculate arctangent of y/x
+; d1 = input x
+; d2 = input y
+; d0 = output angle (360 degrees == 256)
+; ---------------------------------------------------------------------------
+
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 
 
-CalcAngle:				; CODE XREF: Sonic_DoLevelCollision+24p
-					; Tails_Floor+Cp ...
+CalcAngle:
 		movem.l	d3-d4,-(sp)
 		moveq	#0,d3
 		moveq	#0,d4
 		move.w	d1,d3
 		move.w	d2,d4
 		or.w	d3,d4
-		beq.s	loc_2FAA
+		beq.s	CalcAngle_Zero	 ; special case return if x and y are both 0
 		move.w	d2,d4
-		tst.w	d3
+		tst.w	d3		; calculate absolute value of x
 		bpl.w	loc_2F68
 		neg.w	d3
 
-loc_2F68:				; CODE XREF: CalcAngle+14j
-		tst.w	d4
+loc_2F68:
+		tst.w	d4		; calculate absolute value of y
 		bpl.w	loc_2F70
 		neg.w	d4
 
-loc_2F70:				; CODE XREF: CalcAngle+1Cj
+loc_2F70:
 		cmp.w	d3,d4
 		bcc.w	loc_2F82
 		lsl.l	#8,d4
@@ -3955,38 +3967,38 @@ loc_2F70:				; CODE XREF: CalcAngle+1Cj
 		moveq	#0,d0
 		move.b	AngleData(pc,d4.w),d0
 		bra.s	loc_2F8C
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+; ---------------------------------------------------------------------------
 
-loc_2F82:				; CODE XREF: CalcAngle+24j
+loc_2F82:
 		lsl.l	#8,d3
 		divu.w	d4,d3
-		moveq	#$40,d0	; '@'
+		moveq	#$40,d0
 		sub.b	AngleData(pc,d3.w),d0
 
-loc_2F8C:				; CODE XREF: CalcAngle+32j
+loc_2F8C:
 		tst.w	d1
 		bpl.w	loc_2F98
 		neg.w	d0
-		addi.w	#$80,d0	; 'Ä'
+		addi.w	#$80,d0
 
-loc_2F98:				; CODE XREF: CalcAngle+40j
+loc_2F98:
 		tst.w	d2
 		bpl.w	loc_2FA4
 		neg.w	d0
 		addi.w	#$100,d0
 
-loc_2FA4:				; CODE XREF: CalcAngle+4Cj
+loc_2FA4:
 		movem.l	(sp)+,d3-d4
 		rts
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
-
-loc_2FAA:				; CODE XREF: CalcAngle+Ej
-		move.w	#$40,d0	; '@'
+; ===========================================================================
+; loc_2FAA:
+CalcAngle_Zero:
+		move.w	#$40,d0
 		movem.l	(sp)+,d3-d4
 		rts
 ; End of function CalcAngle
 
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+; ===========================================================================
 AngleData:	dc.b   0,  0,  0,  0,  1,  1,  1,  1; 0
 		dc.b   1,  1,  2,  2,  2,  2,  2,  2; 8
 		dc.b   3,  3,  3,  3,  3,  3,  3,  4; 16
@@ -4020,8 +4032,12 @@ AngleData:	dc.b   0,  0,  0,  0,  1,  1,  1,  1; 0
 		dc.b $1F,$1F,$1F,$1F,$1F,$1F,$1F,$1F; 240
 		dc.b $1F,$1F,$20,$20,$20,$20,$20,$20; 248
 		dc.b $20,  0		; 256
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+; ===========================================================================
 		nop
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Sega logo, exact same as Sonic 1's
+; ---------------------------------------------------------------------------
 
 SegaScreen:
 		move.b	#$E4,d0
@@ -4044,23 +4060,24 @@ SegaScreen:
 		move.l	#$40000000,($C00004).l
 		lea	(Nem_SegaLogo).l,a0
 		bsr.w	NemDec
-		lea	($FFFF0000).l,a1
+		lea	($FF0000).l,a1
 		lea	(Eni_SegaLogo).l,a0
 		move.w	#0,d0
 		bsr.w	EniDec
-		lea	($FFFF0000).l,a1
+		lea	($FF0000).l,a1
 		move.l	#$65100003,d0
 		moveq	#$17,d1
 		moveq	#7,d2
 		bsr.w	PlaneMapToVRAM_H40
-		lea	($FFFF0180).l,a1
+		lea	($FF0180).l,a1
 		move.l	#$40000003,d0
 		moveq	#$27,d1
 		moveq	#$1B,d2
 		bsr.w	PlaneMapToVRAM_H40
-		tst.b	($FFFFFFF8).w
-		bmi.s	loc_316A
-		lea	($FFFF0A40).l,a1
+		tst.b	($FFFFFFF8).w	; is console Japanese?
+		bmi.s	loc_316A	; if not, branch
+		; hide 'TM' symbol
+		lea	($FF0A40).l,a1
 		move.l	#$453A0003,d0
 		moveq	#2,d1
 		moveq	#1,d2
@@ -4069,7 +4086,7 @@ SegaScreen:
 loc_316A:
 		moveq	#0,d0
 		bsr.w	PalLoad2
-		move.w	#$FFF6,($FFFFF632).w
+		move.w	#-$A,($FFFFF632).w
 		move.w	#0,($FFFFF634).w
 		move.w	#0,($FFFFF662).w
 		move.w	#0,($FFFFF660).w
@@ -4082,6 +4099,7 @@ Sega_WaitPalette:
 		bsr.w	WaitForVint
 		bsr.w	PalCycle_Sega
 		bne.s	Sega_WaitPalette
+
 		move.b	#$E1,d0
 		bsr.w	PlaySound_Special
 		move.b	#VintID_PCM,(Vint_routine).w
@@ -4099,9 +4117,9 @@ Sega_WaitEnd:
 Sega_GoToTitleScreen:
 		move.b	#GameModeID_TitleScreen,(Game_Mode).w
 		rts
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+; ===========================================================================
 		dc.w 0
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+; ===========================================================================
 
 TitleScreen:				; CODE XREF: ROM:000003A0j
 		move.b	#$E4,d0
@@ -4663,7 +4681,7 @@ LevelSelect_Text:	incbin	"mappings/misc/Level select text.bin"
 ; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
 
 UnknownSub_1:
-		lea	($FFFF0000).l,a1
+		lea	($FF0000).l,a1
 		move.w	#$2EB,d2
 
 loc_3A3A:				; CODE XREF: ROM:00003A4Cj
@@ -4681,7 +4699,7 @@ loc_3A3A:				; CODE XREF: ROM:00003A4Cj
 UnknownSub_2:
 		lea	($FE0000).l,a1
 		lea	($FE0080).l,a2
-		lea	($FFFF0000).l,a3
+		lea	($FF0000).l,a3
 		move.w	#$3F,d1	; '?'
 
 loc_3A68:				; CODE XREF: ROM:00003A70j
@@ -4705,7 +4723,7 @@ loc_3A90:				; CODE XREF: ROM:00003A92j
 
 UnknownSub_3:
 		lea	($FE0000).l,a1
-		lea	($FFFF0000).l,a3
+		lea	($FF0000).l,a3
 		moveq	#$1F,d0
 
 loc_3AA6:				; CODE XREF: ROM:00003AA8j
@@ -4717,7 +4735,7 @@ loc_3AA6:				; CODE XREF: ROM:00003AA8j
 
 loc_3AB8:				; CODE XREF: ROM:00003AD8j
 					; ROM:00003AF4j
-		lea	($FFFF0000).l,a3
+		lea	($FF0000).l,a3
 		move.w	d7,d6
 
 loc_3AC0:				; CODE XREF: ROM:00003AE6j
@@ -15243,15 +15261,15 @@ loc_B416:
 
 loc_B438:
 		move.b	($FFFFF605).w,d0
-		btst	#5,d0
-		beq.s	loc_B44C
-		addq.b	#1,$1A(a0)
-		andi.b	#$F,$1A(a0)
+		btst	#5,d0		; has C been pressed?
+		beq.s	loc_B44C	; if not, branch
+		addq.b	#1,$1A(a0)	; increment mappings
+		andi.b	#$F,$1A(a0)	; if above $F, reset
 
 loc_B44C:
-		btst	#4,d0
-		beq.s	locret_B458
-		bchg	#0,($FFFFFFE9).w
+		btst	#4,d0		; has B been pressed?
+		beq.s	locret_B458	; if not, branch
+		bchg	#0,($FFFFFFE9).w	; set unused variable... which crashes the game?
 
 locret_B458:
 		rts
@@ -15772,37 +15790,36 @@ loc_BB38:				; CODE XREF: ROM:0000BB22j
 loc_BB42:				; CODE XREF: ROM:0000BB0Ej
 					; ROM:0000BB2Ej ...
 		bra.w	DisplaySprite
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
-;----------------------------------------------------
-; Object 3A - leftover SONIC GOT THROUGH title card
-;----------------------------------------------------
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Object 3A - End of level results screen
+; ---------------------------------------------------------------------------
 
-Obj3A:					; DATA XREF: ROM:Obj_Indexo
+Obj3A:
 		moveq	#0,d0
 		move.b	routine(a0),d0
 		move.w	Obj3A_Index(pc,d0.w),d1
 		jmp	Obj3A_Index(pc,d1.w)
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
-Obj3A_Index:	dc.w loc_BB5C-Obj3A_Index ; DATA XREF: ROM:Obj3A_Indexo
-					; ROM:0000BB56o ...
-		dc.w loc_BBB8-Obj3A_Index
-		dc.w loc_BC04-Obj3A_Index
-		dc.w loc_BC80-Obj3A_Index
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
-
-loc_BB5C:				; DATA XREF: ROM:Obj3A_Indexo
+; ===========================================================================
+Obj3A_Index:	dc.w Obj3A_ChkPLC-Obj3A_Index
+		dc.w Obj3A_ChkPos-Obj3A_Index
+		dc.w Obj3A_Wait-Obj3A_Index
+		dc.w Obj3A_NextLevel-Obj3A_Index
+; ===========================================================================
+; loc_BB5C:
+Obj3A_ChkPLC:
 		tst.l	($FFFFF680).w
-		beq.s	loc_BB64
+		beq.s	Obj3A_Config
 		rts
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
-
-loc_BB64:				; CODE XREF: ROM:0000BB60j
+; ---------------------------------------------------------------------------
+; loc_BB64:
+Obj3A_Config:
 		movea.l	a0,a1
 		lea	(Obj3A_Conf).l,a2
 		moveq	#6,d1
-
-loc_BB6E:				; CODE XREF: ROM:0000BBB4j
-		move.b	#$3A,0(a1) ; ':'
+; loc_BB6E:
+Obj3A_Init:
+		move.b	#$3A,0(a1)
 		move.w	(a2),8(a1)
 		move.w	(a2)+,$32(a1)
 		move.w	(a2)+,$30(a1)
@@ -15813,105 +15830,105 @@ loc_BB6E:				; CODE XREF: ROM:0000BBB4j
 		bne.s	loc_BB94
 		add.b	(Current_Act).w,d0
 
-loc_BB94:				; CODE XREF: ROM:0000BB8Ej
+loc_BB94:
 		move.b	d0,$1A(a1)
 		move.l	#Map_Obj3A,4(a1)
 		move.w	#$8580,2(a1)
 		bsr.w	Adjust2PArtPointer2
 		move.b	#0,1(a1)
 		lea	$40(a1),a1
-		dbf	d1,loc_BB6E
-
-loc_BBB8:				; DATA XREF: ROM:0000BB56o
+		dbf	d1,Obj3A_Init
+; loc_BBB8:
+Obj3A_ChkPos:
 		moveq	#$10,d1
 		move.w	$30(a0),d0
 		cmp.w	8(a0),d0
 		beq.s	loc_BBEA
-		bge.s	loc_BBC8
+		bge.s	Obj3A_Move
 		neg.w	d1
-
-loc_BBC8:				; CODE XREF: ROM:0000BBC4j
+; loc_BBC8:
+Obj3A_Move
 		add.w	d1,8(a0)
 
-loc_BBCC:				; CODE XREF: ROM:0000BBF8j
+loc_BBCC:
 		move.w	8(a0),d0
 		bmi.s	locret_BBDE
 		cmpi.w	#$200,d0
 		bcc.s	locret_BBDE
 		rts
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+; ---------------------------------------------------------------------------
 		bra.w	DisplaySprite
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+; ===========================================================================
 
-locret_BBDE:				; CODE XREF: ROM:0000BBD0j
-					; ROM:0000BBD6j
+locret_BBDE:
 		rts
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+; ===========================================================================
 
-loc_BBE0:				; CODE XREF: ROM:0000BBF0j
+loc_BBE0:
 		move.b	#$E,routine(a0)
 		bra.w	loc_BCF8
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+; ===========================================================================
 
-loc_BBEA:				; CODE XREF: ROM:0000BBC2j
+loc_BBEA:
 		cmpi.b	#$E,($FFFFB700+routine).w
 		beq.s	loc_BBE0
 		cmpi.b	#4,$1A(a0)
 		bne.s	loc_BBCC
 		addq.b	#2,routine(a0)
-		move.w	#$B4,$1E(a0) ; '¥'
-
-loc_BC04:				; DATA XREF: ROM:0000BB58o
+		move.w	#$B4,$1E(a0)
+; loc_BC04:
+Obj3A_Wait:
 		subq.w	#1,$1E(a0)
 		bne.s	locret_BC0E
 		addq.b	#2,routine(a0)
 
-locret_BC0E:				; CODE XREF: ROM:0000BC08j
+locret_BC0E:
 		rts
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+; ---------------------------------------------------------------------------
 		bra.w	DisplaySprite
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+; ===========================================================================
+; Obj3A_TimeBonus:
 		bsr.w	DisplaySprite
 		move.b	#1,($FFFFF7D6).w
 		moveq	#0,d0
 		tst.w	($FFFFF7D2).w
-		beq.s	loc_BC30
+		beq.s	Obj3A_RingBonus
 		addi.w	#$A,d0
 		subi.w	#$A,($FFFFF7D2).w
-
-loc_BC30:				; CODE XREF: ROM:0000BC24j
+; loc_BC30:
+Obj3A_RingBonus:
 		tst.w	($FFFFF7D4).w
-		beq.s	loc_BC40
+		beq.s	Obj3A_ChkBonus
 		addi.w	#$A,d0
 		subi.w	#$A,($FFFFF7D4).w
-
-loc_BC40:				; CODE XREF: ROM:0000BC34j
+; loc_BC40:
+Obj3A_ChkBonus:
 		tst.w	d0
-		bne.s	loc_BC66
-		move.w	#$C5,d0	; '≈'
+		bne.s	Obj3A_AddBonus
+		move.w	#$C5,d0
 		jsr	(PlaySound_Special).l
 		addq.b	#2,routine(a0)
 		cmpi.w	#$501,(Current_ZoneAndAct).w
-		bne.s	loc_BC5E
+		bne.s	Obj3A_SetDelay
 		addq.b	#4,routine(a0)
+; loc_BC5E:
+Obj3A_SetDelay:
+		move.w	#$B4,$1E(a0)
 
-loc_BC5E:				; CODE XREF: ROM:0000BC58j
-		move.w	#$B4,$1E(a0) ; '¥'
-
-locret_BC64:				; CODE XREF: ROM:0000BC74j
+locret_BC64:
 		rts
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
-
-loc_BC66:				; CODE XREF: ROM:0000BC42j
-		jsr	AddPoints
+; ===========================================================================
+; loc_BC66:
+Obj3A_AddBonus:
+		jsr	(AddPoints).l
 		move.b	($FFFFFE0F).w,d0
 		andi.b	#3,d0
 		bne.s	locret_BC64
-		move.w	#$CD,d0	; 'Õ'
+		move.w	#$CD,d0
 		jmp	(PlaySound_Special).l
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
-
-loc_BC80:				; DATA XREF: ROM:0000BB5Ao
+; ===========================================================================
+; loc_BC80:
+Obj3A_NextLevel:
 		move.b	(Current_Zone).w,d0
 		andi.w	#7,d0
 		lsl.w	#3,d0
@@ -15922,28 +15939,27 @@ loc_BC80:				; DATA XREF: ROM:0000BB5Ao
 		move.w	LevelOrder(pc,d0.w),d0
 		move.w	d0,(Current_ZoneAndAct).w
 		tst.w	d0
-		bne.s	loc_BCAA
+		bne.s	Obj3A_ChkSS
 		move.b	#GameModeID_SegaScreen,(Game_Mode).w
 		bra.s	locret_BCC2
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
-
-loc_BCAA:				; CODE XREF: ROM:0000BCA0j
+; ===========================================================================
+; loc_BCAA:
+Obj3A_ChkSS:
 		clr.b	($FFFFFE30).w
 		tst.b	($FFFFF7CD).w
 		beq.s	loc_BCBC
 		move.b	#GameModeID_SpecialStage,(Game_Mode).w
 		bra.s	locret_BCC2
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+; ===========================================================================
 
-loc_BCBC:				; CODE XREF: ROM:0000BCB2j
+loc_BCBC:
 		move.w	#1,($FFFFFE02).w
 
-locret_BCC2:				; CODE XREF: ROM:0000BCA8j
-					; ROM:0000BCBAj
+locret_BCC2:
 		rts
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+; ---------------------------------------------------------------------------
 		bra.w	DisplaySprite
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+; ===========================================================================
 LevelOrder:	dc.w	 1,    2, $200,	   0; 0
 		dc.w  $101, $102, $300,	$502; 4
 		dc.w  $201, $202, $400,	   0; 8
@@ -36274,70 +36290,76 @@ S1SS_MapIndex:	dc.l S1Map_SS_R		; DATA XREF: S1SS_Load+90o
 		dc.w $25F0
 		dc.l S1Map_SS_Glass
 		dc.w $45F0
-;
-; this is actually pretty funny, sonic 1 format	mappings
-;
-; ps. sonic 1 special stages code sucks	and i always hated it
-;
-S1Map_SS_R:	dc.w byte_1A344-S1Map_SS_R ; DATA XREF:	ROM:S1SS_MapIndexo
-					; ROM:0001A170o ...
+; ===========================================================================
+; Rather humourously, these sprite mappings are stored in the Sonic 1 format
+; ---------------------------------------------------------------------------
+; Sprite mappings - 'R'
+; ---------------------------------------------------------------------------
+S1Map_SS_R:	dc.w byte_1A344-S1Map_SS_R
 		dc.w byte_1A34A-S1Map_SS_R
 		dc.w word_1A350-S1Map_SS_R
-byte_1A344:	dc.b 1			; DATA XREF: ROM:S1Map_SS_Ro
-		dc.b $F4, $A,  0,  0,$F4; 0
-byte_1A34A:	dc.b 1			; DATA XREF: ROM:0001A340o
-		dc.b $F4, $A,  0,  9,$F4; 0
-word_1A350:	dc.w 0			; DATA XREF: ROM:0001A342o
-S1Map_SS_Glass:	dc.w byte_1A35A-S1Map_SS_Glass ; DATA XREF: ROM:0001A26Co
-					; ROM:0001A272o ...
+byte_1A344:	dc.b 1
+		dc.b $F4, $A,  0,  0,$F4
+byte_1A34A:	dc.b 1
+		dc.b $F4, $A,  0,  9,$F4
+word_1A350:	dc.w 0
+; ---------------------------------------------------------------------------
+; Sprite mappings - Glass
+; ---------------------------------------------------------------------------
+S1Map_SS_Glass:	dc.w byte_1A35A-S1Map_SS_Glass
 		dc.w byte_1A360-S1Map_SS_Glass
 		dc.w byte_1A366-S1Map_SS_Glass
 		dc.w byte_1A36C-S1Map_SS_Glass
-byte_1A35A:	dc.b 1			; DATA XREF: ROM:S1Map_SS_Glasso
-		dc.b $F4, $A,  0,  0,$F4; 0
-byte_1A360:	dc.b 1			; DATA XREF: ROM:0001A354o
-		dc.b $F4, $A,  8,  0,$F4; 0
-byte_1A366:	dc.b 1			; DATA XREF: ROM:0001A356o
-		dc.b $F4, $A,$18,  0,$F4; 0
-byte_1A36C:	dc.b 1			; DATA XREF: ROM:0001A358o
-		dc.b $F4, $A,$10,  0,$F4; 0
-S1Map_SS_Up:	dc.w byte_1A376-S1Map_SS_Up ; DATA XREF: ROM:0001A25Ao
-					; ROM:S1Map_SS_Upo ...
+byte_1A35A:	dc.b 1
+		dc.b $F4, $A,  0,  0,$F4
+byte_1A360:	dc.b 1
+		dc.b $F4, $A,  8,  0,$F4
+byte_1A366:	dc.b 1
+		dc.b $F4, $A,$18,  0,$F4
+byte_1A36C:	dc.b 1
+		dc.b $F4, $A,$10,  0,$F4
+; ---------------------------------------------------------------------------
+; Sprite mappings - 'Up'
+; ---------------------------------------------------------------------------
+S1Map_SS_Up:	dc.w byte_1A376-S1Map_SS_Up
 		dc.w byte_1A37C-S1Map_SS_Up
-byte_1A376:	dc.b 1			; DATA XREF: ROM:S1Map_SS_Upo
-		dc.b $F4, $A,  0,  0,$F4; 0
-byte_1A37C:	dc.b 1			; DATA XREF: ROM:0001A374o
-		dc.b $F4, $A,  0,$12,$F4; 0
-S1Map_SS_Down:	dc.w byte_1A386-S1Map_SS_Down ;	DATA XREF: ROM:0001A260o
-					; ROM:S1Map_SS_Downo ...
+byte_1A376:	dc.b 1
+		dc.b $F4, $A,  0,  0,$F4
+byte_1A37C:	dc.b 1
+		dc.b $F4, $A,  0,$12,$F4
+; ---------------------------------------------------------------------------
+; Sprite mappings - 'Down'
+; ---------------------------------------------------------------------------
+S1Map_SS_Down:	dc.w byte_1A386-S1Map_SS_Down
 		dc.w byte_1A38C-S1Map_SS_Down
-byte_1A386:	dc.b 1			; DATA XREF: ROM:S1Map_SS_Downo
-		dc.b $F4, $A,  0,  9,$F4; 0
-byte_1A38C:	dc.b 1			; DATA XREF: ROM:0001A384o
-		dc.b $F4, $A,  0,$12,$F4; 0
-S1Map_SS_Chaos1:dc.w byte_1A39E-S1Map_SS_Chaos1	; DATA XREF: ROM:0001A2DEo
-					; ROM:S1Map_SS_Chaos1o	...
+byte_1A386:	dc.b 1
+		dc.b $F4, $A,  0,  9,$F4
+byte_1A38C:	dc.b 1
+		dc.b $F4, $A,  0,$12,$F4
+; ---------------------------------------------------------------------------
+; Sprite mappings - Chaos Emeralds
+; Merged together; can't split to file in a useful way...
+; ---------------------------------------------------------------------------
+S1Map_SS_Chaos1:dc.w byte_1A39E-S1Map_SS_Chaos1
 		dc.w byte_1A3B0-S1Map_SS_Chaos1
-S1Map_SS_Chaos2:dc.w byte_1A3A4-S1Map_SS_Chaos2	; DATA XREF: ROM:0001A2E4o
-					; ROM:S1Map_SS_Chaos2o	...
+S1Map_SS_Chaos2:dc.w byte_1A3A4-S1Map_SS_Chaos2
 		dc.w byte_1A3B0-S1Map_SS_Chaos2
-S1Map_SS_Chaos3:dc.w byte_1A3AA-S1Map_SS_Chaos3	; DATA XREF: ROM:0001A2C6o
-					; ROM:0001A2CCo ...
+S1Map_SS_Chaos3:dc.w byte_1A3AA-S1Map_SS_Chaos3
 		dc.w byte_1A3B0-S1Map_SS_Chaos3
-byte_1A39E:	dc.b 1			; DATA XREF: ROM:S1Map_SS_Chaos1o
-		dc.b $F8,  5,  0,  0,$F8; 0
-byte_1A3A4:	dc.b 1			; DATA XREF: ROM:S1Map_SS_Chaos2o
-		dc.b $F8,  5,  0,  4,$F8; 0
-byte_1A3AA:	dc.b 1			; DATA XREF: ROM:S1Map_SS_Chaos3o
-		dc.b $F8,  5,  0,  8,$F8; 0
-byte_1A3B0:	dc.b 1			; DATA XREF: ROM:0001A394o
-					; ROM:0001A398o ...
-		dc.b $F8,  5,  0, $C,$F8; 0
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+byte_1A39E:	dc.b 1
+		dc.b $F8,  5,  0,  0,$F8
+byte_1A3A4:	dc.b 1
+		dc.b $F8,  5,  0,  4,$F8
+byte_1A3AA:	dc.b 1
+		dc.b $F8,  5,  0,  8,$F8
+byte_1A3B0:	dc.b 1
+		dc.b $F8,  5,  0, $C,$F8
+; ===========================================================================
 		nop
-;----------------------------------------------------
-; Object 09 - Sonic in Sonic 1 special stage
-;----------------------------------------------------
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Object 09 - Sonic in Special Stage
+; ---------------------------------------------------------------------------
 
 Obj09:					; DATA XREF: ROM:Obj_Indexo
 		tst.w	(Debug_placement_mode).w
@@ -36409,7 +36431,7 @@ Obj09_InAir:				; DATA XREF: ROM:0001A456o
 
 Obj09_Display:				; CODE XREF: ROM:0001A464j
 		bsr.w	Obj09_ChkItems
-		bsr.w	OBj09_ChkItems2
+		bsr.w	Obj09_ChkItems2
 		jsr	ObjectMove
 		bsr.w	S1SS_FixCamera
 		move.w	($FFFFF780).w,d0
@@ -36774,7 +36796,7 @@ loc_1A77E:				; CODE XREF: sub_1A768+Cj
 					; sub_1A768+12j
 		move.b	d4,$30(a0)
 		move.l	a1,$32(a0)
-		moveq	#$FFFFFFFF,d5
+		moveq	#-1,d5
 		rts
 ; End of function sub_1A768
 
@@ -36886,7 +36908,7 @@ loc_1A87C:				; CODE XREF: Obj09_ChkItems+EAj
 
 loc_1A890:				; CODE XREF: Obj09_ChkItems+F6j
 					; Obj09_ChkItems+FEj
-		moveq	#$FFFFFFFF,d4
+		moveq	#-1,d4
 		rts
 ; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
 
@@ -36920,7 +36942,7 @@ loc_1A8BE:				; CODE XREF: Obj09_ChkItems+110j
 ; €€€€€€€€€€€€€€€ S U B	R O U T	I N E €€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€
 
 
-OBj09_ChkItems2:			; CODE XREF: ROM:0001A476p
+Obj09_ChkItems2:			; CODE XREF: ROM:0001A476p
 		move.b	$30(a0),d0
 		bne.s	loc_1A8E6
 		subq.b	#1,$36(a0)
@@ -37071,21 +37093,26 @@ loc_1AA4E:				; CODE XREF: OBj09_ChkItems2+168j
 locret_1AA58:				; CODE XREF: OBj09_ChkItems2+B8j
 					; OBj09_ChkItems2+ECj ...
 		rts
-; End of function OBj09_ChkItems2
+; End of function Obj09_ChkItems2
 
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
-;----------------------------------------------------
-; Object 10 - Tails eating the master emerald
-;----------------------------------------------------
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Object 10 - Blank, animation test in Sonic 1 prototype
+; ---------------------------------------------------------------------------
 
-Obj10:					; DATA XREF: ROM:Obj_Indexo
+Obj10:
 		rts
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+; ===========================================================================
 
-j_Adjust2PArtPointer_7:		; CODE XREF: ROM:0001A3FAp
+j_Adjust2PArtPointer_7:		; JmpTo
 		jmp	(Adjust2PArtPointer).l
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
+
 		align 4
+
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Subroutine to animate stage art
+; ---------------------------------------------------------------------------
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 
@@ -37099,20 +37126,19 @@ AniArt_Load:
 		lea	DynArtCue_Index(pc,d1.w),a2
 		move.w	DynArtCue_Index(pc,d0.w),d0
 		jmp	DynArtCue_Index(pc,d0.w)
+; ---------------------------------------------------------------------------
+		rts
 ; End of function AniArt_Load
 
-; ===========================================================================
-		rts
 ; ---------------------------------------------------------------------------
 ; ZONE ANIMATION PROCEDURES AND SCRIPTS
 ;
 ; Each zone gets two entries in this jump table. The first entry points to the
-; zone's animation procedure (usually Dynamic_Normal, but some zones have special
-; procedures for complicated animations). The second points to the zone's animation
-; script.
+; zone's animation procedure (usually Dynamic_Null, AKA none). The second points
+; to the zone's animation script.
 ;
-; Seems like stage IDs were already being shifted, since listings for $07-$0F can
-; be found, alongside HPZ's art listed from $08 (its ID in the final).
+; Seems like stage IDs were already being shifted, since listings for $07-$0F
+; can be found, alongside HPZ's art listed from $08 (its ID in the final).
 ; ---------------------------------------------------------------------------
 DynArtCue_Index:
 		dc.w Dynamic_NullGHZ-DynArtCue_Index,AnimCue_EHZ-DynArtCue_Index
@@ -37195,8 +37221,8 @@ loc_1AB1A:
 		addq.w	#2,a3		; Advance to next script's slot in a3 (usually Anim_Counters)
 		dbf	d6,loc_1AACA
 		rts
-; ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ
-AnimCue_EHZ:	dc.w 4			; DATA XREF: ROM:DynArtCue_Indexo
+;n===========================================================================
+AnimCue_EHZ:	dc.w 4
 		dc.l Art_EHZFlower1+$FF000000
 		dc.w $7280
 		dc.b 6
@@ -37243,7 +37269,8 @@ AnimCue_EHZ:	dc.w 4			; DATA XREF: ROM:DynArtCue_Indexo
 		dc.b   0,  2		; 0
 		dc.b   4,  6		; 2
 		dc.b   4,  2		; 4
-AnimCue_HPZ:	dc.w 2			; DATA XREF: ROM:DynArtCue_Indexo
+
+AnimCue_HPZ:	dc.w 2
 		dc.l Art_HPZGlowingBall+$8000000
 		dc.w $5D00
 		dc.b 6
@@ -38681,13 +38708,9 @@ LevelArtPointers:
 ; overflow and completely screw up the variables stored directly after the queue buffer.
 ; (in my experience this is a guaranteed crash or hang)
 ;
-; Many levels queue more than 16 items overall,
-; but they don't exceed the limit because
-; their PLRs are split into multiple parts (like PlrList_Mtz1 and PlrList_Mtz2)
-; and they fully process the first part before requesting the rest.
-;
-; If you can find some extra RAM for it (which is easy in Sonic 2),
-; you can increase this limit by increasing the size of Plc_Buffer.
+; Many levels queue more than 16 items overall, but they don't exceed the limit because
+; their PLRs are split into multiple parts (like PLC_GHZ and PLC_GHZ2) and they fully
+; process the first part before requesting the rest.
 ; ---------------------------------------------------------------------------
 
 ;---------------------------------------------------------------------------------------
@@ -40851,558 +40874,61 @@ Leftover_31000:
 ; --------------------------------------------------------------------------------------
 ; Object layouts
 ; --------------------------------------------------------------------------------------
-ObjPos_Index:	dc.w ObjPos_GHZ1-ObjPos_Index,ObjPos_Null-ObjPos_Index;	0
-					; DATA XREF: ROM:0000DC74o
-					; ROM:ObjPos_Indexo ...
-		dc.w ObjPos_GHZ2-ObjPos_Index,ObjPos_Null-ObjPos_Index;	2
-		dc.w ObjPos_GHZ3-ObjPos_Index,ObjPos_Null-ObjPos_Index;	4
-		dc.w ObjPos_GHZ1-ObjPos_Index,ObjPos_Null-ObjPos_Index;	6
-		dc.w ObjPos_LZ1-ObjPos_Index,ObjPos_Null-ObjPos_Index; 8
-		dc.w ObjPos_LZ2-ObjPos_Index,ObjPos_Null-ObjPos_Index; 10
-		dc.w ObjPos_LZ3-ObjPos_Index,ObjPos_Null-ObjPos_Index; 12
-		dc.w ObjPos_LZ3-ObjPos_Index,ObjPos_Null-ObjPos_Index; 14
-		dc.w ObjPos_CPZ1-ObjPos_Index,ObjPos_Null-ObjPos_Index;	16
-		dc.w ObjPos_CPZ2-ObjPos_Index,ObjPos_Null-ObjPos_Index;	18
-		dc.w ObjPos_CPZ3-ObjPos_Index,ObjPos_Null-ObjPos_Index;	20
-		dc.w ObjPos_CPZ1-ObjPos_Index,ObjPos_Null-ObjPos_Index;	22
-		dc.w ObjPos_EHZ1-ObjPos_Index,ObjPos_Null-ObjPos_Index;	24
-		dc.w ObjPos_EHZ2-ObjPos_Index,ObjPos_Null-ObjPos_Index;	26
-		dc.w ObjPos_EHZ3-ObjPos_Index,ObjPos_Null-ObjPos_Index;	28
-		dc.w ObjPos_EHZ1-ObjPos_Index,ObjPos_Null-ObjPos_Index;	30
-		dc.w ObjPos_HPZ1-ObjPos_Index,ObjPos_Null-ObjPos_Index;	32
-		dc.w ObjPos_HPZ2-ObjPos_Index,ObjPos_Null-ObjPos_Index;	34
-		dc.w ObjPos_HPZ3-ObjPos_Index,ObjPos_Null-ObjPos_Index;	36
-		dc.w ObjPos_HPZ1-ObjPos_Index,ObjPos_Null-ObjPos_Index;	38
-		dc.w ObjPos_HTZ1-ObjPos_Index,ObjPos_Null-ObjPos_Index;	40
-		dc.w ObjPos_HTZ2-ObjPos_Index,ObjPos_Null-ObjPos_Index;	42
-		dc.w ObjPos_HTZ3-ObjPos_Index,ObjPos_Null-ObjPos_Index;	44
-		dc.w ObjPos_HTZ1-ObjPos_Index,ObjPos_Null-ObjPos_Index;	46
-		dc.w ObjPos_S1Ending-ObjPos_Index,ObjPos_Null-ObjPos_Index; 48
-		dc.w ObjPos_S1Ending-ObjPos_Index,ObjPos_Null-ObjPos_Index; 50
-		dc.w ObjPos_S1Ending-ObjPos_Index,ObjPos_Null-ObjPos_Index; 52
-		dc.w ObjPos_S1Ending-ObjPos_Index,ObjPos_Null-ObjPos_Index; 54
-		dc.w ObjPos_S1LZ1pf1-ObjPos_Index,ObjPos_S1LZ1pf2-ObjPos_Index;	56
-		dc.w ObjPos_S1LZ2pf1-ObjPos_Index,ObjPos_S1LZ2pf2-ObjPos_Index;	58
-		dc.w ObjPos_S1LZ3pf1-ObjPos_Index,ObjPos_S1LZ3pf2-ObjPos_Index;	60
-		dc.w ObjPos_S1LZ1pf1-ObjPos_Index,ObjPos_S1LZ1pf2-ObjPos_Index;	62
-		dc.w ObjPos_S1SBZ1pf1-ObjPos_Index,ObjPos_S1SBZ1pf2-ObjPos_Index; 64
-		dc.w ObjPos_S1SBZ1pf3-ObjPos_Index,ObjPos_S1SBZ1pf4-ObjPos_Index; 66
-		dc.w ObjPos_S1SBZ1pf5-ObjPos_Index,ObjPos_S1SBZ1pf6-ObjPos_Index; 68
-		dc.w ObjPos_S1SBZ1pf1-ObjPos_Index,ObjPos_S1SBZ1pf2-ObjPos_Index; 70
-		dc.w $FFFF,    0,    0	; 0
-ObjPos_GHZ1:	dc.w  $248, $351,$A606	; 0 ; DATA XREF: ROM:ObjPos_Indexo
-		dc.w  $334, $328,$4102	; 3
-		dc.w  $340, $3AC,$C000	; 6
-		dc.w  $420, $330,$A200	; 9
-		dc.w  $430,$4378,$1C03	; 12
-		dc.w  $4A0, $460,$AB00	; 15
-		dc.w  $4A8, $388,$110C	; 18
-		dc.w  $510, $378,$1C03	; 21
-		dc.w  $5D6, $320,$A605	; 24
-		dc.w  $8B0, $350,$9F00	; 27
-		dc.w  $960, $2FA,$9F00	; 30
-		dc.w  $9CD, $2FD,$3B00	; 33
-		dc.w  $A30,$4308,$1C03	; 36
-		dc.w  $A78, $400,$AB00	; 39
-		dc.w  $AA8, $318,$110C	; 42
-		dc.w  $AC8, $3C0,$AB00	; 45
-		dc.w  $B10, $308,$1C03	; 48
-		dc.w  $BA0, $2FE,$3B00	; 51
-		dc.w  $C08, $2F8,$4400	; 54
-		dc.w  $C50, $34C,$C000	; 57
-		dc.w  $D08, $3B0,$4400	; 60
-		dc.w  $D08, $3E0,$4401	; 63
-		dc.w  $D28, $373,$3600	; 66
-		dc.w  $D40, $268,$A200	; 69
-		dc.w  $D58, $376,$3600	; 72
-		dc.w  $D88, $377,$3600	; 75
-		dc.w  $DB0, $37B,$4102	; 78
-		dc.w  $DD0, $270,$A200	; 81
-		dc.w  $DD8, $370,$3600	; 84
-		dc.w  $E2C, $278,$4102	; 87
-		dc.w  $ED0, $240,$9A00	; 90
-		dc.w  $F48, $290,$3620	; 93
-		dc.w  $F56, $3B3,$3600	; 96
-		dc.w  $F58, $28F,$3620	; 99
-		dc.w  $F68, $28C,$3620	; 102
-		dc.w  $F78, $287,$3620	; 105
-		dc.w  $F80, $3BF,$4102	; 108
-		dc.w  $FA0, $201,$3B00	; 111
-		dc.w  $FAC, $3B7,$3600	; 114
-		dc.w  $FD8, $272,$3B00	; 117
-		dc.w $1030,$42B0,$9A01	; 120
-		dc.w $10A0, $2B0,$9A00	; 123
-		dc.w $1100, $1D0,$A200	; 126
-		dc.w $1170, $377,$3600	; 129
-		dc.w $11D4, $370,$3600	; 132
-		dc.w $11E8, $22C,$F901	; 135
-		dc.w $1220, $1E8,$1801	; 138
-		dc.w $1234, $373,$3600	; 141
-		dc.w $1260, $1A8,$1805	; 144
-		dc.w $12C0, $330,$A606	; 147
-		dc.w $12E0, $330,$A606	; 150
-		dc.w $12F8, $238,$C200	; 153
-		dc.w $1300, $330,$A606	; 156
-		dc.w $1308, $170,$A606	; 159
-		dc.w $1320, $330,$A605	; 162
-		dc.w $13A0, $130,$A200	; 165
-		dc.w $13A0, $188,$1803	; 168
-		dc.w $1420, $1A8,$1803	; 171
-		dc.w $1448, $304,$C000	; 174
-		dc.w $14A0, $1C8,$1803	; 177
-		dc.w $14D0, $334,$3600	; 180
-		dc.w $1500, $331,$3600	; 183
-		dc.w $1510, $17C,$A200	; 186
-		dc.w $1530, $330,$3600	; 189
-		dc.w $1580, $1F1,$A604	; 192
-		dc.w $1580,$4240, $380	; 195
-		dc.w $1610, $130,$A200	; 198
-		dc.w $1610,$4280, $300	; 201
-		dc.w $1620, $160,$1806	; 204
-		dc.w $1660, $1E8,$1802	; 207
-		dc.w $1690,  $E0,$1802	; 210
-		dc.w $1740,  $A0,$1801	; 213
-		dc.w $1808, $1C0,$4401	; 216
-		dc.w $1808, $1F0,$4401	; 219
-		dc.w $1880,$4138,$C200	; 222
-		dc.w $1900,$4140,$C200	; 225
-		dc.w $1940,$4138,$C200	; 228
-		dc.w $1980,$4160,$C200	; 231
-		dc.w $1980, $373,$F902	; 234
-		dc.w $1AF8,  $C0,$4402	; 237
-		dc.w $1AF8,  $E0,$4402	; 240
-		dc.w $1AF8, $2B0,$4402	; 243
-		dc.w $1AF8, $2F0,$4402	; 246
-		dc.w $1B60,  $88,$1803	; 249
-		dc.w $1B70, $288,$1803	; 252
-		dc.w $1BA0,  $C8,$1803	; 255
-		dc.w $1BE0, $108,$1803	; 258
-		dc.w $1C00,$42C0,$A200	; 261
-		dc.w $1C20, $148,$1803	; 264
-		dc.w $1C60, $188,$1803	; 267
-		dc.w $1CA0, $1C8,$1803	; 270
-		dc.w $1CE0, $208,$1803	; 273
-		dc.w $1D40, $208,$1803	; 276
-		dc.w $1D78, $476,$3B00	; 279
-		dc.w $1DA0, $320,$A200	; 282
-		dc.w $1DE0, $204,$1801	; 285
-		dc.w $1DF8, $4B0,$4402	; 288
-		dc.w $1E08, $370,$4400	; 291
-		dc.w $1E18,$4368,$C201	; 294
-		dc.w $1E20, $4B4,$3600	; 297
-		dc.w $1E40,$4450,$C201	; 300
-		dc.w $1E48, $340,$4400	; 303
-		dc.w $1E60,$4330,$C201	; 306
-		dc.w $1E60,$4430,$C201	; 309
-		dc.w $1EA0, $2A0,$A200	; 312
-		dc.w $1ED8, $2FF,$3B00	; 315
-		dc.w $1F30,$4308,$1C03	; 318
-		dc.w $1F80, $3C0,$AB00	; 321
-		dc.w $1FA8, $318,$110C	; 324
-		dc.w $1FC0, $3D0,$AB00	; 327
-		dc.w $2010, $30A,$1C03	; 330
-		dc.w $2020, $4B0,$3600	; 333
-		dc.w $2048, $390,$3620	; 336
-		dc.w $2058, $38E,$3620	; 339
-		dc.w $2068, $38B,$3620	; 342
-		dc.w $2078, $386,$3620	; 345
-		dc.w $2080, $350,$C200	; 348
-		dc.w $2088, $382,$3620	; 351
-		dc.w $20D0, $370,$3B00	; 354
-		dc.w $2180, $48C,$9F00	; 357
-		dc.w $2248, $350,$A606	; 360
-		dc.w $2334, $320,$A606	; 363
-		dc.w $2378, $408,$1802	; 366
-		dc.w $23F0, $380,$A200	; 369
-		dc.w $2560, $4A2, $D00	; 372
-		dc.w $2584, $460,$7D03	; 375
-		dc.w $2584, $478,$7D03	; 378
-		dc.w $2584, $490,$7D03	; 381
-		dc.w $25D4, $450,$7D01	; 384
-		dc.w $25D4, $470,$7D02	; 387
-		dc.w $FFFF,    0,    0	; 390
-ObjPos_GHZ2:	dc.w   $40, $2B2,$3640	; 0 ; DATA XREF: ROM:ObjPos_Indexo
-		dc.w   $E6,  $FF,$3B00	; 3
-		dc.w   $F0, $2B1,$A604	; 6
-		dc.w  $110, $2B1,$A606	; 9
-		dc.w  $130,$4108,$1C03	; 12
-		dc.w  $130, $2B1,$A606	; 15
-		dc.w  $180, $1F0,$AB00	; 18
-		dc.w  $1A8, $118,$110C	; 21
-		dc.w  $1C0, $1C0,$AB00	; 24
-		dc.w  $20E, $10A,$1C03	; 27
-		dc.w  $248, $190,$3620	; 30
-		dc.w  $250, $2A0,$BC00	; 33
-		dc.w  $25C, $18E,$3620	; 36
-		dc.w  $270, $189,$3620	; 39
-		dc.w  $270, $2A0,$BC01	; 42
-		dc.w  $284, $182,$3620	; 45
-		dc.w  $290, $2A0,$BC01	; 48
-		dc.w  $298, $17E,$3620	; 51
-		dc.w  $2B0, $2A0,$BC01	; 54
-		dc.w  $2D0, $2A0,$BC01	; 57
-		dc.w  $2F0, $158,$4102	; 60
-		dc.w  $2F0, $170,$3B00	; 63
-		dc.w  $2F0, $2A0,$BC02	; 66
-		dc.w  $338, $2B5,$A603	; 69
-		dc.w  $3F8, $2F0,$4402	; 72
-		dc.w  $430, $258,$A200	; 75
-		dc.w  $440, $300,$C000	; 78
-		dc.w  $470, $100,$9F00	; 81
-		dc.w  $480, $2C8,$1801	; 84
-		dc.w  $4F8, $332,$3B00	; 87
-		dc.w  $508, $2F0,$4410	; 90
-		dc.w  $530,$4108,$1C03	; 93
-		dc.w  $580, $1F0,$AB00	; 96
-		dc.w  $590, $3D0,$3640	; 99
-		dc.w  $5A8, $118,$110C	; 102
-		dc.w  $5B0, $2B0,$C000	; 105
-		dc.w  $5C0, $1C0,$AB00	; 108
-		dc.w  $5C8, $340,$1506	; 111
-		dc.w  $60E, $10A,$1C03	; 114
-		dc.w  $620, $3D0,$3640	; 117
-		dc.w  $654, $190,$3620	; 120
-		dc.w  $668, $18B,$3620	; 123
-		dc.w  $67C, $185,$3620	; 126
-		dc.w  $690, $17F,$3620	; 129
-		dc.w  $690,$42B8,$C000	; 132
-		dc.w  $6A0, $360,$1803	; 135
-		dc.w  $6A4, $179,$3620	; 138
-		dc.w  $6B0, $3D0,$3640	; 141
-		dc.w  $6F0, $170,$3B00	; 144
-		dc.w  $708, $2B0,$4400	; 147
-		dc.w  $720, $380,$1803	; 150
-		dc.w  $740, $3D0,$3640	; 153
-		dc.w  $750,  $D0,$A200	; 156
-		dc.w  $7A0,$40F0,$A200	; 159
-		dc.w  $7A0, $3A0,$1803	; 162
-		dc.w  $7AC, $3D0,$3630	; 165
-		dc.w  $7D0, $210,$A200	; 168
-		dc.w  $7DC, $3D0,$3620	; 171
-		dc.w  $7F4, $3D0,$3620	; 174
-		dc.w  $800, $1B0,$3B00	; 177
-		dc.w  $808, $3F0,$4400	; 180
-		dc.w  $834, $124,$A604	; 183
-		dc.w  $874, $3B0,$3B00	; 186
-		dc.w  $8E8, $1C8,$1508	; 189
-		dc.w  $938, $388,$C200	; 192
-		dc.w  $988, $358,$C200	; 195
-		dc.w  $9B4, $1FC,$3600	; 198
-		dc.w  $9C8, $378,$C200	; 201
-		dc.w  $A18, $348,$C200	; 204
-		dc.w  $A2C,$4208,$1C03	; 207
-		dc.w  $A68, $2B0,$AB00	; 210
-		dc.w  $AA0, $290,$AB00	; 213
-		dc.w  $AA8, $218,$110C	; 216
-		dc.w  $AD8, $2E0,$AB00	; 219
-		dc.w  $B10, $208,$1C03	; 222
-		dc.w  $B58,$43B0,$4110	; 225
-		dc.w  $BB8,$4390,$4110	; 228
-		dc.w  $C20, $370,$3B00	; 231
-		dc.w  $C68, $350,$C200	; 234
-		dc.w  $CB4, $326,$C200	; 237
-		dc.w  $D00, $358,$C200	; 240
-		dc.w  $D80, $1F1,$A602	; 243
-		dc.w  $D80, $350,$9F00	; 246
-		dc.w  $D80,$4240, $380	; 249
-		dc.w  $E10,$4280, $300	; 252
-		dc.w  $E30,$4338,$4100	; 255
-		dc.w  $F74, $21F,$A605	; 258
-		dc.w  $FF0, $270,$3B00	; 261
-		dc.w $1060, $2D0,$3600	; 264
-		dc.w $10A0, $288,$180A	; 267
-		dc.w $10D0, $370,$9F00	; 270
-		dc.w $10E0, $2D0,$3600	; 273
-		dc.w $11A0, $2D0,$3600	; 276
-		dc.w $11E0, $288,$180A	; 279
-		dc.w $1220, $2D0,$3600	; 282
-		dc.w $1260, $288,$180A	; 285
-		dc.w $1280, $220,$A200	; 288
-		dc.w $12A0, $2D0,$3600	; 291
-		dc.w $1310, $26C,$F901	; 294
-		dc.w $1360, $2D0,$3600	; 297
-		dc.w $13A0, $288,$180A	; 300
-		dc.w $13C0, $240,$A200	; 303
-		dc.w $13E0, $2D0,$3600	; 306
-		dc.w $1408, $2F0,$4400	; 309
-		dc.w $1520,$42B0,$C000	; 312
-		dc.w $15D4,$4145,$4102	; 315
-		dc.w $1650, $150,$A606	; 318
-		dc.w $16A0, $1B0,$C000	; 321
-		dc.w $16B0,$41A0,$C201	; 324
-		dc.w $16F8, $1F0,$4412	; 327
-		dc.w $16F8, $220,$4412	; 330
-		dc.w $16F8, $2F0,$4402	; 333
-		dc.w $16F8, $330,$4402	; 336
-		dc.w $16F8, $370,$4402	; 339
-		dc.w $16F8, $3B0,$4402	; 342
-		dc.w $16F8, $3F0,$4402	; 345
-		dc.w $1710, $400,$A604	; 348
-		dc.w $1720, $3C0,$A200	; 351
-		dc.w $1760, $238,$C201	; 354
-		dc.w $1790, $370,$A200	; 357
-		dc.w $17A0, $200,$9F00	; 360
-		dc.w $17D0, $1FE,$3B00	; 363
-		dc.w $17E0, $3F0,$9A00	; 366
-		dc.w $1808, $3F0,$4410	; 369
-		dc.w $1810, $370,$C200	; 372
-		dc.w $1820, $3B0,$3600	; 375
-		dc.w $1828, $430,$3B00	; 378
-		dc.w $1830,$4208,$1C03	; 381
-		dc.w $1880, $2C0,$AB00	; 384
-		dc.w $188C, $4D0,$3640	; 387
-		dc.w $18A0,$43B0,$C000	; 390
-		dc.w $18A8, $218,$110C	; 393
-		dc.w $18C0, $2A0,$AB00	; 396
-		dc.w $18C8, $448,$1506	; 399
-		dc.w $1908, $3B0,$4400	; 402
-		dc.w $1910, $208,$1C03	; 405
-		dc.w $191C, $4D0,$3640	; 408
-		dc.w $19A0, $488,$1801	; 411
-		dc.w $19AC, $4D0,$3640	; 414
-		dc.w $19F8, $320,$4412	; 417
-		dc.w $1A08, $4B0,$4400	; 420
-		dc.w $1A08, $4F0,$4401	; 423
-		dc.w $1A30,$42F0,$9A01	; 426
-		dc.w $1A80, $477,$3B00	; 429
-		dc.w $1AA0, $2F0,$9A00	; 432
-		dc.w $1AF0, $410,$A200	; 435
-		dc.w $1AF8, $4B0,$4402	; 438
-		dc.w $1B50, $440,$A200	; 441
-		dc.w $1B94, $377,$3630	; 444
-		dc.w $1BA0, $310,$C200	; 447
-		dc.w $1BDC, $372,$3630	; 450
-		dc.w $1C08, $200,$4401	; 453
-		dc.w $1C90, $3F0,$A200	; 456
-		dc.w $1CA0, $470,$9A00	; 459
-		dc.w $1CE0, $3E0,$A200	; 462
-		dc.w $1D38,$4428,$4110	; 465
-		dc.w $1DA0, $407,$A606	; 468
-		dc.w $1DE4, $403,$3600	; 471
-		dc.w $1DF8, $440,$4402	; 474
-		dc.w $1DF8, $480,$4402	; 477
-		dc.w $1DF8, $4C0,$4402	; 480
-		dc.w $1F38, $370,$7D03	; 483
-		dc.w $1F60, $350,$7D01	; 486
-		dc.w $1F60, $370,$7D03	; 489
-		dc.w $1F60, $3A2, $D00	; 492
-		dc.w $1F88, $370,$7D03	; 495
-		dc.w $1FD4, $370,$7D02	; 498
-		dc.w $FFFF,    0,    0	; 501
-ObjPos_GHZ3:	dc.w   $84, $340,$A605	; 0 ; DATA XREF: ROM:ObjPos_Indexo
-		dc.w  $128, $3B8,$4102	; 3
-		dc.w  $190, $3E0,$3640	; 6
-		dc.w  $1C0, $3C8,$1805	; 9
-		dc.w  $1E0, $340,$9A00	; 12
-		dc.w  $208, $3E0,$3640	; 15
-		dc.w  $250, $307,$C000	; 18
-		dc.w  $260, $298,$A200	; 21
-		dc.w  $278, $30C,$4102	; 24
-		dc.w  $2D8, $218,$A200	; 27
-		dc.w  $2E0, $240,$9A00	; 30
-		dc.w  $320, $2D0,$9A00	; 33
-		dc.w  $350, $208,$A604	; 36
-		dc.w  $390, $250,$C200	; 39
-		dc.w  $3F0,$4278,$1C03	; 42
-		dc.w  $468, $288,$110C	; 45
-		dc.w  $4D0, $278,$1C03	; 48
-		dc.w  $530, $238,$A200	; 51
-		dc.w  $530, $278,$4102	; 54
-		dc.w  $590, $230,$A200	; 57
-		dc.w  $5D0, $240,$9A00	; 60
-		dc.w  $650, $207,$C000	; 63
-		dc.w  $690, $338,$A200	; 66
-		dc.w  $730,$42B0,$9A01	; 69
-		dc.w  $750, $1F0,$A200	; 72
-		dc.w  $780, $258,$1802	; 75
-		dc.w  $7C0, $358,$4102	; 78
-		dc.w  $820, $340,$C201	; 81
-		dc.w  $848, $2D0,$4400	; 84
-		dc.w  $848, $310,$4401	; 87
-		dc.w  $848, $350,$4401	; 90
-		dc.w  $848, $360,$4401	; 93
-		dc.w  $850, $3A0,$BC00	; 96
-		dc.w  $870, $3A0,$BC01	; 99
-		dc.w  $890, $3A0,$BC01	; 102
-		dc.w  $8B0, $3A0,$BC01	; 105
-		dc.w  $8D0, $198,$A200	; 108
-		dc.w  $8D0, $3A0,$BC01	; 111
-		dc.w  $8F0, $3A0,$BC02	; 114
-		dc.w  $8F0,$4278,$1C03	; 117
-		dc.w  $920, $1C0,$A200	; 120
-		dc.w  $968, $288,$110C	; 123
-		dc.w  $9D0, $278,$1C03	; 126
-		dc.w  $A08, $2C0,$4401	; 129
-		dc.w  $A08, $2F0,$4401	; 132
-		dc.w  $B00, $26B,$F901	; 135
-		dc.w  $B24, $220,$A603	; 138
-		dc.w  $B50, $1E8,$1805	; 141
-		dc.w  $BA0, $240,$A200	; 144
-		dc.w  $BD0, $1C8,$1801	; 147
-		dc.w  $C10, $102,$A606	; 150
-		dc.w  $C80, $280,$C200	; 153
-		dc.w  $CD0, $260,$C200	; 156
-		dc.w  $CF0,$4178,$1C03	; 159
-		dc.w  $D58,$4570,$4110	; 162
-		dc.w  $D68, $188,$110C	; 165
-		dc.w  $DD0, $178,$1C03	; 168
-		dc.w  $DD0, $531,$3B00	; 171
-		dc.w  $DF0, $178,$4102	; 174
-		dc.w  $E08,  $F0,$4400	; 177
-		dc.w  $E08, $130,$4401	; 180
-		dc.w  $E08, $170,$4401	; 183
-		dc.w  $E08, $1B0,$4401	; 186
-		dc.w  $E08, $1F0,$4401	; 189
-		dc.w  $E08, $230,$4401	; 192
-		dc.w  $E20, $520,$9F00	; 195
-		dc.w  $E84,  $40,$A606	; 198
-		dc.w  $EA0, $4C0,$C200	; 201
-		dc.w  $EB0,  $AC,$F902	; 204
-		dc.w  $EE0, $4E0,$C200	; 207
-		dc.w  $EF8,  $F0,$4402	; 210
-		dc.w  $EF8, $120,$4402	; 213
-		dc.w  $EF8, $160,$4402	; 216
-		dc.w  $EF8, $1A0,$4402	; 219
-		dc.w  $EF8, $1E0,$4402	; 222
-		dc.w  $F48, $505,$3B00	; 225
-		dc.w  $F60, $4B0,$C200	; 228
-		dc.w  $F98, $533,$3600	; 231
-		dc.w  $FA0,  $C8,$1801	; 234
-		dc.w  $FB4, $350,$A604	; 237
-		dc.w $1020, $108,$1802	; 240
-		dc.w $1060, $188,$1806	; 243
-		dc.w $1080, $4D0,$A200	; 246
-		dc.w $1080,$4340, $380	; 249
-		dc.w $1084, $2F0,$A602	; 252
-		dc.w $10A0, $570,$9A00	; 255
-		dc.w $10B0, $210,$1803	; 258
-		dc.w $1110,$4380, $300	; 261
-		dc.w $1138,$4530,$4110	; 264
-		dc.w $1140, $22C,$1803	; 267
-		dc.w $1150, $4D0,$A200	; 270
-		dc.w $1190, $507,$3B00	; 273
-		dc.w $11D0, $240,$9A00	; 276
-		dc.w $11F0, $4F0,$3610	; 279
-		dc.w $1208, $4F0,$4400	; 282
-		dc.w $1225,$4205,$C000	; 285
-		dc.w $1240, $480,$C200	; 288
-		dc.w $1270, $288,$C000	; 291
-		dc.w $1280, $428,$A200	; 294
-		dc.w $1290, $202,$C000	; 297
-		dc.w $1290, $450,$C200	; 300
-		dc.w $12E0,$4272,$C000	; 303
-		dc.w $12E0, $4B1,$3600	; 306
-		dc.w $1308, $4B0,$4400	; 309
-		dc.w $1330,$42B0,$9A01	; 312
-		dc.w $1378, $478,$3600	; 315
-		dc.w $1404,$436E,$4110	; 318
-		dc.w $1408, $470,$4400	; 321
-		dc.w $1420, $36F,$3B00	; 324
-		dc.w $1428, $420,$9F00	; 327
-		dc.w $1470, $40D,$4102	; 330
-		dc.w $1484, $248,$A604	; 333
-		dc.w $14A8, $406,$3620	; 336
-		dc.w $14B8, $2B0,$3B00	; 339
-		dc.w $14C0, $36C,$F903	; 342
-		dc.w $14C0, $404,$3620	; 345
-		dc.w $14D8, $403,$3620	; 348
-		dc.w $14E8, $420,$A200	; 351
-		dc.w $14F0, $401,$3620	; 354
-		dc.w $14F8, $2F0,$4402	; 357
-		dc.w $14F8, $330,$4412	; 360
-		dc.w $14F8, $360,$4412	; 363
-		dc.w $14F8, $3B0,$4412	; 366
-		dc.w $14F8, $3F0,$4412	; 369
-		dc.w $14F8, $440,$4402	; 372
-		dc.w $14F8, $480,$4402	; 375
-		dc.w $14F8, $4B0,$4402	; 378
-		dc.w $1500, $248,$A200	; 381
-		dc.w $1588, $388,$1710	; 384
-		dc.w $15A8, $2C8,$1508	; 387
-		dc.w $1620, $4B0,$A606	; 390
-		dc.w $1648, $4B0,$A606	; 393
-		dc.w $1670, $4B0,$A606	; 396
-		dc.w $1680, $2C8,$1803	; 399
-		dc.w $1688, $388,$1710	; 402
-		dc.w $1698, $4B0,$A606	; 405
-		dc.w $16C0, $4B0,$A606	; 408
-		dc.w $16E8, $4B0,$A602	; 411
-		dc.w $1708, $3B0,$4410	; 414
-		dc.w $1708, $3F0,$4411	; 417
-		dc.w $1708, $430,$4411	; 420
-		dc.w $1708, $460,$4411	; 423
-		dc.w $1708, $4B0,$4400	; 426
-		dc.w $1720, $2C8,$1803	; 429
-		dc.w $1730, $479,$4102	; 432
-		dc.w $1778, $476,$3630	; 435
-		dc.w $17A8, $475,$3620	; 438
-		dc.w $17C0, $2C8,$1803	; 441
-		dc.w $17D8, $470,$3630	; 444
-		dc.w $17F8, $4B0,$4402	; 447
-		dc.w $17F8, $4F0,$4402	; 450
-		dc.w $1870, $360,$C200	; 453
-		dc.w $1878, $205,$A605	; 456
-		dc.w $18C0, $390,$C200	; 459
-		dc.w $18D4, $771,$3B00	; 462
-		dc.w $1988, $288,$1710	; 465
-		dc.w $1A00, $3B0,$3B00	; 468
-		dc.w $1A80, $360,$A200	; 471
-		dc.w $1A88, $288,$1710	; 474
-		dc.w $1AC0, $210,$A200	; 477
-		dc.w $1AE0, $340,$A200	; 480
-		dc.w $1B76, $220,$A606	; 483
-		dc.w $1BA0, $394,$9F00	; 486
-		dc.w $1BD6, $21F,$A606	; 489
-		dc.w $1C30, $278,$4102	; 492
-		dc.w $1CB0, $33E,$4102	; 495
-		dc.w $1CD0, $240,$9A00	; 498
-		dc.w $1D10, $330,$1802	; 501
-		dc.w $1D45, $207,$A606	; 504
-		dc.w $1D48, $2D0,$4400	; 507
-		dc.w $1D48, $310,$4401	; 510
-		dc.w $1D48, $350,$4401	; 513
-		dc.w $1D50, $3A0,$BC00	; 516
-		dc.w $1D70, $3A0,$BC01	; 519
-		dc.w $1D90, $3A0,$BC01	; 522
-		dc.w $1DB0, $3A0,$BC01	; 525
-		dc.w $1DD0, $3A0,$BC01	; 528
-		dc.w $1DF0, $3A0,$BC02	; 531
-		dc.w $1E20,$42B0,$9A01	; 534
-		dc.w $1E80, $220,$A200	; 537
-		dc.w $1E80, $298,$1802	; 540
-		dc.w $1EE0, $2C0,$1806	; 543
-		dc.w $1FF8, $3E0,$4402	; 546
-		dc.w $2000, $2A0,$A200	; 549
-		dc.w $2030,$43B0,$9A01	; 552
-		dc.w $2050, $3D0,$3640	; 555
-		dc.w $2070, $308,$1507	; 558
-		dc.w $20B0, $2F0,$A200	; 561
-		dc.w $20E0, $3D0,$3640	; 564
-		dc.w $2120, $3D0,$9A00	; 567
-		dc.w $2134, $3D0,$3620	; 570
-		dc.w $2224, $314,$4102	; 573
-		dc.w $2230, $296,$A200	; 576
-		dc.w $2268, $2B0,$A200	; 579
-		dc.w $22A0, $2CC,$A200	; 582
-		dc.w $2376, $321,$A606	; 585
-		dc.w $2490, $340,$A200	; 588
-		dc.w $2530,$43B8,$1C03	; 591
-		dc.w $2535, $320,$A605	; 594
-		dc.w $2588, $3F0,$3640	; 597
-		dc.w $25A8, $3C8,$110C	; 600
-		dc.w $25DC, $3F0,$3620	; 603
-		dc.w $25F4, $3F0,$3620	; 606
-		dc.w $2608, $3F0,$4400	; 609
-		dc.w $2610, $3B9,$1C03	; 612
-		dc.w $26A8, $3AC,$F904	; 615
-		dc.w $2980, $380,$1800	; 618
-		dc.w $2A80, $380,$1800	; 621
-		dc.w $2B60, $37D,$3E01	; 624
-		dc.w $2B60, $3A2,$3E00	; 627
-		dc.w $FFFF,    0,    0	; 630
-ObjPos_LZ1:	dc.w $FFFF,    0,    0	; 0 ; DATA XREF: ROM:ObjPos_Indexo
-ObjPos_LZ2:	dc.w $FFFF,    0,    0	; 0 ; DATA XREF: ROM:ObjPos_Indexo
-ObjPos_LZ3:	dc.w $FFFF,    0,    0	; 0 ; DATA XREF: ROM:ObjPos_Indexo
+ObjPos_Index:	dc.w ObjPos_GHZ1-ObjPos_Index,ObjPos_Null-ObjPos_Index
+		dc.w ObjPos_GHZ2-ObjPos_Index,ObjPos_Null-ObjPos_Index
+		dc.w ObjPos_GHZ3-ObjPos_Index,ObjPos_Null-ObjPos_Index
+		dc.w ObjPos_GHZ1-ObjPos_Index,ObjPos_Null-ObjPos_Index
+
+		dc.w ObjPos_LZ1-ObjPos_Index,ObjPos_Null-ObjPos_Index
+		dc.w ObjPos_LZ2-ObjPos_Index,ObjPos_Null-ObjPos_Index
+		dc.w ObjPos_LZ3-ObjPos_Index,ObjPos_Null-ObjPos_Index
+		dc.w ObjPos_LZ3-ObjPos_Index,ObjPos_Null-ObjPos_Index
+
+		dc.w ObjPos_CPZ1-ObjPos_Index,ObjPos_Null-ObjPos_Index
+		dc.w ObjPos_CPZ2-ObjPos_Index,ObjPos_Null-ObjPos_Index
+		dc.w ObjPos_CPZ3-ObjPos_Index,ObjPos_Null-ObjPos_Index
+		dc.w ObjPos_CPZ1-ObjPos_Index,ObjPos_Null-ObjPos_Index
+
+		dc.w ObjPos_EHZ1-ObjPos_Index,ObjPos_Null-ObjPos_Index
+		dc.w ObjPos_EHZ2-ObjPos_Index,ObjPos_Null-ObjPos_Index
+		dc.w ObjPos_EHZ3-ObjPos_Index,ObjPos_Null-ObjPos_Index
+		dc.w ObjPos_EHZ1-ObjPos_Index,ObjPos_Null-ObjPos_Index
+
+		dc.w ObjPos_HPZ1-ObjPos_Index,ObjPos_Null-ObjPos_Index
+		dc.w ObjPos_HPZ2-ObjPos_Index,ObjPos_Null-ObjPos_Index
+		dc.w ObjPos_HPZ3-ObjPos_Index,ObjPos_Null-ObjPos_Index
+		dc.w ObjPos_HPZ1-ObjPos_Index,ObjPos_Null-ObjPos_Index
+
+		dc.w ObjPos_HTZ1-ObjPos_Index,ObjPos_Null-ObjPos_Index
+		dc.w ObjPos_HTZ2-ObjPos_Index,ObjPos_Null-ObjPos_Index
+		dc.w ObjPos_HTZ3-ObjPos_Index,ObjPos_Null-ObjPos_Index
+		dc.w ObjPos_HTZ1-ObjPos_Index,ObjPos_Null-ObjPos_Index
+
+		dc.w ObjPos_S1Ending-ObjPos_Index,ObjPos_Null-ObjPos_Index
+		dc.w ObjPos_S1Ending-ObjPos_Index,ObjPos_Null-ObjPos_Index
+		dc.w ObjPos_S1Ending-ObjPos_Index,ObjPos_Null-ObjPos_Index
+		dc.w ObjPos_S1Ending-ObjPos_Index,ObjPos_Null-ObjPos_Index
+
+		; platform objects in LZ/SBZ (unused)
+		dc.w ObjPos_S1LZ1pf1-ObjPos_Index,ObjPos_S1LZ1pf2-ObjPos_Index
+		dc.w ObjPos_S1LZ2pf1-ObjPos_Index,ObjPos_S1LZ2pf2-ObjPos_Index
+		dc.w ObjPos_S1LZ3pf1-ObjPos_Index,ObjPos_S1LZ3pf2-ObjPos_Index
+		dc.w ObjPos_S1LZ1pf1-ObjPos_Index,ObjPos_S1LZ1pf2-ObjPos_Index
+		dc.w ObjPos_S1SBZ1pf1-ObjPos_Index,ObjPos_S1SBZ1pf2-ObjPos_Index
+		dc.w ObjPos_S1SBZ1pf3-ObjPos_Index,ObjPos_S1SBZ1pf4-ObjPos_Index
+		dc.w ObjPos_S1SBZ1pf5-ObjPos_Index,ObjPos_S1SBZ1pf6-ObjPos_Index
+		dc.w ObjPos_S1SBZ1pf1-ObjPos_Index,ObjPos_S1SBZ1pf2-ObjPos_Index
+
+		dc.w $FFFF,    0,    0
+ObjPos_GHZ1:	incbin	"level/objects/GHZ_1.bin"
+		dc.w $FFFF,    0,    0
+ObjPos_GHZ2:	incbin	"level/objects/GHZ_2.bin"
+		dc.w $FFFF,    0,    0
+ObjPos_GHZ3:	incbin	"level/objects/GHZ_3.bin"
+		dc.w $FFFF,    0,    0
+ObjPos_LZ1:	dc.w $FFFF,    0,    0
+ObjPos_LZ2:	dc.w $FFFF,    0,    0
+ObjPos_LZ3:	dc.w $FFFF,    0,    0
 ObjPos_S1LZ1pf1:dc.w	 7,$1078, $21A	; 0 ; DATA XREF: ROM:ObjPos_Indexo
 		dc.w	 0,$10BE, $291	; 3
 		dc.w	 2,$10BE, $307	; 6
@@ -41480,7 +41006,7 @@ ObjPos_HTZ1:	incbin	"level/objects/HTZ_1.bin"
 		dc.w $FFFF,    0,    0
 ObjPos_HTZ2:	dc.w $FFFF,    0,    0
 ObjPos_HTZ3:	incbin	"level/objects/HTZ_3.bin"
-		dc.w $FFFF,    0,    0	; 6
+		dc.w $FFFF,    0,    0
 ObjPos_S1SBZ1pf1:dc.w 7			; DATA XREF: ROM:ObjPos_Indexo
 		dc.w  $E14, $370,    0	; 0
 		dc.w  $E5A, $34D,    1	; 3
@@ -41593,1287 +41119,58 @@ ObjPos_S1Ending:dc.w   $10, $170,$280C	; 0 ; DATA XREF: ROM:ObjPos_Indexo
 		dc.w  $CC8, $148,$280A	; 162
 		dc.w  $D34, $1BA,$280D	; 165
 		dc.w  $DF8, $174,$280A	; 168
-		dc.w $FFFF,    0,    0	; 171
-ObjPos_Null:	dc.w $FFFF,    0,    0	; 0 ; DATA XREF: ROM:ObjPos_Indexo
-;
-; a symbol table. 'compiler trash'
-;
-Leftover_418A8:	dc.b $70,$30,  0,  0,  0,  1,$36,  6,  0,  0,  0,  4,$7F,$66,$72,$61,$6D,$65,$6F,$75,$74,$64,$32,$24,$7A,$64,$62,$61,  0,  1,$34,$BE,  0,  0,  0,  3,$63,$6F,$6C,$69,$63,$68,$67,$74,$62,$6C,  0,  0,  0,  1,$35,$E2,  0,  0,  0,  3,$7F,$6C,$6F,$6F,$70,$24,$63,$65; 0
-		dc.b $62,$61,  0,  0,  0,  1,$35,$56,  0,  0,  0,  4,$7F,$66,$72,$61,$6D,$65,$6F,$75,$74,$32,$24,$7A,$64,$62,$61,  0,  0,  1,$34,$E6,  0,  0,  0,  3,$63,$6F,$6C,$69,$63,$68,$67,$6D,$6F,$76,$65,  0,  0,  1,$35,$2A,  0,  0,  0,  3,$7F,$65,$6E,$64,$31,$24,$63,$65; 64
-		dc.b $62,$61,  0,  0,  0,  1,$35,$D4,  0,  0,  0,  3,$7F,$65,$6E,$64,$32,$24,$63,$65,$62,$61,  0,  0,  0,  1,$35,$D0,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$63,$65,$62,$61,  0,  0,  0,  0,  1,$35,$E0,  0,  0,  0,  4,$63,$6F,$6C,$69,$63,$68,$67,$5F,$6D,$6F,$76,$65; 128
-		dc.b $5F,$74,$62,$6C,  0,  1,$34,$EA,  0,  0,  0,  4,$7F,$66,$72,$61,$6D,$65,$6F,$75,$74,$24,$7A,$64,$62,$61,  0,  0,  0,  1,$34,$D4,  0,  0,  0,  3,$63,$6F,$6C,$69,$63,$68,$67,$70,$61,$74,  0,  0,  0,  1,$36,  2,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$63; 192
-		dc.b $65,$62,$61,  0,  0,  1,$35,$94,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$33,$24,$63,$65,$62,$61,  0,  0,  1,$35,$A2,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$34,$24,$63,$65,$62,$61,  0,  0,  1,$35,$C0,  0,  0,  0,  2,$63,$6F,$6C,$69,$63,$68,$67,  0,  0,  1,$34,$9C; 256
-		dc.b   0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$7A,$64,$62,$61,  0,  0,  0,  1,$34,$B6,  0,  0,  0,  3,$6B,$61,$69,$74,$65,$6E,$69,$6E,$69,$74,  0,  0,  0,  1,$36,$60,  0,  0,  0,  3,$6B,$61,$69,$74,$65,$6E,$6D,$6F,$76,$65,  0,  0,  0,  1,$36,$C2,  0,  0,  0,  3; 320
-		dc.b $6B,$61,$69,$74,$65,$6E,$63,$68,$67,$30,  0,  0,  0,  1,$37,$26,  0,  0,  0,  3,$6B,$61,$69,$74,$65,$6E,$63,$68,$67,$31,  0,  0,  0,  1,$37,$2E,  0,  0,  0,  3,$6B,$61,$69,$74,$65,$6E,$70,$61,$74,  0,  0,  0,  0,  1,$37,$36,  0,  0,  0,  3,$6B,$61,$69,$74; 384
-		dc.b $65,$6E,$6D,$6F,$76,$65,$32,  0,  0,  1,$36,$EC,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$31,$24,$72,$64,$62,$61,  0,  0,  1,$36,$DA,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$72,$64,$62,$61,  0,  0,  1,$36,$E0,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$33,$24,$73; 448
-		dc.b $64,$62,$61,  0,  0,  1,$37,  6,  0,  0,  0,  2,$6B,$61,$69,$74,$65,$6E,  0,  0,  0,  1,$36,$4C,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$34,$24,$73,$64,$62,$61,  0,  0,  1,$37,$1E,  0,  0,  0,  4,$6B,$61,$69,$74,$65,$6E,$5F,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0; 512
-		dc.b   0,  1,$36,$5A,  0,  0,  0,  3,$6B,$61,$69,$74,$65,$6E,$63,$68,$67,  0,  0,  0,  0,  1,$37,$22,  0,  0,  0,  3,$6B,$61,$69,$74,$65,$6E,$73,$70,$30,  0,  0,  0,  0,  1,$37,$40,  0,  0,  0,  3,$6B,$61,$69,$74,$65,$6E,$73,$70,$31,  0,  0,  0,  0,  1,$37,$4A; 576
-		dc.b   0,  0,  0,  3,$6B,$61,$69,$74,$65,$6E,$73,$70,$32,  0,  0,  0,  0,  1,$37,$54,  0,  0,  0,  3,$6B,$61,$69,$74,$65,$6E,$73,$70,$33,  0,  0,  0,  0,  1,$37,$5E,  0,  0,  0,  3,$6B,$61,$69,$74,$65,$6E,$73,$70,$34,  0,  0,  0,  0,  1,$37,$68,  0,  0,  0,  3; 640
-		dc.b $6B,$61,$69,$74,$65,$6E,$69,$6E,$69,$74,$32,  0,  0,  1,$36,$B4,  0,  0,  0,  3,$70,$72,$6F,$64,$61,$69,$69,$6E,$69,$74,  0,  0,  0,  1,$37,$86,  0,  0,  0,  3,$70,$72,$6F,$64,$61,$69,$6D,$6F,$76,$65,  0,  0,  0,  1,$37,$E6,  0,  0,  0,  3,$70,$72,$6F,$64; 704
-		dc.b $61,$69,$73,$70,$30,  0,  0,  0,  0,  1,$38,$60,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$30,$24,$76,$64,$62,$61,  0,  0,  1,$38,  6,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$76,$64,$62,$61,  0,  0,  1,$38,$34,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$33,$24,$76; 768
-		dc.b $64,$62,$61,  0,  0,  1,$38,$38,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$34,$24,$76,$64,$62,$61,  0,  0,  1,$38,$4A,  0,  0,  0,  2,$70,$72,$6F,$64,$61,$69,  0,  0,  0,  1,$37,$74,  0,  0,  0,  3,$70,$72,$6F,$64,$61,$69,$70,$61,$74,  0,  0,  0,  0,  1,$38,$5E; 832
-		dc.b   0,  0,  0,  4,$70,$72,$6F,$64,$61,$69,$5F,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  0,  1,$37,$82,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$76,$64,$62,$61,  0,  0,  0,  1,$38,$24,  0,  0,  0,  2,$67,$65,$6D,$70,$61,$74,  0,  0,  0,  1,$38,$DA,  0,  0,  0,  1; 896
-		dc.b $67,$65,$6D,  0,  0,  1,$38,$74,  0,  0,  0,  2,$67,$65,$6D,$73,$70,$30,$30,  0,  0,  1,$38,$DC,  0,  0,  0,  3,$67,$65,$6D,$5F,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  1,$38,$82,  0,  0,  0,  2,$67,$65,$6D,$69,$6E,$69,$74,  0,  0,  1,$38,$86,  0,  0,  0,  2; 960
-		dc.b $67,$65,$6D,$6D,$6F,$76,$65,  0,  0,  1,$38,$AE,  0,  0,  0,  3,$67,$65,$6D,$66,$6F,$75,$74,$63,$68,$6B,  0,  0,  0,  1,$38,$C2,  0,  0,  0,  3,$77,$66,$61,$6C,$6C,$69,$6E,$69,$74,  0,  0,  0,  0,  1,$39,  4,  0,  0,  0,  3,$77,$66,$61,$6C,$6C,$6D,$6F,$76; 1024
-		dc.b $65,$32,  0,  0,  0,  1,$3A,$54,  0,  0,  0,  3,$7F,$73,$75,$62,$24,$72,$64,$62,$61,  0,  0,  0,  0,  1,$39,$6C,  0,  0,  0,  3,$77,$66,$61,$6C,$6C,$6D,$6F,$76,$65,  0,  0,  0,  0,  1,$39,$CA,  0,  0,  0,  4,$7F,$77,$6F,$72,$6B,$6E,$61,$69,$24,$72,$64,$62; 1088
-		dc.b $61,  0,  0,  0,  0,  1,$39,$AE,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$72,$64,$62,$61,  0,  0,  0,  0,  1,$39,$B0,  0,  0,  0,  4,$77,$66,$61,$6C,$6C,$5F,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  0,  0,  1,$38,$FE,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$73; 1152
-		dc.b $64,$62,$61,  0,  0,  1,$39,$FC,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$33,$24,$73,$64,$62,$61,  0,  0,  1,$3A,$34,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$34,$24,$73,$64,$62,$61,  0,  0,  1,$3A,$1C,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$35,$24,$73,$64,$62,$61,  0; 1216
-		dc.b   0,  1,$3A,$14,  0,  0,  0,  2,$77,$66,$61,$6C,$6C,  0,  0,  0,  0,  1,$38,$F0,  0,  0,  0,  2,$77,$66,$61,$6C,$6C,$70,$61,$74,  0,  1,$3A,$6C,  0,  0,  0,  3,$77,$66,$61,$6C,$6C,$73,$70,$30,$30,  0,  0,  0,  0,  1,$3A,$A6,  0,  0,  0,  3,$77,$66,$61,$6C; 1280
-		dc.b $6C,$73,$70,$30,$31,  0,  0,  0,  0,  1,$3A,$B0,  0,  0,  0,  3,$77,$66,$61,$6C,$6C,$73,$70,$30,$32,  0,  0,  0,  0,  1,$3A,$C2,  0,  0,  0,  3,$77,$66,$61,$6C,$6C,$73,$70,$30,$33,  0,  0,  0,  0,  1,$3A,$D4,  0,  0,  0,  3,$77,$66,$61,$6C,$6C,$73,$70,$30; 1344
-		dc.b $34,  0,  0,  0,  0,  1,$3A,$EE,  0,  0,  0,  3,$77,$66,$61,$6C,$6C,$73,$70,$30,$35,  0,  0,  0,  0,  1,$3B,  8,  0,  0,  0,  3,$77,$66,$61,$6C,$6C,$73,$70,$30,$36,  0,  0,  0,  0,  1,$3B,$2A,  0,  0,  0,  3,$77,$66,$61,$6C,$6C,$73,$70,$30,$37,  0,  0,  0; 1408
-		dc.b   0,  1,$3B,$4C,  0,  0,  0,  3,$77,$66,$61,$6C,$6C,$73,$70,$30,$38,  0,  0,  0,  0,  1,$3B,$76,  0,  0,  0,  3,$77,$66,$61,$6C,$6C,$73,$70,$30,$39,  0,  0,  0,  0,  1,$3B,$A0,  0,  0,  0,  3,$77,$66,$61,$6C,$6C,$73,$70,$31,$30,  0,  0,  0,  0,  1,$3B,$D2; 1472
-		dc.b   0,  0,  0,  3,$77,$66,$61,$6C,$6C,$73,$70,$31,$31,  0,  0,  0,  0,  1,$3C,  4,  0,  0,  0,  3,$77,$66,$61,$6C,$6C,$73,$70,$31,$32,  0,  0,  0,  0,  1,$3C,$3E,  0,  0,  0,  3,$77,$66,$61,$6C,$6C,$73,$70,$31,$33,  0,  0,  0,  0,  1,$3C,$78,  0,  0,  0,  3; 1536
-		dc.b $77,$66,$61,$6C,$6C,$73,$70,$31,$34,  0,  0,  0,  0,  1,$3C,$BA,  0,  0,  0,  3,$77,$66,$61,$6C,$6C,$73,$70,$31,$35,  0,  0,  0,  0,  1,$3C,$FC,  0,  0,  0,  3,$77,$66,$61,$6C,$6C,$73,$70,$31,$36,  0,  0,  0,  0,  1,$3D,$46,  0,  0,  0,  3,$77,$66,$61,$6C; 1600
-		dc.b $6C,$73,$70,$31,$37,  0,  0,  0,  0,  1,$3D,$46,  0,  0,  0,  3,$77,$66,$61,$6C,$6C,$73,$70,$31,$38,  0,  0,  0,  0,  1,$3D,$46,  0,  0,  0,  3,$77,$66,$61,$6C,$6C,$73,$70,$31,$39,  0,  0,  0,  0,  1,$3A,$A4,  0,  0,  0,  3,$77,$66,$61,$6C,$6C,$73,$70,$32; 1664
-		dc.b $30,  0,  0,  0,  0,  1,$3D,$58,  0,  0,  0,  3,$77,$66,$61,$6C,$6C,$73,$70,$32,$31,  0,  0,  0,  0,  1,$3D,$62,  0,  0,  0,  3,$77,$66,$61,$6C,$6C,$73,$70,$32,$32,  0,  0,  0,  0,  1,$3D,$6C,  0,  0,  0,  3,$77,$66,$61,$6C,$6C,$73,$70,$32,$33,  0,  0,  0; 1728
-		dc.b   0,  1,$3D,$7E,  0,  0,  0,  3,$77,$66,$61,$6C,$6C,$73,$70,$32,$34,  0,  0,  0,  0,  1,$3D,$90,  0,  0,  0,  3,$77,$66,$61,$6C,$6C,$73,$70,$32,$35,  0,  0,  0,  0,  1,$3D,$AA,  0,  0,  0,  3,$77,$66,$61,$6C,$6C,$73,$70,$32,$36,  0,  0,  0,  0,  1,$3D,$C4; 1792
-		dc.b   0,  0,  0,  3,$77,$66,$61,$6C,$6C,$73,$70,$32,$37,  0,  0,  0,  0,  1,$3D,$E6,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$73,$64,$62,$61,  0,  0,  0,  1,$39,$E2,  0,  0,  0,  3,$73,$6C,$6F,$6F,$70,$6D,$6F,$76,$65,  0,  0,  0,  0,  1,$3E,$46,  0,  0,  0,  3; 1856
-		dc.b $7F,$6C,$65,$66,$74,$32,$24,$7A,$64,$62,$61,  0,  0,  1,$3E,$BC,  0,  0,  0,  2,$73,$6C,$6F,$6F,$70,$74,$62,$6C,  0,  1,$3F,$8A,  0,  0,  0,  3,$7F,$6C,$65,$66,$74,$24,$7A,$64,$62,$61,  0,  0,  0,  1,$3E,$7C,  0,  0,  0,  3,$7F,$72,$69,$67,$68,$74,$24,$7A; 1920
-		dc.b $64,$62,$61,  0,  0,  1,$3E,$8A,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$73,$24,$7A,$64,$62,$61,  0,  0,  1,$3E,$F6,  0,  0,  0,  3,$7F,$73,$75,$62,$24,$7A,$64,$62,$61,  0,  0,  0,  0,  1,$3E,$54,  0,  0,  0,  3,$7F,$72,$69,$64,$65,$6F,$6E,$24,$7A,$64,$62,$61; 1984
-		dc.b   0,  1,$3E,$EE,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$7A,$64,$62,$61,  0,  0,  0,  0,  1,$3E,$EC,  0,  0,  0,  3,$73,$6C,$6F,$6F,$70,$64,$69,$72,$74,$62,$6C,  0,  0,  1,$3F,$56,  0,  0,  0,  3,$7F,$72,$69,$67,$68,$74,$32,$24,$7A,$64,$62,$61,  0,  1,$3E,$CA; 2048
-		dc.b   0,  0,  0,  2,$73,$6C,$6F,$6F,$70,  0,  0,  0,  0,  1,$3E,  8,  0,  0,  0,  4,$7F,$66,$72,$61,$6D,$65,$6F,$75,$74,$24,$77,$64,$62,$61,  0,  0,  0,  1,$3E,$32,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$30,$24,$7A,$64,$62,$61,  0,  0,  1,$3E,$D6,  0,  0,  0,  3; 2112
-		dc.b $7F,$6A,$75,$6D,$70,$31,$24,$7A,$64,$62,$61,  0,  0,  1,$3F,$18,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$7A,$64,$62,$61,  0,  0,  1,$3F,$24,  0,  0,  0,  4,$7F,$66,$72,$61,$6D,$65,$6F,$75,$74,$64,$24,$77,$64,$62,$61,  0,  0,  1,$3E,$1E,  0,  0,  0,  4; 2176
-		dc.b $7F,$70,$6C,$72,$69,$64,$65,$6F,$6E,$24,$7A,$64,$62,$61,  0,  0,  0,  1,$3E,$AE,  0,  0,  0,  4,$73,$6C,$6F,$6F,$70,$5F,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  0,  0,  1,$3E,$38,  0,  0,  0,  3,$73,$6C,$6F,$6F,$70,$69,$6E,$69,$74,  0,  0,  0,  0,  1,$3E,$3C; 2240
-		dc.b   0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$7A,$64,$62,$61,  0,  0,  0,  1,$3E,$96,  0,  0,  0,  3,$73,$62,$61,$6C,$6C,$69,$6E,$69,$74,  0,  0,  0,  0,  1,$42,$C8,  0,  0,  0,  2,$73,$69,$73,$6F,$6F,  0,  0,  0,  0,  1,$41,$2C,  0,  0,  0,  3,$7F,$6A,$75,$6D; 2304
-		dc.b $70,$24,$66,$65,$62,$61,  0,  0,  0,  1,$41,$C6,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$67,$65,$62,$61,  0,  0,  0,  1,$41,$EC,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$69,$65,$62,$61,  0,  0,  0,  1,$42,$94,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$6B,$65; 2368
-		dc.b $62,$61,  0,  0,  0,  1,$43,$28,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$6C,$65,$62,$61,  0,  0,  0,  1,$43,$3C,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$6D,$65,$62,$61,  0,  0,  0,  1,$44,$18,  0,  0,  0,  3,$73,$69,$73,$6F,$6F,$73,$75,$62,$32,  0,  0,  0; 2432
-		dc.b   0,  1,$42,$9C,  0,  0,  0,  3,$73,$62,$61,$6C,$6C,$6D,$6F,$76,$65,  0,  0,  0,  0,  1,$43,$BC,  0,  0,  0,  3,$7F,$64,$6F,$77,$6E,$24,$6D,$65,$62,$61,  0,  0,  0,  1,$43,$DA,  0,  0,  0,  2,$73,$62,$61,$6C,$6C,$70,$61,$74,  0,  1,$45,$78,  0,  0,  0,  3; 2496
-		dc.b $7F,$73,$75,$62,$24,$6D,$65,$62,$61,  0,  0,  0,  0,  1,$44,$50,  0,  0,  0,  2,$73,$69,$73,$6F,$6F,$70,$61,$74,  0,  1,$44,$EC,  0,  0,  0,  3,$7F,$72,$69,$64,$65,$6F,$6E,$24,$67,$65,$62,$61,  0,  1,$41,$D8,  0,  0,  0,  3,$73,$62,$61,$6C,$6C,$77,$61,$69; 2560
-		dc.b $74,  0,  0,  0,  0,  1,$43,$28,  0,  0,  0,  2,$7F,$75,$70,$24,$6D,$65,$62,$61,  0,  1,$43,$C2,  0,  0,  0,  3,$73,$69,$73,$6F,$6F,$69,$6E,$69,$74,  0,  0,  0,  0,  1,$41,$5E,  0,  0,  0,  4,$7F,$77,$6F,$72,$6B,$6E,$61,$69,$24,$66,$65,$62,$61,  0,  0,  0; 2624
-		dc.b   0,  1,$41,$B8,  0,  0,  0,  3,$7F,$6E,$6F,$72,$69,$64,$65,$24,$67,$65,$62,$61,  0,  1,$42,$26,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$6A,$65,$62,$61,  0,  0,  0,  0,  1,$42,$C6,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$6D,$65,$62,$61,  0,  0,  0,  0,  1,$43,$D8; 2688
-		dc.b   0,  0,  0,  3,$73,$69,$73,$6F,$6F,$6D,$6F,$76,$65,  0,  0,  0,  0,  1,$41,$CC,  0,  0,  0,  3,$73,$69,$73,$6F,$6F,$72,$69,$64,$65,  0,  0,  0,  0,  1,$42,$7E,  0,  0,  0,  2,$73,$69,$73,$6F,$6F,$73,$75,$62,  0,  1,$42,$80,  0,  0,  0,  3,$7F,$6A,$75,$6D; 2752
-		dc.b $70,$34,$34,$24,$67,$65,$62,$61,  0,  1,$42,$22,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$30,$24,$6C,$65,$62,$61,  0,  0,  1,$43,$9C,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$30,$24,$6D,$65,$62,$61,  0,  0,  1,$43,$FA,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$31,$24,$6D; 2816
-		dc.b $65,$62,$61,  0,  0,  1,$44,$34,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$67,$65,$62,$61,  0,  0,  1,$41,$F4,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$69,$65,$62,$61,  0,  0,  1,$42,$9C,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$6C,$65,$62,$61,  0; 2880
-		dc.b   0,  1,$43,$78,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$6D,$65,$62,$61,  0,  0,  1,$44,$42,  0,  0,  0,  2,$73,$62,$61,$6C,$6C,$73,$70,$30,  0,  1,$45,$7C,  0,  0,  0,  2,$73,$62,$61,$6C,$6C,$73,$70,$31,  0,  1,$45,$7C,  0,  0,  0,  3,$7F,$6A,$75,$6D; 2944
-		dc.b $70,$33,$24,$67,$65,$62,$61,  0,  0,  1,$42,$10,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$33,$24,$6A,$65,$62,$61,  0,  0,  1,$42,$A8,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$33,$24,$6C,$65,$62,$61,  0,  0,  1,$43,$62,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$33,$24,$6D; 3008
-		dc.b $65,$62,$61,  0,  0,  1,$44,$4E,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$34,$24,$67,$65,$62,$61,  0,  0,  1,$42,$18,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$34,$24,$6C,$65,$62,$61,  0,  0,  1,$43,$7E,  0,  0,  0,  2,$73,$69,$73,$6F,$6F,$73,$70,$30,  0,  1,$44,$F4; 3072
-		dc.b   0,  0,  0,  2,$73,$69,$73,$6F,$6F,$73,$70,$31,  0,  1,$45,$36,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$35,$24,$67,$65,$62,$61,  0,  0,  1,$42,$42,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$36,$24,$67,$65,$62,$61,  0,  0,  1,$42,$4A,  0,  0,  0,  3,$7F,$6A,$75,$6D; 3136
-		dc.b $70,$37,$24,$67,$65,$62,$61,  0,  0,  1,$42,$4A,  0,  0,  0,  2,$73,$62,$61,$6C,$6C,$74,$62,$6C,  0,  1,$44,$80,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$38,$24,$67,$65,$62,$61,  0,  0,  1,$42,$62,  0,  0,  0,  4,$73,$69,$73,$6F,$6F,$5F,$6D,$6F,$76,$65,$5F,$74; 3200
-		dc.b $62,$6C,  0,  0,  0,  1,$41,$52,  0,  0,  0,  2,$73,$69,$73,$6F,$6F,$74,$62,$6C,  0,  1,$44,$8A,  0,  0,  0,  3,$73,$69,$73,$6F,$6F,$74,$62,$6C,$32,  0,  0,  0,  0,  1,$44,$BB,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$6F,$65,$62,$61,  0,  0,  0,  1,$47,$DC; 3264
-		dc.b   0,  0,  0,  2,$74,$61,$6B,$69,$69,$6E,$69,$74,  0,  1,$47,$56,  0,  0,  0,  2,$77,$61,$74,$65,$72,  0,  0,  0,  0,  1,$45,$88,  0,  0,  0,  3,$77,$61,$74,$65,$72,$70,$61,$74,$74,$62,$6C,  0,  0,  1,$46,$14,  0,  0,  0,  2,$74,$61,$6B,$69,$6D,$6F,$76,$65; 3328
-		dc.b   0,  1,$47,$90,  0,  0,  0,  2,$77,$61,$74,$65,$72,$70,$61,$74,  0,  1,$46,$54,  0,  0,  0,  4,$77,$61,$74,$65,$72,$5F,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  0,  0,  1,$45,$96,  0,  0,  0,  3,$77,$61,$74,$65,$72,$69,$6E,$69,$74,  0,  0,  0,  0,  1,$45,$9A; 3392
-		dc.b   0,  0,  0,  3,$7F,$65,$6E,$64,$24,$6F,$65,$62,$61,  0,  0,  0,  0,  1,$47,$EE,  0,  0,  0,  4,$74,$61,$6B,$69,$5F,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  0,  0,  0,  1,$47,$52,  0,  0,  0,  2,$74,$61,$6B,$69,$70,$61,$74,  0,  0,  1,$47,$F6,  0,  0,  0,  3; 3456
-		dc.b $77,$61,$74,$65,$72,$6D,$6F,$76,$65,  0,  0,  0,  0,  1,$45,$C2,  0,  0,  0,  1,$74,$61,$6B,$69,  0,  1,$47,$44,  0,  0,  0,  2,$74,$61,$6B,$69,$73,$70,$30,$30,  0,  1,$47,$FE,  0,  0,  0,  2,$74,$61,$6B,$69,$73,$70,$30,$31,  0,  1,$48,$10,  0,  0,  0,  2; 3520
-		dc.b $74,$61,$6B,$69,$73,$70,$30,$32,  0,  1,$48,$82,  0,  0,  0,  2,$74,$61,$6B,$69,$73,$70,$30,$33,  0,  1,$48,$84,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$30,$24,$63,$65,$62,$61,  0,  0,  1,$45,$E4,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$31,$24,$63,$65,$62,$61,  0; 3584
-		dc.b   0,  1,$45,$F4,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$63,$65,$62,$61,  0,  0,  1,$45,$F4,  0,  0,  0,  2,$77,$61,$74,$65,$72,$73,$70,$30,  0,  1,$46,$60,  0,  0,  0,  2,$77,$61,$74,$65,$72,$73,$70,$31,  0,  1,$46,$7A,  0,  0,  0,  2,$77,$61,$74,$65; 3648
-		dc.b $72,$73,$70,$32,  0,  1,$46,$94,  0,  0,  0,  2,$77,$61,$74,$65,$72,$73,$70,$33,  0,  1,$46,$AE,  0,  0,  0,  2,$77,$61,$74,$65,$72,$73,$70,$34,  0,  1,$46,$E0,  0,  0,  0,  2,$77,$61,$74,$65,$72,$73,$70,$35,  0,  1,$47,$12,  0,  0,  0,  4,$7F,$66,$72,$61; 3712
-		dc.b $6D,$65,$6F,$75,$74,$64,$24,$6F,$65,$62,$61,  0,  0,  1,$47,$AA,  0,  0,  0,  2,$73,$74,$65,$67,$6F,$63,$68,$67,  0,  1,$4A,$1E,  0,  0,  0,  2,$73,$74,$65,$67,$6F,  0,  0,  0,  0,  1,$48,$D0,  0,  0,  0,  3,$73,$74,$65,$67,$6F,$63,$68,$67,$30,$30,  0,  0; 3776
-		dc.b   0,  1,$4A,$24,  0,  0,  0,  3,$73,$74,$65,$67,$6F,$63,$68,$67,$30,$31,  0,  0,  0,  1,$4A,$32,  0,  0,  0,  3,$73,$74,$65,$67,$6F,$63,$68,$67,$30,$32,  0,  0,  0,  1,$4A,$35,  0,  0,  0,  3,$73,$74,$65,$67,$6F,$73,$70,$30,$30,  0,  0,  0,  0,  1,$4A,$4A; 3840
-		dc.b   0,  0,  0,  3,$73,$74,$65,$67,$6F,$73,$70,$30,$31,  0,  0,  0,  0,  1,$4A,$74,  0,  0,  0,  3,$73,$74,$65,$67,$6F,$73,$70,$30,$32,  0,  0,  0,  0,  1,$4A,$9E,  0,  0,  0,  3,$73,$74,$65,$67,$6F,$73,$70,$30,$33,  0,  0,  0,  0,  1,$4A,$C8,  0,  0,  0,  3; 3904
-		dc.b $73,$74,$65,$67,$6F,$73,$70,$30,$34,  0,  0,  0,  0,  1,$4A,$F2,  0,  0,  0,  3,$73,$74,$65,$67,$6F,$73,$70,$30,$35,  0,  0,  0,  0,  1,$4B,$1C,  0,  0,  0,  3,$73,$74,$65,$67,$6F,$73,$70,$30,$36,  0,  0,  0,  0,  1,$4B,$46,  0,  0,  0,  3,$73,$74,$65,$67; 3968
-		dc.b $6F,$73,$70,$30,$37,  0,  0,  0,  0,  1,$4B,$68,  0,  0,  0,  3,$7F,$6F,$75,$74,$30,$24,$75,$64,$62,$61,  0,  0,  0,  1,$49,$E6,  0,  0,  0,  3,$7F,$6F,$75,$74,$31,$24,$75,$64,$62,$61,  0,  0,  0,  1,$4A,$10,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$74,$64,$62; 4032
-		dc.b $61,  0,  0,  0,  0,  1,$49,$9A,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$70,$64,$62,$61,  0,  0,  0,  0,  1,$49,$30,  0,  0,  0,  3,$7F,$6F,$75,$74,$24,$75,$64,$62,$61,  0,  0,  0,  0,  1,$49,$E4,  0,  0,  0,  3,$73,$74,$65,$67,$6F,$69,$6E,$69,$74,  0,  0,  0; 4096
-		dc.b   0,  1,$48,$E2,  0,  0,  0,  3,$7F,$6C,$66,$74,$24,$75,$64,$62,$61,  0,  0,  0,  0,  1,$49,$CA,  0,  0,  0,  2,$73,$74,$65,$67,$6F,$70,$61,$74,  0,  1,$4A,$3A,  0,  0,  0,  4,$73,$74,$65,$67,$6F,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  0,  0,  0,  1,$49,$4E; 4160
-		dc.b   0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$74,$64,$62,$61,  0,  0,  1,$49,$9C,  0,  0,  0,  2,$73,$74,$65,$67,$6F,$5F,$30,  0,  0,  1,$49,$52,  0,  0,  0,  2,$73,$74,$65,$67,$6F,$5F,$31,  0,  0,  1,$49,$76,  0,  0,  0,  3,$73,$74,$65,$67,$6F,$6D,$6F,$76; 4224
-		dc.b $65,  0,  0,  0,  0,  1,$49,$32,  0,  0,  0,  4,$73,$74,$65,$67,$6F,$5F,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  0,  0,  1,$48,$DE,  0,  0,  0,  3,$63,$68,$65,$63,$6B,$73,$6F,$6E,$69,$63,  0,  0,  0,  1,$49,$C0,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$73,$64; 4288
-		dc.b $62,$61,  0,  0,  0,  1,$49,$74,  0,  0,  0,  2,$7F,$72,$74,$24,$75,$64,$62,$61,  0,  1,$49,$F4,  0,  0,  0,  3,$7F,$62,$65,$6C,$6F,$77,$24,$61,$65,$62,$61,  0,  0,  1,$4D,  8,  0,  0,  0,  4,$66,$69,$73,$68,$32,$5F,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  0; 4352
-		dc.b   0,  1,$4B,$AE,  0,  0,  0,  3,$66,$69,$73,$68,$32,$6A,$75,$6D,$70,  0,  0,  0,  0,  1,$4C,$9C,  0,  0,  0,  3,$62,$66,$69,$73,$68,$32,$70,$61,$74,  0,  0,  0,  0,  1,$4D,$B2,  0,  0,  0,  2,$66,$69,$73,$68,$63,$68,$67,  0,  0,  1,$4D,$9A,  0,  0,  0,  3; 4416
-		dc.b $66,$69,$73,$68,$32,$69,$6E,$69,$74,  0,  0,  0,  0,  1,$4B,$B4,  0,  0,  0,  3,$7F,$73,$75,$62,$24,$62,$65,$62,$61,  0,  0,  0,  0,  1,$4D,$80,  0,  0,  0,  2,$66,$69,$73,$68,$63,$68,$67,$30,  0,  1,$4D,$A2,  0,  0,  0,  2,$66,$69,$73,$68,$63,$68,$67,$31; 4480
-		dc.b   0,  1,$4D,$A6,  0,  0,  0,  2,$66,$69,$73,$68,$63,$68,$67,$32,  0,  1,$4D,$AA,  0,  0,  0,  2,$66,$69,$73,$68,$63,$68,$67,$33,  0,  1,$4D,$AE,  0,  0,  0,  3,$7F,$73,$6B,$69,$70,$24,$7A,$64,$62,$61,  0,  0,  0,  1,$4C,$38,  0,  0,  0,  2,$62,$66,$69,$73; 4544
-		dc.b $68,$32,  0,  0,  0,  1,$4B,$A0,  0,  0,  0,  4,$77,$61,$74,$65,$72,$73,$70,$65,$65,$64,$73,$65,$74,  0,  0,  0,  0,  1,$4D,$4C,  0,  0,  0,  3,$66,$69,$73,$68,$32,$6D,$6F,$76,$65,  0,  0,  0,  0,  1,$4C,$2C,  0,  0,  0,  3,$7F,$6A,$6F,$69,$6E,$24,$61,$65; 4608
-		dc.b $62,$61,  0,  0,  0,  1,$4D,$22,  0,  0,  0,  3,$7F,$63,$6E,$74,$24,$62,$65,$62,$61,  0,  0,  0,  0,  1,$4D,$88,  0,  0,  0,  3,$7F,$6C,$65,$76,$65,$6C,$24,$61,$65,$62,$61,  0,  0,  1,$4C,$F4,  0,  0,  0,  2,$62,$66,$69,$73,$68,$70,$61,$74,  0,  1,$4D,$B2; 4672
-		dc.b   0,  0,  0,  2,$66,$69,$73,$68,$31,$73,$70,$30,  0,  1,$4D,$BA,  0,  0,  0,  2,$66,$69,$73,$68,$31,$73,$70,$31,  0,  1,$4D,$C4,  0,  0,  0,  2,$66,$69,$73,$68,$31,$73,$70,$32,  0,  1,$4D,$CE,  0,  0,  0,  2,$66,$69,$73,$68,$31,$73,$70,$33,  0,  1,$4D,$D8; 4736
-		dc.b   0,  0,  0,  2,$62,$66,$69,$73,$68,  0,  0,  0,  0,  1,$4B,$A0,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$79,$64,$62,$61,  0,  0,  0,  1,$4C,$2C,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$7A,$64,$62,$61,  0,  0,  0,  1,$4C,$5A,  0,  0,  0,  1,$72,$65,$64,$7A; 4800
-		dc.b   0,  1,$4D,$F8,  0,  0,  0,  4,$7F,$66,$72,$61,$6D,$65,$6F,$75,$74,$32,$24,$71,$64,$62,$61,  0,  0,  1,$4E,$A4,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$74,$64,$62,$61,  0,  0,  0,  0,  1,$4E,$EA,  0,  0,  0,  2,$72,$65,$64,$7A,$70,$61,$74,  0,  0,  1,$4F,$16; 4864
-		dc.b   0,  0,  0,  3,$7F,$65,$6E,$64,$24,$70,$64,$62,$61,  0,  0,  0,  0,  1,$4E,$60,  0,  0,  0,  2,$72,$65,$64,$7A,$69,$6E,$69,$74,  0,  1,$4E, $C,  0,  0,  0,  2,$72,$65,$64,$7A,$6D,$6F,$76,$65,  0,  1,$4E,$62,  0,  0,  0,  2,$72,$65,$64,$7A,$5F,$30,  0,  0; 4928
-		dc.b   0,  1,$4E,$AC,  0,  0,  0,  2,$72,$65,$64,$7A,$5F,$31,  0,  0,  0,  1,$4E,$D0,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$74,$64,$62,$61,  0,  0,  1,$4E,$EC,  0,  0,  0,  3,$72,$65,$64,$7A,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  1,$4E,$A8,  0,  0,  0,  4; 4992
-		dc.b $7F,$66,$72,$61,$6D,$65,$6F,$75,$74,$24,$71,$64,$62,$61,  0,  0,  0,  1,$4E,$92,  0,  0,  0,  2,$72,$65,$64,$7A,$63,$68,$67,$30,  0,  1,$4F, $C,  0,  0,  0,  2,$72,$65,$64,$7A,$63,$68,$67,$31,  0,  1,$4F, $F,  0,  0,  0,  2,$72,$65,$64,$7A,$63,$68,$67,  0; 5056
-		dc.b   0,  1,$4F,  8,  0,  0,  0,  4,$72,$65,$64,$7A,$5F,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  0,  0,  0,  1,$4E,  6,  0,  0,  0,  2,$72,$65,$64,$7A,$73,$70,$30,  0,  0,  1,$4F,$1C,  0,  0,  0,  2,$72,$65,$64,$7A,$73,$70,$31,  0,  0,  1,$4F,$26,  0,  0,  0,  2; 5120
-		dc.b $72,$65,$64,$7A,$73,$70,$32,  0,  0,  1,$4F,$30,  0,  0,  0,  2,$72,$65,$64,$7A,$64,$69,$65,  0,  0,  1,$4F,  4,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$73,$64,$62,$61,  0,  0,  0,  1,$4E,$CE,  0,  0,  0,  3,$7F,$61,$62,$6F,$76,$65,$24,$63,$67,$62,$61,  0; 5184
-		dc.b   0,  1,$56,$C6,  0,  0,  0,  3,$7F,$61,$62,$6F,$76,$65,$24,$66,$67,$62,$61,  0,  0,  1,$57,$68,  0,  0,  0,  3,$73,$68,$6F,$74,$64,$72,$6F,$70,$73,  0,  0,  0,  0,  1,$52,$66,  0,  0,  0,  3,$7F,$73,$70,$65,$65,$64,$24,$66,$67,$62,$61,  0,  0,  1,$57,$84; 5248
-		dc.b   0,  0,  0,  2,$73,$6B,$79,$68,$6F,$72,$73,$65,  0,  1,$55,$78,  0,  0,  0,  2,$63,$68,$6B,$66,$6C,$6F,$61,$74,  0,  1,$51,$D8,  0,  0,  0,  2,$75,$70,$64,$61,$74,$6F,$69,$6C,  0,  1,$52,$A6,  0,  0,  0,  3,$6C,$61,$6E,$64,$65,$64,$79,$65,$74,  0,  0,  0; 5312
-		dc.b   0,  1,$52,$F2,  0,  0,  0,  4,$73,$6B,$79,$68,$6F,$72,$73,$65,$61,$74,$74,$61,$63,$6B,  0,  0,  0,  1,$56,$3E,  0,  0,  0,  4,$73,$65,$61,$68,$6F,$72,$73,$65,$61,$74,$74,$61,$63,$6B,  0,  0,  0,  1,$50,$BA,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$71,$65; 5376
-		dc.b $62,$61,  0,  0,  0,  1,$53,$4E,  0,  0,  0,  2,$63,$68,$6B,$66,$6C,$69,$70,  0,  0,  1,$53,$32,  0,  0,  0,  2,$73,$65,$61,$68,$6F,$72,$73,$65,  0,  1,$4F,$5C,  0,  0,  0,  3,$68,$6F,$72,$73,$65,$73,$70,$30,$35,  0,  0,  0,  0,  1,$54,$B8,  0,  0,  0,  3; 5440
-		dc.b $68,$6F,$72,$73,$65,$73,$70,$30,$36,  0,  0,  0,  0,  1,$54,$C2,  0,  0,  0,  3,$68,$6F,$72,$73,$65,$73,$70,$30,$37,  0,  0,  0,  0,  1,$54,$CC,  0,  0,  0,  3,$68,$6F,$72,$73,$65,$73,$70,$30,$38,  0,  0,  0,  0,  1,$54,$D6,  0,  0,  0,  2,$68,$6F,$72,$73; 5504
-		dc.b $65,$70,$61,$74,  0,  1,$54,$2C,  0,  0,  0,  3,$7F,$64,$6F,$6E,$65,$24,$6F,$65,$62,$61,  0,  0,  0,  1,$52,$E4,  0,  0,  0,  3,$68,$69,$74,$67,$72,$6F,$75,$6E,$64,  0,  0,  0,  0,  1,$52,$7C,  0,  0,  0,  3,$73,$6B,$79,$68,$6F,$72,$73,$65,$73,$70,$30,$30; 5568
-		dc.b   0,  1,$54,$E0,  0,  0,  0,  3,$73,$6B,$79,$68,$6F,$72,$73,$65,$73,$70,$30,$31,  0,  1,$55,  2,  0,  0,  0,  3,$73,$6B,$79,$68,$6F,$72,$73,$65,$73,$70,$30,$32,  0,  1,$55,$24,  0,  0,  0,  3,$73,$6B,$79,$68,$6F,$72,$73,$65,$73,$70,$30,$33,  0,  1,$55,$4E; 5632
-		dc.b   0,  0,  0,  2,$63,$68,$6B,$68,$69,$74,  0,  0,  0,  1,$53,$50,  0,  0,  0,  3,$7F,$6E,$6F,$72,$6D,$61,$6C,$24,$69,$65,$62,$61,  0,  1,$52,$5C,  0,  0,  0,  2,$66,$69,$78,$77,$69,$6E,$67,$73,  0,  1,$52,$2C,  0,  0,  0,  3,$7F,$6C,$65,$66,$74,$24,$72,$65; 5696
-		dc.b $62,$61,  0,  0,  0,  1,$53,$B8,  0,  0,  0,  3,$73,$65,$61,$68,$6F,$72,$73,$65,$73,$70,$30,$30,  0,  1,$54,$46,  0,  0,  0,  3,$73,$65,$61,$68,$6F,$72,$73,$65,$73,$70,$30,$31,  0,  1,$54,$60,  0,  0,  0,  3,$73,$65,$61,$68,$6F,$72,$73,$65,$73,$70,$30,$32; 5760
-		dc.b   0,  1,$54,$6A,  0,  0,  0,  3,$73,$65,$61,$68,$6F,$72,$73,$65,$73,$70,$30,$33,  0,  1,$54,$74,  0,  0,  0,  3,$73,$65,$61,$68,$6F,$72,$73,$65,$73,$70,$30,$34,  0,  1,$54,$96,  0,  0,  0,  3,$7F,$65,$64,$67,$65,$24,$66,$65,$62,$61,  0,  0,  0,  1,$51,$BC; 5824
-		dc.b   0,  0,  0,  5,$73,$65,$61,$68,$6F,$72,$73,$65,$5F,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  0,  0,  0,  1,$4F,$6A,  0,  0,  0,  5,$73,$6B,$79,$68,$6F,$72,$73,$65,$5F,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  0,  0,  0,  1,$55,$86,  0,  0,  0,  3,$73,$6B,$79,$68; 5888
-		dc.b $6F,$72,$73,$65,$69,$6E,$69,$74,  0,  1,$55,$92,  0,  0,  0,  3,$7F,$62,$65,$6C,$6F,$77,$24,$66,$67,$62,$61,  0,  0,  1,$57,$8C,  0,  0,  0,  2,$6D,$61,$6B,$65,$73,$68,$6F,$74,  0,  1,$56,$F2,  0,  0,  0,  3,$7F,$64,$6F,$77,$6E,$24,$68,$65,$62,$61,  0,  0; 5952
-		dc.b   0,  1,$52,$18,  0,  0,  0,  4,$7F,$6D,$61,$6B,$65,$73,$68,$6F,$74,$24,$64,$65,$62,$61,  0,  0,  0,  1,$50,$DA,  0,  0,  0,  2,$63,$68,$6B,$61,$74,$61,$63,$6B,  0,  1,$51,$70,  0,  0,  0,  3,$7F,$6C,$6F,$6F,$70,$24,$72,$65,$62,$61,  0,  0,  0,  1,$53,$5A; 6016
-		dc.b   0,  0,  0,  4,$7F,$77,$6F,$72,$6B,$6E,$61,$69,$24,$76,$64,$62,$61,  0,  0,  0,  0,  1,$50,$2E,  0,  0,  0,  3,$7F,$64,$6F,$6E,$65,$24,$62,$67,$62,$61,  0,  0,  0,  1,$56,$68,  0,  0,  0,  2,$68,$6F,$72,$73,$65,$63,$68,$67,  0,  1,$53,$F4,  0,  0,  0,  4; 6080
-		dc.b $7F,$74,$6F,$72,$69,$67,$68,$74,$24,$66,$65,$62,$61,  0,  0,  0,  0,  1,$51,$AE,  0,  0,  0,  3,$7F,$76,$65,$6C,$24,$67,$65,$62,$61,  0,  0,  0,  0,  1,$51,$F4,  0,  0,  0,  4,$7F,$77,$6F,$72,$6B,$6E,$61,$69,$24,$72,$65,$62,$61,  0,  0,  0,  0,  1,$53,$CC; 6144
-		dc.b   0,  0,  0,  4,$7F,$77,$6F,$72,$6B,$6E,$61,$69,$24,$64,$65,$62,$61,  0,  0,  0,  0,  1,$51,$46,  0,  0,  0,  3,$73,$65,$61,$68,$6F,$72,$73,$65,$69,$6E,$69,$74,  0,  1,$4F,$76,  0,  0,  0,  3,$63,$68,$6B,$66,$6C,$74,$64,$6F,$6E,$65,  0,  0,  0,  1,$51,$FA; 6208
-		dc.b   0,  0,  0,  3,$7F,$65,$6E,$64,$24,$64,$65,$62,$61,  0,  0,  0,  0,  1,$50,$D8,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$65,$65,$62,$61,  0,  0,  0,  0,  1,$51,$6E,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$66,$65,$62,$61,  0,  0,  0,  0,  1,$51,$D6,  0,  0,  0,  3; 6272
-		dc.b $7F,$65,$6E,$64,$24,$67,$65,$62,$61,  0,  0,  0,  0,  1,$51,$F8,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$68,$65,$62,$61,  0,  0,  0,  0,  1,$52,$16,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$6B,$65,$62,$61,  0,  0,  0,  0,  1,$52,$96,  0,  0,  0,  3,$7F,$6F,$75,$74; 6336
-		dc.b $24,$72,$65,$62,$61,  0,  0,  0,  0,  1,$53,$EE,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$6F,$65,$62,$61,  0,  0,  0,  0,  1,$52,$E2,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$70,$65,$62,$61,  0,  0,  0,  0,  1,$53,$30,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$72,$65,$62; 6400
-		dc.b $61,  0,  0,  0,  0,  1,$53,$F2,  0,  0,  0,  2,$63,$68,$6B,$73,$68,$6F,$74,  0,  0,  1,$50,$CC,  0,  0,  0,  2,$7F,$6F,$6B,$24,$64,$65,$62,$61,  0,  1,$51,$3A,  0,  0,  0,  3,$73,$65,$65,$6B,$73,$6F,$6E,$69,$63,  0,  0,  0,  0,  1,$57,$5C,  0,  0,  0,  3; 6464
-		dc.b $68,$6F,$72,$73,$65,$63,$68,$67,$32,  0,  0,  0,  0,  1,$54, $F,  0,  0,  0,  2,$7F,$72,$31,$24,$72,$65,$62,$61,  0,  1,$53,$C6,  0,  0,  0,  3,$73,$65,$61,$68,$6F,$72,$73,$65,$73,$77,$69,$6D,  0,  1,$50,$9A,  0,  0,  0,  2,$6F,$69,$6C,$73,$6C,$69,$70,  0; 6528
-		dc.b   0,  1,$52,$A2,  0,  0,  0,  3,$73,$6B,$79,$68,$6F,$72,$73,$65,$63,$68,$67,$30,  0,  1,$54,$1F,  0,  0,  0,  3,$73,$6B,$79,$68,$6F,$72,$73,$65,$63,$68,$67,$31,  0,  1,$54,$23,  0,  0,  0,  3,$7F,$74,$6F,$6C,$65,$66,$74,$24,$66,$65,$62,$61,  0,  1,$51,$9E; 6592
-		dc.b   0,  0,  0,  3,$73,$6B,$79,$68,$6F,$72,$73,$65,$6D,$6F,$76,$65,  0,  1,$55,$F0,  0,  0,  0,  3,$73,$65,$61,$68,$6F,$72,$73,$65,$73,$68,$6F,$74,  0,  1,$50,$84,  0,  0,  0,  3,$63,$68,$6B,$61,$74,$6B,$64,$6F,$6E,$65,  0,  0,  0,  1,$51,$48,  0,  0,  0,  3; 6656
-		dc.b $73,$65,$61,$68,$6F,$72,$73,$65,$63,$68,$67,$30,  0,  1,$54,  4,  0,  0,  0,  3,$73,$65,$61,$68,$6F,$72,$73,$65,$63,$68,$67,$31,  0,  1,$54,  7,  0,  0,  0,  3,$73,$65,$61,$68,$6F,$72,$73,$65,$63,$68,$67,$33,  0,  1,$54,$15,  0,  0,  0,  3,$73,$65,$61,$68; 6720
-		dc.b $6F,$72,$73,$65,$63,$68,$67,$34,  0,  1,$54,$19,  0,  0,  0,  3,$73,$65,$61,$68,$6F,$72,$73,$65,$63,$68,$67,$35,  0,  1,$54,$1C,  0,  0,  0,  4,$73,$6B,$79,$68,$6F,$72,$73,$65,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  1,$56,$10,  0,  0,  0,  3,$67,$65,$74,$70; 6784
-		dc.b $6F,$73,$69,$74,$69,$6F,$6E,  0,  0,  1,$56,$7A,  0,  0,  0,  3,$73,$65,$61,$68,$6F,$72,$73,$65,$6D,$6F,$76,$65,  0,  1,$50,$2E,  0,  0,  0,  3,$73,$6B,$79,$68,$6F,$72,$73,$65,$73,$68,$6F,$74,  0,  1,$56,$14,  0,  0,  0,  4,$7F,$77,$6F,$72,$6B,$6E,$61,$69; 6848
-		dc.b $24,$65,$67,$62,$61,  0,  0,  0,  0,  1,$57,$5A,  0,  0,  0,  3,$7F,$6E,$65,$78,$74,$24,$63,$67,$62,$61,  0,  0,  0,  1,$56,$A6,  0,  0,  0,  4,$73,$65,$61,$68,$6F,$72,$73,$65,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  1,$50,$54,  0,  0,  0,  3,$7F,$65,$6E,$64; 6912
-		dc.b $24,$64,$67,$62,$61,  0,  0,  0,  0,  1,$56,$F0,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$66,$67,$62,$61,  0,  0,  0,  0,  1,$57,$B0,  0,  0,  0,  3,$7F,$6F,$75,$74,$24,$63,$67,$62,$61,  0,  0,  0,  0,  1,$56,$CA,  0,  0,  0,  3,$7F,$6F,$75,$74,$24,$66,$67,$62; 6976
-		dc.b $61,  0,  0,  0,  0,  1,$57,$BA,  0,  0,  0,  2,$7F,$6F,$6B,$24,$65,$67,$62,$61,  0,  1,$57,$4E,  0,  0,  0,  4,$7F,$6E,$65,$67,$73,$70,$65,$65,$64,$24,$66,$67,$62,$61,  0,  0,  0,  1,$57,$A8,  0,  0,  0,  3,$73,$6B,$79,$68,$6F,$72,$73,$65,$66,$6C,$79,  0; 7040
-		dc.b   0,  1,$56,$28,  0,  0,  0,  3,$7F,$74,$6F,$6C,$65,$66,$74,$24,$63,$67,$62,$61,  0,  1,$56,$9A,  0,  0,  0,  4,$73,$65,$61,$68,$6F,$72,$73,$65,$66,$6C,$6F,$61,$74,  0,  0,  0,  0,  1,$50,$AC,  0,  0,  0,  2,$63,$68,$6B,$73,$68,$6F,$6F,$74,  0,  1,$56,$CC; 7104
-		dc.b   0,  0,  0,  4,$73,$65,$61,$68,$6F,$72,$73,$65,$77,$69,$6E,$67,$73,  0,  0,  0,  0,  1,$50,$5A,  0,  0,  0,  3,$73,$68,$6F,$74,$73,$74,$61,$74,$75,$73,  0,  0,  0,  1,$56,$54,  0,  0,  0,  4,$7F,$73,$65,$74,$62,$65,$68,$69,$6E,$64,$24,$63,$67,$62,$61,  0; 7168
-		dc.b   0,  1,$56,$A2,  0,  0,  0,  3,$77,$61,$73,$70,$63,$68,$67,$30,$30,  0,  0,  0,  0,  1,$5A,$20,  0,  0,  0,  3,$77,$61,$73,$70,$63,$68,$67,$30,$31,  0,  0,  0,  0,  1,$5A,$23,  0,  0,  0,  3,$77,$61,$73,$70,$63,$68,$67,$30,$32,  0,  0,  0,  0,  1,$5A,$27; 7232
-		dc.b   0,  0,  0,  3,$77,$61,$73,$70,$63,$68,$67,$30,$33,  0,  0,  0,  0,  1,$5A,$2B,  0,  0,  0,  3,$63,$68,$65,$63,$6B,$73,$68,$6F,$6F,$74,  0,  0,  0,  1,$59,$4A,  0,  0,  0,  3,$7F,$64,$6F,$6E,$65,$24,$67,$65,$62,$61,  0,  0,  0,  1,$58,$E6,  0,  0,  0,  3; 7296
-		dc.b $7F,$64,$6F,$6E,$65,$24,$6C,$65,$62,$61,  0,  0,  0,  1,$59,$AC,  0,  0,  0,  2,$77,$61,$73,$70,$69,$6E,$69,$74,  0,  1,$58,$44,  0,  0,  0,  2,$77,$61,$73,$70,$63,$68,$67,  0,  0,  1,$5A,$18,  0,  0,  0,  2,$77,$61,$73,$70,$6D,$6F,$76,$65,  0,  1,$58,$E8; 7360
-		dc.b   0,  0,  0,  3,$77,$61,$73,$70,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  1,$59,  4,  0,  0,  0,  3,$7F,$68,$65,$72,$65,$32,$24,$6A,$65,$62,$61,  0,  0,  1,$59,$2E,  0,  0,  0,  3,$77,$61,$73,$70,$61,$66,$74,$65,$72,$62,  0,  0,  0,  1,$58, $C,  0,  0,  0,  2; 7424
-		dc.b $77,$61,$73,$70,$73,$68,$6F,$74,  0,  1,$57,$FA,  0,  0,  0,  3,$7F,$6F,$75,$74,$24,$6B,$65,$62,$61,  0,  0,  0,  0,  1,$59,$96,  0,  0,  0,  3,$7F,$6F,$75,$74,$24,$6C,$65,$62,$61,  0,  0,  0,  0,  1,$5A,$16,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$6A,$65,$62; 7488
-		dc.b $61,  0,  0,  0,  0,  1,$59,$2C,  0,  0,  0,  3,$77,$61,$73,$70,$73,$68,$6F,$6F,$74,  0,  0,  0,  0,  1,$59,$98,  0,  0,  0,  3,$7F,$74,$6F,$6C,$65,$66,$74,$24,$6B,$65,$62,$61,  0,  1,$59,$7A,  0,  0,  0,  3,$7F,$68,$65,$72,$65,$24,$6A,$65,$62,$61,  0,  0; 7552
-		dc.b   0,  1,$59,$26,  0,  0,  0,  3,$7F,$68,$65,$72,$65,$24,$6C,$65,$62,$61,  0,  0,  0,  1,$59,$B2,  0,  0,  0,  3,$7F,$63,$6E,$74,$24,$66,$65,$62,$61,  0,  0,  0,  0,  1,$58,$1E,  0,  0,  0,  3,$7F,$63,$6E,$74,$24,$6B,$65,$62,$61,  0,  0,  0,  0,  1,$59,$60; 7616
-		dc.b   0,  0,  0,  4,$77,$61,$73,$70,$5F,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  0,  0,  0,  1,$57,$F2,  0,  0,  0,  2,$77,$61,$73,$70,$66,$6C,$79,  0,  0,  1,$59,  8,  0,  0,  0,  1,$77,$61,$73,$70,  0,  1,$57,$E0,  0,  0,  0,  3,$7F,$73,$68,$74,$24,$6B,$65,$62; 7680
-		dc.b $61,  0,  0,  0,  0,  1,$59,$82,  0,  0,  0,  2,$77,$61,$73,$70,$73,$70,$30,$30,  0,  1,$5A,$42,  0,  0,  0,  2,$77,$61,$73,$70,$73,$70,$30,$31,  0,  1,$5A,$54,  0,  0,  0,  2,$77,$61,$73,$70,$73,$70,$30,$32,  0,  1,$5A,$6E,  0,  0,  0,  2,$77,$61,$73,$70; 7744
-		dc.b $73,$70,$30,$33,  0,  1,$5A,$88,  0,  0,  0,  2,$77,$61,$73,$70,$73,$70,$30,$34,  0,  1,$5A,$92,  0,  0,  0,  2,$77,$61,$73,$70,$73,$70,$30,$35,  0,  1,$5A,$9C,  0,  0,  0,  2,$77,$61,$73,$70,$73,$70,$30,$36,  0,  1,$5A,$A6,  0,  0,  0,  2,$77,$61,$73,$70; 7808
-		dc.b $70,$61,$74,  0,  0,  1,$5A,$34,  0,  0,  0,  2,$6F,$63,$74,$63,$68,$67,$30,$30,  0,  1,$5C,$C0,  0,  0,  0,  2,$6F,$63,$74,$70,$61,$74,  0,  0,  0,  1,$5C,$CC,  0,  0,  0,  2,$6F,$63,$74,$63,$68,$67,$30,$31,  0,  1,$5C,$C3,  0,  0,  0,  2,$6F,$63,$74,$63; 7872
-		dc.b $68,$67,$30,$32,  0,  1,$5C,$C8,  0,  0,  0,  2,$6F,$63,$74,$73,$68,$6F,$74,  0,  0,  1,$5A,$DE,  0,  0,  0,  3,$7F,$65,$6E,$64,$30,$24,$77,$64,$62,$61,  0,  0,  0,  1,$5C,$38,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$76,$64,$62,$61,  0,  0,  0,  0,  1,$5B,$D0; 7936
-		dc.b   0,  0,  0,  3,$7F,$65,$6E,$64,$24,$72,$64,$62,$61,  0,  0,  0,  0,  1,$5B,$64,  0,  0,  0,  3,$7F,$6F,$75,$74,$24,$77,$64,$62,$61,  0,  0,  0,  0,  1,$5C,$9E,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$77,$64,$62,$61,  0,  0,  0,  0,  1,$5C,$9C,  0,  0,  0,  1; 8000
-		dc.b $6F,$63,$74,  0,  0,  1,$5A,$C8,  0,  0,  0,  3,$7F,$63,$6E,$74,$24,$78,$64,$62,$61,  0,  0,  0,  0,  1,$5C,$B2,  0,  0,  0,  3,$7F,$63,$6E,$74,$24,$70,$64,$62,$61,  0,  0,  0,  0,  1,$5A,$E8,  0,  0,  0,  2,$6F,$63,$74,$63,$68,$67,  0,  0,  0,  1,$5C,$BA; 8064
-		dc.b   0,  0,  0,  2,$6F,$63,$74,$73,$70,$30,$30,  0,  0,  1,$5C,$DA,  0,  0,  0,  2,$6F,$63,$74,$73,$70,$30,$31,  0,  0,  1,$5C,$EC,  0,  0,  0,  2,$6F,$63,$74,$73,$70,$30,$32,  0,  0,  1,$5D,  6,  0,  0,  0,  2,$6F,$63,$74,$73,$70,$30,$33,  0,  0,  1,$5D,$20; 8128
-		dc.b   0,  0,  0,  2,$6F,$63,$74,$73,$70,$30,$34,  0,  0,  1,$5D,$3A,  0,  0,  0,  2,$6F,$63,$74,$73,$70,$30,$35,  0,  0,  1,$5D,$44,  0,  0,  0,  2,$6F,$63,$74,$73,$70,$30,$36,  0,  0,  1,$5D,$4E,  0,  0,  0,  2,$6F,$63,$74,$73,$68,$6F,$6F,$74,  0,  1,$5B,$D2; 8192
-		dc.b   0,  0,  0,  3,$6F,$63,$74,$5F,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  1,$5A,$D6,  0,  0,  0,  2,$6F,$63,$74,$65,$79,$65,  0,  0,  0,  1,$5A,$FA,  0,  0,  0,  2,$6F,$63,$74,$6C,$65,$61,$76,$65,  0,  1,$5C,$A4,  0,  0,  0,  2,$6F,$63,$74,$66,$6C,$79,  0,  0; 8256
-		dc.b   0,  1,$5B,$B0,  0,  0,  0,  2,$6F,$63,$74,$69,$6E,$69,$74,  0,  0,  1,$5B,  6,  0,  0,  0,  2,$6F,$63,$74,$73,$74,$61,$6E,$64,  0,  1,$5B,$90,  0,  0,  0,  2,$6F,$63,$74,$6D,$6F,$76,$65,  0,  0,  1,$5B,$6C,  0,  0,  0,  3,$6F,$63,$74,$6D,$6F,$76,$65,$5F; 8320
-		dc.b $74,$62,$6C,  0,  0,  1,$5B,$88,  0,  0,  0,  3,$7F,$64,$6F,$6E,$65,$24,$75,$64,$62,$61,  0,  0,  0,  1,$5B,$AE,  0,  0,  0,  2,$62,$61,$74,$68,$6F,$76,$65,$72,  0,  1,$5F,$56,  0,  0,  0,  2,$62,$61,$74,$69,$6E,$69,$74,  0,  0,  1,$5D,$8C,  0,  0,  0,  3; 8384
-		dc.b $61,$74,$74,$61,$63,$6B,$63,$68,$6B,  0,  0,  0,  0,  1,$5E,$6C,  0,  0,  0,  2,$7F,$72,$74,$24,$62,$65,$62,$61,  0,  1,$5E,$F2,  0,  0,  0,  3,$7F,$64,$6F,$6E,$65,$24,$62,$65,$62,$61,  0,  0,  0,  1,$5F,  6,  0,  0,  0,  3,$7F,$67,$6F,$6E,$65,$24,$61,$65; 8448
-		dc.b $62,$61,  0,  0,  0,  1,$5E,$B8,  0,  0,  0,  2,$6D,$6F,$76,$65,$73,$65,$74,  0,  0,  1,$5F,$36,  0,  0,  0,  2,$62,$61,$74,$6D,$6F,$76,$65,  0,  0,  1,$5D,$CA,  0,  0,  0,  3,$62,$61,$74,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  0,  1,$5D,$EA,  0,  0,  0,  2; 8512
-		dc.b $62,$62,$61,$74,$70,$61,$74,  0,  0,  1,$60,$16,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$78,$64,$62,$61,  0,  0,  0,  0,  1,$5E,$36,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$7A,$64,$62,$61,  0,  0,  0,  0,  1,$5E,$6A,  0,  0,  0,  2,$73,$65,$74,$70,$6F,$73,$69,  0; 8576
-		dc.b   0,  1,$5D,$F0,  0,  0,  0,  2,$62,$61,$74,$63,$68,$67,  0,  0,  0,  1,$5F,$E2,  0,  0,  0,  3,$62,$61,$74,$5F,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  1,$5D,$86,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$64,$65,$62,$61,  0,  0,  0,  0,  1,$5F,$8C,  0,  0,  0,  3; 8640
-		dc.b $7F,$65,$6E,$64,$24,$65,$65,$62,$61,  0,  0,  0,  0,  1,$5F,$98,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$61,$65,$62,$61,  0,  0,  0,  0,  1,$5E,$B6,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$62,$65,$62,$61,  0,  0,  0,  0,  1,$5E,$F0,  0,  0,  0,  3,$7F,$68,$65,$72; 8704
-		dc.b $65,$24,$66,$65,$62,$61,  0,  0,  0,  1,$5F,$C8,  0,  0,  0,  3,$7F,$63,$6E,$74,$24,$66,$65,$62,$61,  0,  0,  0,  0,  1,$5F,$E0,  0,  0,  0,  3,$7F,$63,$6E,$74,$24,$61,$65,$62,$61,  0,  0,  0,  0,  1,$5E,$90,  0,  0,  0,  3,$62,$61,$74,$61,$74,$74,$61,$63; 8768
-		dc.b $6B,  0,  0,  0,  0,  1,$5E,$38,  0,  0,  0,  2,$64,$69,$72,$65,$63,$63,$68,$67,  0,  1,$5E,$D8,  0,  0,  0,  2,$66,$69,$78,$6D,$65,  0,  0,  0,  0,  1,$5E,$58,  0,  0,  0,  3,$7F,$6E,$6F,$72,$6D,$24,$61,$65,$62,$61,  0,  0,  0,  1,$5E,$C4,  0,  0,  0,  1; 8832
-		dc.b $62,$62,$61,$74,  0,  1,$5D,$78,  0,  0,  0,  2,$62,$61,$74,$63,$68,$67,$30,$30,  0,  1,$5F,$EA,  0,  0,  0,  2,$62,$61,$74,$63,$68,$67,$30,$31,  0,  1,$5F,$EE,  0,  0,  0,  2,$62,$61,$74,$63,$68,$67,$30,$32,  0,  1,$5F,$FD,  0,  0,  0,  2,$62,$61,$74,$63; 8896
-		dc.b $68,$67,$30,$33,  0,  1,$60, $E,  0,  0,  0,  2,$62,$61,$74,$66,$6C,$61,$70,  0,  0,  1,$5F,$8E,  0,  0,  0,  2,$62,$61,$74,$73,$65,$65,$6B,  0,  0,  1,$5F,$9A,  0,  0,  0,  2,$73,$65,$65,$6B,$63,$68,$6B,  0,  0,  1,$5E, $A,  0,  0,  0,  2,$62,$61,$74,$73; 8960
-		dc.b $70,$30,$30,  0,  0,  1,$60,$34,  0,  0,  0,  2,$62,$61,$74,$73,$70,$30,$31,  0,  0,  1,$60,$56,  0,  0,  0,  2,$62,$61,$74,$73,$70,$30,$32,  0,  0,  1,$60,$78,  0,  0,  0,  2,$62,$61,$74,$73,$70,$30,$33,  0,  0,  1,$60,$9A,  0,  0,  0,  2,$62,$61,$74,$73; 9024
-		dc.b $70,$30,$34,  0,  0,  1,$60,$BC,  0,  0,  0,  2,$62,$61,$74,$73,$70,$30,$35,  0,  0,  1,$60,$D6,  0,  0,  0,  2,$62,$61,$74,$73,$70,$30,$36,  0,  0,  1,$60,$F8,  0,  0,  0,  2,$62,$61,$74,$73,$70,$30,$37,  0,  0,  1,$61,$1A,  0,  0,  0,  2,$62,$61,$74,$73; 9088
-		dc.b $70,$30,$38,  0,  0,  1,$61,$3C,  0,  0,  0,  2,$62,$61,$74,$73,$70,$30,$39,  0,  0,  1,$61,$5E,  0,  0,  0,  2,$62,$61,$74,$73,$70,$31,$30,  0,  0,  1,$61,$78,  0,  0,  0,  2,$62,$61,$74,$73,$70,$31,$31,  0,  0,  1,$61,$92,  0,  0,  0,  2,$62,$61,$74,$73; 9152
-		dc.b $70,$31,$32,  0,  0,  1,$61,$AC,  0,  0,  0,  2,$62,$61,$74,$73,$70,$31,$33,  0,  0,  1,$61,$BE,  0,  0,  0,  2,$62,$61,$74,$73,$70,$31,$34,  0,  0,  1,$61,$D0,  0,  0,  0,  3,$67,$61,$74,$6F,$72,$63,$68,$67,$30,$30,  0,  0,  0,  1,$63,$1C,  0,  0,  0,  3; 9216
-		dc.b $67,$61,$74,$6F,$72,$63,$68,$67,$30,$31,  0,  0,  0,  1,$63,$24,  0,  0,  0,  3,$67,$61,$74,$6F,$72,$63,$68,$67,$30,$32,  0,  0,  0,  1,$63,$27,  0,  0,  0,  2,$67,$61,$74,$6F,$72,  0,  0,  0,  0,  1,$62,  0,  0,  0,  0,  3,$67,$61,$74,$6F,$72,$73,$70,$30; 9280
-		dc.b $30,  0,  0,  0,  0,  1,$63,$48,  0,  0,  0,  3,$67,$61,$74,$6F,$72,$73,$70,$30,$31,  0,  0,  0,  0,  1,$63,$6A,  0,  0,  0,  3,$67,$61,$74,$6F,$72,$73,$70,$30,$32,  0,  0,  0,  0,  1,$63,$8C,  0,  0,  0,  3,$67,$61,$74,$6F,$72,$73,$70,$30,$33,  0,  0,  0; 9344
-		dc.b   0,  1,$63,$AE,  0,  0,  0,  3,$67,$61,$74,$6F,$72,$73,$70,$30,$34,  0,  0,  0,  0,  1,$63,$D0,  0,  0,  0,  3,$67,$61,$74,$6F,$72,$73,$70,$30,$35,  0,  0,  0,  0,  1,$63,$F2,  0,  0,  0,  3,$67,$61,$74,$6F,$72,$73,$70,$30,$36,  0,  0,  0,  0,  1,$64,$14; 9408
-		dc.b   0,  0,  0,  3,$67,$61,$74,$6F,$72,$73,$70,$30,$37,  0,  0,  0,  0,  1,$64,$36,  0,  0,  0,  3,$67,$61,$74,$6F,$72,$73,$70,$30,$38,  0,  0,  0,  0,  1,$64,$58,  0,  0,  0,  3,$67,$61,$74,$6F,$72,$73,$70,$30,$39,  0,  0,  0,  0,  1,$64,$7A,  0,  0,  0,  3; 9472
-		dc.b $67,$61,$74,$6F,$72,$73,$70,$31,$30,  0,  0,  0,  0,  1,$64,$9C,  0,  0,  0,  3,$67,$61,$74,$6F,$72,$73,$70,$31,$31,  0,  0,  0,  0,  1,$64,$BE,  0,  0,  0,  2,$67,$61,$74,$6F,$72,$70,$61,$74,  0,  1,$63,$30,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$74,$64,$62; 9536
-		dc.b $61,  0,  0,  0,  0,  1,$62,$C4,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$70,$64,$62,$61,  0,  0,  0,  0,  1,$62,$60,  0,  0,  0,  3,$7F,$6F,$75,$74,$24,$75,$64,$62,$61,  0,  0,  0,  0,  1,$63, $E,  0,  0,  0,  3,$7F,$73,$65,$74,$24,$75,$64,$62,$61,  0,  0,  0; 9600
-		dc.b   0,  1,$63,  6,  0,  0,  0,  2,$67,$61,$74,$6F,$72,$5F,$30,  0,  0,  1,$62,$82,  0,  0,  0,  2,$67,$61,$74,$6F,$72,$5F,$31,  0,  0,  1,$62,$A6,  0,  0,  0,  3,$7F,$6C,$66,$74,$24,$75,$64,$62,$61,  0,  0,  0,  0,  1,$62,$E8,  0,  0,  0,  4,$67,$61,$74,$6F; 9664
-		dc.b $72,$5F,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  0,  0,  1,$62, $E,  0,  0,  0,  3,$67,$61,$74,$6F,$72,$69,$6E,$69,$74,  0,  0,  0,  0,  1,$62,$12,  0,  0,  0,  3,$67,$61,$74,$6F,$72,$6D,$6F,$76,$65,  0,  0,  0,  0,  1,$62,$62,  0,  0,  0,  3,$7F,$6A,$75,$6D; 9728
-		dc.b $70,$32,$24,$74,$64,$62,$61,  0,  0,  1,$62,$C6,  0,  0,  0,  4,$67,$61,$74,$6F,$72,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  0,  0,  0,  1,$62,$7E,  0,  0,  0,  2,$67,$61,$74,$6F,$72,$63,$68,$67,  0,  1,$63,$16,  0,  0,  0,  3,$63,$68,$65,$63,$6B,$73,$6F,$6E; 9792
-		dc.b $69,$63,  0,  0,  0,  1,$62,$DE,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$73,$64,$62,$61,  0,  0,  0,  1,$62,$A4,  0,  0,  0,  2,$7F,$72,$74,$24,$75,$64,$62,$61,  0,  1,$62,$F8,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$62,$65,$62,$61,  0,  0,  0,  1,$65,$70; 9856
-		dc.b   0,  0,  0,  4,$77,$66,$69,$73,$68,$5F,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  0,  0,  1,$65, $A,  0,  0,  0,  3,$77,$66,$69,$73,$68,$69,$6E,$69,$74,  0,  0,  0,  0,  1,$65, $E,  0,  0,  0,  3,$77,$66,$69,$73,$68,$32,$70,$61,$74,  0,  0,  0,  0,  1,$65,$A6; 9920
-		dc.b   0,  0,  0,  2,$77,$66,$69,$73,$68,$63,$68,$67,  0,  1,$65,$94,  0,  0,  0,  2,$66,$69,$73,$68,$73,$70,$30,  0,  0,  1,$65,$AA,  0,  0,  0,  2,$66,$69,$73,$68,$73,$70,$31,  0,  0,  1,$65,$C4,  0,  0,  0,  3,$77,$66,$69,$73,$68,$63,$68,$67,$30,  0,  0,  0; 9984
-		dc.b   0,  1,$65,$9A,  0,  0,  0,  3,$77,$66,$69,$73,$68,$63,$68,$67,$31,  0,  0,  0,  0,  1,$65,$9E,  0,  0,  0,  3,$77,$66,$69,$73,$68,$63,$68,$67,$32,  0,  0,  0,  0,  1,$65,$A2,  0,  0,  0,  3,$77,$66,$69,$73,$68,$6D,$6F,$76,$65,  0,  0,  0,  0,  1,$65,$48; 10048
-		dc.b   0,  0,  0,  2,$77,$66,$69,$73,$68,$32,  0,  0,  0,  1,$64,$F8,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$62,$65,$62,$61,  0,  0,  1,$65,$92,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$65,$65,$62,$61,  0,  0,  0,  1,$66,$D8,  0,  0,  0,  3,$7F,$64,$6F,$6E; 10112
-		dc.b $65,$24,$66,$65,$62,$61,  0,  0,  0,  1,$67,$36,  0,  0,  0,  2,$73,$6E,$61,$69,$6C,$63,$68,$67,  0,  1,$68,$2C,  0,  0,  0,  3,$73,$6E,$61,$69,$6C,$63,$68,$67,$30,  0,  0,  0,  0,  1,$68,$30,  0,  0,  0,  3,$73,$6E,$61,$69,$6C,$63,$68,$67,$31,  0,  0,  0; 10176
-		dc.b   0,  1,$68,$34,  0,  0,  0,  3,$73,$6E,$61,$69,$6C,$6D,$6F,$76,$65,  0,  0,  0,  0,  1,$66,$AC,  0,  0,  0,  2,$73,$6E,$61,$69,$6C,$73,$70,$30,  0,  1,$68,$3E,  0,  0,  0,  2,$73,$6E,$61,$69,$6C,$73,$70,$31,  0,  1,$68,$50,  0,  0,  0,  2,$73,$6E,$61,$69; 10240
-		dc.b $6C,$73,$70,$32,  0,  1,$68,$62,  0,  0,  0,  3,$75,$70,$64,$61,$74,$65,$70,$61,$72,$74,$73,  0,  0,  1,$68,  4,  0,  0,  0,  4,$7F,$74,$6F,$72,$69,$67,$68,$74,$24,$66,$65,$62,$61,  0,  0,  0,  0,  1,$67,$1C,  0,  0,  0,  3,$7F,$6F,$75,$74,$31,$24,$64,$65; 10304
-		dc.b $62,$61,  0,  0,  0,  1,$66,$94,  0,  0,  0,  3,$7F,$6F,$75,$74,$24,$67,$65,$62,$61,  0,  0,  0,  0,  1,$67,$90,  0,  0,  0,  3,$7F,$64,$6F,$69,$74,$24,$66,$65,$62,$61,  0,  0,  0,  1,$67,$24,  0,  0,  0,  3,$7F,$74,$6F,$6C,$65,$66,$74,$24,$66,$65,$62,$61; 10368
-		dc.b   0,  1,$67,$12,  0,  0,  0,  3,$7F,$63,$6E,$74,$24,$68,$65,$62,$61,  0,  0,  0,  0,  1,$67,$BA,  0,  0,  0,  3,$7F,$63,$6E,$74,$24,$64,$65,$62,$61,  0,  0,  0,  0,  1,$66,$A6,  0,  0,  0,  2,$73,$6E,$61,$69,$6C,  0,  0,  0,  0,  1,$65,$F8,  0,  0,  0,  2; 10432
-		dc.b $6D,$61,$6B,$65,$61,$66,$62,  0,  0,  1,$67,$38,  0,  0,  0,  3,$63,$68,$6B,$63,$68,$61,$72,$67,$65,  0,  0,  0,  0,  1,$66,$F4,  0,  0,  0,  3,$61,$66,$62,$75,$70,$64,$61,$74,$65,  0,  0,  0,  0,  1,$67,$92,  0,  0,  0,  2,$73,$6E,$61,$69,$6C,$70,$61,$74; 10496
-		dc.b   0,  1,$68,$38,  0,  0,  0,  3,$73,$6E,$61,$69,$6C,$69,$6E,$69,$74,  0,  0,  0,  0,  1,$66,$14,  0,  0,  0,  4,$73,$6E,$61,$69,$6C,$5F,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  0,  0,  1,$66, $A,  0,  0,  0,  3,$73,$6E,$61,$69,$6C,$74,$75,$72,$6E,  0,  0,  0; 10560
-		dc.b   0,  1,$67,$CC,  0,  0,  0,  3,$62,$6F,$73,$73,$64,$72,$69,$6C,$6C,$65,$72,  0,  0,  1,$68,$90,  0,  0,  0,  1,$74,$62,$6C,  0,  0,  1,$69,$6C,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$76,$65,$62,$61,  0,  0,  0,  1,$69,$78,  0,  0,  0,  2,$6D,$6F,$76,$65; 10624
-		dc.b $63,$61,$72,  0,  0,  1,$69,$2C,  0,  0,  0,  3,$63,$68,$65,$63,$6B,$73,$68,$6F,$6F,$74,  0,  0,  0,  1,$6D,$42,  0,  0,  0,  3,$6A,$6F,$69,$6E,$61,$64,$6A,$75,$73,$74,  0,  0,  0,  1,$69,  8,  0,  0,  0,  3,$6D,$6F,$76,$65,$6F,$6E,$73,$63,$72,$65,$65,$6E; 10688
-		dc.b   0,  1,$68,$AA,  0,  0,  0,  2,$74,$69,$72,$65,$73,$69,$74,  0,  0,  1,$6C,$1A,  0,  0,  0,  3,$6D,$61,$6B,$65,$77,$68,$65,$65,$6C,$73,  0,  0,  0,  1,$6D,$72,  0,  0,  0,  4,$7F,$77,$6F,$72,$6B,$6E,$61,$69,$32,$24,$63,$67,$62,$61,  0,  0,  0,  1,$6F,$D0; 10752
-		dc.b   0,  0,  0,  3,$7F,$6A,$6F,$69,$6E,$65,$64,$24,$72,$65,$62,$61,  0,  1,$68,$F4,  0,  0,  0,  3,$7F,$64,$6F,$6E,$65,$24,$6F,$65,$62,$61,  0,  0,  0,  1,$68,$C2,  0,  0,  0,  2,$6A,$6F,$69,$6E,$6C,$61,$6E,$64,  0,  1,$68,$E2,  0,  0,  0,  2,$64,$72,$69,$6C; 10816
-		dc.b $6C,$65,$72,  0,  0,  1,$6B,  0,  0,  0,  0,  3,$64,$72,$69,$6C,$6C,$65,$72,$67,$75,$79,  0,  0,  0,  1,$6F,$2C,  0,  0,  0,  3,$74,$69,$72,$65,$62,$6F,$75,$6E,$63,$65,  0,  0,  0,  1,$6C,$A0,  0,  0,  0,  2,$63,$68,$65,$63,$6B,$68,$69,$74,  0,  1,$6A,$9E; 10880
-		dc.b   0,  0,  0,  3,$64,$72,$69,$6C,$6C,$65,$72,$5F,$74,$62,$6C,  0,  0,  1,$6B, $E,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$64,$66,$62,$61,  0,  0,  0,  1,$6A,$C8,  0,  0,  0,  3,$69,$6E,$69,$74,$72,$6F,$74,$6F,$72,$73,  0,  0,  0,  1,$69,$D8,  0,  0,  0,  3; 10944
-		dc.b $7F,$64,$6F,$6E,$65,$24,$63,$66,$62,$61,  0,  0,  0,  1,$6A,$9C,  0,  0,  0,  3,$7F,$64,$6F,$6E,$65,$24,$70,$66,$62,$61,  0,  0,  0,  1,$6B,$B4,  0,  0,  0,  2,$74,$69,$72,$65,$6D,$6F,$76,$65,  0,  1,$6C,  4,  0,  0,  0,  3,$62,$6F,$73,$73,$64,$72,$69,$6C; 11008
-		dc.b $6C,$63,$68,$67,  0,  1,$70,$E0,  0,  0,  0,  2,$74,$69,$72,$65,$72,$6F,$6C,$6C,  0,  1,$6C,$38,  0,  0,  0,  3,$74,$69,$72,$65,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  1,$6C,$12,  0,  0,  0,  3,$63,$68,$65,$63,$6B,$66,$6C,$69,$70,  0,  0,  0,  0,  1,$6A,$7C; 11072
-		dc.b   0,  0,  0,  3,$62,$6F,$73,$73,$68,$65,$6C,$69,$63,$68,$67,  0,  0,  1,$6F,$D2,  0,  0,  0,  3,$7F,$6C,$65,$66,$74,$24,$79,$66,$62,$61,  0,  0,  0,  1,$6D,$60,  0,  0,  0,  2,$72,$75,$6E,$61,$77,$61,$79,  0,  0,  1,$6A,$66,  0,  0,  0,  2,$63,$61,$72,$62; 11136
-		dc.b $6F,$64,$79,  0,  0,  1,$6B,$C2,  0,  0,  0,  2,$74,$61,$6B,$65,$6F,$66,$66,  0,  0,  1,$6A,$4C,  0,  0,  0,  3,$7F,$72,$69,$67,$68,$74,$24,$79,$66,$62,$61,  0,  0,  1,$6D,$56,  0,  0,  0,  3,$62,$6F,$73,$73,$68,$65,$6C,$69,$63,$68,$67,$30,  0,  1,$6F,$D8; 11200
-		dc.b   0,  0,  0,  3,$62,$6F,$73,$73,$68,$65,$6C,$69,$63,$68,$67,$31,  0,  1,$6F,$DC,  0,  0,  0,  3,$62,$6F,$73,$73,$68,$65,$6C,$69,$63,$68,$67,$32,  0,  1,$6F,$F2,  0,  0,  0,  2,$72,$65,$74,$72,$61,$63,$74,  0,  0,  1,$6B,$98,  0,  0,  0,  4,$62,$6F,$73,$73; 11264
-		dc.b $64,$72,$69,$6C,$6C,$63,$68,$67,$30,  0,  0,  0,  0,  1,$70,$E6,  0,  0,  0,  4,$62,$6F,$73,$73,$64,$72,$69,$6C,$6C,$63,$68,$67,$31,  0,  0,  0,  0,  1,$70,$EB,  0,  0,  0,  4,$62,$6F,$73,$73,$64,$72,$69,$6C,$6C,$63,$68,$67,$32,  0,  0,  0,  0,  1,$70,$EF; 11328
-		dc.b   0,  0,  0,  3,$62,$6F,$73,$73,$64,$72,$69,$6C,$6C,$73,$70,$30,  0,  1,$71,  4,  0,  0,  0,  3,$62,$6F,$73,$73,$64,$72,$69,$6C,$6C,$73,$70,$31,  0,  1,$71,$1E,  0,  0,  0,  3,$62,$6F,$73,$73,$64,$72,$69,$6C,$6C,$73,$70,$32,  0,  1,$71,$28,  0,  0,  0,  3; 11392
-		dc.b $62,$6F,$73,$73,$64,$72,$69,$6C,$6C,$73,$70,$33,  0,  1,$71,$32,  0,  0,  0,  3,$62,$6F,$73,$73,$64,$72,$69,$6C,$6C,$73,$70,$34,  0,  1,$71,$3C,  0,  0,  0,  3,$62,$6F,$73,$73,$64,$72,$69,$6C,$6C,$73,$70,$35,  0,  1,$71,$46,  0,  0,  0,  3,$62,$6F,$73,$73; 11456
-		dc.b $64,$72,$69,$6C,$6C,$73,$70,$36,  0,  1,$71,$50,  0,  0,  0,  3,$62,$6F,$73,$73,$64,$72,$69,$6C,$6C,$73,$70,$37,  0,  1,$71,$5A,  0,  0,  0,  3,$64,$65,$61,$74,$68,$73,$74,$61,$72,$74,  0,  0,  0,  1,$69,$70,  0,  0,  0,  5,$62,$6F,$73,$73,$64,$72,$69,$6C; 11520
-		dc.b $6C,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  0,  0,  0,  1,$68,$9E,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$76,$65,$62,$61,  0,  0,  0,  0,  1,$69,$A4,  0,  0,  0,  3,$7F,$6F,$66,$66,$24,$63,$66,$62,$61,  0,  0,  0,  0,  1,$6A,$8C,  0,  0,  0,  2,$6A,$6F,$69,$6E; 11584
-		dc.b $5F,$74,$62,$6C,  0,  1,$68,$DE,  0,  0,  0,  3,$7F,$63,$68,$6B,$73,$65,$74,$24,$79,$66,$62,$61,  0,  1,$6D,$4C,  0,  0,  0,  3,$73,$74,$69,$63,$6B,$74,$6F,$62,$6F,$73,$73,  0,  0,  1,$6B,$3C,  0,  0,  0,  3,$67,$72,$6F,$77,$72,$6F,$74,$6F,$72,$73,  0,  0; 11648
-		dc.b   0,  1,$6B,$18,  0,  0,  0,  3,$7F,$63,$6E,$74,$33,$24,$78,$66,$62,$61,  0,  0,  0,  1,$6D,$30,  0,  0,  0,  3,$7F,$6F,$75,$74,$24,$62,$66,$62,$61,  0,  0,  0,  0,  1,$6A,$7A,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$61,$66,$62,$61,  0,  0,  0,  0,  1,$6A,$64; 11712
-		dc.b   0,  0,  0,  3,$7F,$65,$6E,$64,$24,$77,$66,$62,$61,  0,  0,  0,  0,  1,$6C,$BE,  0,  0,  0,  3,$7F,$73,$65,$74,$24,$79,$66,$62,$61,  0,  0,  0,  0,  1,$6D,$6A,  0,  0,  0,  3,$64,$65,$61,$74,$68,$64,$72,$6F,$70,  0,  0,  0,  0,  1,$69,$A6,  0,  0,  0,  3; 11776
-		dc.b $73,$74,$69,$63,$6B,$5F,$74,$62,$6C,  0,  0,  0,  0,  1,$6B,$4A,  0,  0,  0,  2,$6E,$6F,$72,$6D,$61,$6C,  0,  0,  0,  1,$6B,$4E,  0,  0,  0,  2,$66,$6C,$79,$61,$77,$61,$79,  0,  0,  1,$69,$C0,  0,  0,  0,  2,$6A,$6F,$69,$6E,$63,$61,$72,  0,  0,  1,$68,$D0; 11840
-		dc.b   0,  0,  0,  4,$7F,$77,$6F,$72,$6B,$6E,$61,$69,$24,$63,$67,$62,$61,  0,  0,  0,  0,  1,$6F,$70,  0,  0,  0,  3,$66,$6C,$79,$61,$77,$61,$79,$5F,$74,$62,$6C,  0,  0,  1,$69,$D2,  0,  0,  0,  3,$7F,$63,$6E,$74,$24,$75,$66,$62,$61,  0,  0,  0,  0,  1,$6C,$5A; 11904
-		dc.b   0,  0,  0,  3,$7F,$63,$6E,$74,$24,$78,$66,$62,$61,  0,  0,  0,  0,  1,$6D,$10,  0,  0,  0,  3,$7F,$63,$6E,$74,$24,$6F,$66,$62,$61,  0,  0,  0,  0,  1,$6B,$72,  0,  0,  0,  3,$74,$69,$72,$65,$65,$78,$70,$6C,$6F,$64,$65,  0,  0,  1,$6C,$70,  0,  0,  0,  3; 11968
-		dc.b $62,$6F,$73,$73,$68,$65,$6C,$69,$70,$61,$74,  0,  0,  1,$70, $C,  0,  0,  0,  2,$64,$72,$69,$6C,$6C,  0,  0,  0,  0,  1,$6C,$C2,  0,  0,  0,  3,$7F,$64,$69,$65,$24,$64,$66,$62,$61,  0,  0,  0,  0,  1,$6A,$E6,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$31,$24,$64; 12032
-		dc.b $66,$62,$61,  0,  0,  1,$6A,$D6,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$64,$66,$62,$61,  0,  0,  1,$6A,$E4,  0,  0,  0,  3,$62,$6F,$73,$73,$68,$65,$6C,$69,$73,$70,$30,$30,  0,  1,$70,$1A,  0,  0,  0,  3,$62,$6F,$73,$73,$68,$65,$6C,$69,$73,$70,$30,$31; 12096
-		dc.b   0,  1,$70,$24,  0,  0,  0,  3,$62,$6F,$73,$73,$68,$65,$6C,$69,$73,$70,$30,$32,  0,  1,$70,$4E,  0,  0,  0,  3,$62,$6F,$73,$73,$68,$65,$6C,$69,$73,$70,$30,$33,  0,  1,$70,$78,  0,  0,  0,  3,$62,$6F,$73,$73,$68,$65,$6C,$69,$73,$70,$30,$34,  0,  1,$70,$92; 12160
-		dc.b   0,  0,  0,  3,$62,$6F,$73,$73,$68,$65,$6C,$69,$73,$70,$30,$35,  0,  1,$70,$AC,  0,  0,  0,  3,$62,$6F,$73,$73,$68,$65,$6C,$69,$73,$70,$30,$36,  0,  1,$70,$C6,  0,  0,  0,  4,$7F,$6D,$6F,$76,$65,$64,$72,$69,$6C,$6C,$24,$78,$66,$62,$61,  0,  0,  1,$6D,$22; 12224
-		dc.b   0,  0,  0,  4,$7F,$77,$6F,$72,$6B,$6E,$61,$69,$31,$24,$7A,$66,$62,$61,  0,  0,  0,  1,$6D,$E6,  0,  0,  0,  3,$62,$6F,$73,$73,$64,$72,$69,$6C,$6C,$70,$61,$74,  0,  1,$70,$F4,  0,  0,  0,  4,$7F,$77,$6F,$72,$6B,$6E,$61,$69,$32,$24,$7A,$66,$62,$61,  0,  0; 12288
-		dc.b   0,  1,$6E,$5A,  0,  0,  0,  4,$7F,$77,$6F,$72,$6B,$6E,$61,$69,$33,$24,$7A,$66,$62,$61,  0,  0,  0,  1,$6E,$CE,  0,  0,  0,  4,$7F,$77,$6F,$72,$6B,$6E,$61,$69,$34,$24,$7A,$66,$62,$61,  0,  0,  0,  1,$6F,$2A,  0,  0,  0,  2,$62,$69,$6C,$6C,$62,$6F,$6D,$62; 12352
-		dc.b   0,  1,$74,$1E,  0,  0,  0,  2,$73,$6D,$62,$73,$70,$30,$30,  0,  0,  1,$74,$A6,  0,  0,  0,  2,$73,$6D,$62,$73,$70,$30,$31,  0,  0,  1,$74,$B0,  0,  0,  0,  2,$73,$6D,$62,$73,$70,$30,$32,  0,  0,  1,$74,$BA,  0,  0,  0,  2,$73,$6D,$62,$73,$70,$30,$33,  0; 12416
-		dc.b   0,  1,$74,$C4,  0,  0,  0,  3,$62,$6F,$73,$73,$62,$61,$63,$68,$67,$31,  0,  0,  0,  1,$75,$26,  0,  0,  0,  3,$62,$6F,$73,$73,$62,$61,$63,$68,$67,$32,  0,  0,  0,  1,$75,$29,  0,  0,  0,  3,$62,$6F,$73,$73,$62,$61,$6D,$6F,$76,$65,  0,  0,  0,  1,$72,$CA; 12480
-		dc.b   0,  0,  0,  3,$62,$6F,$73,$73,$62,$61,$63,$68,$67,  0,  0,  0,  0,  1,$75,$22,  0,  0,  0,  3,$62,$69,$6C,$6C,$62,$6F,$6D,$62,$5F,$74,$62,$6C,  0,  1,$74,$2C,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$73,$65,$62,$61,  0,  0,  0,  1,$74,$82,  0,  0,  0,  3; 12544
-		dc.b $7F,$6A,$75,$6D,$70,$24,$6E,$65,$62,$61,  0,  0,  0,  1,$73,$82,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$6F,$65,$62,$61,  0,  0,  0,  1,$74,$1A,  0,  0,  0,  4,$62,$6F,$73,$73,$62,$61,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  0,  0,  1,$73,  0,  0,  0,  0,  3; 12608
-		dc.b $62,$69,$6C,$6C,$62,$6F,$6D,$62,$70,$61,$74,  0,  0,  1,$74,$CE,  0,  0,  0,  4,$62,$6F,$73,$73,$62,$61,$5F,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  0,  1,$71,$A2,  0,  0,  0,  3,$62,$6F,$73,$73,$62,$61,$74,$6F,$70,  0,  0,  0,  0,  1,$73,  8,  0,  0,  0,  3; 12672
-		dc.b $62,$69,$6C,$6C,$62,$6F,$6D,$62,$69,$6E,$69,$74,  0,  1,$74,$30,  0,  0,  0,  4,$7F,$77,$6F,$72,$6B,$6E,$61,$69,$24,$67,$65,$62,$61,  0,  0,  0,  0,  1,$72,$B0,  0,  0,  0,  3,$7F,$63,$6E,$74,$32,$24,$67,$65,$62,$61,  0,  0,  0,  1,$72,$5C,  0,  0,  0,  2; 12736
-		dc.b $62,$6F,$73,$73,$62,$61,  0,  0,  0,  1,$71,$94,  0,  0,  0,  2,$62,$6F,$73,$73,$61,$66,$62,  0,  0,  1,$73,$3A,  0,  0,  0,  3,$62,$6F,$73,$73,$62,$61,$70,$61,$74,  0,  0,  0,  0,  1,$75,$2E,  0,  0,  0,  3,$62,$6F,$73,$73,$73,$6D,$70,$61,$74,  0,  0,  0; 12800
-		dc.b   0,  1,$74,$9E,  0,  0,  0,  2,$61,$66,$62,$74,$62,$6C,  0,  0,  0,  1,$73,$36,  0,  0,  0,  3,$62,$69,$6C,$6C,$62,$6F,$6D,$62,$6D,$6F,$76,$65,  0,  1,$74,$68,  0,  0,  0,  3,$62,$6F,$73,$73,$62,$61,$73,$70,$30,$30,  0,  0,  0,  1,$75,$34,  0,  0,  0,  3; 12864
-		dc.b $62,$6F,$73,$73,$62,$61,$73,$70,$30,$31,  0,  0,  0,  1,$75,$56,  0,  0,  0,  3,$62,$6F,$73,$73,$62,$61,$73,$70,$30,$32,  0,  0,  0,  1,$75,$78,  0,  0,  0,  2,$62,$6F,$73,$73,$73,$6D,  0,  0,  0,  1,$73,$D8,  0,  0,  0,  3,$62,$6F,$73,$73,$62,$6D,$73,$70; 12928
-		dc.b $30,$30,  0,  0,  0,  1,$74,$DC,  0,  0,  0,  3,$62,$6F,$73,$73,$62,$6D,$73,$70,$30,$31,  0,  0,  0,  1,$74,$E6,  0,  0,  0,  3,$62,$6F,$73,$73,$62,$6D,$73,$70,$30,$32,  0,  0,  0,  1,$74,$F0,  0,  0,  0,  3,$62,$6F,$73,$73,$62,$6D,$73,$70,$30,$33,  0,  0; 12992
-		dc.b   0,  1,$74,$FA,  0,  0,  0,  3,$62,$6F,$73,$73,$62,$6D,$73,$70,$30,$34,  0,  0,  0,  1,$75,  4,  0,  0,  0,  3,$62,$6F,$73,$73,$62,$6D,$73,$70,$30,$35,  0,  0,  0,  1,$75, $E,  0,  0,  0,  3,$62,$6F,$73,$73,$62,$6D,$73,$70,$30,$36,  0,  0,  0,  1,$75,$18; 13056
-		dc.b   0,  0,  0,  3,$7F,$68,$65,$72,$65,$24,$6E,$65,$62,$61,  0,  0,  0,  1,$73,$9C,  0,  0,  0,  3,$7F,$63,$6E,$74,$24,$67,$65,$62,$61,  0,  0,  0,  0,  1,$71,$F8,  0,  0,  0,  3,$7F,$63,$6E,$74,$24,$6E,$65,$62,$61,  0,  0,  0,  0,  1,$73,$78,  0,  0,  0,  4; 13120
-		dc.b $62,$6F,$73,$73,$62,$61,$61,$70,$70,$65,$6E,$64,$61,$67,$65,  0,  0,  1,$72,$C2,  0,  0,  0,  3,$7F,$68,$75,$72,$74,$24,$6E,$65,$62,$61,  0,  0,  0,  1,$73,$8E,  0,  0,  0,  3,$62,$6F,$73,$73,$62,$61,$69,$6E,$69,$74,  0,  0,  0,  1,$71,$AC,  0,  0,  0,  2; 13184
-		dc.b $61,$66,$62,$73,$70,$30,$30,  0,  0,  1,$74,$8A,  0,  0,  0,  2,$61,$66,$62,$73,$70,$30,$31,  0,  0,  1,$74,$94,  0,  0,  0,  3,$62,$6F,$73,$73,$61,$66,$62,$70,$61,$74,  0,  0,  0,  1,$74,$86,  0,  0,  0,  3,$73,$74,$61,$66,$66,$5F,$69,$6E,$69,$74,  0,  0; 13248
-		dc.b   0,  1,$75,$BA,  0,  0,  0,  3,$73,$74,$61,$66,$66,$5F,$6D,$6F,$76,$65,  0,  0,  0,  1,$76,$28,  0,  0,  0,  4,$73,$74,$61,$66,$66,$5F,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  0,  0,  1,$75,$B6,  0,  0,  0,  2,$73,$74,$61,$66,$66,$70,$61,$74,  0,  1,$76,$2E; 13312
-		dc.b   0,  0,  0,  2,$73,$74,$61,$66,$66,  0,  0,  0,  0,  1,$75,$A8,  0,  0,  0,  3,$73,$74,$61,$66,$66,$73,$70,$30,$30,  0,  0,  0,  0,  1,$76,$44,  0,  0,  0,  3,$73,$74,$61,$66,$66,$73,$70,$30,$31,  0,  0,  0,  0,  1,$76,$B6,  0,  0,  0,  3,$73,$74,$61,$66; 13376
-		dc.b $66,$73,$70,$30,$32,  0,  0,  0,  0,  1,$77,$38,  0,  0,  0,  3,$73,$74,$61,$66,$66,$73,$70,$30,$33,  0,  0,  0,  0,  1,$77,$8A,  0,  0,  0,  3,$73,$74,$61,$66,$66,$73,$70,$30,$34,  0,  0,  0,  0,  1,$78,$4C,  0,  0,  0,  3,$73,$74,$61,$66,$66,$73,$70,$30; 13440
-		dc.b $35,  0,  0,  0,  0,  1,$78,$EE,  0,  0,  0,  3,$73,$74,$61,$66,$66,$73,$70,$30,$36,  0,  0,  0,  0,  1,$79,$C0,  0,  0,  0,  3,$73,$74,$61,$66,$66,$73,$70,$30,$37,  0,  0,  0,  0,  1,$7A,$7A,  0,  0,  0,  3,$73,$74,$61,$66,$66,$73,$70,$30,$38,  0,  0,  0; 13504
-		dc.b   0,  1,$7B,$74,  0,  0,  0,  3,$73,$74,$61,$66,$66,$73,$70,$30,$39,  0,  0,  0,  0,  1,$7B,$EE,  0,  0,  0,  3,$73,$74,$61,$66,$66,$73,$70,$31,$30,  0,  0,  0,  0,  1,$7C,$30,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$6E,$64,$62,$61,  0,  0,  0,  1,$76,$28; 13568
-		dc.b   0,  0,  0,  4,$7F,$66,$61,$6C,$6C,$69,$6E,$67,$24,$76,$64,$62,$61,  0,  0,  0,  0,  1,$7F,$7A,  0,  0,  0,  4,$7F,$72,$69,$73,$65,$5F,$75,$70,$24,$76,$64,$62,$61,  0,  0,  0,  0,  1,$7F,$88,  0,  0,  0,  3,$62,$74,$61,$6D,$61,$6D,$6F,$76,$65,$32,  0,  0; 13632
-		dc.b   0,  1,$81,$EE,  0,  0,  0,  3,$62,$74,$61,$6D,$61,$69,$6E,$69,$74,  0,  0,  0,  0,  1,$80,$C6,  0,  0,  0,  3,$73,$70,$65,$65,$64,$73,$65,$74,$5F,$6D,  0,  0,  0,  1,$7E,$6A,  0,  0,  0,  2,$62,$6F,$73,$73,$31,  0,  0,  0,  0,  1,$7C,$C4,  0,  0,  0,  2; 13696
-		dc.b $62,$6F,$73,$73,$62,$6F,$6D,$62,  0,  1,$7E,$26,  0,  0,  0,  3,$7F,$70,$61,$73,$73,$30,$24,$78,$64,$62,$61,  0,  0,  1,$80,  8,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$6A,$65,$62,$61,  0,  0,  0,  1,$81,$32,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$6C,$65; 13760
-		dc.b $62,$61,  0,  0,  0,  1,$81,$B4,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$6E,$65,$62,$61,  0,  0,  0,  1,$82,$3A,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$6F,$65,$62,$61,  0,  0,  0,  1,$82,$52,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$70,$65,$62,$61,  0,  0; 13824
-		dc.b   0,  1,$82,$8A,  0,  0,  0,  3,$7F,$70,$61,$73,$73,$31,$24,$78,$64,$62,$61,  0,  0,  1,$80,$10,  0,  0,  0,  3,$7F,$70,$61,$73,$73,$32,$24,$78,$64,$62,$61,  0,  0,  1,$80,$1A,  0,  0,  0,  3,$62,$6F,$73,$73,$31,$63,$68,$67,$31,$30,  0,  0,  0,  1,$82,$CE; 13888
-		dc.b   0,  0,  0,  3,$62,$6F,$73,$73,$31,$63,$68,$67,$31,$31,  0,  0,  0,  1,$82,$D1,  0,  0,  0,  2,$62,$6F,$73,$73,$31,$70,$61,$74,  0,  1,$82,$DC,  0,  0,  0,  2,$62,$6F,$73,$73,$32,$70,$61,$74,  0,  1,$84,$10,  0,  0,  0,  2,$62,$74,$61,$6D,$61,$73,$75,$62; 13952
-		dc.b   0,  1,$81,$FE,  0,  0,  0,  3,$62,$6F,$73,$73,$5F,$79,$73,$75,$62,  0,  0,  0,  0,  1,$7D,$AC,  0,  0,  0,  3,$7F,$6C,$6F,$6F,$70,$24,$6B,$64,$62,$61,  0,  0,  0,  1,$7C,$EA,  0,  0,  0,  3,$62,$6F,$73,$73,$31,$73,$70,$31,$30,  0,  0,  0,  0,  1,$83,$EA; 14016
-		dc.b   0,  0,  0,  3,$62,$6F,$73,$73,$31,$73,$70,$31,$31,  0,  0,  0,  0,  1,$83,$EC,  0,  0,  0,  3,$62,$6F,$73,$73,$31,$73,$70,$31,$32,  0,  0,  0,  0,  1,$83,$FE,  0,  0,  0,  3,$62,$74,$61,$6D,$61,$6D,$6F,$76,$65,  0,  0,  0,  0,  1,$81,$8E,  0,  0,  0,  4; 14080
-		dc.b $62,$74,$61,$6D,$61,$5F,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  0,  0,  1,$80,$BC,  0,  0,  0,  3,$7F,$6C,$6F,$6F,$70,$24,$6A,$65,$62,$61,  0,  0,  0,  1,$80,$F6,  0,  0,  0,  3,$7F,$6C,$6F,$6F,$70,$24,$6C,$65,$62,$61,  0,  0,  0,  1,$81,$9A,  0,  0,  0,  4; 14144
-		dc.b $7F,$77,$6F,$72,$6B,$6E,$61,$69,$24,$70,$64,$62,$61,  0,  0,  0,  0,  1,$7E,$68,  0,  0,  0,  4,$7F,$77,$6F,$72,$6B,$6E,$61,$69,$24,$72,$64,$62,$61,  0,  0,  0,  0,  1,$7E,$D6,  0,  0,  0,  4,$7F,$77,$6F,$72,$6B,$6E,$61,$69,$24,$6B,$64,$62,$61,  0,  0,  0; 14208
-		dc.b   0,  1,$7D,$38,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$74,$64,$62,$61,  0,  0,  0,  0,  1,$7F,$3C,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$75,$64,$62,$61,  0,  0,  0,  0,  1,$7F,$70,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$6E,$64,$62,$61,  0,  0,  0,  0,  1,$7D,$AC; 14272
-		dc.b   0,  0,  0,  3,$7F,$65,$6E,$64,$24,$72,$64,$62,$61,  0,  0,  0,  0,  1,$7E,$DC,  0,  0,  0,  3,$62,$6F,$73,$73,$31,$69,$6E,$69,$74,  0,  0,  0,  0,  1,$7C,$E0,  0,  0,  0,  4,$7F,$77,$6F,$72,$6B,$6E,$61,$69,$24,$6A,$65,$62,$61,  0,  0,  0,  0,  1,$81,$5C; 14336
-		dc.b   0,  0,  0,  3,$7F,$65,$78,$69,$74,$24,$76,$64,$62,$61,  0,  0,  0,  1,$7F,$B6,  0,  0,  0,  3,$7F,$66,$69,$72,$65,$24,$76,$64,$62,$61,  0,  0,  0,  1,$7F,$A8,  0,  0,  0,  3,$62,$74,$61,$6D,$61,$6B,$75,$73,$61,$72,$69,  0,  0,  1,$82,$3C,  0,  0,  0,  3; 14400
-		dc.b $62,$6F,$73,$73,$31,$63,$68,$67,$30,  0,  0,  0,  0,  1,$82,$A8,  0,  0,  0,  3,$62,$6F,$73,$73,$31,$63,$68,$67,$31,  0,  0,  0,  0,  1,$82,$AB,  0,  0,  0,  3,$62,$6F,$73,$73,$31,$63,$68,$67,$32,  0,  0,  0,  0,  1,$82,$AF,  0,  0,  0,  3,$62,$6F,$73,$73; 14464
-		dc.b $31,$63,$68,$67,$33,  0,  0,  0,  0,  1,$82,$B3,  0,  0,  0,  3,$62,$6F,$73,$73,$31,$63,$68,$67,$34,  0,  0,  0,  0,  1,$82,$B7,  0,  0,  0,  3,$62,$6F,$73,$73,$31,$63,$68,$67,$35,  0,  0,  0,  0,  1,$82,$BB,  0,  0,  0,  3,$62,$6F,$73,$73,$31,$63,$68,$67; 14528
-		dc.b $36,  0,  0,  0,  0,  1,$82,$BF,  0,  0,  0,  3,$62,$6F,$73,$73,$31,$63,$68,$67,$37,  0,  0,  0,  0,  1,$82,$C3,  0,  0,  0,  3,$62,$6F,$73,$73,$31,$63,$68,$67,$38,  0,  0,  0,  0,  1,$82,$C6,  0,  0,  0,  3,$62,$6F,$73,$73,$31,$63,$68,$67,$39,  0,  0,  0; 14592
-		dc.b   0,  1,$82,$CA,  0,  0,  0,  2,$62,$6F,$73,$73,$31,$73,$75,$62,  0,  1,$80,$74,  0,  0,  0,  3,$62,$6F,$73,$73,$31,$6D,$6F,$76,$65,  0,  0,  0,  0,  1,$7D,$50,  0,  0,  0,  2,$62,$6F,$73,$73,$31,$63,$68,$67,  0,  1,$82,$90,  0,  0,  0,  3,$62,$74,$61,$6D; 14656
-		dc.b $61,$74,$61,$6D,$61,  0,  0,  0,  0,  1,$82,$58,  0,  0,  0,  3,$7F,$74,$75,$72,$6E,$24,$76,$64,$62,$61,  0,  0,  0,  1,$7F,$82,  0,  0,  0,  2,$62,$6F,$73,$73,$31,$73,$70,$30,  0,  1,$82,$F6,  0,  0,  0,  2,$62,$6F,$73,$73,$32,$73,$70,$30,  0,  1,$84,$20; 14720
-		dc.b   0,  0,  0,  2,$62,$6F,$73,$73,$31,$73,$70,$31,  0,  1,$83,$28,  0,  0,  0,  2,$62,$6F,$73,$73,$32,$73,$70,$31,  0,  1,$84,$2A,  0,  0,  0,  2,$62,$6F,$73,$73,$31,$73,$70,$32,  0,  1,$83,$3A,  0,  0,  0,  2,$62,$6F,$73,$73,$32,$73,$70,$32,  0,  1,$84,$3C; 14784
-		dc.b   0,  0,  0,  2,$62,$6F,$73,$73,$31,$73,$70,$33,  0,  1,$83,$4C,  0,  0,  0,  2,$62,$6F,$73,$73,$32,$73,$70,$33,  0,  1,$84,$46,  0,  0,  0,  2,$62,$6F,$73,$73,$31,$73,$70,$34,  0,  1,$83,$66,  0,  0,  0,  2,$62,$6F,$73,$73,$32,$73,$70,$34,  0,  1,$84,$50; 14848
-		dc.b   0,  0,  0,  2,$62,$6F,$73,$73,$31,$73,$70,$35,  0,  1,$83,$80,  0,  0,  0,  2,$62,$6F,$73,$73,$32,$73,$70,$35,  0,  1,$84,$5A,  0,  0,  0,  2,$62,$6F,$73,$73,$31,$73,$70,$36,  0,  1,$83,$9A,  0,  0,  0,  2,$62,$6F,$73,$73,$32,$73,$70,$36,  0,  1,$84,$7C; 14912
-		dc.b   0,  0,  0,  2,$62,$6F,$73,$73,$31,$73,$70,$37,  0,  1,$83,$B4,  0,  0,  0,  2,$62,$6F,$73,$73,$32,$73,$70,$37,  0,  1,$84,$8E,  0,  0,  0,  2,$62,$6F,$73,$73,$31,$73,$70,$38,  0,  1,$83,$D6,  0,  0,  0,  2,$62,$6F,$73,$73,$31,$73,$70,$39,  0,  1,$83,$E0; 14976
-		dc.b   0,  0,  0,  4,$62,$6F,$73,$73,$31,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  0,  0,  0,  1,$7D,$82,  0,  0,  0,  2,$62,$6F,$73,$73,$31,$74,$62,$6C,  0,  1,$7C,$DA,  0,  0,  0,  4,$7F,$66,$72,$61,$6D,$65,$6F,$75,$74,$24,$77,$64,$62,$61,  0,  0,  0,  1,$7F,$E6; 15040
-		dc.b   0,  0,  0,  4,$7F,$66,$72,$61,$6D,$65,$6F,$75,$74,$24,$78,$64,$62,$61,  0,  0,  0,  1,$80,$3A,  0,  0,  0,  4,$7F,$66,$72,$61,$6D,$65,$6F,$75,$74,$24,$79,$64,$62,$61,  0,  0,  0,  1,$80,$6E,  0,  0,  0,  3,$7F,$64,$69,$65,$24,$6F,$64,$62,$61,  0,  0,  0; 15104
-		dc.b   0,  1,$7E,$12,  0,  0,  0,  3,$7F,$67,$6F,$5F,$75,$70,$24,$76,$64,$62,$61,  0,  0,  1,$7F,$A0,  0,  0,  0,  2,$62,$6F,$73,$73,$31,$5F,$30,  0,  0,  1,$7D,$90,  0,  0,  0,  2,$62,$6F,$73,$73,$31,$5F,$31,  0,  0,  1,$7E,$90,  0,  0,  0,  2,$62,$6F,$73,$73; 15168
-		dc.b $31,$5F,$32,  0,  0,  1,$7E,$E0,  0,  0,  0,  2,$62,$6F,$73,$73,$31,$5F,$33,  0,  0,  1,$7F,$1A,  0,  0,  0,  2,$62,$6F,$73,$73,$31,$5F,$34,  0,  0,  1,$7F,$40,  0,  0,  0,  2,$62,$6F,$73,$73,$31,$5F,$35,  0,  0,  1,$7F,$72,  0,  0,  0,  2,$62,$6F,$73,$73; 15232
-		dc.b $31,$5F,$36,  0,  0,  1,$7F,$BE,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$30,$24,$78,$64,$62,$61,  0,  0,  1,$80,$38,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$30,$24,$79,$64,$62,$61,  0,  0,  1,$80,$60,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$31,$24,$6F,$64,$62,$61,  0; 15296
-		dc.b   0,  1,$7E,  2,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$77,$64,$62,$61,  0,  0,  1,$7F,$DE,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$6F,$64,$62,$61,  0,  0,  1,$7E,$10,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$73,$64,$62,$61,  0,  0,  1,$7F,$16; 15360
-		dc.b   0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$74,$64,$62,$61,  0,  0,  1,$7F,$26,  0,  0,  0,  4,$62,$6F,$73,$73,$31,$5F,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  0,  0,  1,$7C,$D2,  0,  0,  0,  3,$62,$74,$61,$6D,$61,$6C,$65,$6E,$74,$62,$6C,  0,  0,  1,$81,$88; 15424
-		dc.b   0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$30,$24,$70,$65,$62,$61,  0,  0,  1,$82,$62,  0,  0,  0,  2,$62,$74,$61,$6D,$61,  0,  0,  0,  0,  1,$80,$AE,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$6C,$65,$62,$61,  0,  0,  1,$81,$CE,  0,  0,  0,  3,$7F,$6A,$75,$6D; 15488
-		dc.b $70,$33,$24,$6C,$65,$62,$61,  0,  0,  1,$81,$DA,  0,  0,  0,  3,$62,$6F,$73,$73,$31,$6F,$79,$61,$6A,$69,  0,  0,  0,  1,$7F,$EE,  0,  0,  0,  3,$7F,$70,$61,$73,$73,$24,$6E,$65,$62,$61,  0,  0,  0,  1,$82,$10,  0,  0,  0,  3,$62,$6F,$73,$73,$31,$66,$69,$72; 15552
-		dc.b $65,  0,  0,  0,  0,  1,$80,$40,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$73,$64,$62,$61,  0,  0,  0,  1,$7F, $A,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$75,$64,$62,$61,  0,  0,  0,  1,$7F,$4A,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$6B,$64,$62,$61,  0,  0; 15616
-		dc.b   0,  1,$7C,$F2,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$6F,$64,$62,$61,  0,  0,  0,  1,$7D,$F4,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$70,$64,$62,$61,  0,  0,  0,  1,$7E,$68,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$77,$64,$62,$61,  0,  0,  0,  1,$7F,$D8; 15680
-		dc.b   0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$78,$64,$62,$61,  0,  0,  0,  1,$80,$24,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$79,$64,$62,$61,  0,  0,  0,  1,$80,$6C,  0,  0,  0,  2,$7F,$6C,$70,$24,$6D,$64,$62,$61,  0,  1,$86,$56,  0,  0,  0,  2,$7F,$6C,$70,$24; 15744
-		dc.b $6F,$64,$62,$61,  0,  1,$86,$DC,  0,  0,  0,  3,$6D,$61,$73,$69,$6E,$69,$6E,$69,$74,  0,  0,  0,  0,  1,$84,$F8,  0,  0,  0,  3,$6D,$61,$73,$69,$6E,$62,$6F,$6D,$62,  0,  0,  0,  0,  1,$85,$EA,  0,  0,  0,  3,$6D,$61,$73,$69,$6E,$63,$6C,$65,$61,$72,  0,  0; 15808
-		dc.b   0,  1,$86,$D2,  0,  0,  0,  4,$7F,$77,$6F,$72,$6B,$6E,$61,$69,$24,$6D,$64,$62,$61,  0,  0,  0,  0,  1,$86,$28,  0,  0,  0,  4,$7F,$77,$6F,$72,$6B,$6E,$61,$69,$24,$6E,$64,$62,$61,  0,  0,  0,  0,  1,$86,$C0,  0,  0,  0,  2,$6D,$61,$73,$69,$6E,$70,$61,$74; 15872
-		dc.b   0,  1,$86,$FC,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$68,$64,$62,$61,  0,  0,  0,  0,  1,$85,$44,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$6D,$64,$62,$61,  0,  0,  0,  0,  1,$86,$2E,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$6E,$64,$62,$61,  0,  0,  0,  0,  1,$86,$D0; 15936
-		dc.b   0,  0,  0,  3,$7F,$65,$6E,$64,$24,$6F,$64,$62,$61,  0,  0,  0,  0,  1,$86,$F2,  0,  0,  0,  3,$6D,$61,$73,$69,$6E,$63,$68,$67,$30,  0,  0,  0,  0,  1,$86,$F8,  0,  0,  0,  3,$6D,$61,$73,$69,$6E,$63,$68,$67,$31,  0,  0,  0,  0,  1,$86,$F8,  0,  0,  0,  3; 16000
-		dc.b $6D,$61,$73,$69,$6E,$6D,$6F,$76,$65,  0,  0,  0,  0,  1,$85,$46,  0,  0,  0,  3,$6D,$61,$73,$69,$6E,$63,$65,$6E,$74,$65,$72,  0,  0,  1,$85,$EA,  0,  0,  0,  2,$6D,$61,$73,$69,$6E,$63,$68,$67,  0,  1,$86,$F4,  0,  0,  0,  3,$6D,$61,$73,$69,$6E,$73,$77,$69; 16064
-		dc.b $74,$63,$68,  0,  0,  1,$85,$82,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$69,$64,$62,$61,  0,  0,  1,$85,$7A,  0,  0,  0,  5,$7F,$6E,$6F,$5F,$77,$6F,$72,$6B,$5F,$6C,$65,$66,$74,$24,$6D,$64,$62,$61,  0,  0,  0,  1,$86,$80,  0,  0,  0,  3,$7F,$70,$61,$73; 16128
-		dc.b $73,$24,$6E,$64,$62,$61,  0,  0,  0,  1,$86,$B6,  0,  0,  0,  4,$7F,$66,$72,$61,$6D,$65,$6F,$75,$74,$24,$65,$64,$62,$61,  0,  0,  0,  1,$84,$D2,  0,  0,  0,  4,$7F,$62,$6F,$6D,$62,$65,$6E,$64,$24,$6D,$64,$62,$61,  0,  0,  0,  0,  1,$86,$30,  0,  0,  0,  4; 16192
-		dc.b $6D,$61,$73,$69,$6E,$5F,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  0,  0,  1,$84,$D8,  0,  0,  0,  2,$6D,$61,$73,$69,$6E,$73,$70,$30,  0,  1,$87, $A,  0,  0,  0,  2,$6D,$61,$73,$69,$6E,$73,$70,$31,  0,  1,$87,$44,  0,  0,  0,  2,$6D,$61,$73,$69,$6E,$73,$70,$32; 16256
-		dc.b   0,  1,$87,$4E,  0,  0,  0,  2,$6D,$61,$73,$69,$6E,$73,$70,$33,  0,  1,$87,$80,  0,  0,  0,  2,$6D,$61,$73,$69,$6E,$73,$70,$34,  0,  1,$87,$8A,  0,  0,  0,  2,$6D,$61,$73,$69,$6E,$73,$70,$35,  0,  1,$87,$9C,  0,  0,  0,  2,$6D,$61,$73,$69,$6E,$73,$70,$36; 16320
-		dc.b   0,  1,$87,$A6,  0,  0,  0,  2,$6D,$61,$73,$69,$6E,$74,$62,$6C,  0,  1,$84,$E8,  0,  0,  0,  3,$6D,$61,$73,$69,$6E,$75,$73,$61,$67,$69,  0,  0,  0,  1,$86,$82,  0,  0,  0,  2,$6D,$61,$73,$69,$6E,  0,  0,  0,  0,  1,$84,$AC,  0,  0,  0,  3,$6D,$61,$73,$69; 16384
-		dc.b $6E,$63,$65,$6E,$74,$65,$72,$32,  0,  1,$85,$EA,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$69,$64,$62,$61,  0,  0,  0,  1,$85,$64,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$6A,$64,$62,$61,  0,  0,  0,  1,$85,$E8,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$6D,$64; 16448
-		dc.b $62,$61,  0,  0,  0,  1,$86,$28,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$6E,$64,$62,$61,  0,  0,  0,  1,$86,$C0,  0,  0,  0,  3,$65,$73,$63,$6F,$72,$65,$74,$62,$6C,  0,  0,  0,  0,  1,$89,$AC,  0,  0,  0,  3,$70,$63,$6F,$6C,$73,$70,$65,$63,$69,$61,$6C,  0; 16512
-		dc.b   0,  1,$8A,$CA,  0,  0,  0,  3,$7F,$6C,$6F,$6F,$70,$24,$6C,$64,$62,$61,  0,  0,  0,  1,$87,$E8,  0,  0,  0,  3,$7F,$62,$6F,$62,$69,$6E,$24,$76,$64,$62,$61,  0,  0,  1,$8B,$22,  0,  0,  0,  3,$70,$63,$6F,$6C,$70,$6C,$61,$79,$32,  0,  0,  0,  0,  1,$89,$B4; 16576
-		dc.b   0,  0,  0,  3,$7F,$61,$74,$61,$72,$69,$24,$6C,$64,$62,$61,  0,  0,  1,$88,$88,  0,  0,  0,  3,$7F,$69,$74,$65,$6D,$32,$24,$6D,$64,$62,$61,  0,  0,  1,$88,$EE,  0,  0,  0,  3,$70,$6C,$61,$79,$64,$69,$65,$73,$65,$74,  0,  0,  0,  1,$8A,$72,  0,  0,  0,  3; 16640
-		dc.b $7F,$69,$6D,$6F,$24,$76,$64,$62,$61,  0,  0,  0,  0,  1,$8A,$EC,  0,  0,  0,  4,$7F,$77,$6F,$72,$6B,$6E,$61,$69,$24,$74,$64,$62,$61,  0,  0,  0,  0,  1,$89,$F6,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$74,$64,$62,$61,  0,  0,  0,  0,  1,$8A,$66,  0,  0,  0,  3; 16704
-		dc.b $7F,$65,$6E,$64,$24,$75,$64,$62,$61,  0,  0,  0,  0,  1,$8A,$C6,  0,  0,  0,  3,$7F,$64,$61,$6D,$61,$67,$65,$24,$74,$64,$62,$61,  0,  1,$89,$F6,  0,  0,  0,  4,$7F,$63,$6F,$6C,$69,$74,$62,$6C,$24,$6C,$64,$62,$61,  0,  0,  0,  0,  1,$87,$FA,  0,  0,  0,  3; 16768
-		dc.b $7F,$62,$6F,$75,$24,$76,$64,$62,$61,  0,  0,  0,  0,  1,$8B,$34,  0,  0,  0,  2,$70,$63,$6F,$6C,$65,  0,  0,  0,  0,  1,$89,$C4,  0,  0,  0,  3,$7F,$64,$69,$65,$24,$74,$64,$62,$61,  0,  0,  0,  0,  1,$8A,$6A,  0,  0,  0,  3,$7F,$79,$61,$64,$6F,$31,$24,$76; 16832
-		dc.b $64,$62,$61,  0,  0,  1,$8B, $A,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$30,$24,$6C,$64,$62,$61,  0,  0,  1,$87,$DA,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$30,$24,$6E,$64,$62,$61,  0,  0,  1,$89,$44,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$30,$24,$74,$64,$62,$61,  0; 16896
-		dc.b   0,  1,$8A,$2C,  0,  0,  0,  3,$7F,$79,$61,$64,$6F,$32,$24,$76,$64,$62,$61,  0,  0,  1,$8B,$16,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$31,$24,$6E,$64,$62,$61,  0,  0,  1,$89,$9C,  0,  0,  0,  3,$7F,$79,$61,$64,$6F,$33,$24,$76,$64,$62,$61,  0,  0,  1,$8B,$1A; 16960
-		dc.b   0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$75,$64,$62,$61,  0,  0,  1,$8A,$C0,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$6C,$64,$62,$61,  0,  0,  1,$88,$42,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$6E,$64,$62,$61,  0,  0,  1,$89,$A4,  0,  0,  0,  3; 17024
-		dc.b $7F,$6A,$75,$6D,$70,$32,$24,$74,$64,$62,$61,  0,  0,  1,$8A,$60,  0,  0,  0,  3,$7F,$79,$61,$64,$6F,$34,$24,$76,$64,$62,$61,  0,  0,  1,$8B,$1E,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$33,$24,$6C,$64,$62,$61,  0,  0,  1,$88,$64,  0,  0,  0,  3,$7F,$6A,$75,$6D; 17088
-		dc.b $70,$33,$24,$6E,$64,$62,$61,  0,  0,  1,$89,$86,  0,  0,  0,  3,$7F,$69,$74,$65,$6D,$65,$24,$6D,$64,$62,$61,  0,  0,  1,$89,  0,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$34,$24,$6C,$64,$62,$61,  0,  0,  1,$88,$6A,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$34,$24,$6E; 17152
-		dc.b $64,$62,$61,  0,  0,  1,$89,$42,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$35,$24,$6C,$64,$62,$61,  0,  0,  1,$88,$82,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$35,$24,$6E,$64,$62,$61,  0,  0,  1,$89,$5C,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$36,$24,$6E,$64,$62,$61,  0; 17216
-		dc.b   0,  1,$89,$76,  0,  0,  0,  3,$7F,$62,$6F,$62,$69,$6E,$32,$24,$76,$64,$62,$61,  0,  1,$8B,$2E,  0,  0,  0,  3,$70,$63,$6F,$6C,$6E,$6F,$6D,$61,$6C,  0,  0,  0,  0,  1,$89,  2,  0,  0,  0,  4,$70,$6C,$61,$79,$64,$61,$6D,$61,$67,$65,$73,$65,$74,  0,  0,  0; 17280
-		dc.b   0,  1,$89,$CE,  0,  0,  0,  2,$70,$63,$6F,$6C,$65,$6E,$64,  0,  0,  1,$89,$C0,  0,  0,  0,  3,$7F,$79,$61,$64,$6F,$24,$76,$64,$62,$61,  0,  0,  0,  1,$8A,$F0,  0,  0,  0,  3,$7F,$72,$69,$6E,$67,$24,$6D,$64,$62,$61,  0,  0,  0,  1,$88,$B0,  0,  0,  0,  3; 17344
-		dc.b $7F,$72,$69,$6E,$67,$65,$24,$6D,$64,$62,$61,  0,  0,  1,$88,$C0,  0,  0,  0,  1,$70,$63,$6F,$6C,  0,  1,$87,$B0,  0,  0,  0,  3,$7F,$69,$74,$65,$6D,$24,$6D,$64,$62,$61,  0,  0,  0,  1,$88,$C2,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$74,$64,$62,$61,  0,  0; 17408
-		dc.b   0,  1,$8A,$3A,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$6C,$64,$62,$61,  0,  0,  0,  1,$87,$EE,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$6E,$64,$62,$61,  0,  0,  0,  1,$89,$1A,  0,  0,  0,  2,$70,$63,$6F,$6C,$70,$6C,$61,$79,  0,  1,$89,$BA,  0,  0,  0,  2; 17472
-		dc.b $70,$63,$6F,$6C,$69,$74,$65,$6D,  0,  1,$88,$A2,  0,  0,  0,  2,$68,$6F,$75,$73,$30,$70,$61,$74,  0,  1,$93,$5A,  0,  0,  0,  2,$68,$6F,$75,$73,$31,$70,$61,$74,  0,  1,$93,$5E,  0,  0,  0,  2,$68,$6F,$75,$73,$32,$70,$61,$74,  0,  1,$93,$62,  0,  0,  0,  3; 17536
-		dc.b $73,$70,$68,$61,$73,$68,$70,$61,$74,  0,  0,  0,  0,  1,$93,$1A,  0,  0,  0,  4,$73,$63,$72,$5F,$68,$6F,$75,$73,$65,$6B,$69,$74,$62,$6C,  0,  0,  0,  1,$90,  8,  0,  0,  0,  2,$73,$70,$75,$70,$73,$70,$30,  0,  0,  1,$93,$3E,  0,  0,  0,  2,$73,$70,$75,$70; 17600
-		dc.b $73,$70,$31,  0,  0,  1,$93,$44,  0,  0,  0,  2,$6D,$65,$74,$70,$61,$74,  0,  0,  0,  1,$93,  6,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$62,$65,$62,$61,  0,  0,  0,  1,$8F,$C4,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$64,$65,$62,$61,  0,  0,  0,  1,$90,  6; 17664
-		dc.b   0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$66,$65,$62,$61,  0,  0,  0,  1,$90,$3A,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$6A,$65,$62,$61,  0,  0,  0,  1,$90,$8E,  0,  0,  0,  2,$64,$65,$72,$75,$73,$70,$32,  0,  0,  1,$93,$18,  0,  0,  0,  2,$73,$70,$72,$73; 17728
-		dc.b $63,$72,$65,  0,  0,  1,$8B,$DC,  0,  0,  0,  2,$6B,$6F,$75,$6B,$61,$70,$61,$74,  0,  1,$93,$1A,  0,  0,  0,  3,$73,$63,$72,$61,$63,$74,$6F,$66,$66,$74,$62,$6C,  0,  1,$8E,$34,  0,  0,  0,  3,$7F,$6C,$6F,$6F,$70,$24,$6E,$64,$62,$61,  0,  0,  0,  1,$8B,$98; 17792
-		dc.b   0,  0,  0,  3,$7F,$6C,$6F,$6F,$70,$24,$70,$64,$62,$61,  0,  0,  0,  1,$8C,  6,  0,  0,  0,  3,$7F,$6C,$6F,$6F,$70,$24,$71,$64,$62,$61,  0,  0,  0,  1,$8C,$9E,  0,  0,  0,  3,$7F,$6C,$6F,$6F,$70,$24,$73,$64,$62,$61,  0,  0,  0,  1,$8E,$BE,  0,  0,  0,  3; 17856
-		dc.b $7F,$6C,$6F,$6F,$70,$24,$74,$64,$62,$61,  0,  0,  0,  1,$8E,$D4,  0,  0,  0,  3,$73,$70,$64,$6F,$77,$6E,$73,$70,$30,  0,  0,  0,  0,  1,$93,$4E,  0,  0,  0,  3,$73,$70,$64,$6F,$77,$6E,$73,$70,$31,  0,  0,  0,  0,  1,$93,$54,  0,  0,  0,  2,$73,$70,$72,$65; 17920
-		dc.b $76,$70,$61,$74,  0,  1,$93,  6,  0,  0,  0,  3,$73,$63,$72,$5F,$62,$72,$65,$61,$6B,  0,  0,  0,  0,  1,$90, $E,  0,  0,  0,  2,$7A,$6F,$6E,$65,$70,$61,$74,  0,  0,  1,$93,  6,  0,  0,  0,  3,$7F,$6C,$6F,$6F,$70,$24,$6A,$65,$62,$61,  0,  0,  0,  1,$90,$DC; 17984
-		dc.b   0,  0,  0,  3,$7F,$6C,$6F,$6F,$70,$24,$6B,$65,$62,$61,  0,  0,  0,  1,$91, $E,  0,  0,  0,  3,$7F,$6C,$6F,$6F,$70,$24,$6C,$65,$62,$61,  0,  0,  0,  1,$91,$2A,  0,  0,  0,  4,$73,$63,$72,$5F,$72,$65,$76,$65,$72,$73,$74,$62,$6C,  0,  0,  0,  0,  1,$8F,$C8; 18048
-		dc.b   0,  0,  0,  3,$7F,$65,$6E,$64,$24,$76,$64,$62,$61,  0,  0,  0,  0,  1,$8F,$2A,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$70,$64,$62,$61,  0,  0,  0,  0,  1,$8C,$82,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$78,$64,$62,$61,  0,  0,  0,  0,  1,$8F,$60,  0,  0,  0,  3; 18112
-		dc.b $7F,$65,$6E,$64,$24,$7A,$64,$62,$61,  0,  0,  0,  0,  1,$8F,$90,  0,  0,  0,  2,$62,$72,$65,$61,$6B,$70,$61,$74,  0,  1,$93,$1A,  0,  0,  0,  2,$67,$6F,$6C,$65,$73,$70,$30,  0,  0,  1,$93, $C,  0,  0,  0,  2,$67,$6F,$6C,$65,$73,$70,$31,  0,  0,  1,$93,$12; 18176
-		dc.b   0,  0,  0,  3,$73,$63,$72,$5F,$72,$65,$76,$65,$72,$73,  0,  0,  0,  1,$8F,$98,  0,  0,  0,  3,$73,$70,$72,$6D,$61,$70,$73,$65,$74,$74,$62,$6C,  0,  1,$90,$46,  0,  0,  0,  3,$73,$70,$72,$73,$63,$72,$61,$63,$74,$63,$6E,$74,  0,  1,$8C,$8A,  0,  0,  0,  3; 18240
-		dc.b $7F,$65,$6E,$64,$24,$64,$65,$62,$61,  0,  0,  0,  0,  1,$90,  6,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$66,$65,$62,$61,  0,  0,  0,  0,  1,$90,$3A,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$62,$65,$62,$61,  0,  0,  0,  0,  1,$8F,$C6,  0,  0,  0,  2,$73,$70,$72,$73; 18304
-		dc.b $63,$72,  0,  0,  0,  1,$8B,$48,  0,  0,  0,  2,$64,$65,$72,$75,$70,$61,$74,  0,  0,  1,$93,  6,  0,  0,  0,  3,$73,$63,$72,$5F,$62,$6F,$62,$69,$6E,$74,$62,$6C,  0,  1,$8F,$62,  0,  0,  0,  3,$7F,$6C,$6F,$6F,$70,$32,$24,$6E,$64,$62,$61,  0,  0,  1,$8B,$BA; 18368
-		dc.b   0,  0,  0,  3,$7F,$6C,$6F,$6F,$70,$32,$24,$70,$64,$62,$61,  0,  0,  1,$8C, $A,  0,  0,  0,  2,$6B,$6F,$75,$6B,$61,$73,$70,$30,  0,  1,$93,$22,  0,  0,  0,  2,$6B,$6F,$75,$6B,$61,$73,$70,$31,  0,  1,$93,$28,  0,  0,  0,  2,$6B,$6F,$75,$6B,$61,$73,$70,$32; 18432
-		dc.b   0,  1,$93,$2E,  0,  0,  0,  2,$6B,$6F,$75,$6B,$61,$73,$70,$33,  0,  1,$93,$34,  0,  0,  0,  2,$73,$70,$75,$70,$70,$61,$74,  0,  0,  1,$93,$3A,  0,  0,  0,  3,$73,$70,$68,$61,$73,$68,$73,$70,$30,  0,  0,  0,  0,  1,$93,$22,  0,  0,  0,  3,$73,$70,$68,$61; 18496
-		dc.b $73,$68,$73,$70,$31,  0,  0,  0,  0,  1,$93,$28,  0,  0,  0,  2,$73,$63,$72,$5F,$31,$75,$70,  0,  0,  1,$8F,$68,  0,  0,  0,  3,$73,$63,$72,$5F,$31,$75,$70,$74,$62,$6C,  0,  0,  0,  1,$8F,$92,  0,  0,  0,  3,$7F,$6C,$6F,$6F,$70,$30,$24,$6A,$65,$62,$61,  0; 18560
-		dc.b   0,  1,$90,$A4,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$71,$64,$62,$61,  0,  0,  1,$8C,$C2,  0,  0,  0,  3,$7F,$6C,$6F,$6F,$70,$31,$24,$6A,$65,$62,$61,  0,  0,  1,$90,$F0,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$33,$24,$71,$64,$62,$61,  0,  0,  1,$8D,$4A; 18624
-		dc.b   0,  0,  0,  3,$7F,$6C,$6F,$6F,$70,$32,$24,$6A,$65,$62,$61,  0,  0,  1,$90,$F2,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$34,$24,$71,$64,$62,$61,  0,  0,  1,$8C,$DE,  0,  0,  0,  3,$73,$70,$68,$6F,$75,$73,$73,$70,$30,  0,  0,  0,  0,  1,$93,$66,  0,  0,  0,  3; 18688
-		dc.b $73,$70,$68,$6F,$75,$73,$73,$70,$31,  0,  0,  0,  0,  1,$93,$6C,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$35,$24,$71,$64,$62,$61,  0,  0,  1,$8D,$20,  0,  0,  0,  3,$73,$70,$68,$6F,$75,$73,$73,$70,$32,  0,  0,  0,  0,  1,$93,$72,  0,  0,  0,  3,$73,$70,$68,$6F; 18752
-		dc.b $75,$73,$73,$70,$33,  0,  0,  0,  0,  1,$93,$78,  0,  0,  0,  2,$73,$63,$72,$63,$6E,$74,  0,  0,  0,  1,$8E,$CA,  0,  0,  0,  2,$73,$70,$31,$75,$70,$70,$61,$74,  0,  1,$93,  6,  0,  0,  0,  3,$73,$70,$64,$6F,$77,$6E,$70,$61,$74,  0,  0,  0,  0,  1,$93,$4A; 18816
-		dc.b   0,  0,  0,  3,$73,$70,$72,$6D,$61,$70,$73,$65,$74,  0,  0,  0,  0,  1,$90,$76,  0,  0,  0,  3,$73,$63,$72,$61,$63,$74,$74,$62,$6C,  0,  0,  0,  0,  1,$8E,$EA,  0,  0,  0,  3,$73,$63,$72,$70,$61,$74,$73,$65,$74,  0,  0,  0,  0,  1,$91,  0,  0,  0,  0,  3; 18880
-		dc.b $7F,$6A,$75,$6D,$70,$30,$24,$6A,$65,$62,$61,  0,  0,  1,$90,$AC,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$6A,$65,$62,$61,  0,  0,  1,$90,$B0,  0,  0,  0,  3,$73,$63,$72,$5F,$62,$72,$65,$61,$6B,$74,$62,$6C,  0,  1,$90,$3C,  0,  0,  0,  2,$73,$63,$72,$5F; 18944
-		dc.b $72,$69,$6E,$67,  0,  1,$8F,  2,  0,  0,  0,  3,$73,$63,$72,$5F,$68,$6F,$75,$73,$65,$6B,$69,  0,  0,  1,$8F,$CE,  0,  0,  0,  3,$73,$63,$72,$5F,$72,$69,$6E,$67,$74,$62,$6C,  0,  0,  1,$8F,$2C,  0,  0,  0,  3,$73,$63,$72,$63,$6E,$74,$63,$6C,$72,  0,  0,  0; 19008
-		dc.b   0,  1,$91,$20,  0,  0,  0,  3,$73,$63,$72,$70,$61,$74,$74,$62,$6C,  0,  0,  0,  0,  1,$91,$32,  0,  0,  0,  4,$73,$70,$72,$70,$6C,$61,$79,$70,$6F,$73,$69,$74,$62,$6C,  0,  0,  0,  1,$90,$5E,  0,  0,  0,  2,$73,$63,$72,$77,$6B,$63,$68,$6B,  0,  1,$8E,$B4; 19072
-		dc.b   0,  0,  0,  3,$73,$70,$72,$73,$63,$72,$73,$65,$74,  0,  0,  0,  0,  1,$8B,$DC,  0,  0,  0,  3,$73,$63,$72,$5F,$62,$6F,$62,$69,$6E,  0,  0,  0,  0,  1,$8F,$32,  0,  0,  0,  2,$67,$6F,$6C,$65,$70,$61,$74,  0,  0,  1,$93,  6,  0,  0,  0,  3,$7F,$6A,$75,$6D; 19136
-		dc.b $70,$24,$73,$64,$62,$61,  0,  0,  0,  1,$8E,$C8,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$74,$64,$62,$61,  0,  0,  0,  1,$8E,$E2,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$70,$64,$62,$61,  0,  0,  0,  1,$8C,$62,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$76,$64; 19200
-		dc.b $62,$61,  0,  0,  0,  1,$8F,$2A,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$78,$64,$62,$61,  0,  0,  0,  1,$8F,$5E,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$7A,$64,$62,$61,  0,  0,  0,  1,$8F,$90,  0,  0,  0,  2,$77,$61,$72,$70,$70,$61,$74,  0,  0,  1,$93,  6; 19264
-		dc.b   0,  0,  0,  2,$64,$65,$72,$75,$73,$75,$62,  0,  0,  1,$98,$5C,  0,  0,  0,  2,$73,$70,$63,$6F,$6C,  0,  0,  0,  0,  1,$96,$E8,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$6E,$65,$62,$61,  0,  0,  0,  1,$93,$8E,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$76,$65; 19328
-		dc.b $62,$61,  0,  0,  0,  1,$94,$F2,  0,  0,  0,  3,$7F,$6A,$6D,$70,$32,$24,$6B,$66,$62,$61,  0,  0,  0,  1,$98,$AC,  0,  0,  0,  3,$70,$6C,$61,$79,$30,$31,$69,$6E,$69,$74,  0,  0,  0,  1,$93,$A4,  0,  0,  0,  2,$73,$70,$63,$6F,$6C,$32,  0,  0,  0,  1,$96,$E8; 19392
-		dc.b   0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$36,$36,$24,$6B,$66,$62,$61,  0,  1,$99,$F2,  0,  0,  0,  3,$70,$6C,$61,$79,$30,$31,$6A,$75,$6D,$70,  0,  0,  0,  1,$94,$2E,  0,  0,  0,  3,$72,$6F,$74,$73,$70,$64,$73,$65,$74,  0,  0,  0,  0,  1,$96,$56,  0,  0,  0,  4; 19456
-		dc.b $70,$6C,$61,$79,$30,$31,$5F,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  0,  1,$93,$9C,  0,  0,  0,  3,$7F,$6C,$65,$66,$74,$32,$24,$76,$65,$62,$61,  0,  0,  1,$94,$A4,  0,  0,  0,  3,$7F,$6C,$65,$66,$74,$32,$24,$77,$65,$62,$61,  0,  0,  1,$95,$14,  0,  0,  0,  3; 19520
-		dc.b $7F,$6C,$65,$66,$74,$32,$24,$78,$65,$62,$61,  0,  0,  1,$95,$50,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$62,$66,$62,$61,  0,  0,  0,  1,$96,$12,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$61,$66,$62,$61,  0,  0,  0,  1,$95,$CE,  0,  0,  0,  3,$7F,$6A,$75,$6D; 19584
-		dc.b $70,$24,$69,$66,$62,$61,  0,  0,  0,  1,$97,$C4,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$6A,$66,$62,$61,  0,  0,  0,  1,$98,$78,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$6B,$66,$62,$61,  0,  0,  0,  1,$98,$AE,  0,  0,  0,  3,$7F,$6C,$65,$66,$74,$24,$76,$65; 19648
-		dc.b $62,$61,  0,  0,  0,  1,$94,$9A,  0,  0,  0,  3,$7F,$6C,$65,$66,$74,$24,$77,$65,$62,$61,  0,  0,  0,  1,$95,  6,  0,  0,  0,  3,$7F,$6C,$65,$66,$74,$24,$78,$65,$62,$61,  0,  0,  0,  1,$95,$48,  0,  0,  0,  3,$7F,$72,$69,$67,$68,$74,$24,$76,$65,$62,$61,  0; 19712
-		dc.b   0,  1,$94,$8A,  0,  0,  0,  3,$7F,$72,$69,$67,$68,$74,$24,$77,$65,$62,$61,  0,  0,  1,$95,$1A,  0,  0,  0,  3,$7F,$72,$69,$67,$68,$74,$24,$78,$65,$62,$61,  0,  0,  1,$95,$34,  0,  0,  0,  2,$62,$6F,$62,$69,$6E,$63,$68,$6B,  0,  1,$98,$8E,  0,  0,  0,  4; 19776
-		dc.b $7F,$6A,$75,$6D,$70,$36,$36,$36,$24,$6B,$66,$62,$61,  0,  0,  0,  0,  1,$9A,$12,  0,  0,  0,  3,$70,$6C,$61,$79,$30,$31,$67,$6F,$6C,$65,  0,  0,  0,  1,$95,$E0,  0,  0,  0,  2,$70,$6C,$61,$79,$73,$63,$72,  0,  0,  1,$95,$B6,  0,  0,  0,  3,$70,$6C,$61,$79; 19840
-		dc.b $30,$31,$6D,$6F,$76,$65,  0,  0,  0,  1,$93,$E4,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$79,$65,$62,$61,  0,  0,  0,  0,  1,$95,$98,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$7A,$65,$62,$61,  0,  0,  0,  0,  1,$95,$B4,  0,  0,  0,  2,$73,$70,$63,$6F,$6C,$73,$75,$62; 19904
-		dc.b   0,  1,$97,$30,  0,  0,  0,  4,$70,$6C,$61,$79,$30,$31,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  0,  0,  1,$94,$1C,  0,  0,  0,  3,$73,$70,$6A,$75,$6D,$70,$63,$68,$6B,$32,  0,  0,  0,  1,$95,$9A,  0,  0,  0,  4,$7F,$77,$6F,$72,$6B,$6E,$61,$69,$24,$69,$66,$62; 19968
-		dc.b $61,  0,  0,  0,  0,  1,$97,$A0,  0,  0,  0,  4,$7F,$77,$6F,$72,$6B,$6E,$61,$69,$24,$6B,$66,$62,$61,  0,  0,  0,  0,  1,$99,$1C,  0,  0,  0,  3,$7F,$6A,$6D,$70,$24,$6B,$66,$62,$61,  0,  0,  0,  0,  1,$98,$A0,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$63,$66,$62; 20032
-		dc.b $61,  0,  0,  0,  0,  1,$96,$40,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$67,$66,$62,$61,  0,  0,  0,  0,  1,$97,$44,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$6A,$66,$62,$61,  0,  0,  0,  0,  1,$98,$86,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$6B,$66,$62,$61,  0,  0,  0; 20096
-		dc.b   0,  1,$9A,$20,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$33,$33,$24,$6B,$66,$62,$61,  0,  1,$99,$66,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$33,$33,$24,$69,$66,$62,$61,  0,  1,$98,$2A,  0,  0,  0,  4,$7F,$72,$69,$67,$68,$74,$63,$6F,$6C,$24,$78,$65,$62,$61,  0,  0; 20160
-		dc.b   0,  1,$95,$54,  0,  0,  0,  3,$7F,$72,$69,$67,$68,$74,$32,$24,$76,$65,$62,$61,  0,  1,$94,$94,  0,  0,  0,  3,$7F,$72,$69,$67,$68,$74,$32,$24,$77,$65,$62,$61,  0,  1,$95,$22,  0,  0,  0,  3,$7F,$72,$69,$67,$68,$74,$32,$24,$78,$65,$62,$61,  0,  1,$95,$42; 20224
-		dc.b   0,  0,  0,  3,$70,$6C,$61,$79,$30,$31,$77,$61,$6C,$6B,  0,  0,  0,  1,$94,$20,  0,  0,  0,  3,$73,$70,$63,$6F,$6C,$73,$75,$62,$5F,$65,$76,  0,  0,  1,$97,$8C,  0,  0,  0,  3,$70,$6C,$61,$79,$30,$31,$67,$6F,$6C,$65,$32,  0,  0,  1,$96,$34,  0,  0,  0,  3; 20288
-		dc.b $7F,$6C,$6F,$6F,$70,$31,$24,$6A,$66,$62,$61,  0,  0,  1,$98,$6C,  0,  0,  0,  3,$7F,$6C,$6F,$6F,$70,$32,$24,$6A,$66,$62,$61,  0,  0,  1,$98,$6E,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$35,$24,$76,$65,$62,$61,  0,  0,  1,$94,$6C,  0,  0,  0,  3,$7F,$6A,$75,$6D; 20352
-		dc.b $70,$35,$24,$71,$65,$62,$61,  0,  0,  1,$93,$F8,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$36,$24,$76,$65,$62,$61,  0,  0,  1,$94,$78,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$37,$24,$76,$65,$62,$61,  0,  0,  1,$94,$A8,  0,  0,  0,  2,$73,$70,$63,$6F,$6C,$5F,$65,$76; 20416
-		dc.b   0,  1,$97,$52,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$34,$34,$24,$6B,$66,$62,$61,  0,  1,$99,$9A,  0,  0,  0,  2,$70,$6C,$61,$79,$30,$31,  0,  0,  0,  1,$93,$80,  0,  0,  0,  2,$70,$6C,$61,$79,$30,$32,  0,  0,  0,  1,$9A,$22,  0,  0,  0,  3,$7F,$6A,$75,$6D; 20480
-		dc.b $70,$30,$24,$62,$66,$62,$61,  0,  0,  1,$95,$F4,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$67,$66,$62,$61,  0,  0,  1,$97,$46,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$61,$66,$62,$61,  0,  0,  1,$95,$DE,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$64; 20544
-		dc.b $66,$62,$61,  0,  0,  1,$96,$B0,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$69,$66,$62,$61,  0,  0,  1,$97,$C8,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$6B,$66,$62,$61,  0,  0,  1,$99,$26,  0,  0,  0,  3,$73,$70,$70,$6C,$77,$61,$6C,$6B,$5F,$6C,  0,  0; 20608
-		dc.b   0,  1,$94,$F8,  0,  0,  0,  3,$73,$70,$70,$6C,$77,$61,$6C,$6B,$5F,$72,  0,  0,  0,  1,$95,$28,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$33,$24,$64,$66,$62,$61,  0,  0,  1,$96,$C6,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$33,$24,$69,$66,$62,$61,  0,  0,  1,$97,$F2; 20672
-		dc.b   0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$33,$24,$6B,$66,$62,$61,  0,  0,  1,$99,$3C,  0,  0,  0,  3,$70,$6C,$61,$79,$30,$31,$73,$75,$62,  0,  0,  0,  0,  1,$94,$3A,  0,  0,  0,  3,$73,$70,$6C,$65,$76,$65,$72,$6D,$6F,$76,$65,  0,  0,  1,$94,$60,  0,  0,  0,  3; 20736
-		dc.b $7F,$6A,$75,$6D,$70,$34,$24,$64,$66,$62,$61,  0,  0,  1,$96,$D4,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$34,$24,$69,$66,$62,$61,  0,  0,  1,$98,$38,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$34,$24,$6B,$66,$62,$61,  0,  0,  1,$99,$70,  0,  0,  0,  3,$7F,$6A,$75,$6D; 20800
-		dc.b $70,$35,$24,$69,$66,$62,$61,  0,  0,  1,$98,$44,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$35,$24,$6B,$66,$62,$61,  0,  0,  1,$99,$A4,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$36,$24,$69,$66,$62,$61,  0,  0,  1,$98,$58,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$36,$24,$6B; 20864
-		dc.b $66,$62,$61,  0,  0,  1,$99,$DA,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$37,$24,$6B,$66,$62,$61,  0,  0,  1,$9A,$20,  0,  0,  0,  3,$73,$70,$6A,$75,$6D,$70,$63,$68,$6B,  0,  0,  0,  0,  1,$95,$56,  0,  0,  0,  4,$7F,$77,$6F,$72,$6B,$6E,$61,$69,$32,$24,$69,$66; 20928
-		dc.b $62,$61,  0,  0,  0,  1,$97,$DC,  0,  0,  0,  4,$7F,$77,$6F,$72,$6B,$6E,$61,$69,$32,$24,$6B,$66,$62,$61,  0,  0,  0,  1,$99,$CC,  0,  0,  0,  4,$7F,$77,$6F,$72,$6B,$6E,$61,$69,$33,$24,$69,$66,$62,$61,  0,  0,  0,  1,$98, $C,  0,  0,  0,  4,$7F,$77,$6F,$72; 20992
-		dc.b $6B,$6E,$61,$69,$33,$24,$6B,$66,$62,$61,  0,  0,  0,  1,$9A,$16,  0,  0,  0,  3,$65,$66,$65,$63,$74,$74,$62,$6C,$30,  0,  0,  0,  0,  1,$9A,$F8,  0,  0,  0,  3,$65,$66,$65,$63,$74,$74,$62,$6C,$31,  0,  0,  0,  0,  1,$9B,$82,  0,  0,  0,  3,$65,$66,$65,$63; 21056
-		dc.b $74,$74,$62,$6C,$32,  0,  0,  0,  0,  1,$9B,$82,  0,  0,  0,  3,$65,$66,$65,$63,$74,$74,$62,$6C,$33,  0,  0,  0,  0,  1,$9A,$F8,  0,  0,  0,  3,$65,$66,$65,$63,$74,$74,$62,$6C,$34,  0,  0,  0,  0,  1,$9B,$56,  0,  0,  0,  3,$65,$66,$65,$63,$74,$74,$62,$6C; 21120
-		dc.b $35,  0,  0,  0,  0,  1,$9B,$82,  0,  0,  0,  3,$65,$66,$65,$63,$74,$74,$62,$6C,$36,  0,  0,  0,  0,  1,$9B,$82,  0,  0,  0,  3,$65,$66,$65,$63,$74,$74,$62,$6C,$37,  0,  0,  0,  0,  1,$9B,$82,  0,  0,  0,  3,$65,$66,$65,$63,$74,$74,$62,$6C,$38,  0,  0,  0; 21184
-		dc.b   0,  1,$9B,$56,  0,  0,  0,  3,$65,$66,$65,$63,$74,$74,$62,$6C,$39,  0,  0,  0,  0,  1,$9B,$82,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$6E,$65,$62,$61,  0,  0,  0,  1,$9A,$AC,  0,  0,  0,  3,$65,$66,$65,$63,$74,$74,$62,$6C,$61,  0,  0,  0,  0,  1,$9B,$82; 21248
-		dc.b   0,  0,  0,  3,$65,$66,$65,$63,$74,$74,$62,$6C,$62,  0,  0,  0,  0,  1,$9B,$82,  0,  0,  0,  3,$65,$66,$65,$63,$74,$74,$62,$6C,$63,  0,  0,  0,  0,  1,$9B,$82,  0,  0,  0,  3,$65,$66,$65,$63,$74,$74,$62,$6C,$64,  0,  0,  0,  0,  1,$9B,$82,  0,  0,  0,  3; 21312
-		dc.b $65,$66,$65,$63,$74,$74,$62,$6C,$65,  0,  0,  0,  0,  1,$9B,$82,  0,  0,  0,  3,$65,$66,$65,$63,$74,$74,$62,$6C,$66,  0,  0,  0,  0,  1,$9B,$82,  0,  0,  0,  3,$7A,$6F,$6E,$65,$30,$61,$70,$63,$62,$6C,$6B,  0,  0,  1,$9D,$5C,  0,  0,  0,  3,$7F,$6A,$75,$6D; 21376
-		dc.b $70,$24,$65,$66,$62,$61,  0,  0,  0,  1,$9B,$F4,  0,  0,  0,  3,$7A,$6F,$6E,$65,$30,$62,$70,$63,$62,$6C,$6B,  0,  0,  1,$9D,$5C,  0,  0,  0,  3,$7A,$6F,$6E,$65,$30,$63,$70,$63,$62,$6C,$6B,  0,  0,  1,$9D,$5C,  0,  0,  0,  3,$7A,$6F,$6E,$65,$30,$64,$70,$63; 21440
-		dc.b $62,$6C,$6B,  0,  0,  1,$9E,$9A,  0,  0,  0,  3,$7A,$6F,$6E,$65,$30,$65,$70,$63,$62,$6C,$6B,  0,  0,  1,$9D,$5C,  0,  0,  0,  3,$7A,$6F,$6E,$65,$30,$66,$70,$63,$62,$6C,$6B,  0,  0,  1,$9D,$5C,  0,  0,  0,  2,$65,$66,$65,$63,$74,$74,$62,$6C,  0,  1,$9A,$4C; 21504
-		dc.b   0,  0,  0,  3,$7F,$6C,$6F,$6F,$70,$24,$6E,$65,$62,$61,  0,  0,  0,  1,$9A,$96,  0,  0,  0,  4,$65,$66,$65,$63,$74,$62,$6C,$6F,$63,$6B,$73,$65,$74,  0,  0,  0,  0,  1,$9C,$BE,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$77,$64,$62,$61,  0,  0,  0,  0,  1,$9A,$4A; 21568
-		dc.b   0,  0,  0,  4,$65,$66,$65,$63,$74,$62,$6C,$6F,$63,$6B,$74,$62,$6C,  0,  0,  0,  0,  1,$9D,  0,  0,  0,  0,  3,$7F,$6C,$6F,$6F,$70,$24,$65,$66,$62,$61,  0,  0,  0,  1,$9C,$28,  0,  0,  0,  3,$7F,$6C,$6F,$6F,$70,$24,$66,$66,$62,$61,  0,  0,  0,  1,$9C,$E0; 21632
-		dc.b   0,  0,  0,  3,$7F,$73,$75,$62,$24,$65,$66,$62,$61,  0,  0,  0,  0,  1,$9C,$24,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$65,$66,$62,$61,  0,  0,  0,  0,  1,$9B,$F2,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$66,$66,$62,$61,  0,  0,  0,  0,  1,$9C,$E6,  0,  0,  0,  3; 21696
-		dc.b $7A,$6F,$6E,$65,$30,$38,$70,$63,$62,$6C,$6B,  0,  0,  1,$9F,$7E,  0,  0,  0,  3,$7A,$6F,$6E,$65,$30,$39,$70,$63,$62,$6C,$6B,  0,  0,  1,$9D,$5C,  0,  0,  0,  3,$7A,$6F,$6E,$65,$30,$37,$70,$63,$62,$6C,$6B,  0,  0,  1,$9D,$5C,  0,  0,  0,  2,$65,$66,$65,$63; 21760
-		dc.b $74,$77,$72,$74,  0,  1,$9A,$2C,  0,  0,  0,  2,$65,$66,$73,$74,$61,$67,$65,$61,  0,  1,$9A,$8C,  0,  0,  0,  2,$65,$66,$73,$74,$61,$67,$65,$62,  0,  1,$9A,$8C,  0,  0,  0,  2,$65,$66,$73,$74,$61,$67,$65,$63,  0,  1,$9A,$8C,  0,  0,  0,  2,$65,$66,$73,$74; 21824
-		dc.b $61,$67,$65,$64,  0,  1,$9A,$90,  0,  0,  0,  2,$65,$66,$73,$74,$61,$67,$65,$65,  0,  1,$9A,$8C,  0,  0,  0,  2,$65,$66,$73,$74,$61,$67,$65,$66,  0,  1,$9A,$8C,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$31,$24,$6E,$65,$62,$61,  0,  0,  1,$9A,$BA,  0,  0,  0,  3; 21888
-		dc.b $65,$66,$65,$63,$74,$6D,$6F,$76,$65,  0,  0,  0,  0,  1,$9B,$EA,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$6E,$65,$62,$61,  0,  0,  1,$9A,$DC,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$33,$24,$6E,$65,$62,$61,  0,  0,  1,$9A,$E6,  0,  0,  0,  3,$7F,$6C,$6F,$6F; 21952
-		dc.b $70,$32,$24,$66,$66,$62,$61,  0,  0,  1,$9C,$E8,  0,  0,  0,  3,$7A,$6F,$6E,$65,$30,$30,$70,$63,$62,$6C,$6B,  0,  0,  1,$9D,$20,  0,  0,  0,  3,$7A,$6F,$6E,$65,$30,$31,$70,$63,$62,$6C,$6B,  0,  0,  1,$9D,$5C,  0,  0,  0,  3,$7A,$6F,$6E,$65,$30,$32,$70,$63; 22016
-		dc.b $62,$6C,$6B,  0,  0,  1,$9E,$9A,  0,  0,  0,  3,$7A,$6F,$6E,$65,$30,$33,$70,$63,$62,$6C,$6B,  0,  0,  1,$9D,$20,  0,  0,  0,  3,$7A,$6F,$6E,$65,$30,$34,$70,$63,$62,$6C,$6B,  0,  0,  1,$9F,$7E,  0,  0,  0,  3,$7A,$6F,$6E,$65,$30,$35,$70,$63,$62,$6C,$6B,  0; 22080
-		dc.b   0,  1,$9D,$5C,  0,  0,  0,  2,$65,$66,$73,$74,$61,$67,$65,$30,  0,  1,$9A,$8E,  0,  0,  0,  2,$65,$66,$73,$74,$61,$67,$65,$31,  0,  1,$9A,$8C,  0,  0,  0,  2,$65,$66,$73,$74,$61,$67,$65,$32,  0,  1,$9A,$90,  0,  0,  0,  2,$65,$66,$73,$74,$61,$67,$65,$33; 22144
-		dc.b   0,  1,$9A,$90,  0,  0,  0,  2,$65,$66,$73,$74,$61,$67,$65,$34,  0,  1,$9A,$90,  0,  0,  0,  3,$7A,$6F,$6E,$65,$30,$36,$70,$63,$62,$6C,$6B,  0,  0,  1,$9D,$5C,  0,  0,  0,  2,$65,$66,$73,$74,$61,$67,$65,$35,  0,  1,$9A,$8C,  0,  0,  0,  2,$65,$66,$73,$74; 22208
-		dc.b $61,$67,$65,$36,  0,  1,$9A,$8C,  0,  0,  0,  2,$65,$66,$73,$74,$61,$67,$65,$37,  0,  1,$9A,$8C,  0,  0,  0,  2,$65,$66,$73,$74,$61,$67,$65,$38,  0,  1,$9A,$90,  0,  0,  0,  2,$65,$66,$73,$74,$61,$67,$65,$39,  0,  1,$9A,$8C,  0,  0,  0,  3,$7F,$6A,$75,$6D; 22272
-		dc.b $70,$24,$62,$65,$62,$61,  0,  0,  0,  1,$A2,$B2,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$61,$65,$62,$61,  0,  0,  0,  1,$A2,$60,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$66,$65,$62,$61,  0,  0,  0,  1,$A4,$32,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$6A,$65; 22336
-		dc.b $62,$61,  0,  0,  0,  1,$A4,$96,  0,  0,  0,  2,$70,$6F,$73,$69,$77,$72,$74,  0,  0,  1,$A4,$54,  0,  0,  0,  2,$73,$63,$6F,$72,$65,$75,$70,  0,  0,  1,$A2,$48,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$75,$73,$24,$61,$65,$62,$61,  0,  1,$A2,$88,  0,  0,  0,  2; 22400
-		dc.b $72,$69,$6E,$67,$77,$72,$74,  0,  0,  1,$A4,$B4,  0,  0,  0,  4,$7F,$74,$69,$6D,$65,$6F,$76,$65,$72,$24,$62,$65,$62,$61,  0,  0,  0,  1,$A3,$66,  0,  0,  0,  3,$7F,$6C,$6F,$6F,$70,$24,$6A,$65,$62,$61,  0,  0,  0,  1,$A4,$84,  0,  0,  0,  3,$7F,$6C,$6F,$6F; 22464
-		dc.b $70,$24,$66,$65,$62,$61,  0,  0,  0,  1,$A4,$1C,  0,  0,  0,  3,$7F,$6C,$6F,$6F,$70,$24,$78,$65,$62,$61,  0,  0,  0,  1,$A6,$64,  0,  0,  0,  3,$7F,$6C,$6F,$6F,$70,$24,$6D,$65,$62,$61,  0,  0,  0,  1,$A4,$CC,  0,  0,  0,  3,$7F,$6C,$6F,$6F,$70,$24,$6E,$65; 22528
-		dc.b $62,$61,  0,  0,  0,  1,$A5,$3A,  0,  0,  0,  3,$7F,$6C,$6F,$6F,$70,$24,$76,$65,$62,$61,  0,  0,  0,  1,$A5,$A0,  0,  0,  0,  3,$7F,$6C,$6F,$6F,$70,$24,$77,$65,$62,$61,  0,  0,  0,  1,$A5,$F8,  0,  0,  0,  3,$73,$63,$6F,$72,$65,$77,$72,$74,$32,  0,  0,  0; 22592
-		dc.b   0,  1,$A4,$C6,  0,  0,  0,  2,$68,$65,$78,$77,$72,$74,$77,  0,  0,  1,$A4,$7C,  0,  0,  0,  3,$73,$63,$6F,$72,$65,$77,$72,$74,$63,$67,  0,  0,  0,  1,$A6,$B6,  0,  0,  0,  2,$63,$6F,$6E,$74,$77,$72,$74,  0,  0,  1,$A5,$1C,  0,  0,  0,  2,$73,$63,$6F,$72; 22656
-		dc.b $65,$70,$61,$74,  0,  1,$A0,$F8,  0,  0,  0,  2,$73,$63,$6F,$72,$65,$77,$72,$74,  0,  1,$A4,$BE,  0,  0,  0,  2,$74,$69,$6D,$65,$77,$72,$74,  0,  0,  1,$A5,$94,  0,  0,  0,  2,$74,$69,$6D,$65,$77,$72,$74,$30,  0,  1,$A5,$9A,  0,  0,  0,  2,$74,$69,$6D,$65; 22720
-		dc.b $77,$72,$74,$31,  0,  1,$A5,$8C,  0,  0,  0,  2,$73,$63,$6F,$72,$65,  0,  0,  0,  0,  1,$A0,$74,  0,  0,  0,  3,$73,$63,$6F,$72,$65,$69,$6E,$69,$74,$73,$75,$62,  0,  1,$A4,$18,  0,  0,  0,  3,$73,$63,$6F,$72,$65,$5F,$69,$6E,$69,$74,  0,  0,  0,  1,$A0,$86; 22784
-		dc.b   0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$30,$24,$75,$64,$62,$61,  0,  0,  1,$A0,$CE,  0,  0,  0,  3,$72,$69,$6E,$67,$69,$6E,$69,$74,$74,$62,$6C,  0,  0,  1,$A4,$50,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$75,$64,$62,$61,  0,  0,  1,$A0,$EE,  0,  0,  0,  3; 22848
-		dc.b $7F,$6C,$6F,$6F,$70,$31,$24,$66,$65,$62,$61,  0,  0,  1,$A4,$2C,  0,  0,  0,  3,$7F,$6C,$6F,$6F,$70,$32,$24,$66,$65,$62,$61,  0,  0,  1,$A4,$38,  0,  0,  0,  3,$7F,$6C,$6F,$6F,$70,$32,$24,$77,$65,$62,$61,  0,  0,  1,$A6,$40,  0,  0,  0,  3,$7F,$6C,$6F,$6F; 22912
-		dc.b $70,$32,$24,$78,$65,$62,$61,  0,  0,  1,$A6,$AA,  0,  0,  0,  3,$73,$63,$6F,$72,$65,$69,$6E,$69,$74,$74,$62,$6C,  0,  1,$A4,$44,  0,  0,  0,  2,$73,$75,$62,$74,$62,$6C,  0,  0,  0,  1,$A5,$74,  0,  0,  0,  3,$73,$63,$6F,$72,$65,$73,$65,$74,$32,  0,  0,  0; 22976
-		dc.b   0,  1,$A3,$7C,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$30,$24,$61,$65,$62,$61,  0,  0,  1,$A2,$88,  0,  0,  0,  4,$7F,$73,$70,$61,$63,$65,$73,$65,$74,$24,$66,$65,$62,$61,  0,  0,  0,  1,$A4,$38,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$31,$24,$62,$65,$62,$61,  0; 23040
-		dc.b   0,  1,$A2,$BE,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$31,$24,$63,$65,$62,$61,  0,  0,  1,$A3,$8C,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$62,$65,$62,$61,  0,  0,  1,$A2,$D2,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$63,$65,$62,$61,  0,  0,  1,$A3,$A0; 23104
-		dc.b   0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$76,$65,$62,$61,  0,  0,  1,$A5,$A4,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$77,$65,$62,$61,  0,  0,  1,$A5,$FC,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$78,$65,$62,$61,  0,  0,  1,$A6,$6C,  0,  0,  0,  3; 23168
-		dc.b $7F,$6A,$75,$6D,$70,$32,$24,$6D,$65,$62,$61,  0,  0,  1,$A4,$D0,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$6E,$65,$62,$61,  0,  0,  1,$A5,$3E,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$33,$24,$62,$65,$62,$61,  0,  0,  1,$A3, $E,  0,  0,  0,  3,$7F,$6A,$75,$6D; 23232
-		dc.b $70,$33,$24,$63,$65,$62,$61,  0,  0,  1,$A3,$B0,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$33,$24,$76,$65,$62,$61,  0,  0,  1,$A5,$AC,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$33,$24,$77,$65,$62,$61,  0,  0,  1,$A6,  4,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$33,$24,$78; 23296
-		dc.b $65,$62,$61,  0,  0,  1,$A6,$74,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$33,$24,$6D,$65,$62,$61,  0,  0,  1,$A4,$D8,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$33,$24,$6E,$65,$62,$61,  0,  0,  1,$A5,$46,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$34,$24,$62,$65,$62,$61,  0; 23360
-		dc.b   0,  1,$A3,$2E,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$34,$24,$63,$65,$62,$61,  0,  0,  1,$A3,$BE,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$34,$24,$76,$65,$62,$61,  0,  0,  1,$A5,$B6,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$34,$24,$77,$65,$62,$61,  0,  0,  1,$A6, $E; 23424
-		dc.b   0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$34,$24,$78,$65,$62,$61,  0,  0,  1,$A6,$7E,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$34,$24,$6D,$65,$62,$61,  0,  0,  1,$A4,$E2,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$35,$24,$62,$65,$62,$61,  0,  0,  1,$A3,$3C,  0,  0,  0,  3; 23488
-		dc.b $7F,$6A,$75,$6D,$70,$35,$24,$63,$65,$62,$61,  0,  0,  1,$A3,$E6,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$35,$24,$77,$65,$62,$61,  0,  0,  1,$A6,$38,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$35,$24,$78,$65,$62,$61,  0,  0,  1,$A6,$82,  0,  0,  0,  3,$7F,$6A,$75,$6D; 23552
-		dc.b $70,$35,$24,$6A,$65,$62,$61,  0,  0,  1,$A4,$AC,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$35,$24,$6D,$65,$62,$61,  0,  0,  1,$A5,$10,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$36,$24,$62,$65,$62,$61,  0,  0,  1,$A3,$64,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$36,$24,$78; 23616
-		dc.b $65,$62,$61,  0,  0,  1,$A6,$98,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$37,$24,$77,$65,$62,$61,  0,  0,  1,$A6,$3E,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$37,$24,$78,$65,$62,$61,  0,  0,  1,$A6,$A4,  0,  0,  0,  2,$73,$63,$6F,$72,$65,$73,$65,$74,  0,  1,$A2,$8A; 23680
-		dc.b   0,  0,  0,  2,$72,$69,$6E,$67,$69,$6E,$69,$74,  0,  1,$A3,$E8,  0,  0,  0,  3,$70,$6C,$61,$79,$73,$75,$75,$77,$72,$74,  0,  0,  0,  1,$A6,$4C,  0,  0,  0,  4,$73,$63,$6F,$72,$65,$5F,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  0,  0,  1,$A0,$82,  0,  0,  0,  2; 23744
-		dc.b $73,$63,$6F,$72,$65,$73,$70,$30,  0,  1,$A1,  0,  0,  0,  0,  2,$73,$63,$6F,$72,$65,$73,$70,$31,  0,  1,$A1,$52,  0,  0,  0,  2,$73,$63,$6F,$72,$65,$73,$70,$32,  0,  1,$A1,$A4,  0,  0,  0,  2,$73,$63,$6F,$72,$65,$73,$70,$33,  0,  1,$A1,$F6,  0,  0,  0,  2; 23808
-		dc.b $73,$75,$62,$74,$62,$6C,$31,  0,  0,  1,$A5,$88,  0,  0,  0,  2,$73,$75,$62,$74,$62,$6C,$32,  0,  0,  1,$A5,$84,  0,  0,  0,  2,$73,$75,$62,$74,$62,$6C,$33,  0,  0,  1,$A5,$80,  0,  0,  0,  2,$73,$75,$62,$74,$62,$6C,$34,  0,  0,  1,$A5,$7C,  0,  0,  0,  3; 23872
-		dc.b $73,$63,$6F,$72,$65,$69,$6E,$69,$74,  0,  0,  0,  0,  1,$A3,$FC,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$75,$64,$62,$61,  0,  0,  0,  1,$A0,$D8,  0,  0,  0,  2,$62,$6F,$6E,$75,$73,$77,$72,$74,  0,  1,$A5,$EC,  0,  0,  0,  3,$70,$6C,$61,$79,$73,$75,$75,$63; 23936
-		dc.b $67,  0,  0,  0,  0,  1,$A9,$B6,  0,  0,  0,  3,$73,$63,$6F,$72,$65,$5F,$6D,$6F,$76,$65,  0,  0,  0,  1,$A0,$B4,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$61,$65,$62,$61,  0,  0,  0,  1,$AB,$DA,  0,  0,  0,  3,$7F,$6C,$65,$6E,$64,$24,$61,$65,$62,$61,  0,  0; 24000
-		dc.b   0,  1,$AC,$48,  0,  0,  0,  1,$65,$64,$69,$74,  0,  1,$AB,  0,  0,  0,  0,  2,$65,$64,$69,$74,$32,$74,$62,$6C,  0,  1,$AD,$C0,  0,  0,  0,  2,$65,$64,$69,$74,$33,$74,$62,$6C,  0,  1,$AD,$C0,  0,  0,  0,  2,$65,$64,$69,$74,$34,$74,$62,$6C,  0,  1,$AD,$FA; 24064
-		dc.b   0,  0,  0,  2,$65,$64,$69,$74,$35,$74,$62,$6C,  0,  1,$AE,$D4,  0,  0,  0,  2,$65,$64,$69,$74,$36,$74,$62,$6C,  0,  1,$AE,$D4,  0,  0,  0,  2,$65,$64,$69,$74,$31,$74,$62,$6C,  0,  1,$AD,$4E,  0,  0,  0,  2,$65,$64,$69,$74,$37,$74,$62,$6C,  0,  1,$AE,$D4; 24128
-		dc.b   0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$37,$37,$24,$61,$65,$62,$61,  0,  1,$AC,$64,  0,  0,  0,  2,$65,$64,$69,$74,$74,$62,$6C,  0,  0,  1,$AD,$40,  0,  0,  0,  4,$65,$64,$69,$74,$5F,$6D,$6F,$76,$65,$5F,$74,$62,$6C,  0,  0,  0,  0,  1,$AB, $E,  0,  0,  0,  4; 24192
-		dc.b $7F,$77,$6F,$72,$6B,$6E,$61,$69,$24,$61,$65,$62,$61,  0,  0,  0,  0,  1,$AC,$C4,  0,  0,  0,  2,$65,$64,$69,$74,$69,$6E,$69,$74,  0,  1,$AB,$12,  0,  0,  0,  3,$7F,$65,$6E,$64,$24,$61,$65,$62,$61,  0,  0,  0,  0,  1,$AC,$EC,  0,  0,  0,  3,$7F,$6A,$75,$6D; 24256
-		dc.b $70,$30,$24,$79,$64,$62,$61,  0,  0,  1,$AB,$58,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$31,$24,$79,$64,$62,$61,  0,  0,  1,$AB,$5E,  0,  0,  0,  2,$65,$64,$69,$74,$6D,$6F,$76,$65,  0,  1,$AB,$88,  0,  0,  0,  3,$65,$64,$69,$74,$70,$61,$74,$63,$68,$67,  0,  0; 24320
-		dc.b   0,  1,$AD,$20,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$30,$24,$61,$65,$62,$61,  0,  0,  1,$AB,$F2,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$31,$24,$61,$65,$62,$61,  0,  0,  1,$AB,$F6,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$32,$24,$61,$65,$62,$61,  0,  0,  1,$AC,$16; 24384
-		dc.b   0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$33,$24,$61,$65,$62,$61,  0,  0,  1,$AC,$2C,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$34,$24,$61,$65,$62,$61,  0,  0,  1,$AC,$38,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$35,$24,$61,$65,$62,$61,  0,  0,  1,$AC,$40,  0,  0,  0,  3; 24448
-		dc.b $7F,$6A,$75,$6D,$70,$36,$24,$61,$65,$62,$61,  0,  0,  1,$AC,$7C,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$37,$24,$61,$65,$62,$61,  0,  0,  1,$AC,$80,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$38,$24,$61,$65,$62,$61,  0,  0,  1,$AC,$C4,  0,  0,  0,  3,$7F,$6A,$75,$6D; 24512
-		dc.b $70,$39,$24,$61,$65,$62,$61,  0,  0,  1,$AD,$1E,  0,  0,  0,  2,$65,$64,$69,$74,$77,$61,$6C,$6B,  0,  1,$AB,$B0,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$79,$64,$62,$61,  0,  0,  0,  1,$AB,$78,  0,  0,  0,  3,$7F,$6A,$75,$6D,$70,$24,$7A,$64,$62,$61,  0,  0; 24576
-		dc.b   0,  1,$AB,$98,  0,  0,  0,  3,$6D,$61,$70,$69,$6E,$69,$74,$74,$62,$6C,  0,  0,  0,  1,$AF,$58,  0,  0,  0,  3,$64,$69,$76,$64,$65,$76,$74,$62,$6C,  0,  0,  0,  0,  1,$AF,$C8,  0,  0,  0,  2,$64,$64,$65,$76,$30,$30,  0,  0,  0,  1,$B0,  8,  0,  0,  0,  2; 24640
-		dc.b $64,$64,$65,$76,$30,$31,  0,  0,  0,  1,$B0,$28,  0,  0,  0,  2,$64,$64,$65,$76,$30,$32,  0,  0,  0,  1,$B0,$3C,  0,  0,  0,  2,$64,$64,$65,$76,$30,$33,  0,  0,  0,  1,$B0,$44,  0,  0,  0,  2,$64,$64,$65,$76,$30,$34,  0,  0,  0,  1,$B0,$4C,  0,  0,  0,  2; 24704
-		dc.b $64,$64,$65,$76,$30,$35,  0,  0,  0,  1,$B0,$84,  0,  0,  0,  2,$64,$64,$65,$76,$30,$36,  0,  0,  0,  1,$B0,$8C,  0,  0,  0,  2,$64,$64,$65,$76,$30,$37,  0,  0,  0,  1,$B1,$5C,  0,  0,  0,  2,$64,$64,$65,$76,$30,$38,  0,  0,  0,  1,$B0,$8C,  0,  0,  0,  2; 24768
-		dc.b $64,$64,$65,$76,$30,$39,  0,  0,  0,  1,$B1,$5C,  0,  0,  0,  2,$64,$64,$65,$76,$31,$30,  0,  0,  0,  1,$B0,$AC,  0,  0,  0,  2,$64,$64,$65,$76,$31,$31,  0,  0,  0,  1,$B0,$E4,  0,  0,  0,  2,$64,$64,$65,$76,$31,$32,  0,  0,  0,  1,$B0,$F8,  0,  0,  0,  2; 24832
-		dc.b $64,$64,$65,$76,$31,$33,  0,  0,  0,  1,$B1,$2A,  0,  0,  0,  2,$64,$64,$65,$76,$31,$34,  0,  0,  0,  1,$B0,$8C,  0,  0,  0,  2,$64,$64,$65,$76,$31,$35,  0,  0,  0,  1,$B1,$5C,  0,  0,  0,  2,$64,$64,$65,$76,$31,$36,  0,  0,  0,  1,$B1,$70,  0,  0,  0,  2; 24896
-		dc.b $64,$64,$65,$76,$31,$37,  0,  0,  0,  1,$B1,$78,  0,  0,  0,  2,$64,$64,$65,$76,$31,$38,  0,  0,  0,  1,$B1,$B0,  0,  0,  0,  2,$64,$64,$65,$76,$31,$39,  0,  0,  0,  1,$B1,$C4,  0,  0,  0,  2,$64,$64,$65,$76,$32,$30,  0,  0,  0,  1,$B1,$C4,  0,  0,  0,  2; 24960
-		dc.b $64,$64,$65,$76,$32,$31,  0,  0,  0,  1,$B1,$C6,  0,  0,  0,  2,$64,$64,$65,$76,$32,$32,  0,  0,  0,  1,$B1,$D4,  0,  0,  0,  2,$64,$64,$65,$76,$32,$33,  0,  0,  0,  1,$B1,$E2,  0,  0,  0,  2,$64,$64,$65,$76,$32,$34,  0,  0,  0,  1,$B1,$F0,  0,  0,  0,  2; 25024
-		dc.b $64,$64,$65,$76,$32,$35,  0,  0,  0,  1,$B1,$FE,  0,  0,  0,  2,$64,$64,$65,$76,$32,$36,  0,  0,  0,  1,$B2, $C,  0,  0,  0,  2,$64,$64,$65,$76,$32,$37,  0,  0,  0,  1,$B2,$1A,  0,  0,  0,  2,$64,$64,$65,$76,$32,$38,  0,  0,  0,  1,$B2,$1C,  0,  0,  0,  2; 25088
-		dc.b $64,$64,$65,$76,$32,$39,  0,  0,  0,  1,$B2,$1E,  0,  0,  0,  2,$64,$64,$65,$76,$33,$30,  0,  0,  0,  1,$B2,$20,  0,  0,  0,  2,$64,$64,$65,$76,$33,$31,  0,  0,  0,  1,$B2,$22,  0,  0,  0,  0,  0,  0,  3,$F2,$7F,$6A,$75,$6D,  0,$5B,$F2,  0,  0,  9,$D4,$60; 25152
-		dc.b   0,  0,  0,  0,  0,$44,$9B,$A4,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C6,$4E,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$31,$32,$37,  0,  0,  0, $C,  0,$44,$5D,$54,  0,$44,$5B,$DC,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  5,$18,  0,  0,  0,  0,  2,  0,  0,  2; 25216
-		dc.b $66,$6F,$78,$73,$70,$31,$32,$36,  0,  0,  0, $B,  0,$44,$5D,$7C,  0,$44,$5C,  4,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  5, $E,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$31,$32,$35,  0,  0,  0, $A,  0,$44,$5D,$A4,  0,$44,$5C,$2C,  0,$40,$D1,$30; 25280
-		dc.b   0,  0,  0,  0,  0, $A,  5,  4,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$31,$32,$34,  0,  0,  0,  9,  0,$44,$5D,$CC,  0,$44,$5C,$54,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  4,$FA,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$31,$32,$33; 25344
-		dc.b   0,  0,  0,  8,  0,$44,$5D,$F4,  0,$44,$5C,$7C,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  4,$F0,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$31,$32,$32,  0,  0,  0,  7,  0,$44,$5E,$1C,  0,$44,$5C,$A4,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  4,$E6; 25408
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$31,$32,$31,  0,  0,  0,  6,  0,$44,$5E,$44,  0,$44,$5C,$CC,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  4,$DC,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$31,$32,$30,  0,  0,  0,  5,  0,$44,$5E,$6C; 25472
-		dc.b   0,$44,$5C,$F4,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  4,$D2,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$31,$31,$39,  0,  0,  0, $E,  0,$44,$5E,$94,  0,$44,$5D,$1C,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  4,$C0,  0,  0,  0,  0,  2,  0,  0,  2; 25536
-		dc.b $66,$6F,$78,$73,$70,$31,$31,$38,  0,  0,  0, $D,  0,$44,$5E,$BC,  0,$44,$5D,$44,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  4,$B6,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$31,$31,$37,  0,  0,  0, $C,  0,$44,$5E,$E4,  0,$44,$5D,$6C,  0,$40,$D1,$30; 25600
-		dc.b   0,  0,  0,  0,  0, $A,  4,$AC,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$31,$31,$36,  0,  0,  0, $B,  0,$44,$5F, $C,  0,$44,$5D,$94,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  4,$9A,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$31,$31,$35; 25664
-		dc.b   0,  0,  0, $A,  0,$44,$5F,$34,  0,$44,$5D,$BC,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  4,$88,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$31,$31,$34,  0,  0,  0,  9,  0,$44,$5F,$5C,  0,$44,$5D,$E4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FC,$F0; 25728
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$31,$33,  0,  0,  0,  8,  0,$44,$5F,$84,  0,$44,$5E, $C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FC,$E6,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$31,$32,  0,  0,  0,  7,  0,$44,$5F,$AC; 25792
-		dc.b   0,$44,$5E,$34,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FC,$DC,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$31,$31,  0,  0,  0,  6,  0,$44,$5F,$D4,  0,$44,$5E,$5C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FC,$D2,  0,  0,  0,  0,  2,  0,  0,  2; 25856
-		dc.b $66,$6F,$78,$73,$70,$30,$31,$30,  0,  0,  0,  5,  0,$44,$63,$20,  0,$44,$5E,$84,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FC,$C8,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$30,$39,  0,  0,  0, $E,  0,$44,$63,$F4,  0,$44,$5E,$AC,  0,$40,$D1,$30; 25920
-		dc.b   0,  0,  0,  0,  0,  9,$FC,$B6,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$30,$38,  0,  0,  0, $D,  0,$44,$64,$1C,  0,$44,$5E,$D4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FC,$A4,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$30,$37; 25984
-		dc.b   0,  0,  0, $C,  0,$44,$64,$44,  0,$44,$5E,$FC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FC,$9A,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$30,$36,  0,  0,  0, $B,  0,$44,$62,$A0,  0,$44,$5F,$24,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FC,$90; 26048
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$30,$35,  0,  0,  0, $A,  0,$44,$63,$4C,  0,$44,$5F,$4C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FC,$7E,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$30,$34,  0,  0,  0,  9,  0,$44,$64,$BC; 26112
-		dc.b   0,$44,$5F,$74,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FC,$6C,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$30,$33,  0,  0,  0,  8,  0,$44,$60,$50,  0,$44,$5F,$9C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FC,$5A,  0,  0,  0,  0,  2,  0,  0,  2; 26176
-		dc.b $66,$6F,$78,$73,$70,$30,$30,$32,  0,  0,  0,  7,  0,$44,$65, $C,  0,$44,$5F,$C4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FC,$48,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$30,$31,  0,  0,  0,  6,  0,$44,$60,$78,  0,$44,$5F,$EC,  0,$40,$D1,$30; 26240
-		dc.b   0,  0,  0,  0,  0,  9,$FC,$46,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$30,$30,  0,  0,  0,  5,  0,$44,$66,$C4,  0,$44,$60,$14,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  2,  2,  0,  0,  0,  0,  0,  2,  0,  0,  2,$73,$63,$64,$74,$62,$6C,  0,  0; 26304
-		dc.b   0,  0,  0,$16,  0,$44,$60,$C8,  0,$44,$60,$3C,  0,$40,$D1,$30,  0,$40,$D8,$94,  0, $A,$4D,$7A,  0,  0,  0,  0,  2,  0,  0,  3,$66,$61,$6C,$6C,$73,$30,$38,$63,$67,  0,  0,  0,  0,  0,  0,$12,  0,$44,$62,$78,  0,$44,$60,$68,  0,$40,$D1,$30,  0,  0,  0,  0; 26368
-		dc.b   0, $A,$41,$2C,  0,  0,  0,  0,  2,  0,  0,  2,$6B,$61,$67,$65,$62,$63,$67,  0,  0,  0,  0,  7,  0,$44,$60,$A0,  0,$44,$60,$90,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,$E2,$B0,  0,  0,  0,  0,  2,  0,  0,  2,$75,$73,$61,$63,$67,  0,  0,  0,  0,  0,  0,  5; 26432
-		dc.b   0,$44,$65,$34,  0,$44,$60,$B8,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,$E7,$90,  0,  0,  0,  0,  2,  0,  0,  2,$75,$6E,$69,$63,$67,  0,  0,  0,  0,  0,  0,  5,  0,$44,$61,$48,  0,$44,$60,$E0,  0,$40,$D1,$30,  0,$3C,$C2,$70,  0, $A,$2C,$A6,  0,  0,  0,  0; 26496
-		dc.b   2,  0,  0,  3,$74,$69,$74,$6C,$65,$73,$70,$63,$67,  0,  0,  0,  0,  0,  0,$12,  0,$44,$6E,$34,  0,$44,$61, $C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  7,$2E,$7C,  0,  0,  0,  0,  2,  0,  0,  2,$70,$63,$6D,$5F,$74,$6F,$70,  0,  0,  0,  0,  1,  0,$44,$71,$F8; 26560
-		dc.b   0,$44,$61,$34,  0,$40,$D1,$30,  0,$3F,$64,$CC,  0,$FE,$20,  0,  0,  0,  0,  0,  2,  0,  0,  3,$73,$63,$64,$74,$62,$6C,$77,$6B,$32,  0,  0,  0,  0,  0,  0,  2,  0,$44,$61,$74,  0,$44,$61,$60,  0,$40,$D1,$30,  0,$40,$7C,$98,  0,  2,$6A,$A6,  0,  0,  0,  0; 26624
-		dc.b   2,  0,  0,  3,$72,$6F,$74,$6D,$61,$70,$74,$62,$6C,$35,  0,  0,  0,  0,  0,$12,  0,$44,$61,$A0,  0,$44,$61,$8C,  0,$40,$D1,$30,  0,$40,$7C,$CC,  0,  2,$65,$F6,  0,  0,  0,  0,  2,  0,  0,  3,$72,$6F,$74,$6D,$61,$70,$74,$62,$6C,$34,  0,  0,  0,  0,  0,$12; 26688
-		dc.b   0,$44,$61,$CC,  0,$44,$61,$B8,  0,$40,$D1,$30,  0,$40,$7D,  0,  0,  2,$61,$1C,  0,  0,  0,  0,  2,  0,  0,  3,$72,$6F,$74,$6D,$61,$70,$74,$62,$6C,$33,  0,  0,  0,  0,  0,$12,  0,$44,$61,$F8,  0,$44,$61,$E4,  0,$40,$D1,$30,  0,$40,$7D,$34,  0,  2,$5D,$C0; 26752
-		dc.b   0,  0,  0,  0,  2,  0,  0,  3,$72,$6F,$74,$6D,$61,$70,$74,$62,$6C,$32,  0,  0,  0,  0,  0,$12,  0,$44,$62,$24,  0,$44,$62,$10,  0,$40,$D1,$30,  0,$40,$7D,$68,  0,  2,$59,$AE,  0,  0,  0,  0,  2,  0,  0,  3,$72,$6F,$74,$6D,$61,$70,$74,$62,$6C,$31,  0,  0; 26816
-		dc.b   0,  0,  0,$12,  0,$44,$62,$50,  0,$44,$62,$3C,  0,$40,$D1,$30,  0,$40,$7D,$9C,  0,  2,$57,$34,  0,  0,  0,  0,  2,  0,  0,  3,$72,$6F,$74,$6D,$61,$70,$74,$62,$6C,$30,  0,  0,  0,  0,  0,$12,  0,$44,$65,$5C,  0,$44,$62,$68,  0,$40,$D1,$30,  0,$40,$D8,$CC; 26880
-		dc.b   0, $A,$5B,$F0,  0,  0,  0,  0,  2,  0,  0,  2,$6E,$61,$6D,$69,$30,$64,$63,$67,  0,  0,  0,$12,  0,$44,$63,$A4,  0,$44,$62,$90,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,$3A,$3A,  0,  0,  0,  0,  2,  0,  0,  2,$6D,$6F,$76,$65,$63,$67,  0,  0,  0,  0,  0,  7; 26944
-		dc.b   0,$44,$62,$CC,  0,$44,$62,$B8,  0,$40,$D1,$30,  0,$40,$90,$8C,  0,  2,$7C,$58,  0,  0,  0,  0,  2,  0,  0,  3,$65,$66,$65,$63,$74,$30,$64,$64,$63,$67,  0,  0,  0,  0,  0, $A,  0,$44,$64,$6C,  0,$44,$62,$E4,  0,$40,$D1,$30,  0,$40,$90,$C0,  0,  2,$6F,$18; 27008
-		dc.b   0,  0,  0,  0,  2,  0,  0,  3,$65,$66,$65,$63,$74,$30,$30,$64,$63,$67,  0,  0,  0,  0,  0, $A,  0,$44,$6F,$50,  0,$44,$63,$10,  0,$40,$D1,$30,  0,$40,$D8,$FC,  0, $A,$3F,$60,  0,  0,  0,  0,  2,  0,  0,  2,$6A,$79,$61,$6D,$61,$63,$67,  0,  0,  0,  0, $F; 27072
-		dc.b   0,$44,$63,$CC,  0,$44,$63,$38,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  4,$16,$74,  0,  0,  0,  0,  2,  0,  0,  3,$61,$73,$65,$74,$74,$62,$6C,$37,$30,$7A,  0,  0,  0,  0,  0, $E,  0,$44,$63,$78,  0,$44,$63,$64,  0,$40,$D1,$30,  0,$3F,$65,  0,  0,  2,  1,  0; 27136
-		dc.b   0,  0,  0,  0,  2,  0,  0,  3,$73,$63,$64,$64,$69,$72,$74,$62,$6C,$32,  0,  0,  0,  0,  0,  9,  0,$44,$64,$94,  0,$44,$63,$90,  0,$40,$D1,$30,  0,$3F,$65,$34,  0,  2,  0,  0,  0,  0,  0,  0,  2,  0,  0,  3,$73,$63,$64,$64,$69,$72,$74,$62,$6C,$31,  0,  0; 27200
-		dc.b   0,  0,  0,  9,  0,$44,$64,$E4,  0,$44,$63,$BC,  0,$40,$D1,$30,  0,$40,$D9,$2C,  0, $A,$FA,$E0,  0,  0,  0,  0,  2,  0,  0,  2,$67,$6F,$6C,$65,$63,$67,  0,  0,  0,  0,  0,  7,  0,$44,$65,$84,  0,$44,$63,$E4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FE,$80; 27264
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$32,$39,  0,  0,  0, $E,  0,$44,$65,$AC,  0,$44,$64, $C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FE,$66,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$32,$38,  0,  0,  0, $D,  0,$44,$65,$FC; 27328
-		dc.b   0,$44,$64,$34,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FE,$4C,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$32,$37,  0,  0,  0, $C,  0,$44,$66,$4C,  0,$44,$64,$5C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FE,$32,  0,  0,  0,  0,  2,  0,  0,  2; 27392
-		dc.b $66,$6F,$78,$73,$70,$30,$32,$36,  0,  0,  0, $B,  0,$44,$66,$74,  0,$44,$64,$84,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FE,$18,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$32,$35,  0,  0,  0, $A,  0,$44,$66,$9C,  0,$44,$64,$AC,  0,$40,$D1,$30; 27456
-		dc.b   0,  0,  0,  0,  0,  9,$FD,$FE,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$32,$34,  0,  0,  0,  9,  0,$44,$6E,  8,  0,$44,$64,$D4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FD,$E4,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$32,$33; 27520
-		dc.b   0,  0,  0,  8,  0,$44,$67,$8C,  0,$44,$64,$FC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FD,$CA,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$32,$32,  0,  0,  0,  7,  0,$41, $B,$68,  0,$44,$65,$24,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FD,$B0; 27584
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$32,$31,  0,  0,  0,  6,  0,$44,$67,$3C,  0,$44,$65,$4C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FD,$96,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$32,$30,  0,  0,  0,  5,  0,$44,$66,$EC; 27648
-		dc.b   0,$44,$65,$74,  0,$40,$D1,$30,  0,$40,$D9,$60,  0, $A,$FA,  4,  0,  0,  0,  0,  2,  0,  0,  2,$6A,$75,$6D,$70,$32,$63,$67,  0,  0,  0,  0,$12,  0,$40,$EE,$94,  0,$44,$65,$9C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FD,$7C,  0,  0,  0,  0,  2,  0,  0,  2; 27712
-		dc.b $66,$6F,$78,$73,$70,$30,$31,$39,  0,  0,  0, $E,  0,$44,$6D,$B4,  0,$44,$65,$C4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FD,$62,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$31,$38,  0,  0,  0, $D,  0,$44,$66,$24,  0,$44,$65,$EC,  0,$40,$D1,$30; 27776
-		dc.b   0,$40,$D9,$90,  0, $A,$AA,$22,  0,  0,  0,  0,  2,  0,  0,  2,$62,$6F,$73,$73,$73,$6D,$63,$67,  0,  0,  0,$1C,  0,$40,$FE,$70,  0,$44,$66,$14,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FD,$48,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$31,$37; 27840
-		dc.b   0,  0,  0, $C,  0,$44,$71,$30,  0,$44,$66,$3C,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,$A3,$1C,  0,  0,  0,  0,  2,  0,  0,  2,$62,$6F,$73,$73,$62,$6D,$63,$67,  0,  0,  0,$1C,  0,$44,$71,$D0,  0,$44,$66,$64,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FD,$2E; 27904
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$31,$36,  0,  0,  0, $B,  0,$41,  7, $C,  0,$44,$66,$8C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FD,$14,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$31,$35,  0,  0,  0, $A,  0,$44,$6A,$AC; 27968
-		dc.b   0,$44,$66,$B4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FC,$FA,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$31,$34,  0,  0,  0,  9,  0,$44,$67,$14,  0,$44,$66,$DC,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $B,  3,$D2,  0,  0,  0,  0,  2,  0,  0,  2; 28032
-		dc.b $63,$6F,$6E,$74,$63,$67,  0,  0,  0,  0,  0,$16,  0,$41,  0,$8C,  0,$44,$67,  4,  0,$40,$D1,$30,  0,$40,$D9,$C0,  0, $A,$4A,$6A,  0,  0,  0,  0,  2,  0,  0,  2,$63,$73,$6F,$30,$30,$63,$67,  0,  0,  0,  0,$12,  0,$41,  1,$58,  0,$44,$67,$2C,  0,$40,$D1,$30; 28096
-		dc.b   0,$40,$D9,$F4,  0, $A,$70,$86,  0,  0,  0,  0,  2,  0,  0,  2,$62,$62,$61,$74,$63,$67,  0,  0,  0,  0,  0,$16,  0,$44,$6D,$E0,  0,$44,$67,$54,  0,$40,$D1,$30,  0,$3F,$18,$58,  0,  9,$25,$4C,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$63,$67,  0,  0,  0; 28160
-		dc.b   0,  0,  0,  5,  0,$44,$67,$B4,  0,$44,$67,$7C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$E1,$FC,  0,  0,  0,  0,  2,  0,  0,  2,$73,$74,$6F,$70,$66,$78,$63,$67,  0,  0,  0,$19,  0,$44,$7B,$58,  0,$44,$67,$A4,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,$3C,$20; 28224
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$74,$6F,$67,$65,$68,$63,$67,  0,  0,  0,  0,  7,  0,$44,$67,$DC,  0,$44,$67,$CC,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$70,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$31,$33,$32,  0,  0,  0,  0,$19,  0,$44,$68,  4; 28288
-		dc.b   0,$44,$67,$F4,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$6C,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$31,$33,$31,  0,  0,  0,  0,$19,  0,$44,$68,$54,  0,$44,$68,$1C,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$68,  0,  0,  0,  0,  2,  0,  0,  2; 28352
-		dc.b $66,$6F,$78,$77,$31,$33,$30,  0,  0,  0,  0,$19,  0,$40,$CC,$F8,  0,$44,$68,$44,  0,$40,$D1,$30,  0,$40,$DA,$28,  0, $D,$A9,$CE,  0,  0,  0,  0,  2,  0,  0,  2,$7A,$6F,$6E,$65,$31,$6D,$61,$70,  0,  0,  0,$17,  0,$44,$68,$7C,  0,$44,$68,$6C,  0,$40,$D1,$30; 28416
-		dc.b   0,  0,  0,  0,  0, $A,  8,$64,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$31,$32,$39,  0,  0,  0,  0,$19,  0,$44,$68,$A4,  0,$44,$68,$94,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  9,$5A,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$31,$32,$38,  0; 28480
-		dc.b   0,  0,  0,$19,  0,$44,$68,$CC,  0,$44,$68,$BC,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  9,$54,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$31,$32,$37,  0,  0,  0,  0,$19,  0,$44,$68,$F4,  0,$44,$68,$E4,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  9,$50; 28544
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$31,$32,$36,  0,  0,  0,  0,$19,  0,$44,$69,$1C,  0,$44,$69, $C,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  9,$4C,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$31,$32,$35,  0,  0,  0,  0,$19,  0,$44,$69,$44; 28608
-		dc.b   0,$44,$69,$34,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  9,$48,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$31,$32,$34,  0,  0,  0,  0,$19,  0,$44,$69,$6C,  0,$44,$69,$5C,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  9,$44,  0,  0,  0,  0,  2,  0,  0,  2; 28672
-		dc.b $66,$6F,$78,$77,$31,$32,$33,  0,  0,  0,  0,$19,  0,$44,$69,$94,  0,$44,$69,$84,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  9,$40,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$31,$32,$32,  0,  0,  0,  0,$19,  0,$44,$69,$BC,  0,$44,$69,$AC,  0,$40,$D1,$30; 28736
-		dc.b   0,  0,  0,  0,  0, $A,  9,$3C,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$31,$32,$31,  0,  0,  0,  0,$19,  0,$44,$69,$E4,  0,$44,$69,$D4,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  9,$38,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$31,$32,$30,  0; 28800
-		dc.b   0,  0,  0,$19,  0,$44,$6A, $C,  0,$44,$69,$FC,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  9,$34,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$31,$31,$39,  0,  0,  0,  0,$19,  0,$44,$6A,$34,  0,$44,$6A,$24,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  9,$2E; 28864
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$31,$31,$38,  0,  0,  0,  0,$19,  0,$44,$6A,$5C,  0,$44,$6A,$4C,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  9,$2A,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$31,$31,$37,  0,  0,  0,  0,$19,  0,$44,$6A,$84; 28928
-		dc.b   0,$44,$6A,$74,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  9,$26,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$31,$31,$36,  0,  0,  0,  0,$19,  0,$44,$6A,$D8,  0,$44,$6A,$9C,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  9,$20,  0,  0,  0,  0,  2,  0,  0,  2; 28992
-		dc.b $66,$6F,$78,$77,$31,$31,$35,  0,  0,  0,  0,$19,  0,$44,$6C,$1C,  0,$44,$6A,$C4,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,$90,$F4,  0,  0,  0,  0,  2,  0,  0,  3,$73,$61,$6E,$64,$63,$72,$61,$62,$63,$67,  0,  0,  0,  0,  0,  9,  0,$44,$6B,  0,  0,$44,$6A,$F0; 29056
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  9,$1A,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$31,$31,$34,  0,  0,  0,  0,$19,  0,$44,$6B,$28,  0,$44,$6B,$18,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  9,$1A,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77; 29120
-		dc.b $31,$31,$33,  0,  0,  0,  0,$19,  0,$44,$6B,$50,  0,$44,$6B,$40,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  9, $E,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$31,$31,$32,  0,  0,  0,  0,$19,  0,$44,$6B,$78,  0,$44,$6B,$68,  0,$40,$D1,$30,  0,  0,  0,  0; 29184
-		dc.b   0, $A,  9,$14,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$31,$31,$31,  0,  0,  0,  0,$19,  0,$44,$6B,$CC,  0,$44,$6B,$90,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  9, $E,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$31,$31,$30,  0,  0,  0,  0,$19; 29248
-		dc.b   0,$41,  2,$A0,  0,$44,$6B,$B8,  0,$40,$D1,$30,  0,$40,$DA,$58,  0, $A,$FF,$5C,  0,  0,  0,  0,  2,  0,  0,  3,$65,$62,$69,$67,$72,$69,$6E,$67,$63,$67,  0,  0,  0,  0,  0,$11,  0,$44,$6B,$F4,  0,$44,$6B,$E4,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  9,  8; 29312
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$31,$30,$39,  0,  0,  0,  0,$19,  0,$44,$6C,$48,  0,$44,$6C, $C,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  9,  2,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$31,$30,$38,  0,  0,  0,  0,$19,  0,$44,$6C,$98; 29376
-		dc.b   0,$44,$6C,$34,  0,$40,$D1,$30,  0,$40,$90,$F4,  0,  2,$7B,$98,  0,  0,  0,  0,  2,  0,  0,  3,$65,$66,$65,$63,$74,$30,$64,$63,$63,$67,  0,  0,  0,  0,  0,  9,  0,$44,$6C,$70,  0,$44,$6C,$60,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$FE,  0,  0,  0,  0; 29440
-		dc.b   2,  0,  0,  2,$66,$6F,$78,$77,$31,$30,$37,  0,  0,  0,  0,$19,  0,$44,$6C,$C4,  0,$44,$6C,$88,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$F8,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$31,$30,$36,  0,  0,  0,  0,$19,  0,$44,$79,  0,  0,$44,$6C,$B0; 29504
-		dc.b   0,$40,$D1,$30,  0,$40,$91,$28,  0,  2,$6E,$98,  0,  0,  0,  0,  2,  0,  0,  3,$65,$66,$65,$63,$74,$30,$30,$63,$63,$67,  0,  0,  0,  0,  0,  9,  0,$44,$6C,$EC,  0,$44,$6C,$DC,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$F2,  0,  0,  0,  0,  2,  0,  0,  2; 29568
-		dc.b $66,$6F,$78,$77,$31,$30,$35,  0,  0,  0,  0,$19,  0,$44,$6D,$14,  0,$44,$6D,  4,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$EC,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$31,$30,$34,  0,  0,  0,  0,$19,  0,$44,$6D,$3C,  0,$44,$6D,$2C,  0,$40,$D1,$30; 29632
-		dc.b   0,  0,  0,  0,  0, $A,  8,$E6,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$31,$30,$33,  0,  0,  0,  0,$19,  0,$44,$6D,$64,  0,$44,$6D,$54,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$E0,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$31,$30,$32,  0; 29696
-		dc.b   0,  0,  0,$19,  0,$44,$6D,$8C,  0,$44,$6D,$7C,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$DA,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$31,$30,$31,  0,  0,  0,  0,$19,  0,$44,$6E,$60,  0,$44,$6D,$A4,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$D4; 29760
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$31,$30,$30,  0,  0,  0,  0,$19,  0,$40,$CD,$A0,  0,$44,$6D,$CC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  4,$16,$74,  0,  0,  0,  0,  2,  0,  0,  3,$61,$73,$65,$74,$74,$62,$6C,$36,$30,$7A,  0,  0,  0,  0,  0, $D; 29824
-		dc.b   0,$44,$75,$40,  0,$44,$6D,$F8,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,$5D,$60,  0,  0,  0,  0,  2,  0,  0,  2,$73,$77,$69,$63,$68,$63,$67,  0,  0,  0,  0,  5,  0,$44,$7A,$18,  0,$44,$6E,$20,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,$8C,$D6,  0,  0,  0,  0; 29888
-		dc.b   2,  0,  0,  3,$62,$75,$62,$62,$6C,$65,$72,$63,$67,  0,  0,  0,  0,  0,  0,  8,  0,$44,$73,$D8,  0,$44,$6E,$4C,  0,$40,$D1,$30,  0,$40,$DA,$8C,  0, $A,$53,$4E,  0,  0,  0,  0,  2,  0,  0,  3,$70,$6C,$74,$66,$72,$6D,$30,$38,$63,$67,  0,  0,  0,  0,  0,  1; 29952
-		dc.b   0,$44,$6E,$88,  0,$44,$6E,$78,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$CE,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$39,$39,  0,  0,  0,  0,$19,  0,$44,$6E,$B0,  0,$44,$6E,$A0,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$CA,  0,  0,  0,  0; 30016
-		dc.b   2,  0,  0,  2,$66,$6F,$78,$77,$30,$39,$38,  0,  0,  0,  0,$19,  0,$44,$6E,$D8,  0,$44,$6E,$C8,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$C6,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$39,$37,  0,  0,  0,  0,$19,  0,$44,$6F,  0,  0,$44,$6E,$F0; 30080
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$C2,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$39,$36,  0,  0,  0,  0,$19,  0,$44,$6F,$28,  0,$44,$6F,$18,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$BC,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77; 30144
-		dc.b $30,$39,$35,  0,  0,  0,  0,$19,  0,$44,$6F,$78,  0,$44,$6F,$40,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$BC,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$39,$34,  0,  0,  0,  0,$19,  0,$40,$4E,$84,  0,$44,$6F,$68,  0,$40,$D1,$30,  0,  0,  0,  0; 30208
-		dc.b   0, $A,$CE,  0,  0,  0,  0,  0,  2,  0,  0,  2,$61,$72,$75,$6D,$61,$63,$67,  0,  0,  0,  0, $F,  0,$44,$6F,$A0,  0,$44,$6F,$90,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$B8,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$39,$33,  0,  0,  0,  0,$19; 30272
-		dc.b   0,$44,$6F,$C8,  0,$44,$6F,$B8,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$B4,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$39,$32,  0,  0,  0,  0,$19,  0,$44,$6F,$F0,  0,$44,$6F,$E0,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$B0,  0,  0,  0,  0; 30336
-		dc.b   2,  0,  0,  2,$66,$6F,$78,$77,$30,$39,$31,  0,  0,  0,  0,$19,  0,$44,$70,$18,  0,$44,$70,  8,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$AA,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$39,$30,  0,  0,  0,  0,$19,  0,$44,$70,$40,  0,$44,$70,$30; 30400
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$A4,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$38,$39,  0,  0,  0,  0,$19,  0,$44,$70,$68,  0,$44,$70,$58,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$A0,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77; 30464
-		dc.b $30,$38,$38,  0,  0,  0,  0,$19,  0,$44,$70,$90,  0,$44,$70,$80,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$9C,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$38,$37,  0,  0,  0,  0,$19,  0,$44,$70,$B8,  0,$44,$70,$A8,  0,$40,$D1,$30,  0,  0,  0,  0; 30528
-		dc.b   0, $A,  8,$98,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$38,$36,  0,  0,  0,  0,$19,  0,$44,$70,$E0,  0,$44,$70,$D0,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$94,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$38,$35,  0,  0,  0,  0,$19; 30592
-		dc.b   0,$44,$71,  8,  0,$44,$70,$F8,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$90,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$38,$34,  0,  0,  0,  0,$19,  0,$44,$71,$58,  0,$44,$71,$20,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$8C,  0,  0,  0,  0; 30656
-		dc.b   2,  0,  0,  2,$66,$6F,$78,$77,$30,$38,$33,  0,  0,  0,  0,$19,  0,$41, $A,$78,  0,$44,$71,$48,  0,$40,$D1,$30,  0,$40,$DA,$C4,  0, $A,$7A,$F8,  0,  0,  0,  0,  2,  0,  0,  2,$72,$65,$64,$7A,$63,$67,  0,  0,  0,  0,  0,$1C,  0,$44,$71,$80,  0,$44,$71,$70; 30720
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$88,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$38,$32,  0,  0,  0,  0,$19,  0,$44,$71,$A8,  0,$44,$71,$98,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$84,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77; 30784
-		dc.b $30,$38,$31,  0,  0,  0,  0,$19,  0,$44,$72,$20,  0,$44,$71,$C0,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$80,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$38,$30,  0,  0,  0,  0,$19,  0,$40,$FC,  8,  0,$44,$71,$E8,  0,$40,$D1,$30,  0,$40,$DA,$F4; 30848
-		dc.b   0,  9,$DF,$8E,  0,  0,  0,  0,  2,  0,  0,  2,$62,$61,$72,$69,$61,$63,$67,  0,  0,  0,  0, $B,  0,$40,$16,$80,  0,$44,$72,$10,  0,$40,$D1,$30,  0,$40,$DB,$24,  0, $A,$62,$FA,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$61,$79,$6E,$6F,$63,$67,  0,  0,  0,  2; 30912
-		dc.b   0,$44,$72,$48,  0,$44,$72,$38,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$7C,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$37,$39,  0,  0,  0,  0,$19,  0,$44,$72,$70,  0,$44,$72,$60,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$78,  0,  0,  0,  0; 30976
-		dc.b   2,  0,  0,  2,$66,$6F,$78,$77,$30,$37,$38,  0,  0,  0,  0,$19,  0,$44,$72,$98,  0,$44,$72,$88,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$74,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$37,$37,  0,  0,  0,  0,$19,  0,$44,$72,$C0,  0,$44,$72,$B0; 31040
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$70,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$37,$36,  0,  0,  0,  0,$19,  0,$44,$72,$E8,  0,$44,$72,$D8,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$6C,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77; 31104
-		dc.b $30,$37,$35,  0,  0,  0,  0,$19,  0,$44,$73,$10,  0,$44,$73,  0,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$68,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$37,$34,  0,  0,  0,  0,$19,  0,$44,$73,$38,  0,$44,$73,$28,  0,$40,$D1,$30,  0,  0,  0,  0; 31168
-		dc.b   0, $A,  8,$64,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$37,$33,  0,  0,  0,  0,$19,  0,$44,$73,$60,  0,$44,$73,$50,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$60,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$37,$32,  0,  0,  0,  0,$19; 31232
-		dc.b   0,$44,$73,$88,  0,$44,$73,$78,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$5C,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$37,$31,  0,  0,  0,  0,$19,  0,$44,$73,$B0,  0,$44,$73,$A0,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$58,  0,  0,  0,  0; 31296
-		dc.b   2,  0,  0,  2,$66,$6F,$78,$77,$30,$37,$30,  0,  0,  0,  0,$19,  0,$44,$74,$C8,  0,$44,$73,$C8,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$50,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$36,$39,  0,  0,  0,  0,$19,  0,$44,$74,  0,  0,$44,$73,$F0; 31360
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0,  2,$B6,$B0,  0,  0,  0,  0,  2,  0,  0,  2,$7A,$6F,$6E,$65,$37,$5F,$34,$7A,  0,  0,  0,  1,  0,$44,$74,$28,  0,$44,$74,$18,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  2,$B6,$B0,  0,  0,  0,  0,  2,  0,  0,  2,$7A,$6F,$6E,$65; 31424
-		dc.b $36,$5F,$34,$7A,  0,  0,  0,  1,  0,$44,$74,$50,  0,$44,$74,$40,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  2,$B6,$B0,  0,  0,  0,  0,  2,  0,  0,  2,$7A,$6F,$6E,$65,$35,$5F,$34,$7A,  0,  0,  0,  1,  0,$44,$74,$78,  0,$44,$74,$68,  0,$40,$D1,$30,  0,  0,  0,  0; 31488
-		dc.b   0,  2,$B6,$B0,  0,  0,  0,  0,  2,  0,  0,  2,$7A,$6F,$6E,$65,$34,$5F,$34,$7A,  0,  0,  0,  1,  0,$44,$74,$A0,  0,$44,$74,$90,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  2,$B6,$B0,  0,  0,  0,  0,  2,  0,  0,  2,$7A,$6F,$6E,$65,$33,$5F,$34,$7A,  0,  0,  0,  1; 31552
-		dc.b   0,$44,$74,$F0,  0,$44,$74,$B8,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  2,$B6,$B0,  0,  0,  0,  0,  2,  0,  0,  2,$7A,$6F,$6E,$65,$32,$5F,$34,$7A,  0,  0,  0,  1,  0,$44,$75,$18,  0,$44,$74,$E0,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$48,  0,  0,  0,  0; 31616
-		dc.b   2,  0,  0,  2,$66,$6F,$78,$77,$30,$36,$38,  0,  0,  0,  0,$19,  0,$44,$76,$A8,  0,$44,$75,  8,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  2,$B6,$B0,  0,  0,  0,  0,  2,  0,  0,  2,$7A,$6F,$6E,$65,$31,$5F,$34,$7A,  0,  0,  0,  1,  0,$44,$75,$68,  0,$44,$75,$30; 31680
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$40,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$36,$37,  0,  0,  0,  0,$19,  0,$40,$FF,$48,  0,$44,$75,$58,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,$E9,$6E,  0,  0,  0,  0,  2,  0,  0,  2,$69,$6D,$6F,$63; 31744
-		dc.b $67,  0,  0,  0,  0,  0,  0,  5,  0,$44,$75,$90,  0,$44,$75,$80,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$38,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$36,$36,  0,  0,  0,  0,$19,  0,$44,$75,$B8,  0,$44,$75,$A8,  0,$40,$D1,$30,  0,  0,  0,  0; 31808
-		dc.b   0, $A,  8,$30,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$36,$35,  0,  0,  0,  0,$19,  0,$44,$75,$E0,  0,$44,$75,$D0,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$28,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$36,$34,  0,  0,  0,  0,$19; 31872
-		dc.b   0,$44,$76,  8,  0,$44,$75,$F8,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$20,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$36,$33,  0,  0,  0,  0,$19,  0,$44,$76,$30,  0,$44,$76,$20,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$18,  0,  0,  0,  0; 31936
-		dc.b   2,  0,  0,  2,$66,$6F,$78,$77,$30,$36,$32,  0,  0,  0,  0,$19,  0,$44,$76,$58,  0,$44,$76,$48,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,  8,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$36,$31,  0,  0,  0,  0,$19,  0,$44,$76,$80,  0,$44,$76,$70; 32000
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,$10,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$36,$30,  0,  0,  0,  0,$19,  0,$44,$77,$98,  0,$44,$76,$98,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,  8,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77; 32064
-		dc.b $30,$35,$39,  0,  0,  0,  0,$19,  0,$44,$76,$D0,  0,$44,$76,$C0,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  2,$B6,$B0,  0,  0,  0,  0,  2,  0,  0,  2,$7A,$6F,$6E,$65,$37,$5F,$33,$7A,  0,  0,  0,  1,  0,$44,$76,$F8,  0,$44,$76,$E8,  0,$40,$D1,$30,  0,  0,  0,  0; 32128
-		dc.b   0,  2,$B6,$B0,  0,  0,  0,  0,  2,  0,  0,  2,$7A,$6F,$6E,$65,$36,$5F,$33,$7A,  0,  0,  0,  1,  0,$44,$77,$20,  0,$44,$77,$10,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  2,$B6,$B0,  0,  0,  0,  0,  2,  0,  0,  2,$7A,$6F,$6E,$65,$35,$5F,$33,$7A,  0,  0,  0,  1; 32192
-		dc.b   0,$44,$77,$48,  0,$44,$77,$38,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  2,$B6,$B0,  0,  0,  0,  0,  2,  0,  0,  2,$7A,$6F,$6E,$65,$34,$5F,$33,$7A,  0,  0,  0,  1,  0,$44,$77,$70,  0,$44,$77,$60,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  2,$B6,$B0,  0,  0,  0,  0; 32256
-		dc.b   2,  0,  0,  2,$7A,$6F,$6E,$65,$33,$5F,$33,$7A,  0,  0,  0,  1,  0,$44,$77,$C0,  0,$44,$77,$88,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  2,$B6,$B0,  0,  0,  0,  0,  2,  0,  0,  2,$7A,$6F,$6E,$65,$32,$5F,$33,$7A,  0,  0,  0,  1,  0,$44,$77,$E8,  0,$44,$77,$B0; 32320
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  8,  0,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$35,$38,  0,  0,  0,  0,$19,  0,$40,$EC,$DC,  0,$44,$77,$D8,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  2,$B6,$B0,  0,  0,  0,  0,  2,  0,  0,  2,$7A,$6F,$6E,$65; 32384
-		dc.b $31,$5F,$33,$7A,  0,  0,  0,  1,  0,$44,$78,$10,  0,$44,$78,  0,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  7,$F8,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$35,$37,  0,  0,  0,  0,$19,  0,$44,$78,$38,  0,$44,$78,$28,  0,$40,$D1,$30,  0,  0,  0,  0; 32448
-		dc.b   0, $A,  7,$F0,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$35,$36,  0,  0,  0,  0,$19,  0,$44,$78,$60,  0,$44,$78,$50,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  7,$E8,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$35,$35,  0,  0,  0,  0,$19; 32512
-		dc.b   0,$44,$78,$88,  0,$44,$78,$78,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  7,$E0,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$35,$34,  0,  0,  0,  0,$19,  0,$44,$78,$B0,  0,$44,$78,$A0,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  7,$D8,  0,  0,  0,  0; 32576
-		dc.b   2,  0,  0,  2,$66,$6F,$78,$77,$30,$35,$33,  0,  0,  0,  0,$19,  0,$44,$78,$D8,  0,$44,$78,$C8,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  7,$D0,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$35,$32,  0,  0,  0,  0,$19,  0,$44,$79,$F0,  0,$44,$78,$F0; 32640
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  7,$CA,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$35,$31,  0,  0,  0,  0,$19,  0,$44,$79,$28,  0,$44,$79,$18,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  2,$B5,$D4,  0,  0,  0,  0,  2,  0,  0,  2,$7A,$6F,$6E,$65; 32704
-		dc.b $37,$5F,$34,$62,  0,  0,  0,  9,  0,$44,$79,$50,  0,$44,$79,$40,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  2,$B5,$D4,  0,  0,  0,  0,  2,  0,  0,  2,$7A,$6F,$6E,$65,$36,$5F,$34,$62,  0,  0,  0,  9,  0,$44,$79,$78,  0,$44,$79,$68,  0,$40,$D1,$30,  0,  0,  0,  0; 32768
-		dc.b   0,  2,$B6,$66,  0,  0,  0,  0,  2,  0,  0,  2,$7A,$6F,$6E,$65,$35,$5F,$34,$62,  0,  0,  0,  9,  0,$44,$79,$A0,  0,$44,$79,$90,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  2,$A5,$C6,  0,  0,  0,  0,  2,  0,  0,  2,$7A,$6F,$6E,$65,$34,$5F,$34,$62,  0,  0,  0,  9; 32832
-		dc.b   0,$44,$79,$C8,  0,$44,$79,$B8,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  2,$B5,$D4,  0,  0,  0,  0,  2,  0,  0,  2,$7A,$6F,$6E,$65,$33,$5F,$34,$62,  0,  0,  0,  9,  0,$44,$7B,  8,  0,$44,$79,$E0,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  2,$B5,$D4,  0,  0,  0,  0; 32896
-		dc.b   2,  0,  0,  2,$7A,$6F,$6E,$65,$32,$5F,$34,$62,  0,  0,  0,  9,  0,$44,$7B,$80,  0,$44,$7A,  8,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  7,$C4,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$77,$30,$35,$30,  0,  0,  0,  0,$19,  0,$44,$7A,$40,  0,$44,$7A,$30; 32960
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0,  2,$A5,$D0,  0,  0,  0,  0,  2,  0,  0,  2,$7A,$6F,$6E,$65,$37,$5F,$34,$61,  0,  0,  0,  8,  0,$44,$7A,$68,  0,$44,$7A,$58,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  2,$A5,$D0,  0,  0,  0,  0,  2,  0,  0,  2,$7A,$6F,$6E,$65; 33024
-		dc.b $36,$5F,$34,$61,  0,  0,  0,  8,  0,$44,$7A,$90,  0,$44,$7A,$80,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  2,$AD,$D2,  0,  0,  0,  0,  2,  0,  0,  2,$7A,$6F,$6E,$65,$35,$5F,$34,$61,  0,  0,  0,  8,  0,$44,$7A,$B8,  0,$44,$7A,$A8,  0,$40,$D1,$30,  0,  0,  0,  0; 33088
-		dc.b   0,  2,$9D,$C4,  0,  0,  0,  0,  2,  0,  0,  2,$7A,$6F,$6E,$65,$34,$5F,$34,$61,  0,  0,  0,  8,  0,$44,$7A,$E0,  0,$44,$7A,$D0,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  2,$A5,$D0,  0,  0,  0,  0,  2,  0,  0,  2,$7A,$6F,$6E,$65,$33,$5F,$34,$61,  0,  0,  0,  8; 33152
-		dc.b   0,$44,$7B,$30,  0,$44,$7A,$F8,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  2,$A5,$D0,  0,  0,  0,  0,  2,  0,  0,  2,$7A,$6F,$6E,$65,$32,$5F,$34,$61,  0,  0,  0,  8,  0,$40,$EF,$5C,  0,$44,$7B,$20,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  2,$B5,$D4,  0,  0,  0,  0; 33216
-		dc.b   2,  0,  0,  2,$7A,$6F,$6E,$65,$31,$5F,$34,$62,  0,  0,  0,  9,  0,$40,$F0,$74,  0,$44,$7B,$48,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  2,$A5,$D0,  0,  0,  0,  0,  2,  0,  0,  2,$7A,$6F,$6E,$65,$31,$5F,$34,$61,  0,  0,  0,  8,  0,$41,  0,$B8,  0,$44,$7B,$70; 33280
-		dc.b   0,$40,$D1,$30,  0,$40,$DB,$5C,  0, $D,$5D,$B2,  0,  0,  0,  0,  2,  0,  0,  2,$7A,$6F,$6E,$65,$31,$63,$67,  0,  0,  0,  0,  7,  0,$40,$ED,$CC,  0,$40,$EC,$CC,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  7,$B8,  0,  0,  0,  0,  0,$5B,$F2,  0,  0,  9,$B4,$60; 33344
-		dc.b   0,  0,  0,  8,  0,  0,  0,  0,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$35,$39,  0,  0,  0,  0,  0,$12,  0,$44,$7B,$E4,  0,$44,$7B,$D4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$A2,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$35,$39,  0,  0; 33408
-		dc.b   0,  0,  0,$12,  0,$44,$7C, $C,  0,$44,$7B,$FC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1C,$AA,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$35,$38,  0,  0,  0,  0,  0,$12,  0,$44,$7C,$34,  0,$44,$7C,$24,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$98; 33472
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$35,$38,  0,  0,  0,  0,  0,$12,  0,$44,$7C,$5C,  0,$44,$7C,$4C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1C,$88,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$35,$37,  0,  0,  0,  0,  0,$12,  0,$44,$7C,$84; 33536
-		dc.b   0,$44,$7C,$74,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$8E,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$35,$37,  0,  0,  0,  0,  0,$12,  0,$44,$7C,$AC,  0,$44,$7C,$9C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1C,$66,  0,  0,  0,  0,  2,  0,  0,  2; 33600
-		dc.b $70,$6C,$79,$30,$35,$36,  0,  0,  0,  0,  0,$12,  0,$44,$7C,$FC,  0,$44,$7C,$C4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$84,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$35,$36,  0,  0,  0,  0,  0,$12,  0,$44,$86,$AC,  0,$44,$7C,$EC,  0,$40,$D1,$30; 33664
-		dc.b   0,  0,  0,  0,  0, $D,$93,$6E,  0,  0,  0,  0,  2,  0,  0,  2,$65,$6E,$6B,$65,$69,$63,$67,  0,  0,  0,  0,  7,  0,$44,$7D,$24,  0,$44,$7D,$14,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1C,$44,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$35,$35,  0,  0; 33728
-		dc.b   0,  0,  0,$12,  0,$44,$7D,$4C,  0,$44,$7D,$3C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$7A,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$35,$35,  0,  0,  0,  0,  0,$12,  0,$44,$7D,$74,  0,$44,$7D,$64,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1C,$22; 33792
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$35,$34,  0,  0,  0,  0,  0,$12,  0,$44,$7D,$9C,  0,$44,$7D,$8C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$70,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$35,$34,  0,  0,  0,  0,  0,$12,  0,$44,$7D,$C4; 33856
-		dc.b   0,$44,$7D,$B4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1C,  0,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$35,$33,  0,  0,  0,  0,  0,$12,  0,$44,$7D,$EC,  0,$44,$7D,$DC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$66,  0,  0,  0,  0,  2,  0,  0,  2; 33920
-		dc.b $70,$6C,$77,$30,$35,$33,  0,  0,  0,  0,  0,$12,  0,$44,$7E,$14,  0,$44,$7E,  4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1B,$DE,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$35,$32,  0,  0,  0,  0,  0,$12,  0,$44,$7E,$3C,  0,$44,$7E,$2C,  0,$40,$D1,$30; 33984
-		dc.b   0,  0,  0,  0,  0,  9,$DD,$5C,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$35,$32,  0,  0,  0,  0,  0,$12,  0,$44,$7E,$64,  0,$44,$7E,$54,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1B,$BC,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$35,$31,  0,  0; 34048
-		dc.b   0,  0,  0,$12,  0,$44,$7E,$B4,  0,$44,$7E,$7C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$52,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$35,$31,  0,  0,  0,  0,  0,$12,  0,$44,$80,$BC,  0,$44,$7E,$A4,  0,$40,$D1,$30,  0,$40,$D8,  0,  0, $A,$60,$1E; 34112
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$62,$61,$6E,$65,$34,$35,$63,$67,  0,  0,  0, $E,  0,$44,$7E,$DC,  0,$44,$7E,$CC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1B,$92,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$35,$30,  0,  0,  0,  0,  0,$12,  0,$44,$7F,  4; 34176
-		dc.b   0,$44,$7E,$F4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$46,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$35,$30,  0,  0,  0,  0,  0,$12,  0,$44,$7F,$2C,  0,$44,$7F,$1C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1B,$70,  0,  0,  0,  0,  2,  0,  0,  2; 34240
-		dc.b $70,$6C,$79,$30,$34,$39,  0,  0,  0,  0,  0,$12,  0,$44,$7F,$54,  0,$44,$7F,$44,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$3C,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$34,$39,  0,  0,  0,  0,  0,$12,  0,$44,$7F,$7C,  0,$44,$7F,$6C,  0,$40,$D1,$30; 34304
-		dc.b   0,  0,  0,  0,  0,  9,$1B,$4E,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$34,$38,  0,  0,  0,  0,  0,$12,  0,$44,$7F,$A4,  0,$44,$7F,$94,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$32,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$34,$38,  0,  0; 34368
-		dc.b   0,  0,  0,$12,  0,$44,$7F,$CC,  0,$44,$7F,$BC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1B,$34,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$34,$37,  0,  0,  0,  0,  0,$12,  0,$44,$7F,$F4,  0,$44,$7F,$E4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$2A; 34432
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$34,$37,  0,  0,  0,  0,  0,$12,  0,$44,$80,$44,  0,$44,$80, $C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1B,$22,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$34,$36,  0,  0,  0,  0,  0,$12,  0,$44,$60,$F4; 34496
-		dc.b   0,$44,$80,$34,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  7,$45,$DC,  0,  0,  0,  0,  2,  0,  0,  2,$70,$63,$6D,$5F,$65,$6E,$64,  0,  0,  0,  0,  1,  0,$44,$80,$6C,  0,$44,$80,$5C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$24,  0,  0,  0,  0,  2,  0,  0,  2; 34560
-		dc.b $70,$6C,$77,$30,$34,$36,  0,  0,  0,  0,  0,$12,  0,$44,$80,$94,  0,$44,$80,$84,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1B,$10,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$34,$35,  0,  0,  0,  0,  0,$12,  0,$44,$80,$E4,  0,$44,$80,$AC,  0,$40,$D1,$30; 34624
-		dc.b   0,  0,  0,  0,  0,  9,$DD,$1E,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$34,$35,  0,  0,  0,  0,  0,$12,  0,$44,$84,  4,  0,$44,$80,$D4,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,$D5,$AE,  0,  0,  0,  0,  2,  0,  0,  2,$6B,$61,$6D,$65,$72,$65,$63,$67; 34688
-		dc.b   0,  0,  0, $E,  0,$44,$81, $C,  0,$44,$80,$FC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1A,$FE,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$34,$34,  0,  0,  0,  0,  0,$12,  0,$44,$81,$34,  0,$44,$81,$24,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$18; 34752
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$34,$34,  0,  0,  0,  0,  0,$12,  0,$44,$81,$5C,  0,$44,$81,$4C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1A,$EC,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$34,$33,  0,  0,  0,  0,  0,$12,  0,$44,$81,$84; 34816
-		dc.b   0,$44,$81,$74,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$12,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$34,$33,  0,  0,  0,  0,  0,$12,  0,$44,$81,$AC,  0,$44,$81,$9C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1A,$D2,  0,  0,  0,  0,  2,  0,  0,  2; 34880
-		dc.b $70,$6C,$79,$30,$34,$32,  0,  0,  0,  0,  0,$12,  0,$44,$81,$D4,  0,$44,$81,$C4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD, $A,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$34,$32,  0,  0,  0,  0,  0,$12,  0,$44,$81,$FC,  0,$44,$81,$EC,  0,$40,$D1,$30; 34944
-		dc.b   0,  0,  0,  0,  0,  9,$1A,$B8,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$34,$31,  0,  0,  0,  0,  0,$12,  0,$44,$82,$24,  0,$44,$82,$14,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,  2,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$34,$31,  0,  0; 35008
-		dc.b   0,  0,  0,$12,  0,$44,$82,$4C,  0,$44,$82,$3C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1A,$9E,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$34,$30,  0,  0,  0,  0,  0,$12,  0,$44,$82,$74,  0,$44,$82,$64,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DC,$FA; 35072
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$34,$30,  0,  0,  0,  0,  0,$12,  0,$44,$82,$9C,  0,$44,$82,$8C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1A,$8C,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$33,$39,  0,  0,  0,  0,  0,$12,  0,$44,$82,$C4; 35136
-		dc.b   0,$44,$82,$B4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DC,$F4,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$33,$39,  0,  0,  0,  0,  0,$12,  0,$44,$82,$EC,  0,$44,$82,$DC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1A,$7A,  0,  0,  0,  0,  2,  0,  0,  2; 35200
-		dc.b $70,$6C,$79,$30,$33,$38,  0,  0,  0,  0,  0,$12,  0,$44,$83,$14,  0,$44,$83,  4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DC,$EE,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$33,$38,  0,  0,  0,  0,  0,$12,  0,$44,$83,$3C,  0,$44,$83,$2C,  0,$40,$D1,$30; 35264
-		dc.b   0,  0,  0,  0,  0,  9,$1A,$68,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$33,$37,  0,  0,  0,  0,  0,$12,  0,$44,$83,$64,  0,$44,$83,$54,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DC,$E8,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$33,$37,  0,  0; 35328
-		dc.b   0,  0,  0,$12,  0,$44,$83,$8C,  0,$44,$83,$7C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1A,$4E,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$33,$36,  0,  0,  0,  0,  0,$12,  0,$44,$83,$B4,  0,$44,$83,$A4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DC,$E0; 35392
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$33,$36,  0,  0,  0,  0,  0,$12,  0,$44,$83,$DC,  0,$44,$83,$CC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1A,$2C,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$33,$35,  0,  0,  0,  0,  0,$12,  0,$44,$84,$2C; 35456
-		dc.b   0,$44,$83,$F4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DC,$D6,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$33,$35,  0,  0,  0,  0,  0,$12,  0,$44,$88,$B4,  0,$44,$84,$1C,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  3,$82,  0,  0,  0,  0,  2,  0,  0,  2; 35520
-		dc.b $66,$6F,$78,$73,$70,$30,$39,$39,  0,  0,  0, $E,  0,$44,$84,$54,  0,$44,$84,$44,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1A, $A,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$33,$34,  0,  0,  0,  0,  0,$12,  0,$44,$84,$A4,  0,$44,$84,$6C,  0,$40,$D1,$30; 35584
-		dc.b   0,  0,  0,  0,  0,  9,$DC,$CC,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$33,$34,  0,  0,  0,  0,  0,$12,  0,$44,$89,$2C,  0,$44,$84,$94,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  3,$78,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$39,$38; 35648
-		dc.b   0,  0,  0, $D,  0,$44,$84,$CC,  0,$44,$84,$BC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$19,$E8,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$33,$33,  0,  0,  0,  0,  0,$12,  0,$44,$85,$1C,  0,$44,$84,$E4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DC,$C2; 35712
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$33,$33,  0,  0,  0,  0,  0,$12,  0,$44,$89,$A4,  0,$44,$85, $C,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  3,$6E,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$39,$37,  0,  0,  0, $C,  0,$44,$85,$44; 35776
-		dc.b   0,$44,$85,$34,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$19,$BE,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$33,$32,  0,  0,  0,  0,  0,$12,  0,$44,$85,$94,  0,$44,$85,$5C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DC,$B6,  0,  0,  0,  0,  2,  0,  0,  2; 35840
-		dc.b $70,$6C,$77,$30,$33,$32,  0,  0,  0,  0,  0,$12,  0,$44,$8A,$1C,  0,$44,$85,$84,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  3,$64,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$39,$36,  0,  0,  0, $B,  0,$44,$85,$BC,  0,$44,$85,$AC,  0,$40,$D1,$30; 35904
-		dc.b   0,  0,  0,  0,  0,  9,$19,$9C,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$33,$31,  0,  0,  0,  0,  0,$12,  0,$44,$86, $C,  0,$44,$85,$D4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DC,$AC,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$33,$31,  0,  0; 35968
-		dc.b   0,  0,  0,$12,  0,$44,$8A,$94,  0,$44,$85,$FC,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  3,$52,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$39,$35,  0,  0,  0, $A,  0,$44,$86,$34,  0,$44,$86,$24,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$19,$7A; 36032
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$33,$30,  0,  0,  0,  0,  0,$12,  0,$44,$87,$24,  0,$44,$86,$4C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DC,$A2,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$33,$30,  0,  0,  0,  0,  0,$12,  0,$44,$8B, $C; 36096
-		dc.b   0,$44,$86,$74,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  3,$40,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$39,$34,  0,  0,  0,  9,  0,$44,$8B,$34,  0,$44,$86,$9C,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  3,$36,  0,  0,  0,  0,  2,  0,  0,  2; 36160
-		dc.b $66,$6F,$78,$73,$70,$30,$39,$33,  0,  0,  0,  8,  0,$44,$8B,$5C,  0,$44,$86,$C4,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  3,$2C,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$39,$32,  0,  0,  0,  7,  0,$44,$8B,$84,  0,$44,$86,$EC,  0,$40,$D1,$30; 36224
-		dc.b   0,  0,  0,  0,  0, $A,  3,$22,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$39,$31,  0,  0,  0,  6,  0,$44,$8B,$AC,  0,$44,$87,$14,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  3,$10,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$39,$30; 36288
-		dc.b   0,  0,  0,  5,  0,$44,$87,$4C,  0,$44,$87,$3C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$19,$58,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$32,$39,  0,  0,  0,  0,  0,$12,  0,$44,$87,$74,  0,$44,$87,$64,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DC,$98; 36352
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$32,$39,  0,  0,  0,  0,  0,$12,  0,$44,$87,$9C,  0,$44,$87,$8C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$19,$36,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$32,$38,  0,  0,  0,  0,  0,$12,  0,$44,$87,$C4; 36416
-		dc.b   0,$44,$87,$B4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DC,$8E,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$32,$38,  0,  0,  0,  0,  0,$12,  0,$44,$87,$EC,  0,$44,$87,$DC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$19,$14,  0,  0,  0,  0,  2,  0,  0,  2; 36480
-		dc.b $70,$6C,$79,$30,$32,$37,  0,  0,  0,  0,  0,$12,  0,$44,$88,$14,  0,$44,$88,  4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DC,$84,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$32,$37,  0,  0,  0,  0,  0,$12,  0,$44,$88,$3C,  0,$44,$88,$2C,  0,$40,$D1,$30; 36544
-		dc.b   0,  0,  0,  0,  0,  9,$18,$EA,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$32,$36,  0,  0,  0,  0,  0,$12,  0,$44,$88,$64,  0,$44,$88,$54,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DC,$78,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$32,$36,  0,  0; 36608
-		dc.b   0,  0,  0,$12,  0,$44,$88,$8C,  0,$44,$88,$7C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$18,$C0,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$32,$35,  0,  0,  0,  0,  0,$12,  0,$44,$88,$DC,  0,$44,$88,$A4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DC,$6C; 36672
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$32,$35,  0,  0,  0,  0,  0,$12,  0,$44,$8D,$64,  0,$44,$88,$CC,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  2,$FE,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$38,$39,  0,  0,  0, $E,  0,$44,$89,  4; 36736
-		dc.b   0,$44,$88,$F4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$18,$9E,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$32,$34,  0,  0,  0,  0,  0,$12,  0,$44,$89,$54,  0,$44,$89,$1C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DC,$62,  0,  0,  0,  0,  2,  0,  0,  2; 36800
-		dc.b $70,$6C,$77,$30,$32,$34,  0,  0,  0,  0,  0,$12,  0,$44,$8E,  8,  0,$44,$89,$44,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  2,$F4,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$38,$38,  0,  0,  0, $D,  0,$44,$89,$7C,  0,$44,$89,$6C,  0,$40,$D1,$30; 36864
-		dc.b   0,  0,  0,  0,  0,  9,$18,$84,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$32,$33,  0,  0,  0,  0,  0,$12,  0,$44,$89,$CC,  0,$44,$89,$94,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DC,$5A,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$32,$33,  0,  0; 36928
-		dc.b   0,  0,  0,$12,  0,$44,$8E,$80,  0,$44,$89,$BC,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  2,$EA,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$38,$37,  0,  0,  0, $C,  0,$44,$89,$F4,  0,$44,$89,$E4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$18,$6A; 36992
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$32,$32,  0,  0,  0,  0,  0,$12,  0,$44,$8A,$44,  0,$44,$8A, $C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DC,$52,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$32,$32,  0,  0,  0,  0,  0,$12,  0,$44,$8D,$DC; 37056
-		dc.b   0,$44,$8A,$34,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  2,$E0,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$38,$36,  0,  0,  0, $B,  0,$44,$8A,$6C,  0,$44,$8A,$5C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$18,$50,  0,  0,  0,  0,  2,  0,  0,  2; 37120
-		dc.b $70,$6C,$79,$30,$32,$31,  0,  0,  0,  0,  0,$12,  0,$44,$8A,$BC,  0,$44,$8A,$84,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DC,$4A,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$32,$31,  0,  0,  0,  0,  0,$12,  0,$44,$8F,$9C,  0,$44,$8A,$AC,  0,$40,$D1,$30; 37184
-		dc.b   0,  0,  0,  0,  0, $A,  2,$D6,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$38,$35,  0,  0,  0, $A,  0,$44,$8A,$E4,  0,$44,$8A,$D4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$18,$36,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$32,$30,  0,  0; 37248
-		dc.b   0,  0,  0,$12,  0,$44,$8B,$D4,  0,$44,$8A,$FC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DC,$42,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$32,$30,  0,  0,  0,  0,  0,$12,  0,$44,$90,$14,  0,$44,$8B,$24,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  2,$CC; 37312
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$38,$34,  0,  0,  0,  9,  0,$44,$90,$3C,  0,$44,$8B,$4C,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  2,$C2,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$38,$33,  0,  0,  0,  8,  0,$44,$90,$8C; 37376
-		dc.b   0,$44,$8B,$74,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  2,$B8,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$38,$32,  0,  0,  0,  7,  0,$44,$90,$B4,  0,$44,$8B,$9C,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  2,$AE,  0,  0,  0,  0,  2,  0,  0,  2; 37440
-		dc.b $66,$6F,$78,$73,$70,$30,$38,$31,  0,  0,  0,  6,  0,$44,$90,$DC,  0,$44,$8B,$C4,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  2,$A4,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$38,$30,  0,  0,  0,  5,  0,$44,$8B,$FC,  0,$44,$8B,$EC,  0,$40,$D1,$30; 37504
-		dc.b   0,  0,  0,  0,  0,  9,$18,$14,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$31,$39,  0,  0,  0,  0,  0,$12,  0,$44,$8C,$24,  0,$44,$8C,$14,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DC,$38,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$31,$39,  0,  0; 37568
-		dc.b   0,  0,  0,$12,  0,$44,$8C,$4C,  0,$44,$8C,$3C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$17,$F2,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$31,$38,  0,  0,  0,  0,  0,$12,  0,$44,$8C,$74,  0,$44,$8C,$64,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DC,$2E; 37632
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$31,$38,  0,  0,  0,  0,  0,$12,  0,$44,$8C,$9C,  0,$44,$8C,$8C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$17,$D8,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$31,$37,  0,  0,  0,  0,  0,$12,  0,$44,$8C,$C4; 37696
-		dc.b   0,$44,$8C,$B4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DC,$26,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$31,$37,  0,  0,  0,  0,  0,$12,  0,$44,$8C,$EC,  0,$44,$8C,$DC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$17,$BE,  0,  0,  0,  0,  2,  0,  0,  2; 37760
-		dc.b $70,$6C,$79,$30,$31,$36,  0,  0,  0,  0,  0,$12,  0,$44,$8D,$14,  0,$44,$8D,  4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DC,$1E,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$31,$36,  0,  0,  0,  0,  0,$12,  0,$44,$8D,$3C,  0,$44,$8D,$2C,  0,$40,$D1,$30; 37824
-		dc.b   0,  0,  0,  0,  0,  9,$17,$A4,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$31,$35,  0,  0,  0,  0,  0,$12,  0,$44,$8D,$8C,  0,$44,$8D,$54,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DC,$16,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$31,$35,  0,  0; 37888
-		dc.b   0,  0,  0,$12,  0,$44,$92,$94,  0,$44,$8D,$7C,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  2,$9A,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$37,$39,  0,  0,  0, $E,  0,$44,$8D,$B4,  0,$44,$8D,$A4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$17,$92; 37952
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$31,$34,  0,  0,  0,  0,  0,$12,  0,$44,$8E,$30,  0,$44,$8D,$CC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DC,$10,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$31,$34,  0,  0,  0,  0,  0,$12,  0,$44,$8E,$F8; 38016
-		dc.b   0,$44,$8D,$F4,  0,$40,$D1,$30,  0,$40,$8F,$F0,  0,  2,$7D,$18,  0,  0,  0,  0,  2,  0,  0,  3,$65,$66,$65,$63,$74,$30,$64,$65,$63,$67,  0,  0,  0,  0,  0, $B,  0,$44,$93, $C,  0,$44,$8E,$20,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  2,$90,  0,  0,  0,  0; 38080
-		dc.b   2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$37,$38,  0,  0,  0, $D,  0,$44,$8E,$58,  0,$44,$8E,$48,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$17,$80,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$31,$33,  0,  0,  0,  0,  0,$12,  0,$44,$8E,$A8,  0,$44,$8E,$70; 38144
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DC, $A,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$31,$33,  0,  0,  0,  0,  0,$12,  0,$44,$93,$84,  0,$44,$8E,$98,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  2,$86,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73; 38208
-		dc.b $70,$30,$37,$37,  0,  0,  0, $C,  0,$44,$8E,$D0,  0,$44,$8E,$C0,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$17,$5E,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$31,$32,  0,  0,  0,  0,  0,$12,  0,$44,$8F,$4C,  0,$44,$8E,$E8,  0,$40,$D1,$30,  0,  0,  0,  0; 38272
-		dc.b   0,  9,$DC,  0,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$31,$32,  0,  0,  0,  0,  0,$12,  0,$44,$8F,$24,  0,$44,$8F,$10,  0,$40,$D1,$30,  0,$40,$90,$24,  0,  2,$6F,$98,  0,  0,  0,  0,  2,  0,  0,  3,$65,$66,$65,$63,$74,$30,$30,$65,$63,$67,  0,  0; 38336
-		dc.b   0,  0,  0, $B,  0,$44,$93,$FC,  0,$44,$8F,$3C,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  2,$7C,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$37,$36,  0,  0,  0, $B,  0,$44,$8F,$74,  0,$44,$8F,$64,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$17,$3C; 38400
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$31,$31,  0,  0,  0,  0,  0,$12,  0,$44,$8F,$C4,  0,$44,$8F,$8C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DB,$F6,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$31,$31,  0,  0,  0,  0,  0,$12,  0,$44,$94,$74; 38464
-		dc.b   0,$44,$8F,$B4,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  2,$72,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$37,$35,  0,  0,  0, $A,  0,$44,$8F,$EC,  0,$44,$8F,$DC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$17,$2A,  0,  0,  0,  0,  2,  0,  0,  2; 38528
-		dc.b $70,$6C,$79,$30,$31,$30,  0,  0,  0,  0,  0,$12,  0,$44,$91,  4,  0,$44,$90,  4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DB,$F0,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$31,$30,  0,  0,  0,  0,  0,$12,  0,$44,$94,$EC,  0,$44,$90,$2C,  0,$40,$D1,$30; 38592
-		dc.b   0,  0,  0,  0,  0, $A,  2,$68,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$37,$34,  0,  0,  0,  9,  0,$44,$95,$14,  0,$44,$90,$54,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  2,$5E,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$37,$33; 38656
-		dc.b   0,  0,  0,  8,  0,$44,$62,$F8,  0,$44,$90,$7C,  0,$40,$D1,$30,  0,$40,$D8,$30,  0, $A,$65,  4,  0,  0,  0,  0,  2,  0,  0,  2,$69,$74,$65,$6D,$63,$67,  0,  0,  0,  0,  0, $F,  0,$44,$95,$3C,  0,$44,$90,$A4,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  2,$54; 38720
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$37,$32,  0,  0,  0,  7,  0,$44,$95,$8C,  0,$44,$90,$CC,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  2,$4A,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$37,$31,  0,  0,  0,  6,  0,$44,$95,$DC; 38784
-		dc.b   0,$44,$90,$F4,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  2,$40,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$37,$30,  0,  0,  0,  5,  0,$44,$91,$2C,  0,$44,$91,$1C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$17,$18,  0,  0,  0,  0,  2,  0,  0,  2; 38848
-		dc.b $70,$6C,$79,$30,$30,$39,  0,  0,  0,  0,  0,$12,  0,$44,$91,$54,  0,$44,$91,$44,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DB,$EA,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$30,$39,  0,  0,  0,  0,  0,$12,  0,$44,$91,$7C,  0,$44,$91,$6C,  0,$40,$D1,$30; 38912
-		dc.b   0,  0,  0,  0,  0,  9,$17,  6,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$30,$38,  0,  0,  0,  0,  0,$12,  0,$44,$91,$A4,  0,$44,$91,$94,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DB,$E4,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$30,$38,  0,  0; 38976
-		dc.b   0,  0,  0,$12,  0,$44,$91,$CC,  0,$44,$91,$BC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$16,$E4,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$30,$37,  0,  0,  0,  0,  0,$12,  0,$44,$91,$F4,  0,$44,$91,$E4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DB,$DA; 39040
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$30,$37,  0,  0,  0,  0,  0,$12,  0,$44,$92,$1C,  0,$44,$92, $C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$16,$C2,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$30,$36,  0,  0,  0,  0,  0,$12,  0,$44,$92,$44; 39104
-		dc.b   0,$44,$92,$34,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DB,$D0,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$30,$36,  0,  0,  0,  0,  0,$12,  0,$44,$92,$6C,  0,$44,$92,$5C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$16,$98,  0,  0,  0,  0,  2,  0,  0,  2; 39168
-		dc.b $70,$6C,$79,$30,$30,$35,  0,  0,  0,  0,  0,$12,  0,$44,$92,$BC,  0,$44,$92,$84,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DB,$C4,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$30,$35,  0,  0,  0,  0,  0,$12,  0,$44,$96,$54,  0,$44,$92,$AC,  0,$40,$D1,$30; 39232
-		dc.b   0,  0,  0,  0,  0, $A,  2,$26,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$36,$39,  0,  0,  0, $E,  0,$44,$92,$E4,  0,$44,$92,$D4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$16,$6E,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$30,$34,  0,  0; 39296
-		dc.b   0,  0,  0,$12,  0,$44,$93,$34,  0,$44,$92,$FC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DB,$B8,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$30,$34,  0,  0,  0,  0,  0,$12,  0,$44,$96,$7C,  0,$44,$93,$24,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  2, $C; 39360
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$36,$38,  0,  0,  0, $D,  0,$44,$93,$5C,  0,$44,$93,$4C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$16,$44,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$30,$33,  0,  0,  0,  0,  0,$12,  0,$44,$93,$AC; 39424
-		dc.b   0,$44,$93,$74,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DB,$AC,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$30,$33,  0,  0,  0,  0,  0,$12,  0,$44,$96,$A4,  0,$44,$93,$9C,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  1,$F2,  0,  0,  0,  0,  2,  0,  0,  2; 39488
-		dc.b $66,$6F,$78,$73,$70,$30,$36,$37,  0,  0,  0, $C,  0,$44,$93,$D4,  0,$44,$93,$C4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$16,$32,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$30,$32,  0,  0,  0,  0,  0,$12,  0,$44,$94,$24,  0,$44,$93,$EC,  0,$40,$D1,$30; 39552
-		dc.b   0,  0,  0,  0,  0,  9,$DB,$A6,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$30,$32,  0,  0,  0,  0,  0,$12,  0,$44,$96,$CC,  0,$44,$94,$14,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  1,$D8,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$36,$36; 39616
-		dc.b   0,  0,  0, $B,  0,$44,$94,$4C,  0,$44,$94,$3C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$16,$10,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$30,$31,  0,  0,  0,  0,  0,$12,  0,$44,$94,$9C,  0,$44,$94,$64,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DB,$9C; 39680
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$30,$31,  0,  0,  0,  0,  0,$12,  0,$44,$96,$F4,  0,$44,$94,$8C,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  1,$BE,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$36,$35,  0,  0,  0, $A,  0,$44,$94,$C4; 39744
-		dc.b   0,$44,$94,$B4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$16, $E,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$30,$30,  0,  0,  0,  0,  0,$12,  0,$44,$60,$24,  0,$44,$94,$DC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DB,$9A,  0,  0,  0,  0,  2,  0,  0,  2; 39808
-		dc.b $70,$6C,$77,$30,$30,$30,  0,  0,  0,  0,  0,$12,  0,$44,$97,$1C,  0,$44,$95,  4,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  1,$A4,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$36,$34,  0,  0,  0,  9,  0,$44,$97,$44,  0,$44,$95,$2C,  0,$40,$D1,$30; 39872
-		dc.b   0,  0,  0,  0,  0, $A,  1,$8A,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$36,$33,  0,  0,  0,  8,  0,$44,$97,$6C,  0,$44,$95,$54,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  1,$70,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$36,$32; 39936
-		dc.b   0,  0,  0,  7,  0,$44,$95,$B4,  0,$44,$95,$7C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  2,$32,  0,  0,  0,  0,  0,  2,  0,  0,  2,$73,$63,$64,$74,$62,$6C,$34,  0,  0,  0,  0,$16,  0,$44,$97,$94,  0,$44,$95,$A4,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  1,$3C; 40000
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$36,$31,  0,  0,  0,  6,  0,$44,$96,  4,  0,$44,$95,$CC,  0,$40,$D1,$30,  0,$3F,$64,$64,  0,  2,$22,  0,  0,  0,  0,  0,  2,  0,  0,  2,$73,$63,$64,$74,$62,$6C,$33,  0,  0,  0,  0,$16,  0,$44,$97,$BC; 40064
-		dc.b   0,$44,$95,$F4,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  1,$56,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$36,$30,  0,  0,  0,  5,  0,$44,$96,$2C,  0,$44,$96,$1C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  2,$12,  0,  0,  0,  0,  0,  2,  0,  0,  2; 40128
-		dc.b $73,$63,$64,$74,$62,$6C,$32,  0,  0,  0,  0,$16,  0,$44,$5F,$FC,  0,$44,$96,$44,  0,$40,$D1,$30,  0,$3F,$64,$94,  0,  2,  2,  0,  0,  0,  0,  0,  2,  0,  0,  2,$73,$63,$64,$74,$62,$6C,$31,  0,  0,  0,  0,$16,  0,$44,$97,$E4,  0,$44,$96,$6C,  0,$40,$D1,$30; 40192
-		dc.b   0,  0,  0,  0,  0, $A,  1,$3C,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$35,$39,  0,  0,  0, $E,  0,$44,$98, $C,  0,$44,$96,$94,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  1,$22,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$35,$38; 40256
-		dc.b   0,  0,  0, $D,  0,$44,$98,$34,  0,$44,$96,$BC,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  1,  8,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$35,$37,  0,  0,  0, $C,  0,$44,$98,$88,  0,$44,$96,$E4,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  0,$EE; 40320
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$35,$36,  0,  0,  0, $B,  0,$44,$98,$B0,  0,$44,$97, $C,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  0,$D4,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$35,$35,  0,  0,  0, $A,  0,$44,$98,$D8; 40384
-		dc.b   0,$44,$97,$34,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  0,$BA,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$35,$34,  0,  0,  0,  9,  0,$44,$99,  0,  0,$44,$97,$5C,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  0,$A0,  0,  0,  0,  0,  2,  0,  0,  2; 40448
-		dc.b $66,$6F,$78,$73,$70,$30,$35,$33,  0,  0,  0,  8,  0,$44,$99,$28,  0,$44,$97,$84,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  0,$86,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$35,$32,  0,  0,  0,  7,  0,$44,$99,$50,  0,$44,$97,$AC,  0,$40,$D1,$30; 40512
-		dc.b   0,  0,  0,  0,  0, $A,  0,$74,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$35,$31,  0,  0,  0,  6,  0,$44,$99,$78,  0,$44,$97,$D4,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  0,$62,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$35,$30; 40576
-		dc.b   0,  0,  0,  5,  0,$44,$99,$A0,  0,$44,$97,$FC,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  0,$50,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$34,$39,  0,  0,  0, $E,  0,$44,$99,$C8,  0,$44,$98,$24,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  0,$3E; 40640
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$34,$38,  0,  0,  0, $D,  0,$44,$99,$F0,  0,$44,$98,$4C,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  0,$2C,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$34,$37,  0,  0,  0, $C,  0,$44,$67,$64; 40704
-		dc.b   0,$44,$98,$74,  0,$40,$D1,$30,  0,$40,$D8,$60,  0, $A,$A9,$A4,  0,  0,  0,  0,  2,  0,  0,  3,$62,$6F,$73,$73,$61,$66,$62,$63,$67,  0,  0,  0,  0,  0,  0,$19,  0,$44,$9A,$18,  0,$44,$98,$A0,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  0,$1A,  0,  0,  0,  0; 40768
-		dc.b   2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$34,$36,  0,  0,  0, $B,  0,$44,$9A,$40,  0,$44,$98,$C8,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  0,  0,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$34,$35,  0,  0,  0, $A,  0,$44,$9A,$68,  0,$44,$98,$F0; 40832
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FF,$EE,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$34,$34,  0,  0,  0,  9,  0,$44,$9A,$90,  0,$44,$99,$18,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FF,$D4,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73; 40896
-		dc.b $70,$30,$34,$33,  0,  0,  0,  8,  0,$44,$9A,$B8,  0,$44,$99,$40,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FF,$C2,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$34,$32,  0,  0,  0,  7,  0,$44,$9A,$E0,  0,$44,$99,$68,  0,$40,$D1,$30,  0,  0,  0,  0; 40960
-		dc.b   0,  9,$FF,$A8,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$34,$31,  0,  0,  0,  6,  0,$44,$9B,  8,  0,$44,$99,$90,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FF,$96,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$34,$30,  0,  0,  0,  5; 41024
-		dc.b   0,$44,$9B,$30,  0,$44,$99,$B8,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FF,$7C,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$33,$39,  0,  0,  0, $E,  0,$44,$9B,$58,  0,$44,$99,$E0,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FF,$6A,  0,  0,  0,  0; 41088
-		dc.b   2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$33,$38,  0,  0,  0, $D,  0,$44,$9B,$80,  0,$44,$9A,  8,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FF,$50,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$33,$37,  0,  0,  0, $C,  0,$44,$5B,$C4,  0,$44,$9A,$30; 41152
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FF,$36,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$33,$36,  0,  0,  0, $B,  0,$44,$5B,$EC,  0,$44,$9A,$58,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FF,$1C,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73; 41216
-		dc.b $70,$30,$33,$35,  0,  0,  0, $A,  0,$44,$5C,$14,  0,$44,$9A,$80,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FF,  2,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$33,$34,  0,  0,  0,  9,  0,$44,$5C,$3C,  0,$44,$9A,$A8,  0,$40,$D1,$30,  0,  0,  0,  0; 41280
-		dc.b   0,  9,$FE,$E8,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$33,$33,  0,  0,  0,  8,  0,$44,$5C,$64,  0,$44,$9A,$D0,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FE,$CE,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$33,$32,  0,  0,  0,  7; 41344
-		dc.b   0,$44,$5C,$8C,  0,$44,$9A,$F8,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FE,$B4,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$33,$31,  0,  0,  0,  6,  0,$44,$5C,$B4,  0,$44,$9B,$20,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$FE,$9A,  0,  0,  0,  0; 41408
-		dc.b   2,  0,  0,  2,$66,$6F,$78,$73,$70,$30,$33,$30,  0,  0,  0,  5,  0,$44,$5C,$DC,  0,$44,$9B,$48,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  5,$46,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$31,$32,$39,  0,  0,  0, $E,  0,$44,$5D,  4,  0,$44,$9B,$70; 41472
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  5,$34,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$31,$32,$38,  0,  0,  0, $D,  0,$44,$5D,$2C,  0,$44,$5B,$B4,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  5,$22,  0,  0,  0,  0,  0,$5B,$F2,  0,  0,  9,$94,$60; 41536
-		dc.b   0,  0,  0,  0,  0,$44,$BB,$B0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C6,$4A,  2,  0,  0,  2,$70,$6C,$79,$31,$33,$35,  0,  0,  0,  0,  0,$13,  0,$44,$9B,$EC,  0,$44,$9B,$DC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$B2,  0,  0,  0,  0,  2,  0,  0,  2; 41600
-		dc.b $70,$6C,$77,$31,$33,$35,  0,  0,  0,  0,  0,$13,  0,$44,$9C,$14,  0,$44,$9C,  4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$22,$32,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$33,$34,  0,  0,  0,  0,  0,$13,  0,$44,$9C,$3C,  0,$44,$9C,$2C,  0,$40,$D1,$30; 41664
-		dc.b   0,  0,  0,  0,  0,  9,$DE,$AC,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$33,$34,  0,  0,  0,  0,  0,$13,  0,$44,$9C,$64,  0,$44,$9C,$54,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$22,$20,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$33,$33,  0,  0; 41728
-		dc.b   0,  0,  0,$13,  0,$44,$9C,$8C,  0,$44,$9C,$7C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$A6,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$33,$33,  0,  0,  0,  0,  0,$13,  0,$44,$9C,$B4,  0,$44,$9C,$A4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$22,  6; 41792
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$33,$32,  0,  0,  0,  0,  0,$13,  0,$44,$9C,$DC,  0,$44,$9C,$CC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$9E,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$33,$32,  0,  0,  0,  0,  0,$13,  0,$44,$9D,  4; 41856
-		dc.b   0,$44,$9C,$F4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$21,$EC,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$33,$31,  0,  0,  0,  0,  0,$13,  0,$44,$9D,$2C,  0,$44,$9D,$1C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$96,  0,  0,  0,  0,  2,  0,  0,  2; 41920
-		dc.b $70,$6C,$77,$31,$33,$31,  0,  0,  0,  0,  0,$13,  0,$44,$9D,$54,  0,$44,$9D,$44,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$21,$D2,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$33,$30,  0,  0,  0,  0,  0,$13,  0,$44,$9D,$A4,  0,$44,$9D,$6C,  0,$40,$D1,$30; 41984
-		dc.b   0,  0,  0,  0,  0,  9,$DE,$8E,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$33,$30,  0,  0,  0,  0,  0,$13,  0,$44,$6B,$A0,  0,$44,$9D,$94,  0,$40,$D1,$30,  0,$3B,$93,$AC,  0, $A,  9,$60,  0,  0,  0,  0,  2,  0,  0,  2,$6C,$6F,$67,$6F,$63,$67,  0,  0; 42048
-		dc.b   0,  0,  0,$11,  0,$44,$9D,$CC,  0,$44,$9D,$BC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$21,$B8,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$32,$39,  0,  0,  0,  0,  0,$13,  0,$44,$9D,$F4,  0,$44,$9D,$E4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$86; 42112
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$32,$39,  0,  0,  0,  0,  0,$13,  0,$44,$9E,$1C,  0,$44,$9E, $C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$21,$AE,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$32,$38,  0,  0,  0,  0,  0,$13,  0,$44,$9E,$44; 42176
-		dc.b   0,$44,$9E,$34,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$82,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$32,$38,  0,  0,  0,  0,  0,$13,  0,$44,$9E,$6C,  0,$44,$9E,$5C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$21,$A4,  0,  0,  0,  0,  2,  0,  0,  2; 42240
-		dc.b $70,$6C,$79,$31,$32,$37,  0,  0,  0,  0,  0,$13,  0,$44,$9E,$94,  0,$44,$9E,$84,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$7E,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$32,$37,  0,  0,  0,  0,  0,$13,  0,$44,$9E,$BC,  0,$44,$9E,$AC,  0,$40,$D1,$30; 42304
-		dc.b   0,  0,  0,  0,  0,  9,$21,$8A,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$32,$36,  0,  0,  0,  0,  0,$13,  0,$44,$9E,$E4,  0,$44,$9E,$D4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$76,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$32,$36,  0,  0; 42368
-		dc.b   0,  0,  0,$13,  0,$44,$9F, $C,  0,$44,$9E,$FC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$21,$68,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$32,$35,  0,  0,  0,  0,  0,$13,  0,$44,$9F,$34,  0,$44,$9F,$24,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$6C; 42432
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$32,$35,  0,  0,  0,  0,  0,$13,  0,$44,$9F,$5C,  0,$44,$9F,$4C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$21,$46,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$32,$34,  0,  0,  0,  0,  0,$13,  0,$44,$9F,$84; 42496
-		dc.b   0,$44,$9F,$74,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$62,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$32,$34,  0,  0,  0,  0,  0,$13,  0,$44,$9F,$AC,  0,$44,$9F,$9C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$21,$24,  0,  0,  0,  0,  2,  0,  0,  2; 42560
-		dc.b $70,$6C,$79,$31,$32,$33,  0,  0,  0,  0,  0,$13,  0,$44,$9F,$D4,  0,$44,$9F,$C4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$58,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$32,$33,  0,  0,  0,  0,  0,$13,  0,$44,$9F,$FC,  0,$44,$9F,$EC,  0,$40,$D1,$30; 42624
-		dc.b   0,  0,  0,  0,  0,  9,$21, $A,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$32,$32,  0,  0,  0,  0,  0,$13,  0,$44,$A0,$24,  0,$44,$A0,$14,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$50,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$32,$32,  0,  0; 42688
-		dc.b   0,  0,  0,$13,  0,$44,$A0,$4C,  0,$44,$A0,$3C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$20,$F0,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$32,$31,  0,  0,  0,  0,  0,$13,  0,$44,$A0,$74,  0,$44,$A0,$64,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$48; 42752
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$32,$31,  0,  0,  0,  0,  0,$13,  0,$44,$A0,$9C,  0,$44,$A0,$8C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$20,$D6,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$32,$30,  0,  0,  0,  0,  0,$13,  0,$44,$A0,$F0; 42816
-		dc.b   0,$44,$A0,$B4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$40,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$32,$30,  0,  0,  0,  0,  0,$13,  0,$44,$A2,$D0,  0,$44,$A0,$DC,  0,$40,$D1,$30,  0,$3E,$D7,$60,  0,  9,$DA,$4C,  0,  0,  0,  0,  2,  0,  0,  3; 42880
-		dc.b $70,$6C,$61,$79,$77,$72,$74,$70,$61,$74,  0,  0,  0,  0,  0, $C,  0,$44,$A1,$18,  0,$44,$A1,  8,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$20,$BC,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$31,$39,  0,  0,  0,  0,  0,$13,  0,$44,$A1,$40,  0,$44,$A1,$30; 42944
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$38,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$31,$39,  0,  0,  0,  0,  0,$13,  0,$44,$A1,$68,  0,$44,$A1,$58,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$20,$B2,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31; 43008
-		dc.b $31,$38,  0,  0,  0,  0,  0,$13,  0,$44,$A1,$90,  0,$44,$A1,$80,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$34,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$31,$38,  0,  0,  0,  0,  0,$13,  0,$44,$A1,$B8,  0,$44,$A1,$A8,  0,$40,$D1,$30,  0,  0,  0,  0; 43072
-		dc.b   0,  9,$20,$A8,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$31,$37,  0,  0,  0,  0,  0,$13,  0,$44,$A1,$E0,  0,$44,$A1,$D0,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$30,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$31,$37,  0,  0,  0,  0,  0,$13; 43136
-		dc.b   0,$44,$A2,  8,  0,$44,$A1,$F8,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$20,$9E,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$31,$36,  0,  0,  0,  0,  0,$13,  0,$44,$A2,$30,  0,$44,$A2,$20,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$2C,  0,  0,  0,  0; 43200
-		dc.b   2,  0,  0,  2,$70,$6C,$77,$31,$31,$36,  0,  0,  0,  0,  0,$13,  0,$44,$A2,$58,  0,$44,$A2,$48,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$20,$94,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$31,$35,  0,  0,  0,  0,  0,$13,  0,$44,$A2,$80,  0,$44,$A2,$70; 43264
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$28,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$31,$35,  0,  0,  0,  0,  0,$13,  0,$44,$A2,$A8,  0,$44,$A2,$98,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$20,$8A,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31; 43328
-		dc.b $31,$34,  0,  0,  0,  0,  0,$13,  0,$44,$A2,$FC,  0,$44,$A2,$C0,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$24,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$31,$34,  0,  0,  0,  0,  0,$13,  0,$44,$AC,$A8,  0,$44,$A2,$E8,  0,$40,$D1,$30,  0,$40,$8F,$BC; 43392
-		dc.b   0,  2,$7D,$D8,  0,  0,  0,  0,  2,  0,  0,  3,$65,$66,$65,$63,$74,$30,$64,$66,$63,$67,  0,  0,  0,  0,  0, $C,  0,$44,$A3,$24,  0,$44,$A3,$14,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$20,$80,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$31,$33,  0,  0; 43456
-		dc.b   0,  0,  0,$13,  0,$44,$A3,$4C,  0,$44,$A3,$3C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$20,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$31,$33,  0,  0,  0,  0,  0,$13,  0,$44,$A3,$74,  0,$44,$A3,$64,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$20,$76; 43520
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$31,$32,  0,  0,  0,  0,  0,$13,  0,$44,$A3,$9C,  0,$44,$A3,$8C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$1C,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$31,$32,  0,  0,  0,  0,  0,$13,  0,$44,$A3,$C4; 43584
-		dc.b   0,$44,$A3,$B4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$20,$6C,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$31,$31,  0,  0,  0,  0,  0,$13,  0,$44,$A3,$EC,  0,$44,$A3,$DC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$18,  0,  0,  0,  0,  2,  0,  0,  2; 43648
-		dc.b $70,$6C,$77,$31,$31,$31,  0,  0,  0,  0,  0,$13,  0,$44,$A4,$14,  0,$44,$A4,  4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$20,$62,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$31,$30,  0,  0,  0,  0,  0,$13,  0,$44,$A4,$3C,  0,$44,$A4,$2C,  0,$40,$D1,$30; 43712
-		dc.b   0,  0,  0,  0,  0,  9,$DE,$14,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$31,$30,  0,  0,  0,  0,  0,$13,  0,$44,$A4,$64,  0,$44,$A4,$54,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$20,$58,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$30,$39,  0,  0; 43776
-		dc.b   0,  0,  0,$13,  0,$44,$A4,$B4,  0,$44,$A4,$7C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$10,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$30,$39,  0,  0,  0,  0,  0,$13,  0,$44,$A8,$E4,  0,$44,$A4,$A4,  0,$40,$D1,$30,  0,$3C,$D8,  0,  0, $A,$EA,$FC; 43840
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$7A,$6F,$6E,$65,$63,$67,  0,  0,  0,  0,  0,  7,  0,$44,$A4,$DC,  0,$44,$A4,$CC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$20,$4E,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$30,$38,  0,  0,  0,  0,  0,$13,  0,$44,$A5,  4; 43904
-		dc.b   0,$44,$A4,$F4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE, $C,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$30,$38,  0,  0,  0,  0,  0,$13,  0,$44,$A5,$2C,  0,$44,$A5,$1C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$20,$3C,  0,  0,  0,  0,  2,  0,  0,  2; 43968
-		dc.b $70,$6C,$79,$31,$30,$37,  0,  0,  0,  0,  0,$13,  0,$44,$A5,$54,  0,$44,$A5,$44,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,  6,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$30,$37,  0,  0,  0,  0,  0,$13,  0,$44,$A5,$7C,  0,$44,$A5,$6C,  0,$40,$D1,$30; 44032
-		dc.b   0,  0,  0,  0,  0,  9,$20,$2A,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$30,$36,  0,  0,  0,  0,  0,$13,  0,$44,$A5,$A4,  0,$44,$A5,$94,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,  0,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$30,$36,  0,  0; 44096
-		dc.b   0,  0,  0,$13,  0,$44,$A5,$CC,  0,$44,$A5,$BC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$20,$18,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$30,$35,  0,  0,  0,  0,  0,$13,  0,$44,$A5,$F4,  0,$44,$A5,$E4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$FA; 44160
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$30,$35,  0,  0,  0,  0,  0,$13,  0,$44,$A6,$1C,  0,$44,$A6, $C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$20,  6,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$30,$34,  0,  0,  0,  0,  0,$13,  0,$44,$A6,$44; 44224
-		dc.b   0,$44,$A6,$34,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$F4,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$30,$34,  0,  0,  0,  0,  0,$13,  0,$44,$A6,$6C,  0,$44,$A6,$5C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1F,$F4,  0,  0,  0,  0,  2,  0,  0,  2; 44288
-		dc.b $70,$6C,$79,$31,$30,$33,  0,  0,  0,  0,  0,$13,  0,$44,$A6,$94,  0,$44,$A6,$84,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,  6,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$30,$33,  0,  0,  0,  0,  0,$13,  0,$44,$A6,$BC,  0,$44,$A6,$AC,  0,$40,$D1,$30; 44352
-		dc.b   0,  0,  0,  0,  0,  9,$1F,$E2,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$30,$32,  0,  0,  0,  0,  0,$13,  0,$44,$A6,$E4,  0,$44,$A6,$D4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,  0,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$30,$32,  0,  0; 44416
-		dc.b   0,  0,  0,$13,  0,$44,$A7, $C,  0,$44,$A6,$FC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1F,$D0,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$30,$31,  0,  0,  0,  0,  0,$13,  0,$44,$A7,$34,  0,$44,$A7,$24,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$FA; 44480
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$30,$31,  0,  0,  0,  0,  0,$13,  0,$44,$A7,$5C,  0,$44,$A7,$4C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1F,$BE,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$30,$30,  0,  0,  0,  0,  0,$13,  0,$3F,$AD,$DC; 44544
-		dc.b   0,$44,$A7,$74,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$F4,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$30,$30,  0,  0,  0,  0,  0,$13,  0,$44,$AB,$64,  0,$44,$A7,$9C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  4,$16,$74,  0,  0,  0,  0,  2,  0,  0,  3; 44608
-		dc.b $61,$73,$65,$74,$74,$62,$6C,$31,$30,$7A,  0,  0,  0,  0,  0,  8,  0,$44,$A7,$DC,  0,$44,$A7,$C8,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  5,  4,$BA,  0,  0,  0,  0,  2,  0,  0,  3,$72,$69,$6E,$67,$61,$63,$74,$32,$33,  0,  0,  0,  0,  0,  0,$1C,  0,$44,$A8,  8; 44672
-		dc.b   0,$44,$A7,$F4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  5,  4,$5C,  0,  0,  0,  0,  2,  0,  0,  3,$72,$69,$6E,$67,$61,$63,$74,$32,$32,  0,  0,  0,  0,  0,  0,$1C,  0,$44,$65,$D4,  0,$44,$A8,$20,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  5,  3,$CE,  0,  0,  0,  0; 44736
-		dc.b   2,  0,  0,  3,$72,$69,$6E,$67,$61,$63,$74,$32,$31,  0,  0,  0,  0,  0,  0,$1C,  0,$44,$A8,$60,  0,$44,$A8,$4C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  5,  2,$A4,  0,  0,  0,  0,  2,  0,  0,  3,$72,$69,$6E,$67,$61,$63,$74,$31,$33,  0,  0,  0,  0,  0,  0,$1B; 44800
-		dc.b   0,$44,$A8,$8C,  0,$44,$A8,$78,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  5,  1,$7A,  0,  0,  0,  0,  2,  0,  0,  3,$72,$69,$6E,$67,$61,$63,$74,$31,$32,  0,  0,  0,  0,  0,  0,$1B,  0,$41,  1,$30,  0,$44,$A8,$A4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  5,  0,$30; 44864
-		dc.b   0,  0,  0,  0,  2,  0,  0,  3,$72,$69,$6E,$67,$61,$63,$74,$31,$31,  0,  0,  0,  0,  0,  0,$1B,  0,$44,$A9, $C,  0,$44,$A8,$D0,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  5,  9,$9C,  0,  0,  0,  0,  2,  0,  0,  3,$72,$69,$6E,$67,$61,$63,$74,$30,$33,  0,  0,  0; 44928
-		dc.b   0,  0,  0,$1A,  0,$44,$AA,$B8,  0,$44,$A8,$FC,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  5,$64,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$31,$33,$32,  0,  0,  0,  7,  0,$44,$A9,$60,  0,$44,$A9,$24,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  5,  9,$9A; 44992
-		dc.b   0,  0,  0,  0,  2,  0,  0,  3,$72,$69,$6E,$67,$61,$63,$74,$30,$32,  0,  0,  0,  0,  0,  0,$1A,  0,$44,$AB,$E0,  0,$44,$A9,$50,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  5,$5A,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$31,$33,$31,  0,  0,  0,  6; 45056
-		dc.b   0,$44,$A9,$B4,  0,$44,$A9,$78,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  5,  8, $C,  0,  0,  0,  0,  2,  0,  0,  3,$72,$69,$6E,$67,$61,$63,$74,$30,$31,  0,  0,  0,  0,  0,  0,$1A,  0,$44,$AC,  8,  0,$44,$A9,$A4,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  5,$50; 45120
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$31,$33,$30,  0,  0,  0,  5,  0,$3F,$55,  4,  0,$44,$A9,$CC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  5,  6,$AA,  0,  0,  0,  0,  2,  0,  0,  3,$72,$69,$6E,$67,$61,$63,$74,$30,$30,  0,  0,  0,  0,  0,  0,$1A; 45184
-		dc.b   0,$3F,$AA,$7C,  0,$44,$A9,$F8,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  2,$B6,$B4,  0,  0,  0,  0,  2,  0,  0,  3,$62,$69,$67,$72,$69,$6E,$67,$63,$67,  0,  0,  0,  0,  0,  0,$18,  0,$44,$AE,$38,  0,$44,$AA,$24,  0,$40,$D1,$30,  0,$40,$D6,$A8,  0, $A,$50,$DC; 45248
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$67,$65,$6D,$30,$38,$63,$67,  0,  0,  0,  0,$12,  0,$44,$AA,$8C,  0,$44,$AA,$4C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  4, $C,$96,  0,  0,  0,  0,  2,  0,  0,  3,$61,$73,$65,$74,$74,$62,$6C,$32,$33,  0,  0,  0,  0,  0,  0,  9; 45312
-		dc.b   0,$41,  1,  8,  0,$44,$AA,$78,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $B,  6,$82,  0,  0,  0,  0,  2,  0,  0,  3,$73,$64,$73,$6F,$6E,$69,$63,$63,$67,  0,  0,  0,  0,  0,  0,$15,  0,$44,$AA,$E4,  0,$44,$AA,$A4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  4, $C,$96; 45376
-		dc.b   0,  0,  0,  0,  2,  0,  0,  3,$61,$73,$65,$74,$74,$62,$6C,$32,$32,  0,  0,  0,  0,  0,  0,  9,  0,$44,$AB,$B8,  0,$44,$AA,$D0,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,$8A,$AA,  0,  0,  0,  0,  2,  0,  0,  3,$6D,$61,$6D,$61,$62,$75,$62,$63,$67,  0,  0,  0; 45440
-		dc.b   0,  0,  0,  7,  0,$44,$AB,$10,  0,$44,$AA,$FC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  4, $C,$90,  0,  0,  0,  0,  2,  0,  0,  3,$61,$73,$65,$74,$74,$62,$6C,$32,$31,  0,  0,  0,  0,  0,  0,  9,  0,$44,$AD,$20,  0,$44,$AB,$28,  0,$40,$D1,$30,  0,  0,  0,  0; 45504
-		dc.b   0,  4, $C,$8A,  0,  0,  0,  0,  2,  0,  0,  3,$61,$73,$65,$74,$74,$62,$6C,$32,$30,  0,  0,  0,  0,  0,  0,  9,  0,$44,$AC,$58,  0,$44,$AB,$54,  0,$40,$D1,$30,  0,$40,$D6,$D8,  0,  9,$E1,$14,  0,  0,  0,  0,  2,  0,  0,  2,$6D,$75,$74,$65,$6B,$69,$63,$67; 45568
-		dc.b   0,  0,  0, $E,  0,$44,$AB,$90,  0,$44,$AB,$7C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  4,  7,$98,  0,  0,  0,  0,  2,  0,  0,  3,$61,$73,$65,$74,$74,$62,$6C,$31,$32,  0,  0,  0,  0,  0,  0,  8,  0,$44,$AD,$48,  0,$44,$AB,$A8,  0,$40,$D1,$30,  0,  0,  0,  0; 45632
-		dc.b   0, $A,  4,$76,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$31,$31,$33,  0,  0,  0,  8,  0,$44,$AC,$30,  0,$44,$AB,$D0,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  4,$64,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$31,$31,$32,  0,  0,  0,  7; 45696
-		dc.b   0,$44,$AD,$C0,  0,$44,$AB,$F8,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  4,$52,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$31,$31,$31,  0,  0,  0,  6,  0,$44,$AE,$10,  0,$44,$AC,$20,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  4,$40,  0,  0,  0,  0; 45760
-		dc.b   2,  0,  0,  2,$66,$6F,$78,$73,$70,$31,$31,$30,  0,  0,  0,  5,  0,$44,$AD,$98,  0,$44,$AC,$48,  0,$40,$D1,$30,  0,$40,$D7,$10,  0, $A,$69,$2E,  0,  0,  0,  0,  2,  0,  0,  2,$74,$6F,$67,$65,$63,$67,  0,  0,  0,  0,  0,  7,  0,$44,$B1,$D0,  0,$44,$AC,$70; 45824
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  4,$2E,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$31,$30,$39,  0,  0,  0, $E,  0,$44,$84,$7C,  0,$44,$AC,$98,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  4,$1C,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73; 45888
-		dc.b $70,$31,$30,$38,  0,  0,  0, $D,  0,$44,$84,$F4,  0,$44,$AC,$C0,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  4,$12,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$31,$30,$37,  0,  0,  0, $C,  0,$44,$85,$6C,  0,$44,$AC,$E8,  0,$40,$D1,$30,  0,  0,  0,  0; 45952
-		dc.b   0, $A,  4,  0,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$31,$30,$36,  0,  0,  0, $B,  0,$44,$85,$E4,  0,$44,$AD,$10,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  3,$EE,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$31,$30,$35,  0,  0,  0, $A; 46016
-		dc.b   0,$44,$86,$5C,  0,$44,$AD,$38,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  3,$DC,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$31,$30,$34,  0,  0,  0,  9,  0,$44,$86,$84,  0,$44,$AD,$60,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  3,$CA,  0,  0,  0,  0; 46080
-		dc.b   2,  0,  0,  2,$66,$6F,$78,$73,$70,$31,$30,$33,  0,  0,  0,  8,  0,$40,$FE,$48,  0,$44,$AD,$88,  0,$40,$D1,$30,  0,$40,$D7,$40,  0, $B,  0,$D0,  0,  0,  0,  0,  2,  0,  0,  2,$62,$74,$65,$6E,$63,$67,  0,  0,  0,  0,  0,$10,  0,$44,$AD,$E8,  0,$44,$AD,$B0; 46144
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  3,$B8,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$31,$30,$32,  0,  0,  0,  7,  0,$44,$86,$D4,  0,$44,$AD,$D8,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,  3,$A6,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73; 46208
-		dc.b $70,$31,$30,$31,  0,  0,  0,  6,  0,$44,$B1,$A8,  0,$44,$AE,  0,  0,$40,$D1,$30,  0,$40,$D7,$70,  0, $A,$6A,$58,  0,  0,  0,  0,  2,  0,  0,  2,$73,$61,$76,$65,$63,$67,  0,  0,  0,  0,  0,  7,  0,$44,$B3,$B0,  0,$44,$AE,$28,  0,$40,$D1,$30,  0,  0,  0,  0; 46272
-		dc.b   0, $A,  3,$94,  0,  0,  0,  0,  2,  0,  0,  2,$66,$6F,$78,$73,$70,$31,$30,$30,  0,  0,  0,  5,  0,$44,$AE,$60,  0,$44,$AE,$50,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1F,$AC,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$39,$39,  0,  0,  0,  0,  0,$12; 46336
-		dc.b   0,$44,$AE,$88,  0,$44,$AE,$78,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,  6,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$39,$39,  0,  0,  0,  0,  0,$12,  0,$44,$AE,$B0,  0,$44,$AE,$A0,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1F,$9A,  0,  0,  0,  0; 46400
-		dc.b   2,  0,  0,  2,$70,$6C,$79,$30,$39,$38,  0,  0,  0,  0,  0,$12,  0,$44,$AE,$D8,  0,$44,$AE,$C8,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,  0,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$39,$38,  0,  0,  0,  0,  0,$12,  0,$44,$AF,  0,  0,$44,$AE,$F0; 46464
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1F,$88,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$39,$37,  0,  0,  0,  0,  0,$12,  0,$44,$AF,$28,  0,$44,$AF,$18,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$FA,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30; 46528
-		dc.b $39,$37,  0,  0,  0,  0,  0,$12,  0,$44,$AF,$50,  0,$44,$AF,$40,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1F,$76,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$39,$36,  0,  0,  0,  0,  0,$12,  0,$44,$AF,$A0,  0,$44,$AF,$68,  0,$40,$D1,$30,  0,  0,  0,  0; 46592
-		dc.b   0,  9,$DD,$F4,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$39,$36,  0,  0,  0,  0,  0,$12,  0,$44,$95,$64,  0,$44,$AF,$90,  0,$40,$D1,$30,  0,$3E,$81,$F4,  0,  4,  0,  0,  0,  0,  0,  0,  2,  0,  0,  2,$61,$73,$65,$74,$74,$62,$6C,  0,  0,  0,  0,$16; 46656
-		dc.b   0,$44,$AF,$C8,  0,$44,$AF,$B8,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1F,$64,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$39,$35,  0,  0,  0,  0,  0,$12,  0,$44,$AF,$F0,  0,$44,$AF,$E0,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$EE,  0,  0,  0,  0; 46720
-		dc.b   2,  0,  0,  2,$70,$6C,$77,$30,$39,$35,  0,  0,  0,  0,  0,$12,  0,$44,$B0,$40,  0,$44,$B0,  8,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1F,$52,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$39,$34,  0,  0,  0,  0,  0,$12,  0,$44,$68,$2C,  0,$44,$B0,$30; 46784
-		dc.b   0,$40,$D1,$30,  0,$40,$D7,$A0,  0, $B,$10,$78,  0,  0,  0,  0,  2,  0,  0,  2,$72,$69,$73,$75,$63,$67,  0,  0,  0,  0,  0,$17,  0,$44,$B0,$68,  0,$44,$B0,$58,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$E8,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30; 46848
-		dc.b $39,$34,  0,  0,  0,  0,  0,$12,  0,$44,$B0,$90,  0,$44,$B0,$80,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1F,$40,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$39,$33,  0,  0,  0,  0,  0,$12,  0,$44,$B0,$B8,  0,$44,$B0,$A8,  0,$40,$D1,$30,  0,  0,  0,  0; 46912
-		dc.b   0,  9,$DD,$E2,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$39,$33,  0,  0,  0,  0,  0,$12,  0,$44,$B0,$E0,  0,$44,$B0,$D0,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1F,$2E,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$39,$32,  0,  0,  0,  0,  0,$12; 46976
-		dc.b   0,$44,$B1,  8,  0,$44,$B0,$F8,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$DC,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$39,$32,  0,  0,  0,  0,  0,$12,  0,$44,$B1,$30,  0,$44,$B1,$20,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1F,$1C,  0,  0,  0,  0; 47040
-		dc.b   2,  0,  0,  2,$70,$6C,$79,$30,$39,$31,  0,  0,  0,  0,  0,$12,  0,$44,$B1,$58,  0,$44,$B1,$48,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$EE,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$39,$31,  0,  0,  0,  0,  0,$12,  0,$44,$B1,$80,  0,$44,$B1,$70; 47104
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1F, $A,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$39,$30,  0,  0,  0,  0,  0,$12,  0,$44,$B1,$F8,  0,$44,$B1,$98,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$E8,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30; 47168
-		dc.b $39,$30,  0,  0,  0,  0,  0,$12,  0,$44,$7C,$D4,  0,$44,$B1,$C0,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,$37,$EA,  0,  0,  0,  0,  2,  0,  0,  2,$67,$72,$65,$65,$6E,$63,$67,  0,  0,  0,  0,  7,  0,$44,$7E,$8C,  0,$44,$B1,$E8,  0,$40,$D1,$30,  0,  0,  0,  0; 47232
-		dc.b   0, $A,$88,$14,  0,  0,  0,  0,  2,  0,  0,  2,$62,$62,$61,$6C,$6C,$63,$67,  0,  0,  0,  0, $E,  0,$44,$B2,$20,  0,$44,$B2,$10,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1E,$F8,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$38,$39,  0,  0,  0,  0,  0,$12; 47296
-		dc.b   0,$44,$B2,$48,  0,$44,$B2,$38,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$E2,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$38,$39,  0,  0,  0,  0,  0,$12,  0,$44,$B2,$70,  0,$44,$B2,$60,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1E,$E6,  0,  0,  0,  0; 47360
-		dc.b   2,  0,  0,  2,$70,$6C,$79,$30,$38,$38,  0,  0,  0,  0,  0,$12,  0,$44,$B2,$98,  0,$44,$B2,$88,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$DC,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$38,$38,  0,  0,  0,  0,  0,$12,  0,$44,$B2,$C0,  0,$44,$B2,$B0; 47424
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1E,$D4,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$38,$37,  0,  0,  0,  0,  0,$12,  0,$44,$B2,$E8,  0,$44,$B2,$D8,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$EE,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30; 47488
-		dc.b $38,$37,  0,  0,  0,  0,  0,$12,  0,$44,$B3,$10,  0,$44,$B3,  0,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1E,$C2,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$38,$36,  0,  0,  0,  0,  0,$12,  0,$44,$B3,$38,  0,$44,$B3,$28,  0,$40,$D1,$30,  0,  0,  0,  0; 47552
-		dc.b   0,  9,$DD,$E8,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$38,$36,  0,  0,  0,  0,  0,$12,  0,$44,$B3,$60,  0,$44,$B3,$50,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1E,$B0,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$38,$35,  0,  0,  0,  0,  0,$12; 47616
-		dc.b   0,$44,$B3,$88,  0,$44,$B3,$78,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$E2,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$38,$35,  0,  0,  0,  0,  0,$12,  0,$44,$B3,$D8,  0,$44,$B3,$A0,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1E,$9E,  0,  0,  0,  0; 47680
-		dc.b   2,  0,  0,  2,$70,$6C,$79,$30,$38,$34,  0,  0,  0,  0,  0,$12,  0,$44,$86,$FC,  0,$44,$B3,$C8,  0,$40,$D1,$30,  0,$40,$D7,$D0,  0, $A,$9D,$BE,  0,  0,  0,  0,  2,  0,  0,  2,$7A,$64,$62,$63,$67,  0,  0,  0,  0,  0,  0,  5,  0,$44,$B4,  0,  0,$44,$B3,$F0; 47744
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$DC,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$38,$34,  0,  0,  0,  0,  0,$12,  0,$44,$B4,$28,  0,$44,$B4,$18,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1E,$8C,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30; 47808
-		dc.b $38,$33,  0,  0,  0,  0,  0,$12,  0,$44,$B4,$50,  0,$44,$B4,$40,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$D6,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$38,$33,  0,  0,  0,  0,  0,$12,  0,$44,$B4,$78,  0,$44,$B4,$68,  0,$40,$D1,$30,  0,  0,  0,  0; 47872
-		dc.b   0,  9,$1E,$7A,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$38,$32,  0,  0,  0,  0,  0,$12,  0,$44,$B4,$A0,  0,$44,$B4,$90,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$D0,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$38,$32,  0,  0,  0,  0,  0,$12; 47936
-		dc.b   0,$44,$B4,$C8,  0,$44,$B4,$B8,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1E,$68,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$38,$31,  0,  0,  0,  0,  0,$12,  0,$44,$B4,$F0,  0,$44,$B4,$E0,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$CA,  0,  0,  0,  0; 48000
-		dc.b   2,  0,  0,  2,$70,$6C,$77,$30,$38,$31,  0,  0,  0,  0,  0,$12,  0,$44,$B5,$18,  0,$44,$B5,  8,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1E,$56,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$38,$30,  0,  0,  0,  0,  0,$12,  0,$44,$B5,$40,  0,$44,$B5,$30; 48064
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$C4,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$38,$30,  0,  0,  0,  0,  0,$12,  0,$44,$B5,$68,  0,$44,$B5,$58,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1E,$44,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30; 48128
-		dc.b $37,$39,  0,  0,  0,  0,  0,$12,  0,$44,$B5,$90,  0,$44,$B5,$80,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$D6,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$37,$39,  0,  0,  0,  0,  0,$12,  0,$44,$B5,$B8,  0,$44,$B5,$A8,  0,$40,$D1,$30,  0,  0,  0,  0; 48192
-		dc.b   0,  9,$1E,$32,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$37,$38,  0,  0,  0,  0,  0,$12,  0,$44,$B5,$E0,  0,$44,$B5,$D0,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$D0,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$37,$38,  0,  0,  0,  0,  0,$12; 48256
-		dc.b   0,$44,$B6,  8,  0,$44,$B5,$F8,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1E,$20,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$37,$37,  0,  0,  0,  0,  0,$12,  0,$44,$B6,$30,  0,$44,$B6,$20,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$CA,  0,  0,  0,  0; 48320
-		dc.b   2,  0,  0,  2,$70,$6C,$77,$30,$37,$37,  0,  0,  0,  0,  0,$12,  0,$44,$B6,$58,  0,$44,$B6,$48,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1E, $E,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$37,$36,  0,  0,  0,  0,  0,$12,  0,$44,$B6,$80,  0,$44,$B6,$70; 48384
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$C4,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$37,$36,  0,  0,  0,  0,  0,$12,  0,$44,$B6,$A8,  0,$44,$B6,$98,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1D,$FC,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30; 48448
-		dc.b $37,$35,  0,  0,  0,  0,  0,$12,  0,$44,$B6,$D0,  0,$44,$B6,$C0,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$D6,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$37,$35,  0,  0,  0,  0,  0,$12,  0,$44,$B6,$F8,  0,$44,$B6,$E8,  0,$40,$D1,$30,  0,  0,  0,  0; 48512
-		dc.b   0,  9,$1D,$EA,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$37,$34,  0,  0,  0,  0,  0,$12,  0,$44,$B7,$20,  0,$44,$B7,$10,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$D0,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$37,$34,  0,  0,  0,  0,  0,$12; 48576
-		dc.b   0,$44,$B7,$48,  0,$44,$B7,$38,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1D,$D8,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$37,$33,  0,  0,  0,  0,  0,$12,  0,$44,$B7,$70,  0,$44,$B7,$60,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$CA,  0,  0,  0,  0; 48640
-		dc.b   2,  0,  0,  2,$70,$6C,$77,$30,$37,$33,  0,  0,  0,  0,  0,$12,  0,$44,$B7,$98,  0,$44,$B7,$88,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1D,$C6,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$37,$32,  0,  0,  0,  0,  0,$12,  0,$44,$B7,$C0,  0,$44,$B7,$B0; 48704
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$C4,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$37,$32,  0,  0,  0,  0,  0,$12,  0,$44,$B7,$E8,  0,$44,$B7,$D8,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1D,$B4,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30; 48768
-		dc.b $37,$31,  0,  0,  0,  0,  0,$12,  0,$44,$B8,$10,  0,$44,$B8,  0,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$BE,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$37,$31,  0,  0,  0,  0,  0,$12,  0,$44,$B8,$38,  0,$44,$B8,$28,  0,$40,$D1,$30,  0,  0,  0,  0; 48832
-		dc.b   0,  9,$1D,$A2,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$37,$30,  0,  0,  0,  0,  0,$12,  0,$44,$B8,$60,  0,$44,$B8,$50,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$B8,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$37,$30,  0,  0,  0,  0,  0,$12; 48896
-		dc.b   0,$44,$B8,$88,  0,$44,$B8,$78,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1D,$90,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$36,$39,  0,  0,  0,  0,  0,$12,  0,$44,$B8,$B0,  0,$44,$B8,$A0,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$B2,  0,  0,  0,  0; 48960
-		dc.b   2,  0,  0,  2,$70,$6C,$77,$30,$36,$39,  0,  0,  0,  0,  0,$12,  0,$44,$B8,$D8,  0,$44,$B8,$C8,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1D,$7E,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$36,$38,  0,  0,  0,  0,  0,$12,  0,$44,$B9,  0,  0,$44,$B8,$F0; 49024
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$AC,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$36,$38,  0,  0,  0,  0,  0,$12,  0,$44,$B9,$28,  0,$44,$B9,$18,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1D,$6C,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30; 49088
-		dc.b $36,$37,  0,  0,  0,  0,  0,$12,  0,$44,$B9,$50,  0,$44,$B9,$40,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$BE,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$36,$37,  0,  0,  0,  0,  0,$12,  0,$44,$B9,$78,  0,$44,$B9,$68,  0,$40,$D1,$30,  0,  0,  0,  0; 49152
-		dc.b   0,  9,$1D,$5A,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$36,$36,  0,  0,  0,  0,  0,$12,  0,$44,$B9,$A0,  0,$44,$B9,$90,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$B8,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$36,$36,  0,  0,  0,  0,  0,$12; 49216
-		dc.b   0,$44,$B9,$C8,  0,$44,$B9,$B8,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1D,$48,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$36,$35,  0,  0,  0,  0,  0,$12,  0,$44,$B9,$F0,  0,$44,$B9,$E0,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$B2,  0,  0,  0,  0; 49280
-		dc.b   2,  0,  0,  2,$70,$6C,$77,$30,$36,$35,  0,  0,  0,  0,  0,$12,  0,$44,$BA,$18,  0,$44,$BA,  8,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1D,$36,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$36,$34,  0,  0,  0,  0,  0,$12,  0,$44,$BA,$40,  0,$44,$BA,$30; 49344
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$AC,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$36,$34,  0,  0,  0,  0,  0,$12,  0,$44,$BA,$68,  0,$44,$BA,$58,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1D,$24,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30; 49408
-		dc.b $36,$33,  0,  0,  0,  0,  0,$12,  0,$44,$BA,$90,  0,$44,$BA,$80,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$BE,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$36,$33,  0,  0,  0,  0,  0,$12,  0,$44,$BA,$B8,  0,$44,$BA,$A8,  0,$40,$D1,$30,  0,  0,  0,  0; 49472
-		dc.b   0,  9,$1D,$12,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$36,$32,  0,  0,  0,  0,  0,$12,  0,$44,$BA,$E0,  0,$44,$BA,$D0,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$B8,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$36,$32,  0,  0,  0,  0,  0,$12; 49536
-		dc.b   0,$44,$BB,  8,  0,$44,$BA,$F8,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1D,  0,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$36,$31,  0,  0,  0,  0,  0,$12,  0,$44,$BB,$30,  0,$44,$BB,$20,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$B2,  0,  0,  0,  0; 49600
-		dc.b   2,  0,  0,  2,$70,$6C,$77,$30,$36,$31,  0,  0,  0,  0,  0,$12,  0,$44,$BB,$58,  0,$44,$BB,$48,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1C,$EE,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$30,$36,$30,  0,  0,  0,  0,  0,$12,  0,$44,$BB,$80,  0,$44,$BB,$70; 49664
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DD,$AC,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$30,$36,$30,  0,  0,  0,  0,  0,$12,  0,$44,$7B,$BC,  0,$44,$7B,$AC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$1C,$CC,  0,  0,  0,  0,  0,$5B,$F2,  0,  0,  9,$74,$60; 49728
-		dc.b   0,  0,  0, $C,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$44,$BB,$C0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C6,$46,  0,$44,$BB,$D0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C6,$42,  0,$44,$BB,$E0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C6,$3E; 49792
-		dc.b   0,$44,$BB,$F0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C6,$3A,  0,$44,$BC,  0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C6,$36,  0,$44,$BC,$10,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C6,$32,  0,$44,$BC,$20,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C5,$EA; 49856
-		dc.b   0,$44,$BC,$30,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C5,$E6,  0,$44,$BC,$40,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C5,$E2,  0,$44,$BC,$50,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C5,$DA,  0,$44,$BC,$60,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C5,$A2; 49920
-		dc.b   0,$44,$BC,$70,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C5,$9A,  0,$44,$BC,$80,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C5,$96,  0,$44,$BC,$90,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C5,$92,  0,$44,$BC,$A0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C5,$8E; 49984
-		dc.b   0,$44,$BC,$B0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C5,$8A,  0,$44,$BC,$C0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C5,$82,  0,$44,$BC,$D0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C5,$4E,  0,$44,$BC,$E0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C5,$46; 50048
-		dc.b   0,$44,$BC,$F0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C5,$42,  0,$44,$BD,  0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C5,$3A,  0,$44,$BD,$10,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C5,$32,  0,$44,$BD,$20,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C5,$26; 50112
-		dc.b   0,$44,$BD,$30,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C4,$EA,  0,$44,$BD,$40,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C2,$BE,  0,$44,$BD,$50,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C2,$A8,  0,$44,$BD,$60,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C2,$36; 50176
-		dc.b   0,$44,$BD,$70,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C1,$B4,  0,$44,$BD,$80,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$BF,$DC,  0,$44,$BD,$90,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$B8,$DE,  0,$44,$BD,$A0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$B7,$34; 50240
-		dc.b   0,$44,$BD,$B0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$B7,  8,  0,$44,$BD,$C0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$B4,$F6,  0,$44,$BD,$D0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$B4,$C4,  0,$44,$BD,$E0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$B4,$12; 50304
-		dc.b   0,$44,$BD,$F0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$B2,$A2,  0,$44,$BE,  0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$B2,$62,  0,$44,$BE,$10,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$B2,$58,  0,$44,$BE,$20,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$B1,$B8; 50368
-		dc.b   0,$44,$BE,$30,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$B1,$4E,  0,$44,$BE,$40,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$B0,$C2,  0,$44,$BE,$50,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$B0,$8C,  0,$44,$BE,$60,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$AD,$80; 50432
-		dc.b   0,$44,$BE,$70,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$AC,$F8,  0,$44,$BE,$80,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$A9,$DA,  0,$44,$BE,$90,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$A9,$14,  0,$44,$BE,$A0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$A7,$DA; 50496
-		dc.b   0,$44,$BE,$B0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$A4,$AE,  0,$44,$BE,$C0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$A3,$E2,  0,$44,$BE,$D0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$A3,$BA,  0,$44,$BE,$E0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$A2,$D2; 50560
-		dc.b   0,$44,$BE,$F0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$A2,$26,  0,$44,$BF,  0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$A1,$A4,  0,$44,$BF,$10,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$9F,$98,  0,$44,$BF,$20,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$9F,$5E; 50624
-		dc.b   0,$44,$BF,$30,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$9F,$2A,  0,$44,$BF,$40,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$9E,$DA,  0,$44,$BF,$50,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$9D,$B2,  0,$44,$BF,$60,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$9D,$7A; 50688
-		dc.b   0,$44,$BF,$70,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$9C,$34,  0,$44,$BF,$80,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$9B,$FE,  0,$44,$BF,$90,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$9A,$A8,  0,$44,$BF,$A0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$9A,$4E; 50752
-		dc.b   0,$44,$BF,$B0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$99,$10,  0,$44,$BF,$C0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$94,$D0,  0,$44,$BF,$D0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$94,$CC,  0,$44,$BF,$E0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$94,$C8; 50816
-		dc.b   0,$44,$BF,$F0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$94,$C4,  0,$44,$C0,  0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$94,$C0,  0,$44,$C0,$10,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$94,$BC,  0,$44,$C0,$20,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$94,$B8; 50880
-		dc.b   0,$44,$C0,$30,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$94,$B4,  0,$44,$C0,$40,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$94,$B0,  0,$44,$C0,$50,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$94,$AC,  0,$44,$C0,$60,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$94,$A8; 50944
-		dc.b   0,$44,$C0,$70,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$94,$78,  0,$44,$C0,$80,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$94,$70,  0,$44,$C0,$90,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$94,$68,  0,$44,$C0,$A0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$94,$60; 51008
-		dc.b   0,$44,$C0,$B0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$94,$58,  0,$44,$C0,$C0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$94,$50,  0,$44,$C0,$D0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$94,$48,  0,$44,$C0,$E0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$92,$84; 51072
-		dc.b   0,$44,$C0,$F0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$92,$10,  0,$44,$C1,  0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$91,$78,  0,$44,$C1,$10,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$90,$A6,  0,$44,$C1,$20,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$90,$1C; 51136
-		dc.b   0,$44,$C1,$30,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$8F,$D4,  0,$44,$C1,$40,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$8E,$BE,  0,$44,$C1,$50,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$8E,$5C,  0,$44,$C1,$60,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$8D,$BE; 51200
-		dc.b   0,$44,$C1,$70,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$8D,$2E,  0,$44,$C1,$80,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$87,$D4,  0,$44,$C1,$90,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$87,$C6,  0,$44,$C1,$A0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$87,$BA; 51264
-		dc.b   0,$44,$C1,$B0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$87,$AC,  0,$44,$C1,$C0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$86,$DC,  0,$44,$C1,$D0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$86,$1E,  0,$44,$C1,$E0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$86,$14; 51328
-		dc.b   0,$44,$C1,$F0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$85,$FC,  0,$44,$C2,  0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$85,$CA,  0,$44,$C2,$10,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$81,$DA,  0,$44,$C2,$20,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$81,$C4; 51392
-		dc.b   0,$44,$C2,$30,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$81,$AE,  0,$44,$C2,$40,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$80,  6,  0,$44,$C2,$50,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$7C,$E6,  0,$44,$C2,$60,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$7C, $E; 51456
-		dc.b   0,$44,$C2,$70,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$7B,$E2,  0,$44,$C2,$80,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$7B,$A4,  0,$44,$C2,$90,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$78,$DC,  0,$44,$C2,$A0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$78,$C2; 51520
-		dc.b   0,$44,$C2,$B0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$75,$88,  0,$44,$C2,$C0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$75,$68,  0,$44,$C2,$D0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$75,$4C,  0,$44,$C2,$E0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$6B,$E6; 51584
-		dc.b   0,$44,$C2,$F0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$65,$16,  0,$44,$C3,  0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$5A,$D6,  0,$44,$C3,$10,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$57,$BA,  0,$44,$C3,$20,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$50, $C; 51648
-		dc.b   0,$44,$C3,$30,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$4F,$DA,  0,$44,$C3,$40,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$4F,$AE,  0,$44,$C3,$50,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$4D,$8C,  0,$44,$C3,$60,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$4D,$68; 51712
-		dc.b   0,$44,$C3,$70,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$4D,$32,  0,$44,$C3,$80,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$4D,$16,  0,$44,$C3,$90,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$44,  6,  0,$44,$C3,$A0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$43,$A8; 51776
-		dc.b   0,$44,$C3,$B0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$43, $C,  0,$44,$C3,$C0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$43,  8,  0,$44,$C3,$D0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$43,  4,  0,$44,$C3,$E0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$43,  0; 51840
-		dc.b   0,$44,$C3,$F0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$42,$FC,  0,$44,$C4,  0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$42,$F8,  0,$44,$C4,$10,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$42,$F4,  0,$44,$C4,$20,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$42,$F0; 51904
-		dc.b   0,$44,$C4,$30,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$42,$C2,  0,$44,$C4,$40,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$40,$D8,  0,$44,$C4,$50,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$3C,$8C,  0,$44,$C4,$60,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$3C,$74; 51968
-		dc.b   0,$44,$C4,$70,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$3C,$5C,  0,$44,$C4,$80,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$3A,$96,  0,$44,$C4,$90,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$35,$DC,  0,$44,$C4,$A0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$35,$9E; 52032
-		dc.b   0,$44,$C4,$B0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$32,$60,  0,$44,$C4,$C0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$32,$58,  0,$44,$C4,$D0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$24,$5A,  0,$44,$C4,$E0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$24,$52; 52096
-		dc.b   0,$44,$C4,$F0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$24,$4A,  0,$44,$C5,  0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$24,$42,  0,$44,$C5,$10,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$24,$3A,  0,$44,$C5,$20,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$24,$32; 52160
-		dc.b   0,$44,$C5,$30,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$24,$2A,  0,$44,$C5,$40,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$24,$22,  0,$44,$C5,$50,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$24,$1A,  0,$44,$C5,$60,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$24,$12; 52224
-		dc.b   0,$44,$C5,$70,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$24, $A,  0,$44,$C5,$80,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$24,  2,  0,$44,$C5,$90,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$23,$FA,  0,$44,$C5,$A0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$23,$F2; 52288
-		dc.b   0,$44,$C5,$B0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$23,$EA,  0,$44,$C5,$C0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$23,$E2,  0,$44,$C5,$D0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$23,$DA,  0,$44,$C5,$E0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$23,$D2; 52352
-		dc.b   0,$44,$C5,$F0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$23,$CA,  0,$44,$C6,  0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$23,$C2,  0,$44,$C6,$10,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$23,$A8,  0,$44,$C6,$20,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$23,$8C; 52416
-		dc.b   0,$44,$C6,$30,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$23,$74,  0,$44,$C6,$40,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$23,$58,  0,$44,$C6,$50,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$22,$E8,  0,$44,$C6,$60,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$22,$70; 52480
-		dc.b   0,$44,$C6,$70,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$1E,$6A,  0,$44,$C6,$80,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$1E,$3C,  0,$44,$C6,$90,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$1E,$20,  0,$44,$C6,$A0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$1D,$FE; 52544
-		dc.b   0,$44,$C6,$B0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$1D,$D4,  0,$44,$C6,$C0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$1D,$B2,  0,$44,$C6,$D0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$1D,$78,  0,$44,$C6,$E0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$1D,$70; 52608
-		dc.b   0,$44,$C6,$F0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$14,$48,  0,$44,$C7,  0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$14,$36,  0,$44,$C7,$10,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$11,$98,  0,$44,$C7,$20,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$11,$8A; 52672
-		dc.b   0,$44,$C7,$30,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  3,$92,  0,$44,$C7,$40,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$FC,  0,$44,$C7,$50,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$F8,  0,$44,$C7,$60,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$F4; 52736
-		dc.b   0,$44,$C7,$70,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$F0,  0,$44,$C7,$80,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$EC,  0,$44,$C7,$90,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$E8,  0,$44,$C7,$A0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$E4; 52800
-		dc.b   0,$44,$C7,$B0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$E0,  0,$44,$C7,$C0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$DC,  0,$44,$C7,$D0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$D8,  0,$44,$C7,$E0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$D4; 52864
-		dc.b   0,$44,$C7,$F0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$D0,  0,$44,$C8,  0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$CC,  0,$44,$C8,$10,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$C8,  0,$44,$C8,$20,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$C4; 52928
-		dc.b   0,$44,$C8,$30,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$C0,  0,$44,$C8,$40,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$BC,  0,$44,$C8,$50,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$B8,  0,$44,$C8,$60,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$B4; 52992
-		dc.b   0,$44,$C8,$70,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$B0,  0,$44,$C8,$80,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$AC,  0,$44,$C8,$90,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$A8,  0,$44,$C8,$A0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$A4; 53056
-		dc.b   0,$44,$C8,$B0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$A0,  0,$44,$C8,$C0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$9C,  0,$44,$C8,$D0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$98,  0,$44,$C8,$E0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$94; 53120
-		dc.b   0,$44,$C8,$F0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$90,  0,$44,$C9,  0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$8C,  0,$44,$C9,$10,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$88,  0,$44,$C9,$20,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$84; 53184
-		dc.b   0,$44,$C9,$30,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$80,  0,$44,$C9,$40,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$7C,  0,$44,$C9,$50,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$74,  0,$44,$C9,$60,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$6C; 53248
-		dc.b   0,$44,$C9,$70,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$68,  0,$44,$C9,$80,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$64,  0,$44,$C9,$90,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$60,  0,$44,$C9,$A0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$5C; 53312
-		dc.b   0,$44,$C9,$B0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$58,  0,$44,$C9,$C0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$54,  0,$44,$C9,$D0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$50,  0,$44,$C9,$E0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$4C; 53376
-		dc.b   0,$44,$C9,$F0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$48,  0,$44,$CA,  0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$44,  0,$44,$CA,$10,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$40,  0,$44,$CA,$20,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$3C; 53440
-		dc.b   0,$44,$CA,$30,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$38,  0,$44,$CA,$40,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$34,  0,$44,$CA,$50,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$30,  0,$44,$CA,$60,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$2C; 53504
-		dc.b   0,$44,$CA,$70,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$28,  0,$44,$CA,$80,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$24,  0,$44,$CA,$90,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$20,  0,$44,$CA,$A0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$1C; 53568
-		dc.b   0,$44,$CA,$B0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$18,  0,$44,$CA,$C0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$14,  0,$44,$CA,$D0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,$10,  0,$44,$CA,$E0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0, $C; 53632
-		dc.b   0,$44,$CA,$F0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,  8,  0,  0,  0,  0,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,  0,  4,  0,$40,$E3,$44,  0,  0,  0,  2,$4E,$F9,  0,  0,$CF,$C2,  0,  0,  0,$40,$B1,$E4,  0,  0,  0,  2,$4E,$F9,  0,  0,$CF,$C2,  0,  0; 53696
-		dc.b   0,$40,$92,$C8,  0,  0,  0,  2,$4E,$F9,  0,  0,$CF,$C2,  0,  0,  0,$40,$7F,$E0,  0,  0,  0,  3,$4E,$F9,  0,  0,$FD,$CC,$4E,$F9,  0,  0,$D2,$F0,  0,$40,$4F,$B0,  0,  0,  0,  2,$4E,$F9,  0,  0,$CF,$C2,  0,  0,  0,$40,$59,$C8,  0,  0,  0,  3,$4E,$F9,  0,  0; 53760
-		dc.b $CF,$DE,$4E,$F9,  0,  0,$CF,$C2,  0,$40,$2E,$68,  0,  0,  0,  2,$4E,$F9,  0,  0,$CF,$C2,  0,  0,  0,$40,$39,$4C,  0,  0,  0,  3,$4E,$F9,  0,  0,$C7,$58,$4E,$F9,  0,  0,$C8,$8E,  0,$40,$48,  0,  0,  0,  0, $C,$4E,$F9,  0,  0,$C7,$58,$4E,$F9,  0,  0,$C8,$8E; 53824
-		dc.b $4E,$F9,  0,  0,$C7,$AE,$4E,$F9,  0,  0,$DA,$C8,$4E,$F9,  0,  0,$C8,$9C,$4E,$F9,  0,  0,$2A,$F0,$4E,$F9,  0,  0,$C7,  6,$4E,$F9,  0,  0,$C7,$32,  0,$40,$1A,$54,  0,  0,  0,  9,$4E,$F9,  0,  0,$C8,$8E,$4E,$F9,  0,  0,$DA,$C8,$4E,$F9,  0,  0,$C8,$9C,$4E,$F9; 53888
-		dc.b   0,  0,$C8,$1A,$4E,$F9,  0,  0,$C7,  6,$4E,$F9,  0,  0,$C7,$32,  0,$40,$28,$7C,  0,  0,  0,  6,$4E,$F9,  0,  0,$C7,$AE,$4E,$F9,  0,  0,$C8,$9C,$4E,$F9,  0,  0,$CF,$C2,$4E,$F9,  0,  0,$C7,$32,  0,$3F,$ED,$EC,  0,  0,  0,  6,$4E,$F9,  0,  0,$C7,$AE,$4E,$F9; 53952
-		dc.b   0,  0,$C8,$9C,$4E,$F9,  0,  0,$C7,  6,$4E,$F9,  0,  0,$C7,$32,  0,$3F,$F4,$1C,  0,  0,  0,  5,$4E,$F9,  0,  0,$C7,$AE,$4E,$F9,  0,  0,$C8,$9C,$4E,$F9,  0,  0,$C7,$32,  0,  0,  0,$3F,$FD,$94,  0,  0,  0,  8,$4E,$F9,  0,  0,$C7,$58,$4E,$F9,  0,  0,$C8,$8E; 54016
-		dc.b $4E,$F9,  0,  0,$C7,$AE,$4E,$F9,  0,  0,$C8,$9C,$4E,$F9,  0,  0,$C7,  6,  0,  0,  0,$40,  7,$48,  0,  0,  0,  6,$4E,$F9,  0,  0,$C8,$8E,$4E,$F9,  0,  0,$C8,$9C,$4E,$F9,  0,  0,$C8,$1A,$4E,$F9,  0,  0,$C7,$32,  0,$3F,$CE,$48,  0,  0,  0,  9,$4E,$F9,  0,  0; 54080
-		dc.b $C7,$58,$4E,$F9,  0,  0,$C8,$8E,$4E,$F9,  0,  0,$C7,$AE,$4E,$F9,  0,  0,$C8,$9C,$4E,$F9,  0,  0,$C7,  6,$4E,$F9,  0,  0,$C7,$32,  0,$3F,$DF,  8,  0,  0,  0,  8,$4E,$F9,  0,  0,$C7,$58,$4E,$F9,  0,  0,$C8,$8E,$4E,$F9,  0,  0,$C8,$9C,$4E,$F9,  0,  0,$C7,  6; 54144
-		dc.b $4E,$F9,  0,  0,$C7,$32,  0,  0,  0,$3F,$EB,$74,  0,  0,  0,  5,$4E,$F9,  0,  0,$C7,$AE,$4E,$F9,  0,  0,$C8,$9C,$4E,$F9,  0,  0,$C7,$32,  0,  0,  0,$3F,$AF,$3C,  0,  0,  0,  5,$4E,$F9,  0,  0,$C7,$AE,$4E,$F9,  0,  0,$C8,$9C,$4E,$F9,  0,  0,$C7,  6,  0,  0; 54208
-		dc.b   0,$3F,$B6,$44,  0,  0,  0,  2,$4E,$F9,  0,  0,$C7,$58,  0,  0,  0,$3F,$A3,$B0,  0,  0,  0,  2,$4E,$F9,  0,  0,$2B,$16,  0,  0,  0,$3F,$3D,$1C,  0,  0,  0,  2,$4E,$F9,  0,  1,$8A,$82,  0,  0,  0,$3F,$1A,$E4,  0,  0,  0,  2,$4E,$F9,  0,  1,$8A,$82,  0,  0; 54272
-		dc.b   0,$3B,$89,$B0,  0,  0,  0,  2,$4E,$F9,  0,  1,$9A,$3C,  0,  0,  0,  0,  0,  1,  0,  0,$11,$D6,  0,  0,  0,  1,  0,  0,  2,$52,  0,  0,  0,  1,  0,  0,  1,$5E,  0,  0,  0,  1,  0,  0,  8,$80,  0,  0,  0,  1,  0,  0,  2,$E4,  0,  0,  0,  1,  0,  0,  4,$82; 54336
-		dc.b   0,  0,  0,  1,  0,  0,  2,$F4,  0,  0,  0,  1,  0,  0,  0,$FC,  0,  0,  0,  1,  0,  0,  2,$94,  0,  0,  0,  1,  0,  0,  9,  0,  0,  0,  0,  1,  0,  0,  2,$CA,  0,  0,  0,  1,  0,  0,  1,$58,  0,  0,  0,  1,  0,  0,  8,$7A,  0,  0,  0,  1,  0,  0,  2,$AA; 54400
-		dc.b   0,  0,  0,  1,  0,  0,  2,$EE,  0,  0,  0,  1,  0,  0,  2,$8E,  0,  0,  0,  1,  0,  0,  8,$FA,  0,  0,  0,  1,  0,  0,$10,$2E,  0,  0,  0,  1,  0,  0,  0,$FA,  0,  0,  0,  1,  0,  0,  0,$F6,  0,  0,  0,  1,  0,  0,  7,$16,  0,  0,  0,  1,  0,  0,  7,$E4; 54464
-		dc.b   0,  0,  0,  1,  0,  0,  2,$FE,  0,  0,  0,  1,  0,  0,  6,$A6,  0,  0,  0,  1,  0,  0, $A,$86,  0,  0,  0,  1,  0,  0,  4,$52,  0,  0,  0,  1,  0,  0,$12,$12,  0,  0,  0,  1,  0,  0,  3,$94,  0,  0,  0,  1,  0,  0,  2,$DE,  0,  0,  0,  1,  0,  0,  2,$88; 54528
-		dc.b   0,  0,  0,  1,  0,  0,  8,$F4,  0,  0,  0,  1,  0,  0,  7,$DE,  0,  0,  0,  1,  0,  0,  3,$8E,  0,  0,  0,  1,  0,  0,  2,$C4,  0,  0,  0,  1,  0,  0,  2,$4C,  0,  0,  0,  1,  0,  0,  1,$52,  0,  0,  0,  1,  0,  0,  8,$74,  0,  0,  0,  1,  0,  0,  2,$D8; 54592
-		dc.b   0,  0,  0,  1,  0,  0,  2,$A4,  0,  0,  0,  1,  0,  0,  4,$7C,  0,  0,  0,  1,  0,  0,  2,$E8,  0,  0,  0,  1,  0,  0,  0,$F0,  0,  0,  0,  1,  0,  0,  2,$82,  0,  0,  0,  1,  0,  0,  8,$EE,  0,  0,  0,  1,  0,  0,  2,$7C,  0,  0,  0,  1,  0,  0,  8,$E8; 54656
-		dc.b   0,  0,  0,  1,  0,  0,  2,$BE,  0,  0,  0,  1,  0,  0,  2,$46,  0,  0,  0,  1,  0,  0,  8,$6E,  0,  0,  0,  1,  0,  0,  2,$9E,  0,  0,  0,  1,  0,  0,  4,$76,  0,  0,  0,  1,  0,  0,  2,$E2,  0,  0,  0,  1,  0,  0,  0,$EA,  0,  0,  0,  1,  0,  0,  8,$E2; 54720
-		dc.b   0,  0,  0,  1,  0,  0,  1,$4C,  0,  0,  0,  1,  0,  0,  8,$68,  0,  0,  0,  1,  0,  0,  2,$D2,  0,  0,  0,  1,  0,  0,  2,$98,  0,  0,  0,  1,  0,  0,  2,$76,  0,  0,  0,  1,  0,  0,  8,$DC,  0,  0,  0,  1,  0,  0,  4,$10,  0,  0,  0,  1,  0,  0,  3,$42; 54784
-		dc.b   0,  0,  0,  1,  0,  0,  1,$46,  0,  0,  0,  1,  0,  0,  8,$62,  0,  0,  0,  1,  0,  0,  2,$92,  0,  0,  0,  1,  0,  0,  8,$D6,  0,  0,  0,  1,  0,  0,  4, $A,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$6C,$8D,  0,  0,  3,$E9,  0,$3B, $D,$64; 54848
-		dc.b   0,  0,  0,  0,  0,$45,  8,$F8,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$3B,  9,$98,  0,  0,  0,  0,  0,  0,  0,  0,  0,$40,$D1,$2C,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 54912
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$44,$D0,$34,  0,$44,$D0,$20,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  4,  3,$A8,  0,  0,  0,  0; 54976
-		dc.b   2,  0,  0,  3,$61,$73,$65,$74,$74,$62,$6C,$31,$31,  0,  0,  0,  0,  0,  0,  8,  0,$44,$A7,$84,  0,$44,$D0,$4C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  4,  0,$96,  0,  0,  0,  0,  2,  0,  0,  3,$61,$73,$65,$74,$74,$62,$6C,$31,$30,  0,  0,  0,  0,  0,  0,  8; 55040
-		dc.b   0,$44,$AF,$78,  0,$44,$D0,$78,  0,$40,$D1,$30,  0,$40,$D5,$18,  0, $B, $E,  8,  0,  0,  0,  0,  2,  0,  0,  2,$66,$62,$75,$74,$61,$63,$67,  0,  0,  0,  0,$16,  0,$44,$AA,$34,  0,$44,$D0,$A0,  0,$40,$D1,$30,  0,$40,$D5,$4C,  0, $B,  8,$BC,  0,  0,  0,  0; 55104
-		dc.b   2,  0,  0,  2,$75,$73,$61,$67,$69,$63,$67,  0,  0,  0,  0,  9,  0,$44,$AC,$F8,  0,$44,$D0,$C8,  0,$40,$D1,$30,  0,$40,$D5,$7C,  0, $A,$F1, $A,  0,  0,  0,  0,  2,  0,  0,  2,$79,$61,$72,$61,$72,$65,$63,$67,  0,  0,  0, $A,  0,$44,$A7,$B0,  0,$44,$D0,$F0; 55168
-		dc.b   0,$40,$D1,$30,  0,$40,$D5,$AC,  0, $A,$57,$E4,  0,  0,  0,  0,  2,  0,  0,  3,$6B,$65,$6D,$75,$72,$69,$30,$64,$63,$67,  0,  0,  0,  0,  0,$1C,  0,$44,$A8,$34,  0,$44,$D1,$1C,  0,$40,$D1,$30,  0,  0,  0,  0,  0, $A,$49,$F2,  0,  0,  0,  0,  2,  0,  0,  2; 55232
-		dc.b $64,$6F,$6F,$72,$30,$30,$63,$67,  0,  0,  0,$1B,  0,$44,$D1,$54,  0,$44,$D1,$44,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$25,$3A,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$36,$36,  0,  0,  0,  0,  0,$13,  0,$44,$D1,$7C,  0,$44,$D1,$6C,  0,$40,$D1,$30; 55296
-		dc.b   0,  0,  0,  0,  0,  9,$DF,$88,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$36,$36,  0,  0,  0,  0,  0,$13,  0,$44,$D1,$A4,  0,$44,$D1,$94,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$25,$20,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$36,$35,  0,  0; 55360
-		dc.b   0,  0,  0,$13,  0,$44,$D1,$CC,  0,$44,$D1,$BC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DF,$80,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$36,$35,  0,  0,  0,  0,  0,$13,  0,$44,$D1,$F4,  0,$44,$D1,$E4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$25, $E; 55424
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$36,$34,  0,  0,  0,  0,  0,$13,  0,$44,$D2,$1C,  0,$44,$D2, $C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DF,$7A,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$36,$34,  0,  0,  0,  0,  0,$13,  0,$44,$D2,$44; 55488
-		dc.b   0,$44,$D2,$34,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$24,$FC,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$36,$33,  0,  0,  0,  0,  0,$13,  0,$44,$D2,$6C,  0,$44,$D2,$5C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DF,$74,  0,  0,  0,  0,  2,  0,  0,  2; 55552
-		dc.b $70,$6C,$77,$31,$36,$33,  0,  0,  0,  0,  0,$13,  0,$44,$D2,$94,  0,$44,$D2,$84,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$24,$E2,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$36,$32,  0,  0,  0,  0,  0,$13,  0,$44,$D2,$BC,  0,$44,$D2,$AC,  0,$40,$D1,$30; 55616
-		dc.b   0,  0,  0,  0,  0,  9,$DF,$6C,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$36,$32,  0,  0,  0,  0,  0,$13,  0,$44,$D2,$E4,  0,$44,$D2,$D4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$24,$C8,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$36,$31,  0,  0; 55680
-		dc.b   0,  0,  0,$13,  0,$44,$D3, $C,  0,$44,$D2,$FC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DF,$64,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$36,$31,  0,  0,  0,  0,  0,$13,  0,$44,$D3,$34,  0,$44,$D3,$24,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$24,$AE; 55744
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$36,$30,  0,  0,  0,  0,  0,$13,  0,$44,$D3,$5C,  0,$44,$D3,$4C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DF,$5C,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$36,$30,  0,  0,  0,  0,  0,$13,  0,$44,$D3,$84; 55808
-		dc.b   0,$44,$D3,$74,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$24,$9C,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$35,$39,  0,  0,  0,  0,  0,$13,  0,$44,$D3,$AC,  0,$44,$D3,$9C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DF,$56,  0,  0,  0,  0,  2,  0,  0,  2; 55872
-		dc.b $70,$6C,$77,$31,$35,$39,  0,  0,  0,  0,  0,$13,  0,$44,$D3,$D4,  0,$44,$D3,$C4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$24,$92,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$35,$38,  0,  0,  0,  0,  0,$13,  0,$44,$D3,$FC,  0,$44,$D3,$EC,  0,$40,$D1,$30; 55936
-		dc.b   0,  0,  0,  0,  0,  9,$DF,$52,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$35,$38,  0,  0,  0,  0,  0,$13,  0,$44,$D4,$24,  0,$44,$D4,$14,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$24,$80,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$35,$37,  0,  0; 56000
-		dc.b   0,  0,  0,$13,  0,$44,$D4,$4C,  0,$44,$D4,$3C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DF,$4C,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$35,$37,  0,  0,  0,  0,  0,$13,  0,$44,$D4,$74,  0,$44,$D4,$64,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$24,$66; 56064
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$35,$36,  0,  0,  0,  0,  0,$13,  0,$44,$D4,$9C,  0,$44,$D4,$8C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DF,$44,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$35,$36,  0,  0,  0,  0,  0,$13,  0,$44,$D4,$C4; 56128
-		dc.b   0,$44,$D4,$B4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$24,$4C,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$35,$35,  0,  0,  0,  0,  0,$13,  0,$44,$D4,$EC,  0,$44,$D4,$DC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DF,$3C,  0,  0,  0,  0,  2,  0,  0,  2; 56192
-		dc.b $70,$6C,$77,$31,$35,$35,  0,  0,  0,  0,  0,$13,  0,$44,$D5,$14,  0,$44,$D5,  4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$24,$32,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$35,$34,  0,  0,  0,  0,  0,$13,  0,$44,$D5,$3C,  0,$44,$D5,$2C,  0,$40,$D1,$30; 56256
-		dc.b   0,  0,  0,  0,  0,  9,$DF,$34,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$35,$34,  0,  0,  0,  0,  0,$13,  0,$44,$D5,$64,  0,$44,$D5,$54,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$24,$10,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$35,$33,  0,  0; 56320
-		dc.b   0,  0,  0,$13,  0,$44,$D5,$8C,  0,$44,$D5,$7C,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DF,$2A,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$35,$33,  0,  0,  0,  0,  0,$13,  0,$44,$D5,$B4,  0,$44,$D5,$A4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$23,$EE; 56384
-		dc.b   0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$35,$32,  0,  0,  0,  0,  0,$13,  0,$44,$D6,$2C,  0,$44,$D5,$CC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DF,$20,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$35,$32,  0,  0,  0,  0,  0,$13,  0,$44,$D6,  4; 56448
-		dc.b   0,$44,$D5,$F4,  0,$40,$D1,$30,  0,$40,$D5,$E4,  0, $B,$E5,$8C,  0,  0,  0,  0,  2,  0,  0,  2,$7A,$6F,$6E,$65,$30,$38,$63,$67,  0,  0,  0, $E,  0,$44,$AB,$3C,  0,$44,$D6,$1C,  0,$40,$D1,$30,  0,$40,$D6,$18,  0, $B,$21,$74,  0,  0,  0,  0,  2,  0,  0,  2; 56512
-		dc.b $7A,$6F,$6E,$65,$30,$30,$63,$67,  0,  0,  0, $E,  0,$44,$D6,$54,  0,$44,$D6,$44,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$23,$D4,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$35,$31,  0,  0,  0,  0,  0,$13,  0,$44,$D6,$7C,  0,$44,$D6,$6C,  0,$40,$D1,$30; 56576
-		dc.b   0,  0,  0,  0,  0,  9,$DF,$18,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$35,$31,  0,  0,  0,  0,  0,$13,  0,$44,$D6,$A4,  0,$44,$D6,$94,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$23,$B2,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$35,$30,  0,  0; 56640
-		dc.b   0,  0,  0,$13,  0,$44,$D7,$20,  0,$44,$D6,$BC,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DF, $E,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$35,$30,  0,  0,  0,  0,  0,$13,  0,$44,$61,$1C,  0,$44,$D6,$E4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  5,  5,$38; 56704
-		dc.b   0,  0,  0,  0,  2,  0,  0,  3,$72,$69,$6E,$67,$61,$63,$74,$38,$30,  0,  0,  0,  0,  0,  0,  2,  0,$44,$AC,$D0,  0,$44,$D7,$10,  0,$40,$D1,$30,  0,$40,$D6,$48,  0, $A,$8E,$F8,  0,  0,  0,  0,  2,  0,  0,  2,$73,$6E,$61,$69,$6C,$63,$67,  0,  0,  0,  0, $B; 56768
-		dc.b   0,$44,$D7,$48,  0,$44,$D7,$38,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$23,$98,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$34,$39,  0,  0,  0,  0,  0,$13,  0,$44,$D7,$70,  0,$44,$D7,$60,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DF,  6,  0,  0,  0,  0; 56832
-		dc.b   2,  0,  0,  2,$70,$6C,$77,$31,$34,$39,  0,  0,  0,  0,  0,$13,  0,$44,$D7,$98,  0,$44,$D7,$88,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$23,$7E,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$34,$38,  0,  0,  0,  0,  0,$13,  0,$44,$D7,$C0,  0,$44,$D7,$B0; 56896
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DF,  6,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$34,$38,  0,  0,  0,  0,  0,$13,  0,$44,$D7,$E8,  0,$44,$D7,$D8,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$23,$5C,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31; 56960
-		dc.b $34,$37,  0,  0,  0,  0,  0,$13,  0,$44,$D8,$10,  0,$44,$D8,  0,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$F6,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$34,$37,  0,  0,  0,  0,  0,$13,  0,$44,$D8,$38,  0,$44,$D8,$28,  0,$40,$D1,$30,  0,  0,  0,  0; 57024
-		dc.b   0,  9,$23,$3A,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$34,$36,  0,  0,  0,  0,  0,$13,  0,$44,$D8,$60,  0,$44,$D8,$50,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DF,  0,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$34,$36,  0,  0,  0,  0,  0,$13; 57088
-		dc.b   0,$44,$D8,$88,  0,$44,$D8,$78,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$23,$18,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$34,$35,  0,  0,  0,  0,  0,$13,  0,$44,$D8,$B0,  0,$44,$D8,$A0,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$F6,  0,  0,  0,  0; 57152
-		dc.b   2,  0,  0,  2,$70,$6C,$77,$31,$34,$35,  0,  0,  0,  0,  0,$13,  0,$44,$D8,$D8,  0,$44,$D8,$C8,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$23,  6,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$34,$34,  0,  0,  0,  0,  0,$13,  0,$44,$D9,  0,  0,$44,$D8,$F0; 57216
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$F0,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$34,$34,  0,  0,  0,  0,  0,$13,  0,$44,$D9,$28,  0,$44,$D9,$18,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$22,$F4,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31; 57280
-		dc.b $34,$33,  0,  0,  0,  0,  0,$13,  0,$44,$D9,$50,  0,$44,$D9,$40,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$EA,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$34,$33,  0,  0,  0,  0,  0,$13,  0,$44,$D9,$78,  0,$44,$D9,$68,  0,$40,$D1,$30,  0,  0,  0,  0; 57344
-		dc.b   0,  9,$22,$E2,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$34,$32,  0,  0,  0,  0,  0,$13,  0,$44,$D9,$A0,  0,$44,$D9,$90,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$E4,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$34,$32,  0,  0,  0,  0,  0,$13; 57408
-		dc.b   0,$44,$D9,$C8,  0,$44,$D9,$B8,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$22,$D0,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$34,$31,  0,  0,  0,  0,  0,$13,  0,$44,$D9,$F0,  0,$44,$D9,$E0,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$DE,  0,  0,  0,  0; 57472
-		dc.b   2,  0,  0,  2,$70,$6C,$77,$31,$34,$31,  0,  0,  0,  0,  0,$13,  0,$44,$DA,$18,  0,$44,$DA,  8,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$22,$B6,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$34,$30,  0,  0,  0,  0,  0,$13,  0,$44,$DA,$40,  0,$44,$DA,$30; 57536
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$D6,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$34,$30,  0,  0,  0,  0,  0,$13,  0,$44,$DA,$68,  0,$44,$DA,$58,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$22,$9C,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31; 57600
-		dc.b $33,$39,  0,  0,  0,  0,  0,$13,  0,$44,$DA,$90,  0,$44,$DA,$80,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$CE,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$33,$39,  0,  0,  0,  0,  0,$13,  0,$44,$DA,$B8,  0,$44,$DA,$A8,  0,$40,$D1,$30,  0,  0,  0,  0; 57664
-		dc.b   0,  9,$22,$8A,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$33,$38,  0,  0,  0,  0,  0,$13,  0,$44,$DA,$E0,  0,$44,$DA,$D0,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$C8,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$33,$38,  0,  0,  0,  0,  0,$13; 57728
-		dc.b   0,$44,$DB,  8,  0,$44,$DA,$F8,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$22,$68,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$33,$37,  0,  0,  0,  0,  0,$13,  0,$44,$DB,$30,  0,$44,$DB,$20,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$BE,  0,  0,  0,  0; 57792
-		dc.b   2,  0,  0,  2,$70,$6C,$77,$31,$33,$37,  0,  0,  0,  0,  0,$13,  0,$44,$DB,$58,  0,$44,$DB,$48,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$22,$56,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$79,$31,$33,$36,  0,  0,  0,  0,  0,$13,  0,$44,$DB,$80,  0,$44,$DB,$70; 57856
-		dc.b   0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$DE,$B8,  0,  0,  0,  0,  2,  0,  0,  2,$70,$6C,$77,$31,$33,$36,  0,  0,  0,  0,  0,$13,  0,$44,$9B,$C4,  0,$44,$9B,$B4,  0,$40,$D1,$30,  0,  0,  0,  0,  0,  9,$22,$44,  0,  0,  0,  0,  0,$5B,$F2,  0,  0,  9,$54,$60; 57920
-		dc.b   0,  0,  0,  4,  0,  0,  0,  0,  0,$44,$DB,$B8,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0, $E,$7E,  0,$44,$DB,$C8,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0, $C,$EC,  0,$44,$DB,$D8,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$AE,$F6,  0,$44,$DB,$E8,  0,  0,  3,$EC; 57984
-		dc.b   0,  0,  0,  0,  0,  1,$AE,$4C,  0,$44,$DB,$F8,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$AD,$88,  0,$44,$DC,  8,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$AE,$7C,  0,$44,$DC,$18,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$AE,$74,  0,$44,$DC,$28,  0,  0,  3,$EC; 58048
-		dc.b   0,  0,  0,  0,  0,  1,$AE,$6C,  0,$44,$DC,$38,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$AE,$64,  0,$44,$DC,$48,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$AE,$5C,  0,$44,$DC,$58,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C5,$D6,  0,$44,$DC,$68,  0,  0,  3,$EC; 58112
-		dc.b   0,  0,  0,  0,  0,  0,$C5,$DE,  0,$44,$DC,$78,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$86,$F8,  0,$44,$DC,$88,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$96,$52,  0,$44,$DC,$98,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$96,$30,  0,$44,$DC,$A8,  0,  0,  3,$EC; 58176
-		dc.b   0,  0,  0,  0,  0,  1,$94,$6A,  0,$44,$DC,$B8,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$AE,$1C,  0,$44,$DC,$C8,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$AD,$C0,  0,$44,$DC,$D8,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C4,$DE,  0,$44,$DC,$E8,  0,  0,  3,$EC; 58240
-		dc.b   0,  0,  0,  0,  0,  1,$90,$DE,  0,$44,$DC,$F8,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$19,$1E,  0,$44,$DD,  8,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$18,$F4,  0,$44,$DD,$18,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$18,$8E,  0,$44,$DD,$28,  0,  0,  3,$EC; 58304
-		dc.b   0,  0,  0,  0,  0,  1,$17,$9E,  0,$44,$DD,$38,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$32,$B0,  0,$44,$DD,$48,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$32,$7C,  0,$44,$DD,$58,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$32,$4E,  0,$44,$DD,$68,  0,  0,  3,$EC; 58368
-		dc.b   0,  0,  0,  0,  0,  1,$32,$2E,  0,$44,$DD,$78,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$31,$EC,  0,$44,$DD,$88,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$30,$C4,  0,$44,$DD,$98,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$5F,$76,  0,$44,$DD,$A8,  0,  0,  3,$EC; 58432
-		dc.b   0,  0,  0,  0,  0,  1,$71,$94,  0,$44,$DD,$B8,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$7E,$5C,  0,$44,$DD,$C8,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$86,$B6,  0,$44,$DD,$D8,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$86,$1E,  0,$44,$DD,$E8,  0,  0,  3,$EC; 58496
-		dc.b   0,  0,  0,  0,  0,  1,$AE,$44,  0,$44,$DD,$F8,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$AE,$3C,  0,$44,$DE,  8,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C5,$9E,  0,$44,$DE,$18,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C5,$A6,  0,$44,$DE,$28,  0,  0,  3,$EC; 58560
-		dc.b   0,  0,  0,  0,  0,  1,$84,$B2,  0,$44,$DE,$38,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C5,  2,  0,$44,$DE,$48,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$8B,$4E,  0,$44,$DE,$58,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$F0,$42,  0,$44,$DE,$68,  0,  0,  3,$EC; 58624
-		dc.b   0,  0,  0,  0,  0,  0,$F0,$4A,  0,$44,$DE,$78,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C6,$B2,  0,$44,$DE,$88,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  0,$C4,$FE,  0,$44,$DE,$98,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$1C,$1A,  0,$44,$DE,$A8,  0,  0,  3,$EC; 58688
-		dc.b   0,  0,  0,  0,  0,  1,$1B,$8E,  0,$44,$DE,$B8,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$1A,$C2,  0,$44,$DE,$C8,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$16, $A,  0,$44,$DE,$D8,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$15,$D8,  0,$44,$DE,$E8,  0,  0,  3,$EC; 58752
-		dc.b   0,  0,  0,  0,  0,  1,$15,$68,  0,$44,$DE,$F8,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$32,$CC,  0,$44,$DF,  8,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$31,$A8,  0,$44,$DF,$18,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$30,$D4,  0,$44,$DF,$28,  0,  0,  3,$EC; 58816
-		dc.b   0,  0,  0,  0,  0,  1,$36,$F8,  0,$44,$DF,$38,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$4B,$A4,  0,$44,$DF,$48,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$4D,$FC,  0,$44,$DF,$58,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$4F,$5A,  0,$44,$DF,$68,  0,  0,  3,$EC; 58880
-		dc.b   0,  0,  0,  0,  0,  1,$57,$E0,  0,$44,$DF,$78,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$5A,$C8,  0,$44,$DF,$88,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$5D,$7C,  0,$44,$DF,$98,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$62,  4,  0,$44,$DF,$A8,  0,  0,  3,$EC; 58944
-		dc.b   0,  0,  0,  0,  0,  1,$64,$F8,  0,$44,$DF,$B8,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$65,$F8,  0,$44,$DF,$C8,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$68,$8A,  0,$44,$DF,$D8,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$71,$8E,  0,$44,$DF,$E8,  0,  0,  3,$EC; 59008
-		dc.b   0,  0,  0,  0,  0,  1,$73,$3C,  0,$44,$DF,$F8,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$72,$F4,  0,$44,$E0,  8,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$80,$A2,  0,$44,$E0,$18,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$7D,$76,  0,$44,$E0,$28,  0,  0,  3,$EC; 59072
-		dc.b   0,  0,  0,  0,  0,  1,$85,$B0,  0,$44,$E0,$38,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$39,$7E,  0,$44,$E0,$48,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$59,$C4,  0,$44,$E0,$58,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$68,$84,  0,$44,$E0,$68,  0,  0,  3,$EC; 59136
-		dc.b   0,  0,  0,  0,  0,  1,$6F,$98,  0,$44,$E0,$78,  0,  0,  3,$EC,  0,  0,  0,  0,  0,  1,$6F,$3E; 59200
-RingPos_Index:	dc.w RingPos_GHZ1-RingPos_Index; 0 ; DATA XREF:	RingsManager_Setup+1Ao
-					; ROM:RingPos_Indexo ...
-		dc.w RingPos_GHZ2-RingPos_Index; 1
-		dc.w RingPos_GHZ3-RingPos_Index; 2
-		dc.w RingPos_GHZ1-RingPos_Index; 3
-		dc.w RingPos_LZ1-RingPos_Index;	4
-		dc.w RingPos_LZ2-RingPos_Index;	5
-		dc.w RingPos_LZ3-RingPos_Index;	6
-		dc.w RingPos_LZ1-RingPos_Index;	7
-		dc.w RingPos_CPZ1-RingPos_Index; 8
-		dc.w RingPos_GHZ2-RingPos_Index; 9
-		dc.w RingPos_GHZ3-RingPos_Index; 10
-		dc.w RingPos_GHZ1-RingPos_Index; 11
-		dc.w RingPos_EHZ1-RingPos_Index; 12
-		dc.w RingPos_EHZ2-RingPos_Index; 13
-		dc.w RingPos_HTZ1-RingPos_Index; 14
-		dc.w RingPos_HTZ2-RingPos_Index; 15
-		dc.w RingPos_HPZ1-RingPos_Index; 16
-		dc.w RingPos_GHZ2-RingPos_Index; 17
-		dc.w RingPos_GHZ3-RingPos_Index; 18
-		dc.w RingPos_GHZ1-RingPos_Index; 19
-		dc.w RingPos_HTZ1-RingPos_Index; 20
-		dc.w RingPos_HTZ2-RingPos_Index; 21
-		dc.w RingPos_LZ3-RingPos_Index;	22
-		dc.w RingPos_LZ1-RingPos_Index;	23
-RingPos_GHZ1:	dc.w  $144,$2360	; 0 ; DATA XREF: ROM:RingPos_Indexo
-		dc.w  $334,$D22C	; 2
-		dc.w  $46C,$4320	; 4
-		dc.w  $680, $387	; 6
-		dc.w  $6A0, $397	; 8
-		dc.w  $6C0, $3A5	; 10
-		dc.w  $6E3, $3B0	; 12
-		dc.w  $70B, $3B3	; 14
-		dc.w  $737, $3AF	; 16
-		dc.w  $75B, $392	; 18
-		dc.w  $9C4,$12C0	; 20
-		dc.w  $B94,$12D0	; 22
-		dc.w  $D50, $2B6	; 24
-		dc.w  $D70, $2A9	; 26
-		dc.w  $D92, $297	; 28
-		dc.w  $DB4, $287	; 30
-		dc.w  $DDA, $277	; 32
-		dc.w  $EB1, $211	; 34
-		dc.w  $ED2, $20A	; 36
-		dc.w  $EF5, $203	; 38
-		dc.w  $F1A, $205	; 40
-		dc.w  $F3F, $209	; 42
-		dc.w  $F66, $208	; 44
-		dc.w  $F88,$22D8	; 46
-		dc.w $1158,$232C	; 48
-		dc.w $1220,$232C	; 50
-		dc.w $125C, $23E	; 52
-		dc.w $1280, $249	; 54
-		dc.w $12A2, $259	; 56
-		dc.w $12C3, $269	; 58
-		dc.w $12EA, $271	; 60
-		dc.w $153C, $260	; 62
-		dc.w $154E, $230	; 64
-		dc.w $1580, $21D	; 66
-		dc.w $15AF, $230	; 68
-		dc.w $15C3, $260	; 70
-		dc.w $16E4, $1B5	; 72
-		dc.w $170C, $1B5	; 74
-		dc.w $1734, $1AB	; 76
-		dc.w $175B, $19C	; 78
-		dc.w $1784, $189	; 80
-		dc.w $17A6, $179	; 82
-		dc.w $17E0, $174	; 84
-		dc.w $180C, $174	; 86
-		dc.w $1820,$6074	; 88
-		dc.w $183C, $176	; 90
-		dc.w $186C, $178	; 92
-		dc.w $189C, $17A	; 94
-		dc.w $18C8,$6074	; 96
-		dc.w $18CC, $174	; 98
-		dc.w $18FC, $174	; 100
-		dc.w $192C, $175	; 102
-		dc.w $1950,$4370	; 104
-		dc.w $195C, $17A	; 106
-		dc.w $1970,$5074	; 108
-		dc.w $198C, $17B	; 110
-		dc.w $19BC, $176	; 112
-		dc.w $19EC, $174	; 114
-		dc.w $1D58,$6268	; 116
-		dc.w $1D64,$6258	; 118
-		dc.w $1D70,$5248	; 120
-		dc.w $1D7C,$4238	; 122
-		dc.w $1D88,$3228	; 124
-		dc.w $1E00, $268	; 126
-		dc.w $1F64,$5480	; 128
-		dc.w $1F70,$42B4	; 130
-		dc.w $2135, $374	; 132
-		dc.w $2158, $37D	; 134
-		dc.w $217A, $388	; 136
-		dc.w $219C, $397	; 138
-		dc.w $21BE, $3A8	; 140
-		dc.w $21E2, $3B1	; 142
-		dc.w $2342, $475	; 144
-		dc.w $2367, $47E	; 146
-		dc.w $2386, $48D	; 148
-		dc.w $23A5, $49D	; 150
-		dc.w $23C6, $4AE	; 152
-		dc.w $23EC, $4B6	; 154
-		dc.w $2414, $4B6	; 156
-		dc.w $243A, $4B6	; 158
-		dc.w $2461, $4B6	; 160
-		dc.w $2486, $4B5	; 162
-		dc.w $FFFF		; 164
-RingPos_GHZ2:	dc.w  $180,$30BF	; 0 ; DATA XREF: ROM:RingPos_Indexo
-		dc.w  $2F0,$C058	; 2
-		dc.w  $564,$5268	; 4
-		dc.w  $570,$4100	; 6
-		dc.w  $860, $1A1	; 8
-		dc.w  $86A, $1DD	; 10
-		dc.w  $874,$A334	; 12
-		dc.w  $886, $20D	; 14
-		dc.w  $8B4, $229	; 16
-		dc.w  $8C7, $2AD	; 18
-		dc.w  $8E8, $230	; 20
-		dc.w  $8EA, $2B7	; 22
-		dc.w  $912, $2B5	; 24
-		dc.w  $91C, $229	; 26
-		dc.w  $93D, $2AE	; 28
-		dc.w  $948, $20D	; 30
-		dc.w  $95B, $293	; 32
-		dc.w  $960,$8240	; 34
-		dc.w  $960,$826B	; 36
-		dc.w  $966, $1DD	; 38
-		dc.w  $977, $1A1	; 40
-		dc.w  $B90, $218	; 42
-		dc.w  $B90, $240	; 44
-		dc.w  $B91, $268	; 46
-		dc.w  $B98, $290	; 48
-		dc.w  $BB8, $2AE	; 50
-		dc.w  $BE8, $2B5	; 52
-		dc.w  $C19, $2B5	; 54
-		dc.w  $D18,$31F0	; 56
-		dc.w  $D24,$21E0	; 58
-		dc.w  $D30,$11D0	; 60
-		dc.w  $D3C, $1C0	; 62
-		dc.w  $D3D, $260	; 64
-		dc.w  $D44, $23E	; 66
-		dc.w  $D44, $282	; 68
-		dc.w  $D5C, $223	; 70
-		dc.w  $D80, $21C	; 72
-		dc.w  $DA0,$31F0	; 74
-		dc.w  $DA0, $223	; 76
-		dc.w  $DAC,$21E0	; 78
-		dc.w  $DB8,$11D0	; 80
-		dc.w  $DBC, $23E	; 82
-		dc.w  $DBC, $282	; 84
-		dc.w  $DC4, $1C0	; 86
-		dc.w  $DC4, $260	; 88
-		dc.w  $F00, $2B4	; 90
-		dc.w  $F28, $2B4	; 92
-		dc.w  $F4D, $2A6	; 94
-		dc.w  $F62, $286	; 96
-		dc.w  $F67, $261	; 98
-		dc.w $1054,$1230	; 100
-		dc.w $10D4,$1210	; 102
-		dc.w $1194,$1230	; 104
-		dc.w $1214,$1218	; 106
-		dc.w $1294,$1218	; 108
-		dc.w $1354,$1218	; 110
-		dc.w $13D4,$1230	; 112
-		dc.w $1518, $2B4	; 114
-		dc.w $1542, $2AA	; 116
-		dc.w $1568, $298	; 118
-		dc.w $158E, $286	; 120
-		dc.w $15BB, $277	; 122
-		dc.w $15C4,$904C	; 124
-		dc.w $15D4,$D040	; 126
-		dc.w $15E4,$904C	; 128
-		dc.w $1864,$51C0	; 130
-		dc.w $198F, $218	; 132
-		dc.w $198F, $23D	; 134
-		dc.w $198F, $260	; 136
-		dc.w $1994, $285	; 138
-		dc.w $19A7, $2A3	; 140
-		dc.w $19C8, $2B4	; 142
-		dc.w $19F4, $2B5	; 144
-		dc.w $1A1D, $2B6	; 146
-		dc.w $FFFF		; 148
-RingPos_GHZ3:	dc.w  $350, $372	; 0 ; DATA XREF: ROM:RingPos_Indexo
-		dc.w  $374, $36A	; 2
-		dc.w  $398, $35E	; 4
-		dc.w  $3BC, $34D	; 6
-		dc.w  $3E0, $33A	; 8
-		dc.w  $408, $334	; 10
-		dc.w  $420,$5258	; 12
-		dc.w  $566, $37D	; 14
-		dc.w  $584, $38C	; 16
-		dc.w  $5A2, $39C	; 18
-		dc.w  $5C4, $3AC	; 20
-		dc.w  $5E8, $3B6	; 22
-		dc.w  $648, $294	; 24
-		dc.w  $66C, $28C	; 26
-		dc.w  $690, $282	; 28
-		dc.w  $6B8, $274	; 30
-		dc.w  $6E8, $272	; 32
-		dc.w  $716, $274	; 34
-		dc.w  $745, $27E	; 36
-		dc.w  $828,$5201	; 38
-		dc.w  $920,$5250	; 40
-		dc.w  $B38, $272	; 42
-		dc.w  $B60, $27E	; 44
-		dc.w  $B8A, $28E	; 46
-		dc.w  $BB0, $2A0	; 48
-		dc.w  $BDA, $2AD	; 50
-		dc.w  $C09, $2B3	; 52
-		dc.w  $C38,$6570	; 54
-		dc.w  $CE0,$2570	; 56
-		dc.w  $D20,$5140	; 58
-		dc.w  $D20, $2B0	; 60
-		dc.w  $D47, $2A7	; 62
-		dc.w  $D68, $297	; 64
-		dc.w  $D8D, $284	; 66
-		dc.w  $DBC, $275	; 68
-		dc.w  $DE8, $274	; 70
-		dc.w  $F48,$A490	; 72
-		dc.w $103C, $360	; 74
-		dc.w $1040, $345	; 76
-		dc.w $1040, $37C	; 78
-		dc.w $104F, $32F	; 80
-		dc.w $1064, $320	; 82
-		dc.w $107E, $31C	; 84
-		dc.w $1098, $320	; 86
-		dc.w $10AF, $32F	; 88
-		dc.w $10C0, $345	; 90
-		dc.w $10C0, $37C	; 92
-		dc.w $10C4, $360	; 94
-		dc.w $1250, $372	; 96
-		dc.w $1274, $36A	; 98
-		dc.w $1298, $35E	; 100
-		dc.w $12B8, $34E	; 102
-		dc.w $12D8, $33E	; 104
-		dc.w $175C, $37F	; 106
-		dc.w $177E, $38A	; 108
-		dc.w $179F, $39B	; 110
-		dc.w $17C0, $3A9	; 112
-		dc.w $17E6, $3B3	; 114
-		dc.w $194C,$5398	; 116
-		dc.w $19C4,$5384	; 118
-		dc.w $1A3C,$5398	; 120
-		dc.w $1E20, $3B8	; 122
-		dc.w $1E48, $3B9	; 124
-		dc.w $1E70, $3AA	; 126
-		dc.w $1E98, $397	; 128
-		dc.w $1EC0, $384	; 130
-		dc.w $1EE6, $378	; 132
-		dc.w $1F11, $375	; 134
-		dc.w $2224,$C250	; 136
-		dc.w $22DB, $3AF	; 138
-		dc.w $2300, $3B5	; 140
-		dc.w $2328, $3B4	; 142
-		dc.w $234C, $3A6	; 144
-		dc.w $2363, $385	; 146
-		dc.w $FFFF		; 148
-RingPos_LZ1:	dc.w   $98,$2248	; 0 ; DATA XREF: ROM:RingPos_Indexo
-		dc.w  $250, $238	; 2
-		dc.w  $268,$2228	; 4
-		dc.w  $2B0, $238	; 6
-		dc.w  $350, $238	; 8
-		dc.w  $368,$2228	; 10
-		dc.w  $3B0, $238	; 12
-		dc.w  $450, $238	; 14
-		dc.w  $468,$2228	; 16
-		dc.w  $4B0, $238	; 18
-		dc.w  $798,$1150	; 20
-		dc.w  $870,$81E8	; 22
-		dc.w  $888,$8200	; 24
-		dc.w  $8A0,$8218	; 26
-		dc.w  $8B8,$8230	; 28
-		dc.w  $8D7,$8248	; 30
-		dc.w  $958,$1240	; 32
-		dc.w  $998,$1258	; 34
-		dc.w  $C14,$13F0	; 36
-		dc.w  $C94,$13F0	; 38
-		dc.w  $D14,$13F0	; 40
-		dc.w  $D94,$13F0	; 42
-		dc.w  $E70,$82E8	; 44
-		dc.w  $E88,$8300	; 46
-		dc.w  $EA0,$8318	; 48
-		dc.w  $EB8,$8330	; 50
-		dc.w  $ED8,$8348	; 52
-		dc.w $1008,$3550	; 54
-		dc.w $1294,$1268	; 56
-		dc.w $12D4,$125C	; 58
-		dc.w $1310,$1250	; 60
-		dc.w $1468,$2258	; 62
-		dc.w $14D4,$1220	; 64
-		dc.w $1554,$1260	; 66
-		dc.w $16A8,$2298	; 68
-		dc.w $FFFF		; 70
-RingPos_LZ2:	dc.w  $154,$1258	; 0 ; DATA XREF: ROM:RingPos_Indexo
-		dc.w  $388,$25D4	; 2
-		dc.w  $488,$25D4	; 4
-		dc.w  $550,$430C	; 6
-		dc.w  $618,$2590	; 8
-		dc.w  $634,$1354	; 10
-		dc.w  $7C8,$24F4	; 12
-		dc.w  $A14,$126C	; 14
-		dc.w  $A68,$2358	; 16
-		dc.w  $AD4,$126C	; 18
-		dc.w  $B54,$11FC	; 20
-		dc.w  $BD4,$11AC	; 22
-		dc.w  $C08,$2414	; 24
-		dc.w  $C54,$116C	; 26
-		dc.w  $D08,$2414	; 28
-		dc.w $1108,$3490	; 30
-		dc.w $1110, $2B4	; 32
-		dc.w $1130, $2BB	; 34
-		dc.w $114D, $2C9	; 36
-		dc.w $1162, $2E0	; 38
-		dc.w $1178,$25A0	; 40
-		dc.w $1179, $2F8	; 42
-		dc.w $11F8,$25A0	; 44
-		dc.w $FFFF		; 46
-RingPos_LZ3:	dc.w  $154,$1130	; 0 ; DATA XREF: ROM:RingPos_Indexo
-		dc.w  $338,$36A8	; 2
-		dc.w  $3F0,$46A8	; 4
-		dc.w  $4C8,$46A8	; 6
-		dc.w  $530, $1B8	; 8
-		dc.w  $554, $1CE	; 10
-		dc.w  $570, $1EC	; 12
-		dc.w  $58C, $208	; 14
-		dc.w  $5AB, $225	; 16
-		dc.w  $5CA, $243	; 18
-		dc.w  $5F4, $253	; 20
-		dc.w  $618,$2454	; 22
-		dc.w  $670, $414	; 24
-		dc.w  $690, $3D4	; 26
-		dc.w  $6B0, $3B4	; 28
-		dc.w  $6D4,$1394	; 30
-		dc.w  $754,$15D4	; 32
-		dc.w  $7E8,$25D4	; 34
-		dc.w  $F94,$16F2	; 36
-		dc.w  $FD4,$16A0	; 38
-		dc.w $1008,$2514	; 40
-		dc.w $1014,$16F2	; 42
-		dc.w $1094,$16F2	; 44
-		dc.w $10D4,$16A0	; 46
-		dc.w $1108,$2514	; 48
-		dc.w $1208,$2514	; 50
-		dc.w $13E8,$22A8	; 52
-		dc.w $1450,$4710	; 54
-		dc.w $1468,$2670	; 56
-		dc.w $14B8,$24F4	; 58
-		dc.w $1518,$2752	; 60
-		dc.w $FFFF		; 62
+		dc.w $FFFF,    0,    0
+ObjPos_Null:	dc.w $FFFF,    0,    0
+; ---------------------------------------------------------------------------
+; Leftover symbol tables due to compiler weirdness
+; ---------------------------------------------------------------------------
+Leftover_418A8:	incbin	"misc/leftovers/418A8.bin"
+		even
+; ---------------------------------------------------------------------------
+; Ring layouts; one entry per act, four entries per zone
+; ---------------------------------------------------------------------------
+RingPos_Index:	dc.w RingPos_GHZ1-RingPos_Index
+		dc.w RingPos_GHZ2-RingPos_Index
+		dc.w RingPos_GHZ3-RingPos_Index
+		dc.w RingPos_GHZ1-RingPos_Index
+
+		dc.w RingPos_LZ1-RingPos_Index
+		dc.w RingPos_LZ2-RingPos_Index
+		dc.w RingPos_LZ3-RingPos_Index
+		dc.w RingPos_LZ1-RingPos_Index
+
+		dc.w RingPos_CPZ1-RingPos_Index
+		dc.w RingPos_GHZ2-RingPos_Index
+		dc.w RingPos_GHZ3-RingPos_Index
+		dc.w RingPos_GHZ1-RingPos_Index
+
+		dc.w RingPos_EHZ1-RingPos_Index
+		dc.w RingPos_EHZ2-RingPos_Index
+		dc.w RingPos_HTZ1-RingPos_Index
+		dc.w RingPos_HTZ2-RingPos_Index
+
+		dc.w RingPos_HPZ1-RingPos_Index
+		dc.w RingPos_GHZ2-RingPos_Index
+		dc.w RingPos_GHZ3-RingPos_Index
+		dc.w RingPos_GHZ1-RingPos_Index
+
+		dc.w RingPos_HTZ1-RingPos_Index
+		dc.w RingPos_HTZ2-RingPos_Index
+		dc.w RingPos_LZ3-RingPos_Index
+		dc.w RingPos_LZ1-RingPos_Index
+
+RingPos_GHZ1:	incbin	"level/rings/GHZ_1.bin"
+		even
+RingPos_GHZ2:	incbin	"level/rings/GHZ_2.bin"
+		even
+RingPos_GHZ3:	incbin	"level/rings/GHZ_3.bin"
+		even
+RingPos_LZ1:	incbin	"level/rings/LZ_1.bin"
+		even
+RingPos_LZ2:	incbin	"level/rings/LZ_2.bin"
+		even
+RingPos_LZ3:	incbin	"level/rings/LZ_3.bin"
+		even
 RingPos_HPZ1:	incbin	"level/rings/HPZ_1.bin"
 		even
 RingPos_EHZ1:	incbin	"level/rings/EHZ_1.bin"
@@ -42887,11 +41184,11 @@ RingPos_HTZ2:	incbin	"level/rings/HTZ_2.bin"
 RingPos_CPZ1:	incbin	"level/rings/CPZ_1.bin"
 		even
 
-; ======================================================================================
-; --------------------------------------------------------------------------------------
-; Now THIS is the biggest chunk of leftovers, you can find practically anything here,
-; but most notably, some of the Debug Mode source code
-; --------------------------------------------------------------------------------------
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Now THIS is the biggest chunk of leftovers, you can find practically
+; anything here, but most notably, some of the Debug Mode source code
+; ---------------------------------------------------------------------------
 
 Leftover_50A9C:
 		incbin	"misc/leftovers/50A9C.bin"
@@ -42903,736 +41200,14 @@ Leftover_50A9C:
 ; ---------------------------------------------------------------------------
 		include	"s2.sounddriver.asm"
 
-
+; ---------------------------------------------------------------------------
+; Primary object assets (players and common objects)
+; ---------------------------------------------------------------------------
 Art_Sonic:	incbin	"art/uncompressed/Sonic's art.bin"
 		even
 Map_Sonic:	incbin	"mappings/sprite/Sonic.bin"
+Art_Tails:	incbin	"art/uncompressed/Tails' art.bin"
 		even
-Art_Tails:	dc.l	     0,	  $DDB00,   $DFEBB,   $DF9EE,	$DF789,	  $DFF67,   $DDF66,    $DDF6,	 $DDDF,	   $DBFF,    $DBFF,    $DBFF,	  $DBF,	    $DBB,      $D8,	 $DB; 0
-					; DATA XREF: LoadTailsDynPLC+3Co
-		dc.l	     0,	       0,$B0000000,$FBDDBBBB,$EEDFFFEF,$7BFFEEEE,$BFFEEEEE,$FFEEEEEE,$FEEEF666,$FEEF6671,$FEEF6689,$FFEF6681,$F878F681,$B8666666,$87666666,$D8766666; 16
-		dc.l	     0,	 $D00000,$DDD00000,$DDDBFEEE,$FFBF0000,$EFFEE000,$EEDF0EE0,$EEEDF00F,$FE7D0F00,$7F1D0000,$7F9D0000,$7F100000,$67100000,$66661100,$66668000,$66880000; 32
-		dc.l	  $BDD,	   $BD00,	 0,	  $D,	   $DB,	     $99,     $988,    $9887,	 $9877,	   $9878,     $999,	   0,	     1,	     $1D,      $1D,	 $11; 48
-		dc.l $88887777,	$DBB9999,$DBFB8777,$BFE87666,$BED76666,$9DF76666,$79D86666,$66987777,$969FFFF9,$97DFE199, $1DFE11D,$187661DD,$98876111,$DDCCCCC6,$CCCCCC66,$11111111; 64
-		dc.l $88000000,	       0,$90000000,$79000000,$69000000,$79000000,$78900000,$87890000,$96890000,$98900000,	 0,$99000000,$DDDD0000,$77998900,$66779899,$11111111; 80
-		dc.l	     0,	  $DDB00,   $DFEBB,   $DF9EE,	$DF789,	  $DFF67,   $DDF66,    $DDF6,	 $DDDF,	   $DBFF,    $DBFF,    $DBFF,	  $DBF,	    $DBB,      $D8,	 $DB; 96
-		dc.l	     0,	       0,$B0000000,$FBDDBBBB,$EEDFFFEF,$7BFFEEEE,$BFFEEEEE,$FFEEEEEE,$FEEEFEFF,$FEEFEEFF,$FEEFFFFF,$FFEF6681,$F878F681,$B8666666,$87666666,$D8766666; 112
-		dc.l	     0,	 $D00000,$DDD00000,$DDDBFEEE,$FFBF0000,$EFFEE000,$EEDF0EE0,$EEEDF00F,$FEFD0F00,$FFFD0000,$FFFD0000,$7F100000,$67100000,$66661100,$66668000,$66880000; 128
-		dc.l	     0,	  $DDB00,   $DFEBB,   $DF9EE,	$DF789,	  $DFF67,   $DDF66,    $DDF6,	 $DDDF,	   $DBFF,    $DBFF,    $DBFF,	  $DBF,	    $DBB,      $D8,	 $DB; 144
-		dc.l	     0,	       0,$B0000000,$FBDDBBBB,$EEDFFFEF,$7BFFEEEE,$BFFEEEEE,$FFEEEEEE,$FEEEFEEF,$FEEFEEEF,$FEEFEEEF,$FFEF9EEF,$F878F999,$B8666666,$87666666,$D8766666; 160
-		dc.l	     0,	 $D00000,$DDD00000,$DDDBFEEE,$FFBF0000,$EFFEE000,$EEDF0EE0,$EEEDF00F,$FEFD0F00,$FFFD0000,$FFFD0000,$FFF00000,$97900000,$66661100,$66668000,$66880000; 176
-		dc.l	     0,	 $BBBB00, $DBFFEBB, $DDF99EE,  $DF7889,	 $DFF667,   $DF666,    $DFF6,	 $DDFF,	   $DBFF,    $DBFF,    $DBFF,	  $DBF,	    $DBB,      $D8,	 $DB; 192
-		dc.l	     0,	       0,	$D,$BBDDBBBB,$EEDFFFEF,$7BFFEEEE,$BFFEEEEE,$FFEEE671,$FEEE6679,$FEEF6671,$FEEF6681,$FEEF6666,$FF766666,$B8666666,$87666666,$D8766666; 208
-		dc.l	     0,$D0000000,$D00BFEEE,$DDBF0000,$FFBFE000,$EFFE0EE0,$EEEBF00F,$EE1D0F00,$FE7D0000,$7F1D0000,$7F9D1100,$66667800,$66668000,$66670000,$66780000,$77800000; 224
-		dc.l	     0,	 $DBD000,  $DFFDD0,  $DF88FD,  $DF7788,	  $DF767,   $DF66F,    $DFFF,	 $DBFF,	   $DBFF,     $BFF,	$BFF,	  $DBF,	     $B7,     $666,	$866; 240
-		dc.l	  $608,	       0,	 0,	  $D,	   $DB,	    $999,     $988,    $9886,	 $9879,	   $9879,     $999,	   0,	     1,	       1,      $1D,	 $11; 256
-		dc.l	     0,	       0,	 0,$DDBBBBBB,$DBFFFFFF,$BFEEEEEE,$FEEEEEEE,$EEEEEEEE,$E666EE66,$6671EE17,$6677FF77,$6671FF17,$6671FF17,$76666116,$66666666,$66666866; 272
-		dc.l $86666666,	$8887778,$DD7B9997,$BF887667,$BE776667,$9D766666,$9D766666,$69D87777,$69DFFFF9,$69DFE199,$91DFE11D,$187661DD,$98876111,$DDCCC667,$CCCC6677,$11111111; 288
-		dc.l	     0,	   $BD00,  $DB7D00,$DB87D000,$FBFEEE00,$EFB990E0,$EEFDB000,$EEFD0B00,$EEFD0B00,$6FBD0000,$6FBD0000,$6FD00000,$67D00000,$67700000,$66667000,$66880000; 304
-		dc.l $88000000,	       0,$D0000000,$BD000000,$7B000000,$79D00000,$78900000,$97890000,$96890000,$98900000,	 0,$99000000,$DD990000,$99198900,$76919899,$11111111; 320
-		dc.l	     0,	 $DBD000,  $DFFDD0,  $DF88FD,  $DF7788,	  $DF767,   $DF66F,    $DFFF,	 $DBFF,	   $DBFF,     $BFF,	$BFF,	  $DBF,	     $B7,     $666,	$866; 336
-		dc.l	  $608,	       0,	 0,	  $D,	   $DB,	    $999,     $988,    $9886,	 $9879,	   $9879,     $999,	   0,	     1,	       1,      $1D,	 $11; 352
-		dc.l	     0,	       0,	 0,$DDBBBBBB,$DBFFFFFF,$BFEEEEEE,$FEBBEEEE,$EBEEBEEB,$BEEEBEEB,$BEE17EE1,$BE787FE9,$E76976F1,$76666619,$66666666,$66666DD6,$6666CCD6; 368
-		dc.l $86666666,	$8888778,$DD7B9997,$BF887667,$BE776667,$9D766666,$9D766666,$69D87777,$69DFFFF9,$69DFE199,$91DFE11D,$187661DD,$98876111,$DDCCC667,$CCCC6677,$11111111; 384
-		dc.l	     0,	   $BD00,  $DB7D00,$DB87D000,$FBFEEE00,$EFB990E0,$BEFDB000,$EEFD0B00,$EBFD0B00,$EBFD0000,$EBFD0000,$9FD00000,$67D00000,$66700000,$66667000,$66880000; 400
-		dc.l $88000000,	       0,$D9999000,$B9666900,$79867900,$79668900,$7D889000,$9D990000, $DD00000,	       0,	 0,$99000000,$DD990000,$99198900,$76919899,$11111111; 416
-		dc.l	     0,	 $DDBD00,  $DFFFDD,  $DBF8FF,  $DBF788,	  $DB766,   $DBFF6,    $DFFF,	 $DBFF,	   $DBFF,    $DBFF,    $DBFF,	  $DBF,	    $D77,     $666,	$866; 432
-		dc.l	     0,	       0,	 0,$DDBBBBBB,$8BFFFFFF,$7FEEEEEE,$FEBBEEEE,$EBEEBEEB,$BEEEBEEB,$BEEEEEEE,$BEEE9FE9,$E9996611,$76666666,$6666DDD6,$666CCCD6,$666CCCC6; 448
-		dc.l	     0,	  $BD000, $DB7D000,$DB8B0000,$FBFEEE00,$EFB990E0,$BEFDB000,$EEFD0B00,$EBFD0B00,$EBFD0000,$EBFD0000,$9FD00000,$67D00000,$66700000,$66760000,$67800000; 464
-		dc.l	  $688,	       0,	 0,	  $D,	   $DB,	    $999,     $988,    $9886,	 $9879,	   $9879,     $999,	   0,	     1,	       1,      $1D,	 $11; 480
-		dc.l $7666BB66,	$8876678,$DD7B9997,$BF887667,$BE776667,$9D766666,$9D766666,$69D87777,$69DFFFF9,$69DFE199,$91DFE11D,$187661DD,$98876111,$DDCCC667,$CCCC6677,$11111111; 496
-		dc.l $88966000,	$9696900,$97966900,$97766900,$79766900,$7D999000,$7DDD0000,$90000000,	     0,	       0,	 0,$99000000,$DD990000,$99198900,$76919899,$11111111; 512
-		dc.l	  $688,	       0,	 0,	  $D,	   $DB,	    $999,     $988,    $9886,	 $9879,	   $9879,     $999,	   0,	     1,	       1,      $1D,	 $11; 528
-		dc.l $7666BB66,	$8876678,$DD7B9997,$BF887667,$BE776667,$9D766666,$9D766666,$69D87777,$69DFFFF9,$69DFE199,$91DFE11D,$187661DD,$98876111,$DDCCC667,$CCCC6677,$11111111; 544
-		dc.l $88679600,	$7969690,$D9796690,$D9766790,$7D967900,$7DD99000,$7DDD0000,$90000000,	     0,	       0,	 0,$99000000,$DD990000,$99198900,$76919899,$11111111; 560
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       8,	 0,  $999000,	 $9990,	     $99,      $19,	$199; 576
-		dc.l	 $1999,	   $1999,   $19999,  $199998, $1B999BB,	$DDBD9BF,$DDBDDBFF,$DBDBDBFF,$DDBDDBFF,	$DDBDBFF, $DBDDBFF,  $DBDDBF,	$DDBDB,	    $DDD,	 0,	   0; 592
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,$67000000, $8667000,  $876700,	$87670,	  $87670,$90087670,$90876667; 608
-		dc.l $90876667,$98776667,$87766667,$77666667,$FFE6E660,$FEEEEEF0,$FEEEEEF0,$EEEEEEF0,$FEEEEEEF,$FEEEEEEE,$FFFEEEFF,$FFFFFFFB,$FFFFFBBD,$BBBBBD00, $DDDD000,	   0; 624
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 640
-		dc.l	     0,	       0,	 0,	   0,	     0,	      $D,      $DB,	$DDD,	  $DDB,	    $DBD,     $DDB,	 $DD,	    $D,	       0,	 0,	   0; 656
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 672
-		dc.l	     0,	     $88,    $8877,  $987776,$D9877666,$99876666,$99876F6E,$9DBFFFEE,$DDBFFFEE,$BDBFFFFE,$DBDBFFFF,$BDDBFFFF,$DBDDBBFF,$DDBDDDBB,  $DDDDDD,	   0; 688
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 8,	   8,  $880007,	   $8986,     $878,   $88768; 704
-		dc.l $88876689,$77666899,$66668990,$66689900,$66899000,$66890000,$EEFB0000,$EEFF0000,$EEFFEEEE,$EEEEEEFF,$EEEEFFFB,$FFFFFFBD,$FFFFBBD0,$BBBBD000,$DDD00000,	   0; 720
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 736
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 8,	   8,	   $D8,	    $DB8,    $DBD8,    $DDB8,	 $DBD8,	    $DBD,      $DB,	   0; 752
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,      $80,    $8800; 768
-		dc.l	$87000,	 $870000, $8770000, $8700000,$87701111,$867D9999,$7667BB99,$76667BB9,$6666677F,$76666EEE,$7667EEEE,$766FEEEE,$776FFFFE,$87FFFFFF,$DBBBFFFF,$DDBBBBBB; 784
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   9; 800
-		dc.l	     9,	     $99,     $999,$19999990,$99999900,$99999000,$99990000,$9990FFF0,$FFFFEEFE,$EEEEEEFF,$EEEEFFFB,$EEEFFFBD,$FFFFFBD0,$FFFFBD00,$FBBDD000,$DD000000; 816
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 1,	 $19,	  $719,	    $799,    $1799,    $1689,	 $1966,	   $1986,     $1D8,	 $DD; 832
-		dc.l	    $B,	    $BBF,     $BFF,    $BFFE, $117FFEE,$1997FEEE,$9987EEEE,$9977EEEE,$997666EE,$98766667,$97666677,$76666778,$66667789,$6667778D,$777789DB,$88899DBD; 848
-		dc.l $BBBB0000,$FFFFB000,$EEEFFB00,$EEEEEFB0,$EEEEEFB0,$EEEEEEB0,$EEFFFEFB,$EFFFFFFF,$FFFFFFFF,$FBBBFFEB,$BBBBFBBD,$BDDBBD00,$DBDD0000,$BD000000,$D0000000,	   0; 864
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 880
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   7,	     8,	       0,	 0,	   9,	     9,	       9,      $91,	$900; 896
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     8,	    $877,    $7666,   $76666; 912
-		dc.l   $766666,	 $766666, $7677776, $6788877,$77811187,$681DDD18,$71DDDDD8,$81DDBDDB, $9DDBDDB,$99BBDBDB,$999DDDDD,$991000DD,$91000000,$10000000,	 0,	   0; 928
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,$78888000,$77778800,$66677800,$66666780; 944
-		dc.l $66666680,$666666F0,$666EEEEF,$76EEEEEF,$77EEEEEF,$FFEEEEEF,$FFEEEEEF,$FFFEEEEF,$FFFEEEEF,$FFFFEEEE,$BFFFEEFB,$BFFFFFBD,$DBBBBBD0,	$DDDDD00,	 0,	   0; 960
-		dc.l	     0,	       0,	 0,	   0,	$DBBBD,	 $DFEEEF,  $DF8181,   $DFF67,	 $DF66,	   $9BF6,     $9DF,	$DBF,	  $BFF,	    $BBF,     $BBD,    $B00D; 976
-		dc.l	   $D0,	     $D0,    $DDDB,   $BBBFF,$DDBFFEEE,$DFFFEEEE,$EFFFEEEE,$8FEEEEEE,$7EEEEEF6,$FFFEEEF6,$FFFEFEE6,$FF8877EE,$87666666,$FF786666,$FBB66666,$BB677777; 992
-		dc.l	$FB000,	$FB00000,$BB000000,$BFFFFF00,$FF000000,$EFBFFF00,$EFB000F0,$66B00000,$69B00000,$68B00089,$69888791,$69666610,$66666780,$66667800,$66788000,$78800000; 1008
-		dc.l	     0,	       0,	 0,	   1,	     1,	       1,	 0,	   0,	     0,	       0,      $11,    $1111,  $1111DD,	$11189DD,$9198889D,$99899000; 1024
-		dc.l $DB8B9988,	$1DDD999,$1DDBF776,$DB987E86,$B9666787,$D96667E7,$D97668ED,  $988FEE,  $DDDDFE,$11111DDF,$1111100D,$DD110000,$DDD00000,$DD000000,	 0,	   0; 1040
-		dc.l $80000000,	       0,$90099000,$69198900,$66918900,$66919900,$87919000,$98900000,$E99600D7,$FE66DDCC,$666DCCCC, $6DCCCCC, $DDDCCCD,	$DDDDCD9,  $9DDD90,   $99900; 1056
-		dc.l	     0,	       0,	 0,	   0,	     0,	    $889,  $887790,$77767900,$76679000,$76790000,$C7900000,$D9000000,$90000000,	       0,	 0,	   0; 1072
-		dc.l	     0,	       0,	 0,   $DDBBD,	$DFE1E,	  $DF878,   $DBF67,    $DF66,	 $9BF6,	   $9DFF,    $9BBF,    $DBFF,	 $DBFF,	   $DBFF,     $DBF,	$DDD; 1088
-		dc.l	     0,	      $D,     $DDD,    $BBBB,$FDDBFFEF,$1EFFEEEE,$88FFEEEE,$7FEEEEEE,$FEEEEEF7,$FFFEEEF6,$FFFEFEF6,$FFFFFFF6,$FFFFF7F6,$F7677666,$FF766666,$B8766666; 1104
-		dc.l	  $F00,	  $FF000, $FF00000,$DBB000FF,$FBFFFF00,$EFF0000F,$EFBFFFF0,$EFB00000,$6EB00000,$69B00000,$68B00000,$69880000,$69666711,$66666880,$66677800,$67788000; 1120
-		dc.l	    $D,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   1,	  $111,	   $1199,   $11998,	   0; 1136
-		dc.l  $DDDBD86,	  $DDBBB,   $1FFF7,  $1BFFDF,  $1DB977,	 $1D9666,   $19666,    $9666,	 $1988,	  $11111, $1111111,$11111111,$9DDDCCC0,$88DCC000,$88000000,	   0; 1152
-		dc.l $77888000,$DD000000,$66900000,$76691900,$D667D110,$8D67D990,$8DB7D990,$8BB99900,$ED990000,$FE900000,$87680000,$8876DCC7,$99DDCCC6,$9DDCCCC6,$9DDDC999, $9999000; 1168
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,$78888000,$87668890,$66699900,$99900000,	 0,	   0; 1184
-		dc.l	     0,	 $DDDB00,  $DFEEBD,  $DF81EF,  $DBF781,	  $DF678,   $9B667,   $9DF6F,  $9BBFFF,	 $DBFFFF,  $DBFFFF,  $DBFFFF,	$BBFF7,	  $DBFFF,  $DDDB87,    $DBBB; 1200
-		dc.l	     0,	      $D,     $DDD,$DDBBBBBD,$EFFFFEFF,$8FFEEEEE,$FEEEEEEE,$EEEEEEEE,$FEEEEF66,$FEEEFE69,$FFFEF668,$FFFFF669,$6777F669,$76666666,$66666666,$86666666; 1216
-		dc.l	   $F0,	    $F00,   $FF000,$BFF000F0,$BB000F00,$FFFFF000,$FF000000,$FBFFF000,$EB000000,$EB000000,$B0000000,$B0000000,$88000000,$66611000,$66780000,$78800000; 1232
-		dc.l	     0,	      $D,	$D,	   0,	     0,	       0,	 0,	  $D,	   $DB,	    $8BB,    $9877,   $9DD87,	$9DDDD,	 $9DDDDC,  $9DDDDD,  $999999; 1248
-		dc.l $DDDBBB87,$BEBBBFE7,$BFED9776,$1BF96668, $DB96668,	$1196668,$DDBF9779,$DFFDDDDD,$EED0011D,$ED01111D,$66611110,$76611110,$DDCC7810,$CCC76678,$CC766666,$99999999; 1264
-		dc.l $78888800,$80000000,$89000000,$68000000,$99000000,$99100000,$91110000,$DD110000,$DD100000,$D0000000,	 0,	   0,	     0,$70000000,$68700000,$99900000; 1280
-		dc.l	     0,	       0,	 0,	   0,  $DDFEEE,	 $DFE8DD,   $DF678,   $DBF67,	  $DB6,	    $9DF,     $9BB,	$DBF,	   $DF,	     $DB,      $DB,	  $D; 1296
-		dc.l	   $D0,	    $DDD,     $BBF,  $BBBEFE,$FBFFFEEE,$DDFFEEEE,$88FEEEEE,$67FEEEEF,$6FEEEEFE,$6FFEEEEF,$FFFFFFFF,$FFFFFF77,$FFFF6776,$FFF77666,$BFFF6666,$DBB8B867; 1312
-		dc.l   $FFFFF0,$BF00000F,$BBBBBF00,$EFF000F0,$EFBFF00F,$EFFB0F00,$66EB0000,$69E00000,$668B0000,$66988011,$66966678,$F6666680,$66667880,$66668800,$66880000,$78000000; 1328
-		dc.l	     0,	      $D,      $DF,	 $1B,	     1,	     $DD,     $DBB,  $DD88EE, $DDD8666,$DDDDD888,$DDCCCCC0,$9DCCCCCC, $9CC8777,	 $987666,   $97766,    $9999; 1344
-		dc.l $DDBBBB80,$FEBF9789,$ED996667,$FF996666,$1B997667,$B1119779,$ED1DDDDD,$D1119D98,	$11998,	   $1911,      $11,	   0,$88000000,$77880000,$66778000,$99999000; 1360
-		dc.l	     0,	       0,$90000000,$91000000,$91000000,$11000000,	 0,$80000000,$DD100000,$DDD89000,$DD988800,$19988880,  $998888,	  $99988,     $998,	   0; 1376
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     1,	     $1C,    $11CC,   $1CCCC,  $17CCCD,	$1768CD0,$17668D00,$86880000; 1392
-		dc.l $DB8B9988,	$DDDD999, $DBBB976,$DBEB9766,$DBFE9666,$DBBF9776,  $111977, $DBFEEFB,$88DEEDDD,$866E0000,$C8600000,$D0000000,	     0,	       0,	 0,	   0; 1408
-		dc.l $80000000,	       0,$90000000,$68000000,$67900000,$77900000,$98900000,$81000000,$1DD0000D,$DDD980DD, $D998111,  $99111D,	 $1111,	   $1111,     $110,	   0; 1424
-		dc.l	     0,	       0,	 0,	   0,	  $999,	  $99991, $9998810,$DD888100,$DDD81000,$DDD10000,$DD100000,$D1000000,$10000000,	       0,	 0,	   0; 1440
-		dc.l	    $D,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     1,	     $17,     $166,    $1877; 1456
-		dc.l  $DDDBD86,	   $DBBB,   $DBFFE,  $DBF977,  $DF9666,	 $DB9666,  $1D9666,   $1D977,	$11DDD,	 $1DD86B, $1CCD66F,$1CCCC6D1,$76CCCD00,$666CD000,$678D0000,$70000000; 1472
-		dc.l $77888000,$D9000000,$66900000,$97680000,$69680000,$69888000,$7DD89000,$DED99000,$BFED0000,$FEED0000,$ED100000,$D1111999, $1111DD9,	$1111DDD, $111DD11, $1111100; 1488
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,$90000000,$99999900,$99111100,$11000000,	   0; 1504
-		dc.l	     0,	      $D,	$D,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   1,	     1,	     $1D,      $1D,	 $11; 1520
-		dc.l  $DDDDDDB,$DBB967BE,$DB96667E,$DD96666B,  $966676,	 $D977B6,  $1DBBFE,  $11DDDF,  $1111DD,	$111DDD8,$191DDCC7,$991DCCC9,$111DC771,$DD118876,$DDD1D876,$11111D87; 1536
-		dc.l $87788888,$E8890000,$66789000,$66781900,$77891900,$D8999900,$EDD09000,$FEFD0000,$BBED0000,$7FED0000,$6ED00000,$61000000,	     0,$90000000,$69800000,$76198000; 1552
-		dc.l	  $BDD,	    $DD9,     $D96,	 $96,	   $97,	     $19,     $11D,   $991DD, $1D988D0,$11DD8800,$11DDDD00, $1DDDD00, $11DDD90,	 $11D889,   $11888,    $1111; 1568
-		dc.l $DDEE7890,$67EE6691,$666EB679,$666EDD89,$667FEEDD,$77DDBFFE,$11DD87FF, $1118776,  $DDDD86,	$1DDCCCC,  $11DDCC,	$11D,	     1,$90000000,$99000000,$11100000; 1584
-		dc.l	     0,$18000000,$19000000,$19000000,$10000000,$D0000000,$D0000000,$60000000,$70000000,$CC700000,$C7760000,$87766000,$99766600,	 $998660,    $9988,	   0; 1600
-		dc.l	     0,	       0,   $88880,  $800988,	$88098,	 $808678,     $867,	$966,	  $976,	     $98,	 9,	   0,	     0,	       0,	 0,	   0; 1616
-		dc.l	     0,	       0,	 0,$80000000,$88800000,$88888000,$888888B0,$778888BB,$66777BBB,$66666FFF,$6666EEEE,$877EEEEE,$987FFEEE,	$98BFFFF,  $9DBBBB,    $DDDD; 1632
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,    $BBBF,$BBBBFFFE,$BFFEEEEB,$FEEEEFBD,$EEEEFBD0,$EEFFBD00,$EFFBD000,$FBBD0000,$BDD00000,$D0000000; 1648
-		dc.l	     0,	       0,	 0,	   0,	$88000,	 $808880,  $800887,  $900976,	$80766,	  $97767,    $9878,	$999,	     0,	       0,	 0,	   0; 1664
-		dc.l	     0,	       0,    $7FFF,  $776EEE, $766EEEE,$7666EEEE,$6667EFFF,$66667FFF,$677788BB,$78889DDD,$8999BBBB,$988BBBBB,$988BBBBB,	$98BBBBB,  $9DBBBB,    $DDDD; 1680
-		dc.l	     0,	       0,$FF000000,$EEFF0000,$EEEEF000,$EEEEEF00,$FFEEEEFB,$FFFFFEEF,$BBFFFFFB,$DBBBBBBD,$BDDDDDD0,$BBBBBD00,$BBBBD000,$BBBD0000,$BDD00000,$D0000000; 1696
-		dc.l	  $777,	   $7986,   $90099,	   0,	     0,	       0,  $800008,  $900088,	$80888,	  $98888,    $9888,	$999,	     0,	       0,	 0,	   0; 1712
-		dc.l $78000000,$66677000,$8666688B,$98666668, $986666E,$889766EE,$889876EE,$88898FFF,$88889BBF,$88889DDB,$8999000D,$90000000,	     0,	       0,	 0,	   0; 1728
-		dc.l	     0,	       0,$BB000000,$FBBB0000,$EFBBB000,$EEFFBB00,$EEEEFFB0,$FEEEEEFF,$FFFEEEFB,$BFFFFBBD,$DBBBBDD0, $DDDD000,	     0,	       0,	 0,	   0; 1744
-		dc.l	  $888,	   $8988,   $88779,  $800976,	   $97,	       8,	 9,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 1760
-		dc.l $88000000,$88888000,$88888880,$78888888,$6788888B,$666788BB,$766667FB,$976666EF, $8766EEE,	$9876EEE,  $98FFEE,   $98BFF,	 $DDBF,	     $DD,	 0,	   0; 1776
-		dc.l	     0,	       0,	 0,$B0000000,$BB000000,$BBBB0000,$BBBBFFFF,$FFFFEEEE,$EEEEEEFB,$EEEFFFBD,$EEFFBBD0,$FFFBDD00,$FBDD0000,$DD000000,	 0,	   0; 1792
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,  $B00000, $F000000,	$B000F00,$FB0FF0FF,$FBFF0F00; 1808
-		dc.l	  $D0B,	    $DDF,     $DBF,	$BBE,	 $BFFE,	   $BFFE,   $BDFFF,   $DF9FE,  $BF98FE,	$BE9777E,$DE98767F,$F887666F,$DFFFFFDF,	$DDDDDDB,	$D,	   0; 1824
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     8,	  $88889,  $889998, $8998887,$80077776,	 $866666, $8998877, $8008999; 1840
-		dc.l $BF0B0000,$FFFBB000,$EEEFBB00,$EEE69BB8,$EEE66887,$EEF66696,$EEEF6666,$EEEEEE66,$EEFE7666,$FEE76666,$FF866667,$FF676677,$F8F76779,$FFFD77DD,$BFFBB8DB,$BBDDDDD9; 1856
-		dc.l $B00001D9,	    $1D9,     $1BB,	 $1D,	   $BE,	    $BFE,    $BFFE,  $BBBBEE,$888BBFEE,$98BBFEEE,$877FEEEE,$776EEEEF,$6666EEFF,$6666FFFB,$6677BBBD,$98998DD0; 1872
-		dc.l   $100000,	$9900000,$87900000,$76700000,$66700000,$66700000,$66800000,$67800000,$68800999,$77009988,$78009118,$89699991,$97666699,$77877679,$99987D98,$7677DEEE; 1888
-		dc.l $6668FEFF,$7668FFDD,$9788BDD0,$DD9D1100,$EFD11100,$EF111100,$EF11DD00,$EFDDDD00,$FFDDDD00,$FBDDDD00,$FBD99900,$FBD89000,$BD890000,$DD890000,$D9800000,$19000000; 1904
-		dc.l	     0,	       0,	 0,	   9,	   $89,	     $79,     $879,	$769,	 $8769,$90007669,$90007769,$900DCCC9,	$DCCC9,$967DCCC9,$966CCCC9,$E77CCCC9; 1920
-		dc.l $F87DDDD9,$D08DDDD9,   $D9990,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 1936
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	    $F00,    $F000,    $F00F, $D0FBBF0,	$DDDBBFF, $DBBFFFB, $BBFEEFF; 1952
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,$F0000000,  $FF0000,$FF000000,$F0000000,	 0,$B0000010; 1968
-		dc.l	     0,	       0,	$D,	 $DE,	  $FE9,	   $F987,   $B9777,  $DBF766,	$DDFFB,	    $DDD,	 0,	   0,	     0,	       0,	 0,	   0; 1984
-		dc.l	     0,	       0,	 0,	   0,	     0,	       8,	 8,	   7,	     7,	       6,     $876,   $88996,	   $96,	  $80007,    $9887,	 $99; 2000
-		dc.l $BBFEEEEE,$BFEEEE76,$BFEEEF76,$EFFEEEF6,$8FEEEEEF,$7FEEEFFF,$7FEFFEFF,$6FFFFFF7,$FFFFFF66,$BBFFF766,$BBFFFBB7, $BBFFFB8,  $DBBBBD,	  $DBDDD,    $D000,    $DFFF; 2016
-		dc.l	$FFFEE,	 $FEEEEE, $FEEEEEE,$FEEEEEFF,$8EEEEFFB,$7EEEFFBB,$66EFFBBB,$667788BD,$667788DB,$67778DBB,$677899BB,$778899BB,$778999BB,$679999DD,$87990000,$99000000; 2032
-		dc.l $EB000980,$98B86680,$68966670,$66966680,$66666780,$F6666700,$66666800,$66668000,$66670001,$667D6967,$78D76666,$DBB7FD66,$DBFD778D,$1FF97668,$1BB96666,$1DD97668; 2048
-		dc.l $E1D19799,$EFFFD111,$FFFBD111,$FFBDD111,$FBDDB111,$BDDB111D,$DBBB11DD,$BBBB1988,$BBBB1988,$BBB19980,$BBB19900,$BBB11000,$BBD10000,$DD000000,	 0,	   0; 2064
-		dc.l $91000000,$D1900000,$DD900000,$7D900008,$B9000008,$BD0000C7,$BBD00DCC,$EEB66DCC,$1F777DCC,$1188DDDC,$1119DDD9,$11009D90,$1C000900,$C0000000,$C0000000,	   0; 2080
-		dc.l	$89000,	$8779000,$87790000,$76690000,$66900000,$66900000,$69000000,$69000000,$90000000,$90000000,	 0,	   0,	     0,	       0,	 0,	   0; 2096
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	$F,	  $F,	   $F0,	     $F0,  $DD0F00,  $DDDB0F,  $DBBFF0,	 $BBFFFF, $BBFEEEE, $BFEEEE6; 2112
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0, $F000000, $F000000,	$F000000,$F0000000,  $F00000,$FF000000,$F0000000,$EB000000,$EF000091; 2128
-		dc.l	    $D,	    $DDE,   $DDEE9,  $DEF997,	$DFE86,	   $DBE6,     $DFF,	 $DD,	     9,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 2144
-		dc.l	     0,	       0,	 8,    $8786,  $887666,	$7666666,$76677777,$78999997,$89000099,$90000088,     $888,	$888,	  $888,	   $8888,  $988889,   $99990; 2160
-		dc.l $DDFFEEE6,$EEFEEEEE,$98FEEEEF,$77FEEEEE,$66FFFEFF,$6FFFFFFF,$EFFFFFF7,$BBFFFF76,$BBFFFFFF,$DBBBFFF7, $DDBBFBB,   $DBDBB,	 $D0DD,	     $DE,      $DB,   $BBBBD; 2176
-		dc.l  $BBBBFFF,$BFBFFFEE,$8EEEEEEE,$6EEEEEEE,$6EEEEFFF,$66EFFFFB,$77FBBBBD,$88BBDDD0,$999D9000,$99990000,$89990000,$88900000,$88000000,$89000000,$90000000,	   0; 2192
-		dc.l $69FB0861,$668B8667,$66696667,$F6666668,$FF666670,$76666680,$66666800,$66667000,$66678990,$B8876899,$BBD96789,$BD976678,$BD766679,$E697678D,$F96999DD,$DDD1FDD1; 2208
-		dc.l $FB1BFD01,$EFDBED01,$EBDBED01,$FBDBFD66,$BBDBF666,$BD8B777D,$D08887DC,  $9DDDCC,  $9DDDDD,	 $9DDDD9,   $9DD90,   $9D900,	 $9000,	       0,	 0,	   0; 2224
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,$91000000,$1D100000,$DD100000,$DD100000,$D1000000,$11000000; 2240
-		dc.l $11000000,$11108889,$11876690,$17666900,$C7669000,$C7690000,$C7900000,$C9000000,$90000000,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 2256
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	$F0F00,	 $F0F000, $F00F0FF, $F0B00F0; 2272
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	    $D,	     $DE,     $DE9,    $DE97,	 $DEFF,	    $DDD,	 0,	   0; 2288
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 8,    $8888,  $888888,	$8888899,$78899987,$89977766,$97766666,$79999777,$80000999, $8000000; 2304
-		dc.l   $D0FBF0,	 $DDBFFB,  $DBFFFF,  $BFEEEE,  $FEEEEE,	$BFEEEEE, $BFEEEEE,$DFFEEEEF,$B9FEEEEE,$988FEEEF,$877FFEFF,$766FFFFF,$FFFFFFFF,$DBBBFFFF, $9DBBFFF,   $DDBFF; 2320
-		dc.l	 $DBBD,	    $D00,	 0,	   0,	    $F,	   $BBFE,$88BBBBFE,$8BBBBFEE,$8BBBFEEE,$99FFEEEF,$776EEEEE,$66EEEEEF,$666EFEFF,$767FFBBD,$98888DD0, $999D000; 2336
-		dc.l $F0000000,$B0000010,$FB000198,$EFB00678,$69FF6668,$668B6668,$66696668,$F6666670,$FFF66680,$F7666680,$F7666700,$66666800,$77668009,$F8689869,$F88B7666,$BBBF9666; 2352
-		dc.l $BDB69666,$DED97977,$DEDF971D,$DBFBB1D1,$EDDDDD11,$EFDDB110,$EFDBED00,$FBDBD600,$FB876770,$FD8878DC,$FDDDDDCC,$BDDDCCC7,$DDDCCC86,	$DDDCC77,  $999999,	   0; 2368
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,$10000000,$91000000,$99000000,$710000D8; 2384
-		dc.l $7D88DDD8,$D98DDD99,$DD91DD99,$11111110,$10000000,	       0,	 0,	   0,	$87800,	$8777900,$77669000,$66690000,$66900000,$79000000,$90000000,	   0; 2400
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,$88888800,$88889900,$88990000,$99000000,	   0,	     0,	       0,	 0,	   0; 2416
-		dc.l $BF0B0000,$FFFBB000,$EEEFBB00,$EEE69BB8,$EEE66887,$EEF66696,$EEEF6666,$EEEEEE66,$EEFE7666,$FEE76666,$FF866667,$FF676677,$F8F76779,$FFFD77BD,$BFFBB8DB,$BBDDDDBB; 2432
-		dc.l $B00000DE,	     $DB,	 1,	  $B,	    $B,	     $BF,     $BFF,   $BBBBE,$8888BBFE,$998BBFEE,$8877FEEE,$7776EEEE,$66666EEF,$66666FFF,$76677BBB,$998998DD; 2448
-		dc.l   $100000,	$9900000,$87900000,$76700000,$66700000,$66700000,$66800000,$67800000,$68800000,$77000100,$78001990,$89989110,$97666910,$97666790,$B8666791,$B96779B1; 2464
-		dc.l $EE999FD0,$FF1EED00,$D1FFD000,$DD8ED000,$18660000,$1D866000,$1DDD0000,$1DCC0000,$1CCC0000,$1CCC0000,$988C0000,$96690000,$96690000,$96690000,$96800000,$99000000; 2480
-		dc.l	     0,	       0,	 9,	 $91,	   $91,	    $981,     $981,    $9881,	 $9881,	   $9DD1,    $DDD1,    $DDD1,	 $DDD1,	 $8811D1,$DD981111,$DD991111; 2496
-		dc.l $DD991111,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 2512
-		dc.l	     0,	       0,	$D,	 $DE,	  $FE9,	   $F987,   $B9777,  $DBF766,	$DDFFB,	    $DDD,	 0,	   0,	     0,	       0,	 0,	   0; 2528
-		dc.l	     0,	       0,	 0,	   0,	     0,	       8,	 8,	   7,	     7,	       6,     $876,   $88996,	   $96,	  $80007,    $9887,	 $99; 2544
-		dc.l $BBFEEEEE,$BFEEEE76,$BFEEEF76,$EFFEEEF6,$8FEEEEEF,$7FEEEFFF,$7FEFFEFF,$6FFFFFF7,$FFFFFF66,$BBFFF766,$BBFFFBB7, $BBFFFB8,  $DBBBBD,	  $DBDDD,    $D000,    $DFFF; 2560
-		dc.l	$FFFEE,	 $FEEEEE, $FEEEEEE,$FEEEEEFF,$8EEEEFFB,$7EEEFFBB,$66EFFBBB,$667788BD,$667788DB,$67778DBB,$677899BB,$778899BB,$778999BB,$679999DD,$87990000,$99000000; 2576
-		dc.l $EB000980,$98B86680,$68966670,$66966680,$66666780,$F6666700,$66666800,$66668000,$66670000,$666D9780,$78B97778,$DBFE9998,$DFF9667D,$DF976669,$DF976679,$DBB9679D; 2592
-		dc.l $EDBDD9D7,$EF111188,$FFFB1DD7,$FFBD1DCC,$FBDDDCCC,$BDDBDCCC,$DBBB9776,$BBBB9767,$BBBB9768,$BBBB9668,$BBBD9680,$BBBD9800,$BBD00000,$DD000000,	 0,	   0; 2608
-		dc.l	     0,	       0,$90000000,$90000009,$DDD0009D,$EEED01DD,$FEE11DDD,$BFD11DDD,$BFD1111D,$7D101111,$6D000110,$60000000,$C0000000,$C0000000,$80000000,$80000000; 2624
-		dc.l	     0,	 $910000, $9910000,$99100000,$99100000,$D1000000,$D1000000,$10000000,$10000000,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 2640
-		dc.l $DDFFEEE6,$EEFEEEEE,$98FEEEEF,$77FEEEEE,$66FFFEFF,$6FFFFFFF,$EFFFFFF7,$BBFFFF77,$BBFFFFFF,$DBBBFFF7, $DDBBFBB,   $DBDBB,	 $D0D9,	     $D9,     $DB9,   $BBDB9; 2656
-		dc.l  $BBBBFDD,$BFBFFFEE,$8EEEEEEE,$6EEEEEEE,$6EEEEFFF,$66EFFFFB,$77FBBBBD,$88BBDDD0,$999D9000,$99990000,$89990000,$88900000,$88000000,$89000000,$90000000,	   0; 2672
-		dc.l $69FB0861,$668B8667,$66696667,$F6666668,$FF666670,$76666680,$66666800,$66668990,$66678781,$B8886679,$BDE76678,$99987778,$7679879D,$666799EE,$66678FFF,$96789DDD; 2688
-		dc.l $9999DDD8,$ED1111DD,$EB111DDC,$FBD111DC,$BBD111DC,$BD00911D,$D0009911,    $11DD,	 $1DDD,	   $1DD1,     $110,	   0,	     0,	       0,	 0,	   0; 2704
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,$90000000,$19000000,$99000000,	   0,$DD000000,$EED00000,$BFE00000,$7FE00000; 2720
-		dc.l $86000000,$C9607788,$CC876690,$C7766900,$C8779000,$88890000,$11100000,$D1000000,$10000000,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 2736
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	    $D,	     $DE,     $DE9,    $DE97,	 $DEFF,	    $DDD,	 0,	   0; 2752
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 8,    $8888,  $888888,	$8888899,$78899987,$89977766,$97766666,$79999777,$80000999, $8000000; 2768
-		dc.l   $D0FBF0,	 $DDBFFB,  $DBFFFF,  $BFEEEE,  $FEEEEE,	$BFEEEEE, $BFEEEEE,$DFFEEEEF,$B9FEEEEE,$988FEEEF,$877FFEFF,$766FFFFF,$FFFFFFFF,$DBBBFFFF, $9DBFFFF,   $DDBFF; 2784
-		dc.l	 $DDBD,	    $D0D,	$D,	  $D,	    $D,	   $BBFE,$88BBBBFE,$8BBBBFEE,$8BBBFEEE,$99FFEEEF,$776EEEEE,$66EEEEEF,$666EFEFF,$767FFBBD,$98888DD0, $999D000; 2800
-		dc.l $F0000000,$B0000010,$FB000198,$EFB00678,$69FF6668,$668B6668,$66696668,$F6666670,$FFF66680,$F7666680,$F7666700,$66666800,$77668011,$7FB88991,$F887667D,$BBFEB6DE; 2816
-		dc.l $BDFEEDEE,$D866EEFF,$98667FD8,$96666DD1,$98768111,$E999111D,$EFD1D000,$FBD1D000,$FBD1D000,$FBD77000,$FD187D00,$BD1DDDD9,$D1DDDDD9,	$11DDDD9,   $11111,	   0; 2832
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,$90000000,$10000000,$D1000000,$ED000000; 2848
-		dc.l $FD660877,$8767C766,$878DC877,$8DDCCC89,$DDDDC990,$DDD19000,$11100000,	   0,	     0,	       0, $9991000,$98910000,$88100000,$91000000,$10000000,	   0; 2864
-		dc.l $66670000,$66790000,$89900000,$90000000,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 2880
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	     $F0,   $F0F00,$B00F0F00,$F00F0F00,	$B0F0BBB, $FBFFFF6,  $BBFEE6; 2896
-		dc.l   $BFEEEE,$DDDFEEEE,  $DBEEEE,  $DBFEEE,	$BFFFE,	   $BFFE,    $DFFF,    $DDE8,	 $DF17,	   $BE86,    $BE1F,    $BE8F,	 $DFFD,	    $DD0,	 0,	   0; 2912
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0, $9100000,	$8918000,  $767800,  $866780,  $866680,$BB866678,$98996668,$66666667; 2928
-		dc.l $666E6667,$FFEE6667,$EEE76667,$EEF76667,$EEE86867,$EFF867B6,$EFFF7FBB,$7FFF8FFB,$66FFFFDD,$6FDBFBB0,$FB9DBBB0,$D900000B,	     0,	       0,	 0,	   0; 2944
-		dc.l	  $900,	    $890,     $879,	 $77,	   $86,	     $87,	 7,	   7,	     0,	       0,   $99900,  $988990,  $991110,	  $19999,   $96678,$80966689; 2960
-		dc.l $896677DE,$89788EEE,$997E778F,$9DF76668,$BDB86668,$8DD96679,$B1DB9990,$D01DBDD0,	$11100,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 2976
-		dc.l	     0,	       0,	 0,$90000000,$79000000,$67900000,$66790000,$77CD9000,$7CCCD900,$DCCCCD90, $DCCCCD9, $DCCCDD9,$66DCDDD9,$966DDD90,$9E66DD00,$EF600000; 2992
-		dc.l $EFD00000,$FD000000,$DD000000,$D1100000,$D1110000,$D111D000, $11DDD00, $11DDD00,  $11DDD0,	 $11DD90,   $11980,   $11889,	 $1189,	   $1198,     $119,	 $99; 3008
-		dc.l	     0,	       0,	 0,	   0,	     0,	  $F0F00,   $F00F0,$F000F0F0, $F00F0F0,	$F00F0F0,  $FBFFBB,  $FBBFFF,	$DFEEE,	$DDBFEEE,  $DBEEEE,  $DBFEEE; 3024
-		dc.l	$BFEEE,	   $BFFE,    $DFFE,    $DE8F,	 $F187,	  $DE876,   $B1766,   $BE8FF,	$DFFBD,	  $DDDD0,	 0,	   0,	     0,	       0,	 0,	   0; 3040
-		dc.l	     0,	       0,	 0,	   0,	     0,	   $1000,    $1800,    $7880,	 $6678,	  $86678,$BBB86667,$E9899667,$66666666,$76666666,$FFFFF666,$EEEF7666; 3056
-		dc.l $EEFFF766,$EEEFF766,$EFFFF677,$EFFFF7F8,$FFFFFFFB,$6FFFFFFD,$FFBFFFBD,$BDBBBBDD,$999DDD00,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 3072
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	   $1990,   $91999,$8001DDD9,$80097779,$809666BB,$7D666DDB,$7D67D888; 3088
-		dc.l $6B7F7666,$8BFD7666,$DBFF9666,$BDFFB999,$DD1BDD10,$D0011100,$D0000000,	   0,$D0000000,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 3104
-		dc.l	     0,	  $90000,   $89000,  $889000,  $869000,	 $866900,  $876900,  $786900,	$76690,	  $CCC90,   $CCC90,   $DCCC9,$9086DCD9,$9967DDD9,$DE789DD9,$EF889990; 3120
-		dc.l $81110000,$8111C000,$9111C000,$1111CC00, $111DC00,	 $11DD00,  $11D880,   $19880,	$11980,	   $1990,    $1190,	$110,	   $10,	       0,	 0,	   0; 3136
-		dc.l	     0,$F00F0000, $F00F000,  $F00F0F,  $F00F0F,	  $F0F0F,   $FBFFB,   $BBFFF, $DDDFEEE,	 $DBFEEE,  $DBEEEE,   $BFEEE,	$BFEEE,	  $BFFEE,   $DFFEE,   $DE8FE; 3152
-		dc.l   $DF187F,	 $BE8766, $BE1766F, $DE8FFBD, $DFFBD99,	$DDDD000,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 3168
-		dc.l	     0,	       0,	 0,	$100,	  $180,	    $678,$BB008668,$EEBB8667,$69899666,$66666666,$FE666666,$EFFFF666,$EEEF7666,$EEFF7666,$EEFF7666,$FFFF6768; 3184
-		dc.l $FFFF7F7B,$FFFFFF8B,$FFFFFFBB,$BFFFBBDD,$BBBBBDD0,$9DDD00D0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 3200
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,$80000000,$80000000,$80000011,$80000111,$8098991D,$7886999D,$7768889D,$8E76667D,$BF76667D; 3216
-		dc.l $BB96669D,$BBD999FD,$DBEFB1BF,$DEFBD1DF,$DBB100DD,	$DD0000D,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 3232
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,$10000079,$D0000089,$DD000769,$DD000869,$11111769,$11118669; 3248
-		dc.l  $1117669,	$111C769,$D066CC79,$ED66DCC9,$EE67DCC9,$BB77DCD9,$DB78DDD9, $88DDDD9,  $9DDDD9,	  $99DD9,     $999,	   0,	     0,	       0,	 0,	   0; 3264
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0, $F00F000,$F00F0000,$F0F00F00,$F0B0F000,$F0B0FBB0,$F0BFBFEE, $FBFFF69,	$BBEEE66, $DFEEEEF,$DDBFEEEE; 3280
-		dc.l  $DBEEEEE,	  $BFEEE,   $BFFEE,   $BFFFF,	 $BD87,	   $FD86,    $ED87,    $ED76,	 $E86F,	   $FEFB,    $DFDD,    $DD00,	     0,	       0,	 0,	   0; 3296
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0, $1800000, $1788000,  $668800,	$8667800,$B8666680,$89966680,$66666668,$666F6667,$EFF76667,$FEF77666; 3312
-		dc.l $EEFF7668,$EEFF676B,$EEFFF7F8,$EFFFFFFB,$FFFFFFFB,$66FFFFBD,$6FBFFBBD,$BDBBDDD0,$D99D0000,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 3328
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	$11100,	 $999108, $97679D8,$886667D9; 3344
-		dc.l $B76667DD,$B96679D9,$BF9991D1,$BB999111,$DEDFB1D1,$DFEF1BED, $DFB1DBE,  $D10DBE,	   $D8,	       8,	$D,	  $D,	     0,	       0,	 0,	   0; 3360
-		dc.l	     0,	       0,	 0,	   0,	     0,	     $80,    $8880,   $88890,  $888990,	$9888900, $8889900,$1D999000,$DDD90000,$DDD10000,$81100000,$91100000; 3376
-		dc.l $99000000,$11000089,$10000879,	$879,	 $8769,	   $8769,$680C7669,$68CC7669,$68CC7679,$8DCC8779,$DDCCC890,$DDCCC900,$DDDD9000,	$DD90000,	 0,	   0; 3392
-		dc.l	 $9100,	   $9910,    $9981,	$988,	  $998,	     $98,      $9D,	  $D,	     0,	       0,	 0,	   0,	     0,	   $9990,   $87781,$80966798; 3408
-		dc.l $8966667B,$8976677F,$9997679E,$9DB9991E,$BDBBEF1F,$8DBEFB1B,$BDDBBB0D,$D00DDD00,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 3424
-		dc.l	     0,	       0,	 0,$10000000,$81000000,$DD100000,$DDD10000,$DDDD1000,$DD1D1100,	$D111110,  $111110, $8811100, $9990000,$DD990000,$DDD00000,$1D000000; 3440
-		dc.l $D0000000,$D0000000,$D0000000,$E0000000,$EE000000,$D6600000,$86800000,$88CD0000,$1CCCD000,	$1CCCD00,  $1CCCD0,  $1CC880,	$17668,	   $1768,     $176,	 $18; 3456
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,$80000899,$80088889,$809668DD,$796799DE,$7D69667D; 3472
-		dc.l $6BE76667,$8BF76667,$DBF96669,$BDBF999D,$D0DBFBD1,$D00DDD10,$D0000000,	   0,$D0000000,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 3488
-		dc.l	     0,	       0,    $9100,    $9100,	 $9100,	   $9100,    $9910,   $99910,	$99D10,	  $9DD10,   $9DDD1,   $111D1,$DD011111,$EE111111,$FED11111,$BFED0000; 3504
-		dc.l $DBF10000,$D66D0000,$D866D000,$1DDCCD00,$1DCCCCD0,	$1CCC680,  $1C6670,   $17667,	 $1767,	    $167,      $18,	   1,	     0,	       0,	 0,	   0; 3520
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,$80000000,$80000000,$80099900,$80911990,$8988990D,$787789DF,$786678DE,$8E667DEF,$BEEB66EF; 3536
-		dc.l $DB767BFD,$D76667BD,$D66667BD,$D96669D1,$DB999D11,$DBBD0000, $DDD0000, $DD00000,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 3552
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 8,$DD000009,$EED00081,$BFE10096,$B7660967,$D8791667; 3568
-		dc.l $DDCC7778,$1DCC788D,$1DDCC8D1,$11DDD111,$111111D1,	$1991DD1,  $191DD1,   $11DD1,	  $111,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 3584
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0, $8990000,	$1111DD6, $199DEF6,$9978DFF7; 3600
-		dc.l $866DEF77,$76BDEB88,$EEEEFDD1,$EE667DD1,$D7666711,$D6666710,$D96679DD,$DD99911D,$BDD00011,	       9,	 9,	   0,	     0,	       0,	 0,	   0; 3616
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,      $80,	$680,	 $6690,	  $66890,  $666900, $7777900, $C779000,$7CC89000,$6CCD1000,$8CC10000; 3632
-		dc.l $DCD10000,$DCD00000,$DD100000,$DD100001, $1000091,	    $991,     $981,$D0009881,$88DDD881,$88DDDD11,$9DDDD110,$DDDD1100,$11111000,	$1100000,	 0,	   0; 3648
-		dc.l	   $FE,	     $BF,      $BF,	 $BF,	    $B,	      $B,	$B,	  $B,	    $B,	     $BB,      $88,	$888,	  $888,	   $8888,    $8887,   $88887; 3664
-		dc.l	$88876,	 $889766,  $890689,  $808800,  $808000,	  $80800,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 3680
-		dc.l $BD000000,$EBD00000,$EFBD0000,$EEFBD000,$EEEFBD00,$FEEFFBD0,$FEEEFBD0,$BFEEEFBD,$BFEEEFBD,$BFEEEFBD,$BFEEEFBD,$76EEFFBD,$766EFBD0,$76677890,$66678900,$66689000; 3696
-		dc.l $68900000,$79000000,$90000000,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 3712
-		dc.l	   $BF,	     $FE,     $FEE,    $FEEF,	$FEEEF,	  $FEEEF,  $FEEEFF,  $FEEEFF,  $FEEEFF,	 $FEEEFF,  $FEEEFF,  $76EEE7,	$76676,	  $76666,    $7666,	$766; 3728
-		dc.l	   $76,	    $887,     $889,    $8800,	 $8000,	    $889,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 3744
-		dc.l $BD000000,$FBD00000,$FBDD0000,$FBDBD000,$FBDBBD00,$FBDBBBD0,$BBDBBBD0,$BDBBBBBD,$BDBBBBBD,$BDBBBBBD,$8DBBBBBD,$89BBBBBD,$789BBBD0,$78988890,$78988900,$67899000; 3760
-		dc.l $67890000,$66790000,$77890000, $7900000,$89000000,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 3776
-		dc.l	    $F,	     $BF,     $BFE,    $BBFE,	$BBFEE,	  $BBFEE,  $BBFEEE,  $BFEEEF,  $B8EEEF,	 $866EEF,  $86666F, $7666678, $7666789,	$6668998,$86689888,$76890888; 3792
-		dc.l $76900088,$78900008,$79000000, $7000000,  $900000,	     $89,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 3808
-		dc.l $BD000000,$FBD00000,$EBD00000,$EFBD0000,$EFBD0000,$FFBD0000,$FFBD0000,$FBD00000,$FBD00000,$BD000000,$BD000000,$99000000,$88900000,$88900000,$88900000,$88890000; 3824
-		dc.l $88890000,$88890000,$88890000, $8900000,$89000000,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 3840
-		dc.l	   $FE,	     $FE,      $FE,	 $FE,	  $BBF,	    $BBF,    $BBBF,   $BBBBF,	$8BBBF,	 $888BFE,  $888876, $8888866, $8888766,	$8888666,$88887667,$88876679; 3856
-		dc.l $88967890,$88779000,$89790000, $8800000,  $800000,	  $80000,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 3872
-		dc.l $BD000000,$FBD00000,$EFBD0000,$EFBD0000,$EFFBD000,$EEFFD000,$EEEFBD00,$EEEFFD00,$EEEFFD00,$EEEFBD00,$EEFBD000,$66F8D000,$67890000,$78900000,$89000000,	   0; 3888
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 3904
-		dc.l	     0,	     $F0,      $F0,	$F0F,	   $F0,	     $FF,   $B000F,    $FBBB,	   $FF,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 3920
-		dc.l	$99999,	   $8776,      $87,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,$19977788, $9766667,  $876666; 3936
-		dc.l	$87666,	  $B8966,  $BB866E, $BB9666E,$BBF666FE,	$FEEEFEE,$FFEEEEEE,$BFEEEEEE,$BFFEEEFE,	$DBBFFFF,$DDDBFFF9,    $BBDF,	   $BD,	       0,	 0,	   0; 3952
-		dc.l $99999999,$666CCCCC,$767CCCCC,$877CCCCC,	$DDDCC,	    $767,     $667, $999099E,$9881998E,$9819979E,$991966DE, $999677D,	$96787,$80066897,$87897796,$67789797; 3968
-		dc.l $66779DB9,$66677DDD,$6666778D,$766667BD,$E7677DBD,$FE86FFFD,$EEFF8FFB,$EFFFFFBB,$EEFFFBD0,$F776DD00,$8766FD00,$9776FD00,$F987FD00,$BE98FD00, $BE8FD00,  $DFD000; 3984
-		dc.l $99000000,$DD900000,$DD900000,$DD900000,$DDD00000,$78000000,$80000000,$FD000000,$FD000000,$FDD00000,$EFD111DD,$FFB111DD,$888D111D,$6689D11D,$667DFFFF,$679DEEEE; 4000
-		dc.l $99BDEEEE,$DDB1BFFE,$11100BFB,	 $BB,	    $B,	      $B,	 0,$B0000000,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 4016
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,$DD900000,$DD990000,$DD989900,$DDDD8880,$FBBBDD99,$FFFFBDD1; 4032
-		dc.l $EEEFFBD0,$EEEEFFBD,$FEEEEFBD,$BFEEEFB8,$BBFE6679,$8B766679,$88776668,$89876669,$89876679,	$8987679, $8987689, $8987688, $8897690,	 $890890,   $80088,    $8000; 4048
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	 $99,	   $87,	       7,	 8,	   0; 4064
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,$99000000,$76990000,$76669900,$87666699; 4080
-		dc.l	     0,	     $18,	 9,	   0,  $F00000,	 $F00000,   $F000B, $F0FF0BE,  $F0FBFE,	  $FFFFE,$F00BBFEE, $FFBBFEE,	$FDBFE,	   $DBBF,   $DDDBB,	  $B; 4096
-		dc.l	     0,	       0,	 0,	   0,	     0,	       9,      $11,	 $9D,	     1,$87880000,$66677800,$66666680,$86666667,$B9966666,$88666666,$9666F666; 4112
-		dc.l $666FFF76,$77FEFFF6,$EFEEFEFF,$EEEEEFFF,$EEEEEFFF,$EEFEEEFF,$FFFFFFFF,$BBE8776F, $DE9776B,	 $DE876F,   $F977F,    $F9FD,	  $BBD,	     $D0,	 0,	   0; 4128
-		dc.l  $887CCCC,	  $CCCCD,    $DDDD,	$67D,	  $678,$9900DB78,$DD9DBEF1,$D7BBBE11,$766D8689,$66686669,$96D76667,$66F77679,$D77D9991,$7DBFFBDD,$68BBFBD1,$67DD111E; 4144
-		dc.l $678DD0FE,$6BBBD0FE,$7BFBD0FF,$FFFBBDDF,$FFFBD00F,$FFBD0000,$BBB00000,$BB000000,$D0000000,$D0000000,$D0000000,	   0,	     0,	       0,	 0,	   0; 4160
-		dc.l $90000000,$D9000000,$DD900000,$D9000000,$90000000,$10000000,$11C00000,$111CC000,$1111DD88,$11111D88,$11111199,$DDDB1111,$FBDDBBBB,$FFBDDBBB,$FFFBDBBB,$EFFFBDBB; 4176
-		dc.l $EEFBBBDB,$EEFFBBBD,$EEEFFB88,$EEEEFF88,$EEEEEF77,$FEEEEE77, $FEEE666,  $F87666,	 $8877,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 4192
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,$80000000,$99000000,$99100000,$11110000,$BBBD0000,$BBBBD000,$BBBBD000; 4208
-		dc.l $BBBBD000,$BBBBD000,$D9999000,$89999000,$78899900,$77889900,$77777790,$66776890,$66667790,	$7990890, $8900800,  $800900,  $808000,	       0,	 0,	   0; 4224
-		dc.l	     0,	       0,	 0,	   0,	  $F00,	$FFF00F0,    $F0FF,$FF000F0F,  $FF00FF,	   $FBFF,     $DBF,    $DDBB,	 $DDDB,	       0,	 0,	   0; 4240
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0, $1000000, $9177800,	 $666678,  $866666,   $86666,  $BB9666,$BFF86666,$EE9666F6,$E6666FF7; 4256
-		dc.l $EE6EFEFF,$EEEEEEFF,$EEEEEEEF,$FEEEEEFF,$BFFEEEFF,$BBFFFFFF,  $DE876F,  $DE9766,  $DE9766,	  $DE98E,   $DE9EB,    $DFFD,	 $DED0,	    $D00,	 0,	   0; 4272
-		dc.l	     0,	       0,	 0,	   0,	     0,	    $111,    $1DDD,    $91DD,	$9989D,	 $998778,$80987667,$67866666,$66779767,$6668D979,$6668BDD6,$666BBBBE; 4288
-		dc.l $76F7BBDE,$F7FFBBDD,$FFFFFD00,$FFFFBBD0,$FFFBBD00,$FFFBD000,$FBBBD000,$EBBD0000,$FD900000,$FD000000,$D0000000,	   0,	     0,	       0,	 0,	   0; 4304
-		dc.l	$90000,	  $89000,   $86900,   $86690,	 $7669,	  $18666,$11111777,$D11111CC,$D111166D,$DD000667,$9DDDDD67,$9FFEEFF7,$91BBBBBB,$6D1DDDD8,$9DBFBBBD,$FDFEEFBB; 4320
-		dc.l $BDFEEEFB,$DBFEEEFF, $BFFEEFF, $BBFEEEF, $BBFEEEF,	 $BBEEEE,  $BFEEE6,   $B8666,	 $8666,	    $866,     $766,	$876,	   $86,	     $86,	 7,	   0; 4336
-		dc.l	     0,	       0,	 0,	   0,	     0,$90000000,$79000000,$CC900000,$CCD90000,$DCDD9000,$7DDDD900,$8DDDDD90,$8DDD9900,$89990000,	 0,$D0000000; 4352
-		dc.l $D0000000,$BD000000,$BD000000,$BD900000,$BBD99000,$FB999900,$78999890,$78998890,$77988889,$79988889,$79008889,$79000089,$79000089,$69000090,$68900000,$77890000; 4368
-		dc.l	   $88,	    $197,      $16,	   0,	     0,	 $F0000B,  $FF00BF,$F000FBFE, $FF00BFE,$F00BFFFE, $F00BFFE,  $FFFBFE,	  $DBF,	   $DDDB,	 0,	   0; 4384
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	  $89000,   $89000,   $88900,	$88900,	  $88890,   $88890,   $88990; 4400
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,$88800000,$66678800,$66666678,$66666666,$FB966666,$F866F666,$9666F776,$666FFFF6,$EEEFEFFF; 4416
-		dc.l $EEEEEEFF,$EEEEEEEF,$EEEEEEFF,$EEEEEFFF,$FFFFF876,	$BBF9876,   $DB987,    $DE97,	  $DE9,	     $DE,	$D,	   0,	     0,	       0,	 0,	   0; 4432
-		dc.l	$DD991,	   $DDD1,    $DDD1,    $8D11,	 $8891,	$191D9D1,$19977DD1,$996667D1, $666671D,	$8666971,$8979979B,$68BF69FB,$668BBDDF,$788BDEEB,$7FFBBDDD,$FFFFD000; 4448
-		dc.l $FFFFB000,$FFFBBD00,$FFBDD000,$FBBD0000,$FBD00000,$FB900000,$FD000000,$FD000000,$FD000000,$ED000000,$D0000000,	   0,	     0,	       0,	 0,	   0; 4464
-		dc.l	     0,	   $8900,    $7790,    $8769,	  $766,	    $876,$10000076,$10000CC7,$11007DCC,$D1D678DC,$DBED67DC,$DDBB78DD,$DDDD88DD,$DFFBBDDD,$EEEFFFFB,$FEEEEFEF; 4480
-		dc.l  $FFEEEEE,	$BBFEEEE, $BBBFEEE,  $BBBFEE,  $BBBF6E,	 $8BB976,  $888976,  $888976,	$88986,	  $88897,   $88897,    $8897,	 $8889,	    $889,      $88,	   8; 4496
-		dc.l	     0,	       0,	 0,	   0,$90000000,$69000000,$67900000,$67900000,$87900000,$CC900000,$CC900000,$CD900000,$DD900000,$DD000000,$D0000000,$FD000000; 4512
-		dc.l $FBD00000,$EBD00000,$FF8D0000,$EF890000,$67890000,$66890000,$67900000,$67900000,$67900000,$67900000,$69000000,$69000000,$79000000,$79000000,$98000000,$80880000; 4528
-		dc.l   $911111,	  $99888,     $998,	   9,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,$19977788, $9766667,  $876666; 4544
-		dc.l	$87666,	  $B8966,  $BB866E, $BB9666E,$BBF666FE,	$FEEEFEE,$FFEEEEEE,$BFEEEEEE,$BFFEEEFE,	$DBBFFFF,$DDDBFFF9,    $BBDF,	   $BD,	       0,	 0,	   0; 4560
-		dc.l $11111111,$8DDDDD11,$8DDDD111,$99DDD111,	  $889,	    $899,      $DD,	 $DD,	   $11,	 $91199B, $1919779,  $196667,	$86667,$80096666,$87897789,$677899BB; 4576
-		dc.l $66779DBB,$66677BDB,$6666778D,$766667BD,$E7677DBD,$FE86FFFD,$EEFF8FFB,$EFFFFFBB,$EEFFFBD0,$F776DD00,$8766FD00,$9776FD00,$F987FD00,$BE98FD00, $BE8FD00,  $DFD000; 4592
-		dc.l $10000000,$10000000,$10000000,$10000000,$90000000,$90000000,$D0000000,$D0000000,	     0,$D0000000,$FD000000,$9EDD0600,$9EFE66DC,$91F868DC,$EF1D8DDD,$EFDD1111; 4608
-		dc.l $EB1BBFFE,$DD000BFB,      $BB,	  $B,	    $B,	       0,	 0,$B0000000,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 4624
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,$CCC99900,$CC866680,$CC866669,$11999999; 4640
-		dc.l $EEEEFFBD,$FEEEEFBD,$BFEEEFB8,$BBFE6679,$8B766679,$88776668,$89876669,$89876679, $8987679,	$8987689, $8987688, $8897690,  $890890,	 $890088,   $80000,    $8800; 4656
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,$11000000,$99110000, $9991100,  $99DD11; 4672
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,$87880000,$66677800,$66666680,$86666667,$B9966666,$88666666,$9666F666; 4688
-		dc.l $666FFF76,$77FEFFF6,$EFEEFEFF,$EEEEEFFF,$EEEEEFFF,$EEFEEEFF,$FFFFFFFF,$BBE8776F, $DE9776B,	 $DE876F,   $F977F,    $F9FD,	  $BBD,	     $D0,	 0,	   0; 4704
-		dc.l   $9DDDDD,	  $9DDD1,    $1DD1,	$111,	 $D111,	  $DEEDD,   $DEEFF, $99DEFBB, $88D99D7,$8797679D,$77966679,$9796666D,$D9E9779D,$6BFF99BB,$68BFFFBD,$67DDDDDE; 4720
-		dc.l $678DD0FE,$6BBBD0FE,$7BFBD0FF,$FFFBBDDF,$FFFBD00F,$FFBD0000,$BBB00000,$BB000000,$D0000000,$D0000000,$D0000000,	   0,	     0,	       0,	 0,	   0; 4736
-		dc.l $10000000,$11000000,$11000000,$10000000,	     0,$10000000,$DD000000,$766CC880,$87CCC678,$8DCCC766,$1DDCC777,$111DD999,$1BDDBBBB,$1FBDDBBB,$FFFBDBBB,$EFFFBDBB; 4752
-		dc.l $EEFBBBDB,$EEFFBBBD,$EEEFFB88,$EEEEFF88,$EEEEEF77,$FEEEEE77, $FEEE666,  $F87666,	 $8877,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 4768
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,$80000000,$68000000,$66800000,$99900000,$BDD00000,$BBBD0000,$BBBBD000,$BBBBD000; 4784
-		dc.l $BBBBD000,$BBBBD000,$D9999000,$89999000,$78899900,$77889900,$77777790,$66776890,$66667790,	$7990890, $8900800,  $800900,  $808000,	       0,	 0,	   0; 4800
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0, $1000000, $9177800,	 $666678,  $866666,   $86666,  $BB9666,$BFF86666,$EE9666F6,$E6666FF7; 4816
-		dc.l $EE6EFEFF,$EEEEEEFF,$EEEEEEEF,$FEEEEEFF,$BFFEEEFF,$BBFFFFFF,  $DE876F,  $DE9766,  $DE9766,	  $DE98E,   $DE9EB,    $DFFD,	 $DED0,	    $D00,	 0,	   0; 4832
-		dc.l	     0,	       0,	 0,	   0,	     0,	      $D,   $990DE,  $9190DE,  $1988DE,	$987779E,$89766779,$68866789,$66787897,$6668E976,$6668D966,$666BB976; 4848
-		dc.l $77F7BB99,$F7FFBBDD,$FFFFFD00,$FFFFBBD0,$FFFBBD00,$FFFBD000,$FBBBD000,$EBBD0000,$FD900000,$FD000000,$D0000000,	   0,	     0,	       0,	 0,	   0; 4864
-		dc.l	$80000,	  $89000,   $76900,   $76690,	 $7679,$EE068778,$FF69C788,$B78CCCC8,$FD8DCCCD,$FDDDDDD1,$FDD1D111,$89D11119,$78911110,$67911DD0,$669DBBBD,$699EEFBB; 4880
-		dc.l $99DEEEFB,$BBDEEEFF,$DDFFEEFF, $BBFEEEF, $BBFEEEF,	 $BBEEEE,  $BFEEE6,   $B8666,	 $8666,	    $866,     $766,	$876,	   $86,	     $86,	 7,	   0; 4896
-		dc.l	     0,	       0,	 0,	   0,	     0,$10000000,$11000000,$1D100000,$1DD10000,$1DDD1000,$91DD1000,$91110000,	     0,	       0,	 0,$D0000000; 4912
-		dc.l $D0000000,$BD000000,$BD000000,$BD900000,$BBD99000,$FB999900,$78999890,$78998890,$77988889,$79988889,$79008889,$79000089,$79000089,$69000090,$68900000,$77890000; 4928
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	 $7900,	   $6790,    $6690,    $6689; 4944
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,$88800000,$66678800,$66666678,$66666666,$FB966666,$F866F666,$9666F776,$666FFFF6; 4960
-		dc.l $EEEFEFFF,$EEEEEEFF,$EEEEEEEF,$EEEEEEFF,$EEEEEFFF,$FFFFF876, $BBF9876,   $DB987,	 $DE97,	    $DE9,      $DE,	  $D,	     0,	       0,	 0,	   0; 4976
-		dc.l	 $7679,	   $7678,    $878C,	$CCC,	 $67DC,	   $668D,  $1DD77D,$91DEF888,$11DEEF81,$197DEFDD, $966DEFD,$886BEE76,$687EE666,$6B8FF666,$7F8BD886,$77FBBD99; 4992
-		dc.l $FFFFDDDD,$FFFFB000,$FFFBDD00,$FFFDD000,$FBBD0000,$FBD00000,$FB900000,$FD000000,$FD000000,$FD000000,$ED000000,$D0000000,	     0,	       0,	 0,	   0; 5008
-		dc.l	     0,$90000000,$90000000,$C9000010,$D1000091,$DD100099,$DD100098,$DD100009,$1D000009,$1100000D,$110000DD,$81DDD77D,$6911178D,$79DDDD11,$89FBBBDD,$9EEFFFFB; 5024
-		dc.l $DEEEEFEF,	$FFEEEEE, $BBFEEEE, $BBBFEEE,  $BBBFEE,	 $BBBF6E,  $8BB976,  $888976,  $888976,	  $88986,   $88897,   $88897,	 $8897,	   $8889,     $889,	 $78; 5040
-		dc.l	     0,	       0,	 0,	   0,	     0,$10000000,$81000000,$89100000,$99100000,$DD100000,$DD100000,$DD100000,$DD100000,$D1000000,$11000000,$D0000000; 5056
-		dc.l $FD000000,$FBD00000,$EBD00000,$FF8D0000,$EF890000,$67890000,$66890000,$67900000,$67900000,$67900000,$67900000,$69000000,$69000000,$79000000,$79080000,$97800000; 5072
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 5088
-		dc.l	     0,	       0,	 0,	$DDD,	 $DDDD,	   $DDCD,   $DCCCD,   $DCCCD,	$977CC,	  $9667C,   $96690,   $96790,	$96900,	  $97900,   $99000,	   0; 5104
-		dc.l	     0,	 $DDDB00,  $DFEEBD,  $DF81EF,  $DBF781,	  $DF678,   $9B667,   $9DF6F,  $9BBFFF,	 $DBFFFF,  $DBFFFF,  $DBFFFF,	$BBFF7,	  $BBFFF, $DDDB988,$DBEE9766; 5120
-		dc.l $DDDB9666,	$11D9766,  $D11776,$D7DBB999,$71BFF977,$61FED988,$61DB1D99,$D6111D00,$D111D000,$1111D000,$111D0000,$19900000,$19900000,$19000000,$10000000,	   0; 5136
-		dc.l	     0,	      $D,     $DDD,$DDBBBBBD,$EFFFFEFF,$8FFEEEEE,$FEEEEEEE,$EEEEEEFE,$FEEEE66F,$FEEEE669,$FFFEE668,$FFFFE669,$6777F669,$76666666,$86666686,$89666666; 5152
-		dc.l $69778888,$69989119,$98991199,$78911990,$78900000,$89000000,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 5168
-		dc.l	   $F0,	    $F00,   $FF000,$BFF000F0,$BB000F00,$FFFFF000,$FF000000,$FBFFF000,$EB000000,$FB000000,$B0000000,$B0000000,$88000000,$66611000,$66780000,$78800000; 5184
-		dc.l $80000000,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 5200
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 5216
-		dc.l	     0,	       0,	 0,	   0,	  $DDD,	   $DDDD,    $DDCD,   $DCCCD,	$DCCCD,	  $977CC,   $9667C,   $96690,	$96790,	  $96900,   $97900,   $99000; 5232
-		dc.l	     0,	       0, $DDFEBD0, $DF81EFD,  $DF771E,	 $DFF678,   $DB667,   $9DF6F,  $9BBFFF,	 $DBFFFF,  $DBFFFF,  $DBFFFF,	$BBFF7,	  $BBFFF, $DDDB988,$DBEE9766; 5248
-		dc.l $DDDB9666,	$11D9766,  $D11776,  $DBB999,$D7DFF977,$71BEF988,$61FBD199,$61DB1D00,$D6111D00,$D111D000,$1111D000,$119D0000,$19900000,$19000000,$19000000,$10000000; 5264
-		dc.l	     0,	    $D00,     $DDD,$DDBBBBBD,$EFFFFEFF,$8FFEEEEE,$FEEEEEEE,$EEEEEEFE,$FEEEE66F,$FEEEE669,$FFFEE668,$FFFFE669,$6777F669,$76666666,$86666686,$89666666; 5280
-		dc.l $69778888,$69989119,$98991199,$78911990,$78900000,$89000000,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 5296
-		dc.l   $F00000,	  $F0000,  $FF0F00,$BFF00F00,$BB00F000,$FFFF0000,$FF00F000,$FBFF0000,$EB000000,$FB000000,$B0000000,$B0000000,$88000000,$66611000,$66780000,$78800000; 5312
-		dc.l $80000000,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 5328
-		dc.l	     0,	$8877788,  $876666,    $8666,	  $766,	    $866,      $86,	 $86,	   $B7,	     $BF,      $BB,	 $BB,	    $B,	      $B,	 0,	   0; 5344
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	$E,	  $F,	    $F,	     $77,      $77,	$878,	  $888,	    $888,    $8899,  $899900; 5360
-		dc.l	     0,	       0,$78000000,$66700000,$66680000,$66667000,$666FF000,$F6EEFF00,$FFEEEF00,$FEEEEF00,$FEEEEEF0,$FFEEEEF0,$BFFEEEF0,$BFFFEEE0,$BBFFFEEF, $BBFFFFF; 5376
-		dc.l   $DBBBFF,	  $DDBBB,  $DDDDDB, $BBDDDDD,$BBBBBDDD,$BBBBBDD0,$EFBBBBD0,$FFBBBD00,$FFBBBD00,$FBBBD000,$88B90000,$88890000,$88900000,$89000000,	 0,	   0; 5392
-		dc.l $76667888,$87666667, $8766666, $8776666, $9777666,	 $877766,   $88777,	$897,	    $F,	     $9D,    $888B,   $88888, $8888888,$88888888,$99888888,  $99999D; 5408
-		dc.l	     0,$78000000,$67EB0000,$6EEEB000,$6EEEEB00,$66EEEEB0,$FEEEEEFB,$FFFFEEEF,$FFFFFFFF,$DDBBFFFB,$DDDDDDDD,$BBDDDDD0,$BBDDDD00,$BBBD0000,$BDD00000,$D0000000; 5424
-		dc.l	     0,	       0,	 0,	   0,	   $77,	  $87666, $8766666,$86666666,$98777777,	$9888777,   $99888,	 $99,	     0,	       0,	 0,	   0; 5440
-		dc.l	     0,	       0,	 0,	   0,$FBB00000,$6EEFBB00,$66EEEEBB,$7EEEEEEE,$7FFFFFBB,$FFFFBBDD,$88BDDD00,$BDD00000,	     0,	       0,	 0,	   0; 5456
-		dc.l	     0,	     $77,     $777,    $6700,	$66600,	  $66000,  $666000,  $666E00,  $666E00,	 $66FE00,  $66EE00,  $66EE00,  $66EEE0,	$660FFE0, $600FFF0, $600F0FF; 5472
-		dc.l  $700F000,	$7000000, $7000000, $7000000, $7000000,	 $700000,	 0,	   0,	$80000,	       0,    $8000,	   0,	     0,	     $88,	 0,	   0; 5488
-		dc.l	     0,	       0,$70000000, $7000000,  $700000,	       0,	 0,	   0,	     0,	       0,	 0,    $7000,	 $7000,	   $7000,   $78000,   $78000; 5504
-		dc.l	$88000,$B0F88000,$BBF88000,$BBFF8000, $BBF8000,	$BBB8000, $BBB8000, $BBB8000, $BB80000,	$B880000,  $880000, $8880000, $8800000,$88000000,	 0,	   0; 5520
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	  $F0F,	    $F0F,    $F00F,    $F00F, $D0FF0F0,	$DDBBF00,$DBDFFFFF,$BBFEEFB0; 5536
-		dc.l	     0,	       0,      $DD,    $DDFF,  $DDEEE1,	$DFF8177,  $DFFF66,   $DDDB6,	  $99D,	     $9B,      $9B,	  $D,	     0,	       0,	 0,	   0; 5552
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 5568
-		dc.l  $BBFEEEE,$BBFEEEFF,$DFFEEE66,$EFEEEEE6,$8FEEEEEE,$77EEEEEE,$6FFFEFFF,$FFFFFFF7,$FFFFFF76,$BFFFF776,$BFFFFFF8,$BBFFFF86,$DBBBF966,	 $BBB776,   $DE967,  $DEEB97; 5584
-		dc.l   $DBDD11,	  $D1D1B,      $DF,	$D1B,	 $D771,	  $DDD66,   $DDCDD,   $DDCCD,	$DCCCC,	  $DDC77,    $D866,	$976,	   $97,	       9,	 0,	   0; 5600
-		dc.l $EB000000,$FF000091,$98B08610,$68986670,$66966680,$E6666780,$F6686680,$66666810,$66668190,$66689190,$96781190,$89999100,$66899000,$66989000,$76978900,$79778900; 5616
-		dc.l $99789000,$F9990000,$FDDD0000,$EB1D0000,$D11D0000,$6111D000,$D111D000,$D1119000,$C1198000,$80119800,$78011800,$78001100,$67000000,$78000000,$98000000, $9000000; 5632
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	   $FF00,      $F0,	 $F0,	  $FF0,	$DDDDBBB,  $DBDFFF,  $BBFEEF; 5648
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,$F0000000,$F0000000,$B0000000,$BFB00000,	       0,$FF000000,$BB000000; 5664
-		dc.l	     0,	       0,	$D,	 $DE,	  $DF9,	   $DE97,   $DE976,  $DFFF86,	$DDDFF,	     $9B,      $9B,	  $D,	     0,	       0,	 0,	   0; 5680
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 5696
-		dc.l  $BBFEEEE,$BBFEEEFF,$DFFEEE66,$EFEEEEE6,$8FEEEEEE,$77EEEEEE,$6FFFEFFF,$FFFFFFF7,$FFFFFF76,$BFFFF776,$BFFFFFF8,$BBFFFF86,$DBBBF966,	 $BBB776,   $DE967,  $DEEB97; 5712
-		dc.l   $DBDD11,	  $D1D1B,      $DF,	 $7D,	  $DD1,	   $DD76,    $DDD6,    $DCCD,	 $DCCC,	   $DCCC,    $DD77,	$D76,	   $97,	       9,	 0,	   0; 5728
-		dc.l $EBB00000,$FF000011,$98B08610,$68986670,$66966680,$E6666780,$F6686680,$66666810,$66668190,$66689190,$96781190,$89999100,$66899000,$66989000,$76978900,$79778900; 5744
-		dc.l $99789000,$F9990000,$FF1D0000,$EB1D0000,$FBB10000,$1D11D000,$66111000,$DD11D000,$CD119000,$CC119000,$78011900,$67801100,$67800100,$76700000,$97800000, $9800000; 5760
-		dc.l	   $77,	  $87766,  $866666, $7666666,$76666666,$88887766,$80000087,	  $B,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 5776
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 5792
-		dc.l $7FF00000,$66FFF000,$6FFEEFF0,$6EEEEEFF,$6FEEEEEF,$FFEEEEEE,$7FEEEEEE,$BBFFFFFF,$BBBBFFFF,	$BBBBBBB,   $BBBBB,	   0,	     0,	       0,	 0,	   0; 5808
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 5824
-		dc.l	     0,	       0,	 0,	   0,$FF000000,$EEF00000,$EFFB0000,$FFBBB000,$BBBDDD00,$BDDDDDD0,$DDDDDDD0,$DDDBBDDD,$DBBBBBDD,$DBBBBBBD, $BBFBBBD, $EEFFBBD; 5840
-		dc.l  $EFFFBB9,	 $FFFB89,   $77889,   $77889,	 $7889,	   $8889,     $890,	$890,	  $890,	    $900,    $8000,	   0,	     0,	       0,	 0,	   0; 5856
-		dc.l	   $BB,	  $88EEE,  $7666EE, $766666E, $766666E,$76666666,$76666677,$77777788,$88880000,$80000000,	 0,	   0,	     8,	       8,     $888,	 $89; 5872
-		dc.l $BBBBB000,$EEEFFBBB,$EEEEEFBB,$EEEEFFBD,$EFFFFBDD,$FFFBBDDD,$FBBBDDD0,$BDDDDDD0,$DDDBDDD0,$988BBBD0,$8888BBD0,$88888D00,$88888D00,$88889000,$88990000,$99000000; 5888
-		dc.l	     0,	       0,	 0,	  $B,	   $BE,	    $76E,    $7666,    $7666,	$76666,	 $866667,  $866677,  $866787, $8767889,	$8788990,  $990000,	   0; 5904
-		dc.l	     0,	   $BB00, $BBFEEB0,$BFEEEBD0,$EEEEFDD0,$EEEFBB00,$EEFFBD00,$7FFFD000,$7FFBD000,$778D0000,$78900000,$89000000,	     0,	       0,	 0,	   0; 5920
-		dc.l	     0,	    $DDD,   $DDBBD,  $988BBD, $98888BB,	$988888D,$9888888D,$9888889D,$98880000,$88000000, $8000000,	   0,	     8,	       8,	 8,	 $88; 5936
-		dc.l   $DDDBB0,$DDDDBBB0,$DDDBFFB0,$DDBFFEFB,$DBBFEEFB,$DBFFEEEB,$DBFFEEEB,$BFFEEEEB,$876EEEEB,$87666EEB,$766666E0,$76666680,$76666680,$76666700,$76677000,$77700000; 5952
-		dc.l	     0,	       0,	 0,  $777770, $7700000,	$7000000, $7600000, $6600000,$66600000,	$666EE00, $6666EE0,  $666FEE,	$666EE,	   $666E,     $660,	 $60; 5968
-		dc.l	   $60,	       6,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 5984
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,    $7000,    $7700,	  $770,	     $88,      $78,	   8,$EE00000F,$FFFF000F,$FF0000BB, $F00000B; 6000
-		dc.l   $F00000,	       0,$70000000, $7000000,  $700000,	   $7000,	 8,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 6016
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,$80000000,$88000000,$88800000,$FF880000,$FBB88000,$BBBB8800; 6032
-		dc.l  $BBBB000,	 $BBB800,   $B8880,	$880,	  $888,	     $80,      $80, $8000800,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 6048
-		dc.l	     0,$F00F0000, $F00F000,  $F00F0F,  $F00F0F,	  $F0F0F,   $FBFFB,   $BBFFF, $DDDFEEE,	 $DBFEEF,  $DBEEEE,   $BFEEE,	$BFEEE,	  $BFFEE,   $DFFEE,   $DE8FE; 6064
-		dc.l	     0,	       0,	 0,	$100,	  $180,	    $678,$BB008668,$EFBB8667,$F9899666,$66666686,$66666666,$EEEEF666,$EEEF7666,$EEFF7666,$EEFF7669,$FFFF6788; 6080
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,$80000000,$89900000,$81990000,$81190000,$89110000,$78910000,$79999000,$99888900,$66977800; 6096
-		dc.l   $DF187F,	 $BE8766, $BE1766F, $DE8FFBD, $DFFBD99,	$DDDD000,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 6112
-		dc.l $FFFF7F86,$FFFFFF86,$FFFFFF97,$BFFFBBB9,$BBBBBBDE,$9DDD00DE,      $DB,	  $D,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 6128
-		dc.l $66697890,$66797890,$677999DD,$991BFD11,$BD1BFEB1,$D1DDBFD1,$D1071116,$D00D766D,	$DDDDD,	  $DDCCC,   $DDDCC,    $DDCC,	   $DD,	       0,	 0,	   0; 6144
-		dc.l	     0,	       0,	 0,$DD000000,$11D00000,$11199000,$11199900,$D1111110,$CC000000,$C7990000,$76679900,$76666790,$99999990,	       0,	 0,	   0; 6160
-		dc.l	     0,	       0,  $FF0000,    $F0F0, $FF00F0F,$F0FF0F0F,   $FBFFB,   $BBFFF,  $DDFEEE,	 $DBFEEF, $DDBEEEE,   $BFEEE,	$BFEEE,	  $BFFEE,   $DFFEE,   $DE8FE; 6176
-		dc.l	     0,	       0,	 0,	$100,	  $180,	    $678,$BB008668,$EFBB8667,$F9899666,$66666686,$66666666,$EEEEF666,$EEEF7666,$EEFF7666,$EEFF7669,$FFFF6788; 6192
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,$80000000,$89900000,$81990000,$81190000,$89110000,$78910000,$79999000,$99888900,$66977800; 6208
-		dc.l	$DE87F,	 $DF1766,  $BE766F,  $E17FBD,  $F8FFD9,	 $DFDD00,  $DD0000,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 6224
-		dc.l $FFFF7F86,$FFFFFF86,$FFFFFF97,$BFFFBBB9,$BBBBBBDE,$9DDD00DE,      $DB,	  $D,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 6240
-		dc.l $66697890,$66797890,$6779991D,$991BFFD1,$BD1BFEBB,$D1DDDBFD,$D1007111,$D000D766,	 $DDDD,	   $DDCC,    $DDDC,	$DDC,	    $D,	       0,	 0,	   0; 6256
-		dc.l	     0,	       0,$D0000000,$1DD00000,$111D0000,$11199000,$61119990,$DD111111,$DCC00000,$CC799000,$C7667990,$C7666679,$D9999999,	       0,	 0,	   0; 6272
-		dc.l	     0,	       0,	$F,	$7FF,	 $86FE,	  $7666E,  $866666,  $76666F, $8666666,	$8666688, $7667800, $7680000, $7700000,	$8800000, $8000000,	   0; 6288
-		dc.l	   $FF,	 $FFFEEF,$FFEEEEEF,$EEEEEEFF,$EEEEEFFF,$EEEEFFFB,$FEEFFFBB,$FFFFBBB0,$7FBBBB00,$BBBB0000,	 0,	   0,	     0,	       0,	 0,	   0; 6304
-		dc.l $FBBDD000,$FBDDDDD0,$BBDDDDBD,$BDDDBBBB,$BDDDBBBB,$D0DBBBBB,   $BBBFF,    $BBEF,	   $EF,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 6320
-		dc.l	     0,	       0,$D0000000,$BD000000,$BB990000,$BBB89000,$FB888900,$FF888800,$F7788890,	$7778890,   $88889,	 $89,	     9,	       8,	 0,	   0; 6336
-		dc.l	   $BE,	     $BE,     $BEE,	$BEE,	  $FEE,	   $BEEE,    $BE6E,    $F667,	 $7666,	   $7666,     $666,	$766,	  $866,	     $76,      $86,	   8; 6352
-		dc.l $BD000000,$BD000000,$FBD00000,$FBD00000,$FFD00000,$FFBD0000,$FF8D0000,$7F8B0000,$77890000,$77890000,$77800000,$78900000,$78900000,$78000000,$89000000,$90000000; 6368
-		dc.l	   $BF,	    $BFE,    $BEEE,   $BEEEE,  $BEEEEF,	 $EEEEEF, $87EE6EF, $76666FF,$87666677,$86666679,$86666778,$76667780,$66677780,$66777800,$67889000,$78000000; 6384
-		dc.l $FBD00000,$FFDD0000,$FFDDD000,$FFDDD000,$FBDDDD00,$FBDDDBD0,$FDDBBBD0,$FDDBBBBD,$FDB8888D,	$9888889,  $888889,  $888889,	$88889,	   $8889,    $8890,	$890; 6400
-		dc.l	     0,	       0,	 0,	   0,	     0,	   $7000,   $70000,  $700000, $7700000,	$7700000,  $77600E,   $66666,	 $6666,	     $66,	 0,	   0; 6416
-		dc.l	     0,	       0,	 0,   $77788,	   $77,	       0,	 0,	   0,	    $F,	   $EEFF,$EEEEEFF0,$6FEEEFFF,$66666000,$66666600,     $666,	   0; 6432
-		dc.l	     0,	       0,	 0,$88888888,$888FFBBB,	$FFFBBBB,  $BBBBBB, $BBB0000,	     0,	       0,	 0,$F0000000,	     0,	    $700,$77777000,	   0; 6448
-		dc.l	     0,	       0,	 0,	   0,$88880000,$B8888000,$BB088800,	$800,	  $800,	    $800,	 0,  $800000,$80000000,	       0,	 0,	   0; 6464
-		dc.l	     0,	       0,	 0,	   0,	     0,	    $F00,$FFFF00F0,    $F0FB,$FF000FFF,	 $FFFBFE,    $FBFE,	$DDF,	 $DDBB,	     $DB,	 0,	   0; 6480
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 6496
-		dc.l  $1000000,	$9178881,  $666768,  $866666,	$86686,	 $B99666,$BF886666,$EF966EF6,$EF66EEF7,$EF6EEEFF,$EEEEEEFF,$EEEEEEEF,$FEEEEEFF,$BFFEEEFF,$BBFFF7FF, $BDE876F; 6512
-		dc.l   $DF1766,	 $DFE76B,   $DE1FD,   $DE8FD,	 $DFFD,	   $DFD0,     $D00,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 6528
-		dc.l	     0,$99900000,$11110099,$89199988,$68899877,$66798997,$66696669,$66986677,$66866677,$77F86769,$F7FF979B,$FFFFFBEE,$FFFFBBDE,$FFFFBB0D,$FFFBB000,$FBBBD000; 6544
-		dc.l $DBBD0000,$99900000,$90000000,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 6560
-		dc.l	     0,	       0,	 0,$90000DD9,$89DDD111,$79D11111,$99DB1111,$9FFED6DD,$1BFB16DD,$11D176DC,$DD0D7DCC,$D100DDDD,$BD000DDD,$D0000000,	 0,	   0; 6576
-		dc.l	     0,	       0, $8810000,$89110000,$91100000,$11000000,$10887889,$C8776790,$C7667900,$C7679000,$CC890000,$CDD00000,$DD000000,	       0,	 0,	   0; 6592
-		dc.l	     0,	       0,	 0,	   0,	     0,	   $B000,    $F0FB, $FFBB0FB,	  $BFF,	 $FFFBFE, $F00FBFE, $F000DDF,	  $DBB,	    $DDB,     $D00,	   0; 6608
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 6624
-		dc.l  $1000000,	$1178881,  $666768,  $866666,	$86686,$B0B99666,$BF886666,$EF966EF6,$EF66EEF7,$EF6EEEFF,$EEEEEEFF,$EEEEEEEF,$FEEEEEFF,$BFFEEEFF,$BBFFF7FF, $BDE876F; 6640
-		dc.l   $DE9766,	  $DF978,    $DE9F,	$DEF,	   $DF,	      $D,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 6656
-		dc.l	     0,$99900000,$11110099,$89199988,$68899877,$66798997,$66696669,$66986677,$66866677,$77F86769,$F7FF979B,$FFFFFBEE,$FFFFBBDE,$FFFFBB0D,$FFFBB000,$FBBBD000; 6672
-		dc.l $FBBD0000,$F9900000,$D0000000,$D0000000,$D0000000,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 6688
-		dc.l	     0,	       0,	 0,$90000D1D,$89DD1111,$7911B111,$99FBBD6D,$9FFEF16D,$1BFD166D,$11D7D7DC,$DD00DDDC,$D1000DDD,$BD000000,$D0000000,	 0,	   0; 6704
-		dc.l	     0,	       0,  $911000,$99110000,$11100000,$11088788,$DC877679,$CC766790,$CC767900,$CC779000,$CCDD0000,$DDD00000,	     0,	       0,	 0,	   0; 6720
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	$B,	$BBB,	 $BBBF,	   $BBBF,   $B0BFF,   $B0BFF,  $B0BFFF,	   $BFFF,   $BBFFF,   $BBFFF; 6736
-		dc.l   $BBBFFF,	 $BBBBFF,  $B0BBBB,  $B0BBBB,	$B0BBB,	  $B0BBB,    $B0BB,	 $BB,	   $BB,	      $B,	$B,	   0,	     0,	       0,	 0,	   0; 6752
-		dc.l	     0,	       0,    $BBBB,  $BB00BB, $B00BBBB,	 $BBFFFF,$BBFFFEEF,$FFFFFEEE,$FFFFFFFE,$FFFFFFEF,$FFFFFFEE,$FFFFFFFF,$FFFFFFFE,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF; 6768
-		dc.l $FFFFFFFF,$FFFFFFFB,$FFFFFFBF,$BFFFFBBF,$BBBBFBBB,$BBBBBBBB,$BBBBBBBB,$BBBBBBBB,$BBBBBBBB,$BBBBBBBB,$BBBBBBBB,$BB00BBBB,  $BB00BB,	   $B000,	 0,	   0; 6784
-		dc.l	     0,	       0,   $B0000,$BB00BB00,$BBBB00BB,$FEEEBBBB,$EEEEEEBB,$EEEEEFEE,$EEEEFEEF,$FFEEEEEE,$EEFEEFEE,$FEEEEEFF,$EEEEFEEF,$EEEFFFEF,$EEFFFFFF,$EEFFFFFF; 6800
-		dc.l $FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$BBFFFFFF,$FFFBBFFF,$BBBBFFFB,$BBBBBBBB,$BBBBBBBB,$BBBBBBBB,$BBBBBB00,$BBBB00B0,$BB00BB00,$BBBB0000,	 0,	   0; 6816
-		dc.l	     0,	       0,	 0,	   0,	     0,$B0000000,$B0000000,$BB000000,$FB000000,$FB0B0000,$EFB0B000,$EEB0B000,$FFFB0B00,$FFFB0B00,$FFFBBB00,$FFFBBB00; 6832
-		dc.l $FFFBB000,$FFFBB000,$FFFB0000,$FFFB0B00,$FFB0B000,$FBB0B000,$BBBB0000,$BBBB0000,$BBB00000,$B0000000,	 0,	   0,	     0,	       0,	 0,	   0; 6848
-		dc.l	     0,	       0,	 0,	   0,	     0,	     $BB,	 0,	  $B,	   $BF,	    $BBF,    $BBFF,   $BBBFF,	$BBFFF,	 $B0BFFF,  $B0BFFF,  $B0BFFF; 6864
-		dc.l	 $BBFF,	   $BBBF,   $BBBBB,   $BBBBB,	$BBBBB,	  $BBBBB,    $B0BB,    $B0BB,	  $B0B,	    $B00,	 0,	   0,	     0,	       0,	 0,	   0; 6880
-		dc.l	     0,	       0,	 0,  $BBBB00,$BBBBBBBB,	 $BBFFFF,$BBFFFFEE,$FFFFFFFE,$FFFFFFFE,$FFFFFFEE,$FFFFFFFE,$FFFFFFFE,$FFFFFFFF,$FFFFFFFF,$FFFFFFFE,$FFFFFFFE; 6896
-		dc.l $FFFFFFFB,$FFFFFFFB,$FFFFFFBB,$BBBFFBBB,$BBBBBBBB,$BBBBBBBB,$BBBBBBBB,$BBBBBBBB,$BBBBBBBB,$BBBBBBBB, $BBBBBBB,  $BBBBBB,	$BB000,	    $BBB,	 0,	   0; 6912
-		dc.l	     0,	       0,$BBB00000,   $BB000,$BBBBBB00,$EEEEBBB0,$FEEEEEBB,$EEEEEFFF,$EEEEEFFF,$EEEEFFFF,$EEEEFFFF,$EEEFFFFF,$EEEEFFFF,$EEFFFFFF,$EFFFFFFF,$FFFFFFFF; 6928
-		dc.l $FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$BFFFFBBB,$BBBBBBBB,$BBBBBBBB,$BBBBBBBB,$BBBBBBBB,$BBBBBB00,$BBBBBBBB,  $BBBB00,	       0,	 0,	   0; 6944
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,  $B00000,$B0B00000,$FB0B0000,$FB0B0000,$FFBBB000,$FFBBB000,$FFFBB000,$FFFBB000,$FFFB0000,$FFFB0000; 6960
-		dc.l $FFFB0B00,$FFFB0B00,$FFBB0B00,$FBBBB000,$BBBBB000,$BBBB0000,$BBB00000,$BB000000,$B0000000,	       0,$BB000000,	   0,	     0,	       0,	 0,	   0; 6976
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,      $BB,	$BBB,	 $B0BF,	  $B00BF,     $BFF,	$BFF,	 $BFFF,	  $BBFFF,   $BBFFF,   $BBFFF; 6992
-		dc.l   $B0BBFF,	 $B0BBBF,  $B0BBBB,  $B0BBBB,	  $BBB,	    $BBB,     $BBB,	$BBB,	   $BB,	     $BB,	$B,	   0,	     0,	       0,	 0,	   0; 7008
-		dc.l	     0,	       0,    $BBBB,	   0,	 $BBBB,$BBBBFEEE,$BBFFFFFF,$FFFFFFFE,$FFFFFFFF,$FFFFFFFF,$FFFFFFFE,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF; 7024
-		dc.l $FFFFFFFF,$FFFFFFBB,$FFFFFFBB,$BFFFFBBF,$BBBBBBBB,$BBBBBBBB,$BBBBBBBB,$BBBBBBBB,$BBBBBBBB,$BBBBBBBB,  $BBBBBB,$B000BBBB, $B000BBB,	       0,	 0,	   0; 7040
-		dc.l	     0,	       0,	 0,$BBB000B0,$BBBB000B,$EEEEBB00,$EEEEEEBB,$EEEEEEFF,$EEEEEEEF,$EFEEFFFF,$EEEEEFFF,$EEEEEFFF,$EEEEFFFF,$EEFFFFFF,$EEFFFFFF,$EEFFFFFF; 7056
-		dc.l $FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$BFFFFFBB,$BBBBBBBB,$BBBBBBBB,$BBBBBBBB,$BBBBBBBB,$BBBBBBBB,$BBBB0000,	     0,$BBBB0000,	 0,	   0; 7072
-		dc.l	     0,	       0,	 0,	   0,	     0,$B0000000,$BB000000,$BB000000,$FBB00000,$FBB00000,$FFB00000,$FFB00000,$FFFB0B00,$FFFB0B00,$FFFB0B00,$FFFB0B00; 7088
-		dc.l $FFFBB000,$FFBBB000,$FFBBB000,$FBBB0000,$BBB00000,$BBB00000,$BB00B000,$BB0B0000,$BBB00000,$BB000000,	 0,	   0,	     0,	       0,	 0,	   0; 7104
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     8,	    $888,    $8999,   $80007,	$80086,	    $899,     $800,	   0; 7120
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,      $BB,   $8888B,$888998BB,$9998877F,$8887776E,$77766666,$66666666,$88776677,$89999899,	   0; 7136
-		dc.l	 $FE00,	  $BFBB0,  $BFEED0,  $BEEFD0, $BFEEFD0,$BFFEEFD0,$BBEEEFD0,$BFEEFFD0,$FEEEFBD0,$EEEEFBD0,$EEEFFBD0,$EEFFBD00,$FFFBDD00,$BBBDD000,$8DD00000,	   0; 7152
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   8,	  $889,	       0,     $800,	 $98; 7168
-		dc.l	    $F,	    $FFF,    $FEEE,   $FEEEE,  $FEEEEE,	 $8EEEEF, $87EEEFF, $866EFFB, $7667788,	$7667788, $667778D,$76677899,$96778899,$96778999, $7679999,$89999900; 7184
-		dc.l $FFFBB000,$EEEEEBB0,$EEEFFFD0,$EEFFFBD0,$FFFFBDD0,$FBFBDDB0,$BBBDDBD0,$BBDBBBD0,$BDBBBBD0,$DBBBBBD0,$BBBBBBD0,$BBBBBD00,$BBBBBD00,$BBBBD000,$DDDD0000,	   0; 7200
-		dc.l	     0,	       0,	 0,	   0,	     0,	     $88,     $766,    $7667,	$78899,	  $79900,   $90000,	   0,	     0,	     $90,	 9,	   0; 7216
-		dc.l	    $B,	    $BBB,    $BFBF,   $88EEE,$87866EEE,$76666EEE,$666666EF,$777777FB,$999788BB,	 $99999D,  $889999, $8888999, $8888890,	$8888800,$98888900, $9999000; 7232
-		dc.l $BBBBBF00,$BFFFFBB0,$FFEEEFD0,$EEEEEBD0,$EEEEFBD0,$EFFFBBD0,$FFFBBD00,$BBBDD000,$DDD00000,$90000000,	 0,	   0,	     0,	       0,	 0,	   0; 7248
-		dc.l	     0,	       0,	 0,	   0,	     0,	     $88,     $888,    $8889,	$88997,	  $89776,    $8999,   $80000,	$80000,	       0,	 0,	   0; 7264
-		dc.l	     0,	       0,	 0,   $888BB,$88888BBB,$88888BBB,$889999FF,$9987776E,$776666EE,$6666666E,$9777767F, $9999888,	  $999,	       0,	 0,	   0; 7280
-		dc.l	 $FE00,	  $FEBD0,$BBFEEFD0,$BBFEEFD0,$BFEEFBD0,$FEEEFBD0,$EEEFFBD0,$EEEEFD00,$EEEFBD00,$FEFFD000,$FBBD0000,$8DD00000,$D0000000,	       0,	 0,	   0; 7296
-		dc.l	     0,	$BDDDDDD,$EBEFFFFF,$FFEEEEEF, $BFEEEEE,	 $BBFFEE,    $BFBF,	$BBB,	   $BB,	     $B8,	 8,	   8,	     8,	       0,	 0,	   0; 7312
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 7328
-		dc.l	     0,$DDD00000,$BBBDD000,$FFFBDD00,$EEFFBD00,$EEEFFBD0,$EEEEFBD0,$FEEEFB80,$BFE66790,$B7666790,$87766680,$98766690,$98766790,$89876790,$89876890,$89876880; 7344
-		dc.l $88976900,	$8908900, $8900880,  $800000,	$88000,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 7360
-		dc.l	     0,	$BDDDBDD, $BFBDDBB,$BEFFBDDB,$BEFFFBDB,$FEEFFFBD,$FEEEFBBB,$FEEEFFBB,$FFEEEFFB,	$FEEEEFF, $FEEEEEF,  $FEEEEE,	$FEEE6,	   $F876,      $88,	   0; 7376
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 7392
-		dc.l	     0,$DDD00000,$BBBDD000,$BBBBBD00,$BBBBBBD0,$BBBBBBD0,$DBBBBBD0,$BDBBBBD0,$88D99990,$88899990,$77788999,$77778899,$66777779,$66667769,$77666679,   $79908; 7408
-		dc.l	$89008,	   $8009,    $8080,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 7424
-		dc.l	     0,	$BDDDD00,$FBFBBBD0,$BFEEFBBD,$BFEEEFBD,$BFEEEFFB,$BFFEEFFB,$BBFEEEFB,$BBFEEEFB,	$BBEEEEF, $BFEEE67,  $B86667,	$86667,	   $8667,    $7667,    $8767; 7440
-		dc.l	  $867,	    $866,      $76,	   7,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 7456
-		dc.l	     0,	       0,	 0,	   0,	     0,$D0000000,$D0000000,$D9000000,$BD990000,$B9999000,$89998890,$89988889,$79888889,$99888889,$90088889,$90000090; 7472
-		dc.l $90000090,$90000900,$89000000,$89000000,$77900000,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 7488
-		dc.l	     0,	$DDDDDD0,$EBFFBBBD,$FEEEFFFF, $FEEEEFE,	 $FFEEEE,  $BBFEEE,  $BBBFEE,	$BBBFE,	  $BBBF6,   $8BB97,   $88897,	$88897,	   $8898,    $8889,    $8889; 7504
-		dc.l	  $889,	    $888,      $88,	   8,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 7520
-		dc.l	     0,	       0,$D0000000,$BD000000,$FFD00000,$EFBD0000,$EEBD0000,$EFF8D000,$EEF89000,$E6789000,$66689000,$66790000,$66790000,$66790000,$76790000,$76900000; 7536
-		dc.l $76900000,$97900000,$97900000,$89800000,$88088000,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 7552
-		dc.l	     0,	   $F000, $FF00F00,   $F00F0,	 $F0F0,	   $F0F0,   $BBFFF,$DDDBBFFB, $DDDFEEF,	 $BBFEEE,  $BEEEE6, $BBFEEEF, $BBFEEEE,	$DFFEEEE, $DEFEEEE,$DF98FEEE; 7568
-		dc.l	     0,	       0,	 0,	   0,$F0000000,$F0000010,      $10,$BB000670,$FFB08668,$F98B8668,$66699667,$E6666668,$FFF66668,$EFFF6668,$FF766668,$FF766678; 7584
-		dc.l	    $B,	     $DF,     $BE9,	$DF8,	  $DFF,	    $DDD,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	 $BB; 7600
-		dc.l	  $BEE,	   $BEEE,   $BEEEE,   $BEEEF,  $87EEEF,	 $86EFFF,  $866FFF,  $86677B,  $866788,	 $867789,  $867899,  $878999,  $889009,	  $89000,   $89000,	$900; 7616
-		dc.l $F887FFFF,$9766FFFF,$766FFFFF,$76FBBFFF,$FBBDDBBF,$DD00DDBB,      $DD,	 $DD,	  $99F,	   $9779,   $96999,  $966679,  $966679,	 $977979,$BBB99998,$EFBBD1D8; 7632
-		dc.l $EFBD1DD7,$EFBD1DDD,$FFBDDDDD,$FBD1DDCC,$FBD1DDCC,$FBD1DDCC,$BBD19668,$BD119667,$D1109670,$11109780,$91009800,$99000000,$99000000,$99000000, $9900000,	   0; 7648
-		dc.l $F7666780,$F6768800,$FF7BBD00,$FF8BD000,$FFBB9070,$BBDD9767,$DDBD7667,$FFE87668,$FDEE7678,$DFEE8770,$1FFF9880,$DBFF9900, $DF11100,$DFE1D000,$1EDD0000,$11110000; 7664
-		dc.l $66999000,$7799C000,$D11DC000,$C1DC0000,$C1CC0000,$CDC00000,$99900000,$99700000,$99000000,$97000000,$70000000,	   0,	     0,	       0,	 0,	   0; 7680
-		dc.l	   $DB,	    $BE9,     $DE8,	$DFF,	  $DDD,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	 $BB; 7696
-		dc.l	 $BBEE,	  $BEEEE,  $BEEEEF,  $BEEEFF, $877EFFF,	$876EFFF, $8666FBB, $8666789,$87666899,$87668999,$86789999,$76790998,$87900998,$98000990,$90000900,$90000900; 7712
-		dc.l $9887FFFF,$8766FFFF,$766FFFFF,$FFBBBFFF,$DDDDDBBF,	   $DDBB,      $DD,	 $DD,	  $99F,	   $9779,   $96999,  $966679,  $966679,	 $977979,$BBB99998,$EFBBD1D8; 7728
-		dc.l $FFBD1DD7,$FBDD1DDD,$FBDDDDDD,$FDD1DDCC,$BDD1DDCC,$BD11DDCC,$DD119668,$D1009667,$D1009670,$10009780,    $9800,	   0,	     0,	       0,	 0,	   0; 7744
-		dc.l $F7666780,$F6768800,$FF7BBD00,$FF8BD000,$FFBB9070,$BBDD9767,$DDBD7667,$FFE87668,$FDEE7678,$DFEE8770,$1FFF9880,$DBFF9900, $DF11100,$DFE1D000,$1EDD0000,$11110000; 7760
-		dc.l $66999000,$7799C000,$D11DC000,$C1DC0000,$C1CC0000,$CDC00000,$99900000,$99700000,$99000000,$97000000,$70000000,	   0,	     0,	       0,	 0,	   0; 7776
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	$DDDD0,	  $DFFFD,   $DF88F,   $DF777; 7792
-		dc.l	 $DF66,	   $DF66,     $DFF,    $DDFF,	$DFDBF,	 $DBFDBB,  $DBEFDB,  $DDEFD7, $DBDBEFD,	$D7FDBED, $DDFFDB9, $D777D97, $1887B97,	$111DCD9, $1DDCCD9, $1111111; 7808
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,$D00BBBBB,$FDDBFFFF,$8FFFFFFF; 7824
-		dc.l $6FFFFEEE,$FFEEEEEF,$FEEEEEEE,$FEEEE618,$FEEE6698,$FFEE6618,$7FFE6666,$6777E666,$96666666,$66666666,$79776666,$66999999,$6667D997,$7677D966,$7779D997,$11111199; 7840
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	$BD000,	 $BDD000,$BBDD0000,$FFEE0000; 7856
-		dc.l $EFFFBE00,$EEFFF0E0,$EEFBF000,$E1EB0F00,$E9EB0F00,$E1B00000,$B6B00000,$B6B00000,$66711000,$66780000,$77800000,$99000000,$79000000,$79000000,$79000000,$90000000; 7872
-		dc.l	     0,	    $DDD,     $DFF,	$DF8,	   $F6,	     $DF,	$D,	  $D,	    $D,	      $D,  $99979D, $9869669,  $976966,	$8697996, $9976976, $8769766; 7888
-		dc.l  $9989877,$70009999,$97780009, $9868000, $9876800,	 $986800,$90976680, $99876E8, $9917EEF,	 $91FEFF,  $991FFF,  $991BFF,	$991BB,	  $DD11D,    $DD11,	$DDD; 7904
-		dc.l	     0,$DD000000,$FFDD0000,$89FFDDDB,$789BBFFF,$67BFFFEE,$FBFFFEEE,$BFFFEEE6,$BFFFEE66,$BBFFEE66,$BBBFEE66,$D77BFE66,$D9667EE6,$97966666,$9976666D,$979766CC; 7920
-		dc.l $97F9976C,$69FE7997,$91BE7789, $DDF6678, $DBF66DD,	$DBF6DEE, $DDBFFFF,$DBDBFBDD,$FBBDDDD1,$FFBBB111,$FFBBDDD1,$FBBBDD10,$BBDD1110,$DD111100,$1111D000,$DD000000; 7936
-		dc.l	     0,	    $DDF,    $DDFD,$BBBDDFD0,$FFFFBBD0,$EEEEFFDF,$EEEEEEB0,$66EE6EF0,$667E66F0,$667E66E0,$617E16E0,$697F96F0,$617F16FE,$66666611,$DDB66679,$CCD66711; 7952
-		dc.l $CC667968,$77779689,$99917699,$99196899,$DD176999,$E7168999,$667CCDD1,$681CCDD1,$181CCDD1,$191CDDD1,  $9CDD10,   $CDD10,	$11100,	       0,	 0,	   0; 7968
-		dc.l	     0,$F0000000,	 0,$FF000000,  $E00000,$F0000000, $F000000,  $E00000,	     0,	$9790000,$97979000,$98769000,$97698600,$86676600,$99669000,$97990099; 7984
-		dc.l $10000979,$10009789,$10009789,$10097789,$10097890,	 $977890, $7DD7890,$78DDD790,$7CDDD100,$8DDDD100,$1CDD1000, $1D11000,  $110000,	       0,	 0,	   0; 8000
-		dc.l	  $B00,	  $FFFEB,     $B9E,	$B89,	  $B68,	     $EE,    $FFB6,   $F00BF,	    $B,	       0,	 0,	   6,	     7,	     $99,     $969,    $8698; 8016
-		dc.l	 $9866,	    $966,  $888099,  $977800,  $996780,	  $99668,   $99961,   $9991C,	 $DD1D,	    $DD1,     $DD1,	 $DD,	    $D,	       0,	 0,	   0; 8032
-		dc.l	     0,	       0,$EB000000,$9EBBBBBB,$EEEBBFFF,$6DBFEEEE,$6DFFBEEE,$6FFB66EE,$DFB661EE,$DF6669EE,$DF6661FF,$8BEE6691,$68666666,$766666DD,$666666CC,$997766CC; 8048
-		dc.l $88F99766,$8DEFB999,$90DF8766,  $B87666,  $B87666,	  $E8777,$6DEBF88F,$67DDDBFB,$C7D00111,$C880DD1D,$CC00DD1D,$1C00DD1D,$1000DBDD,	    $DBD,      $DB,	  $D; 8064
-		dc.l	     0,	      $B,     $BBF,$BBBBBF99,$FFBBF976,$EEFFBF67,$EBEEFB7F,$66BEEFFB,$166BEFBD,$9666EBD0,$1666EBD0,$666EBB90,$66666779,$66666667,$66666679,$66779969; 8080
-		dc.l $7799D898,$9BDDB989,$79BFBD98,$78FBD000,$78FD0000,$8FBD0000,$FEEDD000,$DDEFD66C,$11DD76CC,$DD1D87C1,$DDD11CC1,$BBBB1C1D,$BBFBBC1D,$BFEEFBDB,$1DFEEFB9,$D1DDDD99; 8096
-		dc.l	     0,$FF000000,$9F000000,$7F000000,$7D000000,$B0000000,$D0000000,	   0,	     0,	       0,	 0,	   0,$90000000,$99000000,$97900000,$69690000; 8112
-		dc.l $66979000,$76690000,$99900000,	   0,	$88000,	$8769900,$87699000,$76999000,$19990000,$1DDB0000,$DDB00000,$DD777000,$B8888700,$98999980,$99000090,$90000000; 8128
-		dc.l	     0,	       0,	 0,	   0,	     0,	      $B,      $BF,	$BFE,	 $BFFE,	   $BFEE,    $BFEF,    $BFEF,	 $BFEE,	    $DFE,   $98DFE,  $98DDBB; 8144
-		dc.l   $977DDD,	 $D97669,  $DD9990, $DCCCD00, $DCCCD00,	$9887900, $9766000, $9666000, $9766000,	$9767000,  $870000,  $990000,	     0,	       0,	 0,	   0; 8160
-		dc.l	     0,	      $D,	$D,	 $DF, $BBDD0DF,$BFFBBDDF,$EEFFBBDF,$EEEEFBDF,$EEEFFDDB,$EEFFFDBB,$FFFFFDBF,$B9FFBBFF,$B9BEFBFF,$F78FFBBB,$B17FDBB8,$B1DFED86; 8176
-		dc.l   $DFEDD8,	 $DFEE88,  $1DF999, $11D9876, $1D98766,	$1D98766, $1198766, $1919887, $1990999,	$1980000, $1900000, $9800000,	     0,	       0,	 0,	   0; 8192
-		dc.l $DD000000,$FFD00000,$F9ED0000,$88ED0000,$778ED000,$6789EDBB,$66FEEEEE,$FFEEEEEE,$FEEEEE7F,$FEEEE766,$FEEE7666,$FEEE7666,$FFEE6661,$BFFE6669,$6BFFE661,$66666666; 8208
-		dc.l $66666666,$76666669,$88877677,$90099990,$8800DDDD,$89000DD9,$900000D9,$90000009,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 8224
-		dc.l	     0,	  $DD000,  $DDB000, $DDBD000,$DDDDFFFF,$FDBFD000,$EEFFFF00,$EEEDD0F0,$EEFEF00F,$FE7FBF00,$FF6FB0F0,$FF6F00F0,$FF1F0000,$FF9F0000,$FF100000,$66781100; 8240
-		dc.l $66667000,$66770000,$78000000,	   0,$99900000,$79780000,$79780000,$99880000,$99900000,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 8256
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	   $6666, $66600FF,$70000000, $7780000,	   $8800,	 0,	   0; 8272
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	 $6666,$6666EEFF,$EEEEEEF0, $FFFEEFF,	   $FE,	      $E,   $BBBBE,	  $B; 8288
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,$76780000,$F0007778,	 0,	   0,$BBBBBBB0,$BDDDDBBB,$BDD00000,$B0000000; 8304
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,$78880000,    $7780,	 $BB,	 $BB00,$BBBB0000,	 0,	   0; 8320
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	$B,	  $B; 8336
-		dc.l	   $BB,	     $BB,     $BBB,	$BBB,	  $BBB,	    $BBB,    $BBBB,    $BBBB,	  $BBB,	    $BBB,      $BB,	   0,	     0,	       0,	 0,	   0; 8352
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	$B,	 $BF,	  $BFF,	  $BBFFF,  $BFFFFF,  $BFFFFF, $BFFFFFF,$BBFFFFFF,$BBFFFFFF,$BFFFFFFF; 8368
-		dc.l $BFFFFFFB,$BBFFFBBF,$BBBBBBBF,$BBBBBBBF,$BBBBBBBB,$BBBBBBBB,$BBBBBBBB,$BBBBBBBB,$BBBBBBBB,$BBBBBBBB,$BBBBBBB0,$BBBBB000,	     0,	       0,	 0,	   0; 8384
-		dc.l	     0,	       0,	 0,	 $BB,  $BBBBFF,	$BFFEEEE,$BFEEEEEE,$FFEEEEEE,$FFEEEEAA,$FFFEEA66,$FFFEEA66,$FFEEEEAA,$FEEFEEFE,$FEFFFFFF,$FFFFFFFF,$FFFFFFFF; 8400
-		dc.l $FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFB,$FFFFFFBB,$BFFFFBB0,$BBBFB000,$BBBB0000,$BBB00000,$B0000000,	 0,	   0,	     0,	       0,	 0,	   0; 8416
-		dc.l	     0,	       0,	 0,	   0,$BB000000,$FEB00000,$EEEBB000,$EEEEB000,$EEEEB000,$AEEEB000,$AEFFB000,$EEFFB000,$EFFB0000,$FFFB0000,$FFB00000,$FFB00000; 8432
-		dc.l $FBB00000,$FB000000,$B0000000,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 8448
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	$B,	 $BB; 8464
-		dc.l	   $BB,	    $BBB,     $BBB,	$BBB,	  $BBB,	   $BBBB,    $BBBB,    $BBBB,	 $BBBB,	    $BBB,      $BB,	  $B,	     0,	       0,	 0,	   0; 8480
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	$B,	 $BE,	  $BFF,	   $BFFF,   $BFFFF,  $BFFFFF, $BFFFFFF,$BBFFFFFF,$BFFFFFFF,$BFFFFFFF; 8496
-		dc.l $BFFFFFFF,$BBFFFFFF,$BBBFFBFF,$BBBBBBBF,$BBBBBBBB,$BBBBBBBB,$BBBBBBBB,$BBBBBBBB,$BBBBBBBB,$BBBBBBBB,$BBBBBBB0,$BBBBB000,	     0,	       0,	 0,	   0; 8512
-		dc.l	     0,	       0,	 0,	   0,	$BBBBB,	$BBEEEEE,$BEEEEEEE,$EFFFEEEE,$FFFFEEAA,$FFFFEA66,$FFFFEA66,$FFFFEEAA,$FFFEEEFE,$FFEEEFFF,$FEEFFFFF,$FEFFFFFF; 8528
-		dc.l $FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFB,$BBBBBBB0,$BBBBBB00,$BBBBBB00,$BBBB0000,$BBB00000,$BB000000,	 0,	   0,	     0,	       0,	 0,	   0; 8544
-		dc.l	     0,	       0,	 0,	   0,$B0000000,$EFB0B000,$EEFBB000,$EEEEB000,$EEEEB000,$AEEEB000,$AEEFB000,$EFEFBB00,$FFFBB000,$FEFBB000,$FFFB0000,$FFB00000; 8560
-		dc.l $FFB00000,$FB000000,$BB000000,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 8576
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	$B,	 $BB; 8592
-		dc.l	  $BBB,	    $BBB,     $BBB,	$BBB,	 $BBBB,	   $BBBB,    $BBBB,    $BBBB,	  $BBB,	    $BBB,      $BB,	   0,	     0,	       0,	 0,	   0; 8608
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	$B,	 $BE,	 $BBEE,	   $BEEF,   $BFFFF,  $BFFFFF,$BBFFFFFF,$BFFFFFFF,$BBFFFFFF,$BFFFFFFF; 8624
-		dc.l $BFBFFFFF,$BBFFFFFF,$BBBFBBFF,$BBBBBBFF,$BBBBBBBF,$BBBBBBBF,$BBBBBBBB,$BBBBBBBB,$BBBBBBBB,$BBBBBBBB,$BBBBBBBB,$BBBBB000,	     0,	       0,	 0,	   0; 8640
-		dc.l	     0,	       0,	 0,	$B00,	$BBBBB,$BBBEEEEE,$BEEEEEEE,$EEEEEEEE,$FFFEEAAE,$FFFEAA6A,$FFFEA666,$FFFEAA6A,$FFEEEAAA,$FEEEEEEE,$FFFFFFEE,$FFFFFFFF; 8656
-		dc.l $FFFFFFFF,$FFFFFFFF,$FFFFFFFF,$FFFFFFFB,$FFFFFFBB,$FFBFFB00,$BBFFB000,$BBBB0000,$BB000000,$B0000000,	 0,	   0,	     0,	       0,	 0,	   0; 8672
-		dc.l	     0,	       0,	 0,	   0,$BB000000,$EFBB0000,$EEFB0000,$EEEEB000,$EEEEB000,$AEEEBB00,$AEEEBB00,$AEEEB000,$EEEB0000,$EEEB0000,$EFBB0000,$EFBB0000; 8688
-		dc.l $FB000000,$FB000000,$B0000000,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 8704
-		dc.l	     0,	       0,     $DDD,	$DEE,	  $DE8,	    $DE7,     $DE6,	$DE6,	  $DF6,	    $DFF,     $DFF,	$DFF,	  $D77,	   $9766,    $7666,    $9977; 8720
-		dc.l	     0,	       0,	 0,$DD000000,$EEDD0000,$89EBDB00,$779FEEBB,$6FFEEEEE,$FEEEEEEE,$FEEE76EE,$FEE7666E,$FF76671E,$FF66677F,$776661FF,$666671FF,$66666666; 8736
-		dc.l	     0,	       0,	 0,	   0,	     0,	  $DDD00,$BDDDBB00,$FFBBB000,$EEFBB000,$EEFFFE00,$EE6FF0EF,$E66B0F00,$E1FB0F00,$F7FB00F0,$17B000F0,$61100000; 8752
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 9,	 $DD,	  $DDC,	   $DDCC,    $DCC6,    $1111; 8768
-		dc.l	 $9D99,	   $DBEB,   $DBFFE,   $DBFFD,	$DBF71,	 $DBFF77,  $DBFE77,  $DFEE67, $DBEED99,$96BED000,$86690000,$99600000,$78000000,$6678000D,$6667800D,$11111001; 8784
-		dc.l $77687666,$99766667,$EB978889,$FEE9999D,$DFEEBDDD,$9DDFEB69,$791DD697,$7891D997,$8911DDD9,$991DBD00,  $DBBD00, $88BD000,$88990000,$DDD99900,$DDD99999,$11111111; 8800
-		dc.l $66690000,$77900000,$99080000,  $890000,$D8960000,$99670000,$96680000,$66690000,$97790000,	$9780000,  $990000,	   0,	     0,	       0,	 0,$10000000; 8816
-		dc.l	 $9D99,	   $DBEB,   $DBFFE,   $DBFFB,	$DBFDD,	  $DBFFD,   $DBBFE,   $1DBBF,	 $1D7D,	   $1D76,    $DCD7,   $DCCCD,	$1CCCC,	 $111CC6,  $111166, $1111111; 8832
-		dc.l $77687666,$99766667,$EB978889,$FEEF999D,$DBFEE769,$1DDDB696,$D819D999,$ED890000,$FED10000,$DFD00000,$6D000000,$C0000000,$79900000,$67790000,$66679000,$11111900; 8848
-		dc.l $66690000,$77900000,$99090000,$99960000,$96670000,$66690000,$76790000,$99780000,  $990000,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 8864
-		dc.l	 $9D99,	   $DBEB,   $DBFFE,   $DBFFD,	$DFED9,	  $DFEED,   $DBFEE,    $DBBB,	  $1DB,	  $9911D,  $119910, $1DD1100, $1DDDD00,	$1DDD910,  $1DD991,   $11111; 8880
-		dc.l $77687666,$99766667,$EB978889,$FEE9999D,$DFEEBDDD,$9DDFEB69,$DD9DD699,$EFD19997,$BBFD0099,$DBFD0000, $7766000, $8766000,$1DDDDC90,$1DCCC679,$1DCC6667,$11111111; 8896
-		dc.l $66690000,$77900000,$99080000,  $890000,$D8960000,$99670000,$96680000,$66690000,$97790000,	$9780000,  $990000,	   0,	     0,$90000000,$79900000,$11100000; 8912
-		dc.l	 $9D99,	   $DFEB,   $DBFFE,   $DBFFB,	$DBFDD,	  $DBFE7,   $DBEB6,   $DFED6,  $DBFED7,	 $DBED09, $D678001, $D688001,$DCCC9001,$DCC67891,$DC666678,$D1111111; 8928
-		dc.l $77687666,$99766667,$EB978889,$FEEF999D,$DBFEE769,$9DDDB696,$7899D999,$77891000,$789DD000,$991DBD00,$11DBBD00,$DD1DD000,$DD000000,$79000000,$97900000,$11111000; 8944
-		dc.l $66690000,$77900000,$99090000,$99960000,$96670000,$66690000,$76790000,$99780000,  $990000,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 8960
-		dc.l	     0,	 $DDDD00,  $DFEEDD,  $DF79EE,  $DF7778,	 $DE6677,   $DB66F,   $DBFFF,	$DBBFF,	   $DBFF,    $DBFF,    $DBF6,	 $DB86,	   $DD97,$99990D76,$766699D9; 8976
-		dc.l	     0,	       0,$D000000D,$EFDDBBBD,$9FFFEEEE,$FFEEEEEE,$FEEE76FE,$EEEE666F,$EEE7666E,$EEE6661E,$FEE6668E,$77E6661F,$66666666,$66666666,$66666966,$88766667; 8992
-		dc.l  $D000000,$DDD00000,$DDFFF000,$EED00000,$EDDEE000,$EEE00000,$EFDFFF00,$F6B000F0,$F6B00000,$F1B00000,$F8B00000,$F1B00000,$66661900,$66678000,$67890000,$89790000; 9008
-		dc.l $9996696D,$779679FE, $97790DB,  $99000D,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 9024
-		dc.l $DDDD9911,$EED88881,$FEE76667,$BFF76668,$DFF86689,$DFFFDDD9, $DFFEEED,  $DDDEE9,	  $D97,	    $976,     $987,	 $99,	    $D,	      $D,	 0,	   0; 9040
-		dc.l $16979000,$97799000,	 0,	 $87,$DDD00866,$FFFD8669,$DFEF6699,$76DC6999,$6DCC9999,$DCC11DDD,$DCC11DD1,$CC11DD11,$C11DD111,$C11DD111,$11D0011D,	   0; 9056
-		dc.l	     0,	       0,$78000780,$69087699,$99866999,$99669999,$99699990,$99199990,$91111D00,$D111D000,$111D0000,$11D00000,$1D000000,$D0000000,	 0,	   0; 9072
-		dc.l	     0,	 $DDDD00,  $DFEEDD,  $DF79EE,  $DF7778,	 $DE6677,   $DB66F,   $DBFFF,	$DBBFF,	   $DBFF,    $DBFF, $900DBF6,$9690DB86,$9769DD97,$99769977,$997769E9; 9088
-		dc.l	     0,	       0,$D000000D,$EFDDBBBD,$9FFFEEEE,$FFEEEEEE,$FEEE76FE,$EEEE666F,$EEE7666E,$EEE6661E,$FEE6668E,$77E6661F,$66666666,$66666DD6,$7666CCD6,$9876CC67; 9104
-		dc.l  $D000000,$DDFFF000,$DED00000,$EDD0E000,$EDEE0000,$EED0FFF0,$EFDF0000,$F6B00000,$F6B00000,$F1B00000,$F8B00000,$F1B00000,$66661900,$66678000,$67890000,$89799000; 9120
-		dc.l $97669DDE,	$99900DB,	$D,	  $D,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 9136
-		dc.l $FDD98891,$EED89981,$BEE76667,$BFF76668,$DFF86689,$DFFFDDD9, $DFFEEDD,  $DDFEED,	 $DFD9,	    $D97,     $976,	$987,	   $9D,	      $D,	$D,	   1; 9152
-		dc.l $D9999000,$D9000000,	 0,	   0,$DDDD0088,$FFFFD866,$DDEF8669,$9DDC6699,$76DC6999,$6DCC9999,$DCC11DDD,$CC11DDD1,$C11DDD11,$C1DDDD1D,$11DDD000,$1DD00000; 9168
-		dc.l	     0,	    $770,   $87699,$88866999,$69669999,$99699990,$99999990,$99111D00,$9111D000,$111D0000,$11D00000,$1D000000,$D0000000,	       0,	 0,	   0; 9184
-		dc.l	  $600,	  $90670,    $9660,    $9767,	 $6666,	  $66888,	 0,	   0,	     0,$18880000, $1777809,  $176CD8,	$1CCCD,	   $1CCD,     $1DD,	 $1D; 9200
-		dc.l	     0,$DBB00000,$BFEBDB0B,$BF79FDBB,$BF779FFF,	$B667FEE, $BF6FEEE,  $DFFEE7,  $DFFE76,	 $DFFE66,  $DFFE66, $67FFE66,$B8667E66,$767666E6,$B9666666,  $B97666; 9216
-		dc.l	$D9866,	 $DB7899,$8DEE6778,$66EB6677,$6900D667,$D0000BBB,$D0000000,	   9,	     9,	      $D,      $DD,	 $98,	  $987,	    $187,      $17,	   1; 9232
-		dc.l	     0,	       0,$DBBBB000,$FFFFFBDD,$EEEEEFBF,$EEEEEEFE,$EEEEEEEB,$6EEEE7FF,$66EE66FF,$66FF66FF,$61FF16FB,$68F686FD,$61E616F8,$66619676,$66666666,$69666667; 9248
-		dc.l $66666780,$77778000,$899FED00,$889DFED6,$89EBDD79,$FEB00D79,$DED00000,$11600000,$76700000,$87C00000,$CCC00000,$CCC00000,$7CC00000,$66C00000,$66C00000,$99900000; 9264
-		dc.l	     0,	       0,$DDD00000,$FFD00000,$6FD00000,$EEFFF000,$BD000000,$EEF00000,$BD0F0000,$D000F000,$D0000000,$86000000,$60000000,$77000000,$70000000,	   0; 9280
-		dc.l	     0,	       0,    $6000,$96668000,$66880000,$67990000,$86000000, $8600000,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 9296
-		dc.l	     0,	$DBB0000, $BFEBDB0, $BF79FDB, $BF779FF,	 $B667FE,  $BF6FEE,   $DFFEE,	$DFFE7,	  $DFFE6,   $DFFE6,  $67FFE6,  $8667E6,	$767666E,  $966666,   $D9766; 9312
-		dc.l	     0,	       0,$BDBBBB00,$BFFFFFBD,$FEEEEEFB,$EEEEEEEF,$EEEEEEEE,$76EEEE7F,$666EE66F,$666FF66F,$661FF16F,$668F686F,$661E616F,$66661967,$66666666,$66966666; 9328
-		dc.l	     0,	       0, $DDD0000,$DFFD0000,$F6FD0000,$EEEFFF00,$BBD00000,$FEEF0000,$FBD0F000,$FD000F00,$BD000000,$D8600000,$86000000,$67706000,$67068000,$76689000; 9344
-		dc.l	     0,	       0,      $99,	$866,	 $8666,	   $7766,     $878,	$999,	  $988,	   $9888,    $1111,	   0,	     0,	       0,	 0,	   0; 9360
-		dc.l   $DBB986,	$DBEE789,$96EFDB67,$696DBB66,$669BDD86,$169900BB,$17D00000,$DDDD0000,$DDD10000,$91100000,$1000000D,	   9,	   $87,	     $17,	 1,	   0; 9376
-		dc.l $66666678,$977778DD,$8899BDD0,$7789B000,$779EB000,$BFEB0000, $DED0000,$911D0000,$97670000,$D88C0000,$DDCC0000,$8CCC0000,$77C00000,$66C00000,$66700000,$19900000; 9392
-		dc.l $D8680000,$D9769000,  $970000,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 9408
-		dc.l	    $D,	     $DF,      $D8,	 $DF,	   $DF,	      $F,	$D,	  $D,	    $D,	 $99979D, $9869669,  $976966, $8697996,	$9976976, $8769766, $9989877; 9424
-		dc.l   $909999,	 $970009,  $977000,  $976800,  $976800,	 $986680,  $976668,  $9876EE,$90917EEF,$9001FEFF,$99091FFF, $9991BFF,  $9991BB,	  $9D11D,    $DD11,	 $DD; 9440
-		dc.l $D0000000,$FDD00000,$9FFD0000,$899FDDDB,$689BBFFF,$67BFFFEE,$FBFFFEEE,$BFFFEEE6,$BFFFEE66,$BBFFEE66,$BBBFEE66,$D77BFE66,$D9667EE6,$97966666,$99766666,$9797666C; 9456
-		dc.l $97F99766,$79FE7997,$91BE7789, $DDF6678, $DBF66DD,	$DBF6DEE, $DDBFFFF,$DBDBFBDD,$FBBDDDD1,$FFBBB111,$FFBBDDD1,$FBBBDD11,$BBDD1110,$DD1111D0,$1111DD00,$DDDDD000; 9472
-		dc.l	     0,	   $DD0F,    $DDF0,$BBBDDFDF,$FFFFBBD0,$EEEEFFDF,$EEEEEEB0,$66EE6EF0,$667E66F0,$667E66E0,$697E96E0,$697F96F0,$617F16FE,$66666611,$DDB66679,$CCD66711; 9488
-		dc.l $CC667918,$77779968,$99999689,$99917699,$DD196899,$E7176999,$66168999,$687CCDD1,$181CCDD1,$191CCDD1,  $1CDDD1,  $1CDD10,	$CDD10,	  $11100,	 0,	   0; 9504
-		dc.l	     0,	       0,$FFE00000,	   0,$FFE00000,	       0,	 0,	   0,	     0,	       0, $9790000,$97979000,$97769000,$87697600,$99676699,$97669979; 9520
-		dc.l $17999779,$10009789,$10097789,$10097790,$10977890,$10DD7890, $7DDD790,$78DDD190,$7CDDD100,$8DDD1000,$11D11000,  $110000,	     0,	       0,	 0,	   0; 9536
-		dc.l	     0,	       0,	 0,	   0,	     0,	     $EE,	 0,	   0,	     0,	       0,	$D,	 $DE,  $999DD7,	$9669E76,$96668E61,$9661161F; 9552
-		dc.l $989666FF,$97966668,$97886666, $9086666,	 $8866,	 $999988, $9688990,$9668889D,$96667889,$96678879,$97788999,$97119000, $9000000,	       0,	 0,	   0; 9568
-		dc.l	     0,	       0,	 0,  $E00000,	$E0000,	  $E00D0,$EE00DDD0,  $EDBBD0, $DEBBBD0,$DEEEEDD0,$EEEEEEED,$EEEEEEEE,$66EEEEEE,$86FFEEEF,$FF666EEF,$F16666EF; 9584
-		dc.l $886666EF,$16666EEF,$6666EEEF,$66EEEFFF,$666666FF,$6666667B,$8877677D,$BB88969E,$69EEEFFF,$79DDDDDD,$90000000,	   0,	     0,	       0,	 0,	   0; 9600
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,$D0000000,$ED000000,$EFDD0000,$FFBEDD00,$FF99EEDB; 9616
-		dc.l $FF9776ED,$FF766EDE,$FF66FDEE,$FB6FDFFF,$BBBDDBBB,$BDD11DDD,$DFBBBD11,$EEFFFBD1,$EEEFFFBD,$7799FFBB,  $779DFB,	 $D1,	     0,	       0,	 0,	   0; 9632
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	    $888,  $888666,$B8666666; 9648
-		dc.l $E6666667,$EE677777,$FF787788,$FBB88899,$BBBDD9B9,$DDDBBBBB,$BBBBBBBD,$1BBBBBD0,$77DDD100,$16DDDD10,$16DDDDD1,$6CCCDD89, $DCCC688,	 $D97768,    $9977,	 $99; 9664
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,$88888000,$66788800,$67800000; 9680
-		dc.l $78000000,$80000000,$99990000,$99999000,$99999900,$91111190,	 0,	   0,	     0,	       0,	 0,$10000000,$91000000,$89100000,$88910000,$99910000; 9696
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	  $D,	$999DD,	$98669E7,$966668E6,$98661161; 9712
-		dc.l $9889666F,$98796666,$98188666, $9008666,	  $886,	 $999998, $9668899,$96668889,$96666788,$96667887,$96778899,$97111900, $9000000,	       0,	 0,	   0; 9728
-		dc.l	     0,	       0,	 0,    $E000,$E0000E00,	$E000E00,  $E00E0D,   $EDEDD,  $DEEBBD,	$DEEEEDD,$DEEEEEEE,$EEEEEEEE,$766EEEEE,$686FFEEE,$1FF666EE,$FF16666E; 9744
-		dc.l $F886666E,$816666EE,$66666EEE,$666EEEFF,$6666666F,$86666667, $8877677,$DBB88969,$969EEEFF,$979DDDDD,$99000000,	   0,	     0,	       0,	 0,	   0; 9760
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,$DDD00000,$DD000000,$D0000000,	       0,$D0000000,$ED000000,$EED00000,$FEFDD000,$FFFBEDD0,$FFF99EED; 9776
-		dc.l $FFF9776E,$FFF766ED,$FFF66FDE,$FFB6FDFF,$FBBBDDBB,$BBDD11DD,$DDFBBBD1,$EEEFFFBD,$FEEEFFFB,$D7799FFB,   $779DD,	   0,	     0,	       0,	 0,	   0; 9792
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   8,	  $886,	  $88666,  $866666,$BB666677; 9808
-		dc.l $DE666778,$EFF77788,$FFB78889,$BBBB8889,$BBBBDD9B,$DDDDBBBB,$1BBBBBBB,$177DDD1D,$D16DDDDD,$B16CCDDD,$16CCCCCD,  $DDCCC6,	 $DD97,	       9,	 0,	   0; 9824
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,$88888800,$66678080,$67780000,$78800000,$88000000; 9840
-		dc.l $88990000,$89999900,$99999990,$99900009,$99000000,$B0000000,	 0,	   0,$10000000,$91100000,$89911000,$78899100,$77788910,$99999100,	 0,	   0; 9856
-		dc.l	     0,	       0,    $8888,  $886666, $8777666,	   $7766,     $977,    $9998,	$99999,	$9999991,	 1,	 $16,	   $16,	    $177,     $188,	$199; 9872
-		dc.l	     0,	       0,$8BBB0000,$6EEEBB00,$6FEEEEBB,$FFFFEEBD,$FFFFBFDE,$7B1119DF,$11CC19DB,$1CCC671D,$CCCC671F,$78CD681D,$78DDD001,$88900001,$99000001,	   0; 9888
-		dc.l	     0,	       0,	 0,	   0,  $DDDD00,	 $DFEFD0,  $DF79ED,  $DF669E,  $DF66B9,	  $DFBFF,   $D696F, $796869F,$868899FF,$87889FFF,$D97766FF,$ED7996FF; 9904
-		dc.l $FEDDB666,$BFDDBE76,$BBBB9B77,$F999D999,$DD887788,$19D88667,$90000000,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 9920
-		dc.l	     0,	       0,	 0,	   0,	     0,	      $D,$D00000DD,$FDBBBDDD,$FFFFFBBE,$FEEEEEFB,$EEEEEEEF,$EEE766E7,$EEE666E7,$EE7671E1,$EE6678F8,$FE6671F1; 9936
-		dc.l $6EE66666,$66666666,$66666666,$77666677,$99777770,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 9952
-		dc.l	     0,	       0,	 0,	   0,$D0000000,$D0000000,$D0000000,$EEFF0000,$D000F000,$EE000000,$B0FF0000,$B000F000,$B0000000,$B0000799,$B0007977,$B0778899; 9968
-		dc.l $61188900,$66788900,$67099880,$70000990,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 9984
-		dc.l	     0,	       0,	 0,	   0,	   $DB,	     $DE,      $DE,	 $DE,	    $D,	      $D,	 0,  $760000, $8676790,$76869960,$98898680, $9888690; 10000
-		dc.l   $9969FF,	   $9DDF,      $1D,	 $19,	   $19,	     $19,      $19,	   1,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 10016
-		dc.l	     0,	       0,	 0,	   0,	     0,$BB000000,$7EBB0000,$79EEBBBB,$6679FEEE,$E66FEEEE,$B6FEEEEE,$DEEE76EE,$BFF7666E,	$BF6671E,$1BF6678F,$1DF6671F; 10032
-		dc.l $F86F6661,$F6666666,$D8966666,$11697766,$9D1F9888,$9109B999,$91000088,$10000000,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 10048
-		dc.l	     0,	       0,	 0,	   0, $DDB0000,	$DEFB00B,  $DEFBBB,  $DEEBEE,	$EEEEE,	  $DFEEE,   $DFFEE, $96DBFFF,$6677DDDB,$6661EEED,$8661FFFE,$96899DDF; 10064
-		dc.l $68996669,	$9000988,	 9,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 10080
-		dc.l	     0,	       0,	 0,	  $D,	   $DD,$BBBBBDDD,$EEEEEBDD,$EEEEEEBD,$EEEEEFFD,$EEEEFFBD,$EEFFFBBD,$FFFFBBBD,$BBBBBB1C,$DDFFB1DD,$EEFF61DD,$FFFB61DD; 10096
-		dc.l $78FB81DD,$978B11DD,$9978B199,  $978199,	 $9919,	     $19,	 1,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 10112
-		dc.l	     0,	       0,  $BBBEE7,$DBBEEE66,$C11BEE66,$CC11E666,$DC11BE67,$DC1DBBE8,$DC1DDDD9,$DC1DDBB8,$97190DD8,$97190001,$97100008,$97100000,$97100000,$11000000; 10128
-		dc.l	     0,	       0,$70000000,$67700000,$66677008,$66677880,$77778000,$88D10000,$99910000,$88890000,$77788900,$11110000,$19910000,$81910000, $8100000,	   0; 10144
-		dc.l	     0,	       0,  $800008,  $880886,  $878666,	  $87666,   $98777, $9999888,	 $9991,	       1,      $16,	 $16,	  $177,	    $188,     $199,	   0; 10160
-		dc.l	     0,	       0,$8BBB0000,$6EEEBB00,$6FEEEEBB,$FFFFEEBD,$FF11BFDE,$71CC19DF,$1CCC69DB,$CCCC671D,$7CCD671F,$78DDD81D,$889D0001,$99000001,	 1,	   1; 10176
-		dc.l	     0,	       0,	 0,	   0,  $DDDD00,	 $DFEFD0,  $DF79ED,  $DF669E,  $DF66B9,	  $DFBFF,   $DFFFF,   $D696F, $796869F,$868899FF,$87889FFF,$D97766FF; 10192
-		dc.l $FDD99666,$BFDDBE76,$BBBB9B77,$F999D999,$DD887788,$11D88667,$19000000,$90000000,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 10208
-		dc.l	     0,	       0,	 0,	   0,	     0,	      $D,$D00000DD,$FDBBBDDD,$FFFFFBBE,$FEEEEEFB,$EEEEEEEF,$EEE766E7,$EEE666E7,$EE7671E1,$EE6678F8,$FE6671F1; 10224
-		dc.l $6EE66666,$66666666,$66666666,$77666677,$99777770,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 10240
-		dc.l	     0,	       0,	 0,	   0,$D0000000,$D0000000,$D0000000,$EEFF0000,$D000F000,$EE000000,$B0FF0000,$B000F000,$B0000799,$B0007977,$B0777899,$B8778900; 10256
-		dc.l $61188900,$66799880,$67000990,$70000000,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 10272
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	 $8680,	    $866,      $96,	$899; 10288
-		dc.l	 $9999,	       9,      $88,	   0, $9000099,	$9999991,  $999919,   $99997,	 $9777,	  $97778,  $988889, $9999991,	     1,	       1,	 1,	   1; 10304
-		dc.l   $BBBBBB,	 $DFEEEE,  $DF7899,  $DFF679,	$DE67F,	   $DE6F,     $DFF,	$D87,	  $DB8,	     $DB,      $D7,	 $DD,	    $D,$800000DB,$66898DFF,$666869EE; 10320
-		dc.l $966868DD,$6689800D,$8800011D,  $111DD1,$11DBDD1B,$DBBD11FF,$BBB171BE,$BB1D7116,$71DDC66C,$18DCCCCD,$176CCC0D,$76667001,$76678001,$76780001,$77800001,$80000001; 10336
-		dc.l $BBDDBBBB,$EEBBFFFF,$9FFEE76E,$FFEE7669,$FEEE6661,$FEEE7666,$FEEEE666,$F677EE66,$66666667,$B6666679,$6666667C,$D766667C,$77766667,$99987766,$BB899988,$DB768899; 10352
-		dc.l $EE766679,$FE666679,$FEE66689,$FEF78891,$EEDD1110,$ED011100,$D001DD00,$D911D000,$DD910000,$DD890000,$DDD00000,$88900000,$89000000,$89000000,$90000000,$90000000; 10368
-		dc.l	$D00EE,$BFDDEE00,$EEBE0000,$E9EBEEEE,$9E1E0000,$16E10000,$66667719,$66666671,$91976678,$11186680,$CD186800,$CC167000,$CC670000,$66800000,$88000000,	   0; 10384
-		dc.l $D0997000,$BD779000,$DB790000,$98879000,$99999000,	$9900000,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 10400
-		dc.l	    $D,	      $D,	$D,	  $D,	    $D,	      $D,	$D,	  $D,	    $D,$8888000D, $8878800,  $766778,  $876667,	  $77666,   $77766,    $7777; 10416
-		dc.l	 $777F,	    $BBB,	$B,	   0,	    $B,	     $BB,     $BBB,	$BBB,	 $777B,	   $7778,   $77788,  $778888, $7888899,$78800991,     $918,	$180; 10432
-		dc.l $D0000000,$DD0BBBBB,$DDBFFFFB,$DBFFFFFF,$BBFFEEEE,$BFFEEEEE,$BFFEEE6E,$BFFEEEEE,$BFFEEEEE,$BFFFEEEE,$DBFFFEEF,$DBFFFFFF,$EDBBFFFF,$EFDBBBBB,$EEDDDBBB,$EEE1DBBF; 10448
-		dc.l $FFEEBBDD,$FFEEBBFF,$BBFFDBFF, $BBBFBBF,$BDDD1DDB,$BBDD111C,$BBBD1D1C,$BBBCDD1C,$BBBDDD1C,$BBCDDD1C,$B1CDD1CC,$18099188,$18099180,$80991880,  $991800,  $918000; 10464
-		dc.l	$ED000,$FBEFD000,$BFFBD000,$FFBBDBB0,$FBBDBB0B,$FDDD70B0,$EFDF9000,$EEFF8000,$EEFF9000,$EFFF9871,$FFFB6688,$FF666780,$FB866800,$B7799900,$D9996670,$E9897880; 10480
-		dc.l $11898890,$F9999900,$FF790000,$BB760000,$B7600000,$B8000000,$6B000000,$7B000000,$90000000,$C0000000,	 0,	   0,	     0,	       0,	 0,	   0; 10496
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,$D0000000,$DDD00BBB,$DDDBBFFF,$DDDFFFFF; 10512
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,$BB0000B0,$FBBBEEED,$FFBEEFBD; 10528
-		dc.l	    $D,	      $D,	$D,	  $D,	    $D,	      $D,	$D,	   0, $8880000,	 $877700,  $876677,   $87666,	$87666,	   $8766,     $888,	 $BB; 10544
-		dc.l	     0,	       0,	 0,	  $B,	   $87,	    $887,     $877,    $8878,	 $8889,	  $98997,   $19700,	   0,	     0,	       0,	 0,	   0; 10560
-		dc.l $DFFFEEEE,$DFFEEEEE,$BFFEEE6E,$BFFEEEEE,$BFFEEEEE,$BFFFEEEE,$BFFFEEEE,$DBFFFFFF,$DDBBFFFF,	$DDBBFFF,$D011DDBB,$7BD1DBFF,$6FBDBFEE,$7EFBBFEE,$FEEFBFFF,$FFFEBDBF; 10576
-		dc.l $BFFFFDDD,	$DDDDD00,$BBBBD009,$BBBBB118,$7BBBDDD1,$78B1DDD1,$781DDD1C,$990DDD1C,$700DD1C0,	 $99D1C0,  $991870, $9918700, $9187000,	$1700000,	 0,	   0; 10592
-		dc.l $FFFFFD00,$EFFFBD00,$EEBBD000,$EEFB7000,$EEFBF990,$EEFFB670,$EFF66670,$FFBB6700,$FF878000,$B8990000,$89008680,$97076668,$EB117668,$DEE19789,$FDDD9990,$FBD00000; 10608
-		dc.l $BBD00000,$DBD00000,$DD000000,$60000000,$70000000,$C0000000,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 10624
-		dc.l	    $D,	      $D,	$D,	  $D,	    $D,	      $D,	$D,	 $DB,	   $DB,	     $DB,      $DB,	 $DB,	    $D,	     $9D,      $99,	 $19; 10640
-		dc.l	  $77F,	  $77666,  $766666, $8877777,  $88888B,	   $89DD,    $8987,    $9987,	 $8988,	     $88,      $99,	 $90,	     0,	       0,	 0,	   0; 10656
-		dc.l	     0,$D0000000,$DDD0BBB0,$DDDBFFFB,$DBFFFFFF,$BFFFEEEE,$FFFFEEEE,$FFFEEEEE,$FFFEEEEE,$FFFEEE6E,$FFFEEEEE,$FFFFFEEF,$BFFFFFFF,$BBFFFFFF,$DBBBFFBB,$DDDBBBBB; 10672
-		dc.l $F1BDDD99,$EEEBBBBB,$EEFDBFFB,$FFDB1DDD,$BDBDCC8D,$DBB11CC7,$8BB1D1C6,$881DD1C0,$89199100,$91999800,$19997000, $8960000,	     0,	       0,	 0,	   0; 10688
-		dc.l   $BB0000,	$B000000,$B0BFF000,$BB000000,$BBB00000,$FBBB9900,$EFFB7900,$EFFFB700,$EFEFFFF0,$EFEEFBD0,$FBFFBD00,$FBBBD000,$FFDD0000,$FB700000,$B7900000,$79007660; 10704
-		dc.l $D7077667,$FD088768,$BFF99889,$DDBFD990,  $DD0000,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 10720
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	  $D,	   $DE,	      $D,	 0,	   0,	     0,	       1,      $11,	 $DD; 10736
-		dc.l	  $9DD,	    $99D,     $99E,	 $EE,	  $7EE,	    $66F,    $7667,    $6779,	$77990,	  $99000,	 0,	   0,	     0,	       0,	 0,	   0; 10752
-		dc.l	     0,	       0,	 0,	   0, $7690000,$76668787,$668DBF66,$DDDBFF76,$987DFFEF,$E977FEEE,$DEE66EEE,$DDDEEEEE,$DBBBFEEE,$DBBFFEEE,$DBFFFFEE,$1DBBFFFF; 10768
-		dc.l $1DBBBFFF,$EEDBBBBB,$EEFDDBBB,$EFFB1DDD,$FFBD1111,$FBD9DDD1,$BD099DD1,$D0099900,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 10784
-		dc.l	     0,	       0,	 0,	   0,	     0,$87777910,$66666790,$61666680,$19B66880,$EEBB7880,$EEE91780,$6EE17780,$EEEE7780,$EEEE8880,$EEEFBB80,$77FBBD80; 10800
-		dc.l $E78DBD99,$DE98D889,$BDF9D899,$DDDFD900,$100DD000,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 10816
-		dc.l	   $99,	     $98,      $9D,	 $9D,	    $D,	       0,	 7,	   7,	     9,	     $DB,      $DD,	$FBB,	 $FBBB,	  $7FBBD,  $777BDD,  $7889DF; 10832
-		dc.l  $8899DB9,	$9900DF9,    $DB97,    $DFEE,	    $D,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 10848
-		dc.l	     0,$80090000,$DC998000,$8799CC00,$7EBD7E00,$777BEEBE,$6666BB77,$6696FF77,$7679F766,$999BB779,$BB977666,$D7666666,$DF777666,$BFFFE767,$FFEE7661,$9FEE7677; 10864
-		dc.l $7FFE7679,$76FEE667,$77FFEEEE,$EEFFEEEE,$DDBFFFEF,$DDBBFFFF, $DDDDBBB,   $DDDDD,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 10880
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,$E0000000,$79000000,$77900000,$99900000,$77908990,$66799889,$66671189,$66771899,$9F777890,$9F17B000; 10896
-		dc.l $EE97B000,$EE9FB000,$EE7FB00B,$EEFB0BB0,$FFBFB000,$FBB9FFFF,$BD97F000,$DDD9F000,  $DDB000,	   $D000,	 0,	   0,	     0,	       0,	 0,	   0; 10912
-		dc.l	   $90,	    $999,     $987,	$987,	  $98D,	     $DD,	$D,	  $D,	    $D,	      $B,	 7,	 $76,	   $87,	     $98,     $BB9,	$DDD; 10928
-		dc.l	   $BB,	    $FBD,    $FBBD,   $FBBDB,	$77BDB,	  $779DB,  $7789DB,  $789DF8,  $889DF7,	$889DF86, $899DF76, $900DEEE,	     0,	       0,	 0,	   0; 10944
-		dc.l	     0,	       0,$80990000,$70979000,$CC977000,$CC98CC00,$C76DC760,$711D7110,$71BEDDBE,$DDDB7778,$78D66667,$66876666,$668E7866,$789BFE77,$99D77799,$D7766666; 10960
-		dc.l $76666666,$B7FEE666,$BFEE6691,$FFEE6689,$FFEE6691,$FFEE7666,$BFEEE767,$BFFEEEEE,$7BFFFEEE,$77BFFEEE,$EFBBFFFF,$BDDBBBBB,	$DDDDD,	       0,	 0,	   0; 10976
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,$90000000,$79000000,$89999000,$79898900,$99888900,$79988900; 10992
-		dc.l $66719000,$66970000,$E6780000,$EE188000,$EE9B8000,$EE1BB000,$EE7FB0B0,$EEFF0B00,$EFFBB00F,$FFBBFFF0,$FB88B000,$DD88B000,  $DDB000,	   $DB00,	 0,	   0; 11008
-		dc.l	$99000,	  $98900,   $98880,   $98776,	$976CC,	   $9CCD,    $DDD7,	$D81,	  $D81,	    $DDD,      $DD,	  $B,	     8,	     $87,     $D96,    $BF97; 11024
-		dc.l	  $DD9,	    $BBB,    $BBDD,    $8BBD,	 $88DB,	  $888DB,   $889DB,   $999DB,	   $DD,	     $DF,      $DF,	$DF7,	  $DF7,	    $DF8,     $DFE,	$DBB; 11040
-		dc.l $99000000,$98800000,$98780000,$98660000,$69CCC000,$69CDD000,$6DD76000,$ED71EF00,$BE81BFE0,$DBEDDDDD,$BDDBF888,$BDBF7666,$87BE7666,$668F7666,$668F8766,$669BB899; 11056
-		dc.l $99D88888,$DB876666,$B7766666,$BB666666,$F766E666,$FEEE6691,$FEEE6699,$FFEE6691,$FFEE7667,$6FFEE77F,$66FEEEFF,$78FFFFFF,$88EBBBBB,$EBB00000,$B0000000,	   0; 11072
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,$90000000,$89000000,$69889000,$68778900,$79788900,$8D888900; 11088
-		dc.l $89999000,$77890000,$66779000,$66667000,$66691000,$FF1F0000,$FF9F00B0,$FF1B00B0,$FF8B0B00,$FF8BB00F,$FBBBFFF0,$BBB9B000,$DB899B00,	$DD89B00,   $DBB00,	   0; 11104
-		dc.l	     0,	  $99011,   $98811,   $98681,	$97667,	  $97667,    $D7CC,    $DDCC,	  $DD8,	    $DD7,      $D7,	  $D,	     0,	       0,	 0,	  $B; 11120
-		dc.l	   $D8,	   $DD87,    $BB96,    $BB97,	     9,	      $D,	$D,	  $D,	    $D,	      $B,      $DB,	 $DF,	   $DF,	     $DF,      $DF,	 $DF; 11136
-		dc.l $99000000,$98800000,$98680000,$98660000,$9966C000,$1D8CC000,$CDDC7600,$CCD71160,$76D7BF70,$1617BF00,$BF11BBF0,$DBFDDDFD, $DBFBBBB,	$DBBF777, $DBF7666,$DDBF6666; 11152
-		dc.l $88BF6667,$778B7778,$67898889,$67977777,$99766666,$87766666,$B7766666,$777E6666,$FFEE6667,$FFEE7661,$F7FEE761,$667FFFF9,$6779FFFF,$799EEBBB,$9EEB0000,$EB000000; 11168
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,$D0877000,$79766900,$7D866900,$7D988900; 11184
-		dc.l $7D999000,$99000000,$78900000,$77790000,$67788000,$66778000,$6667B000,$66688000,$78811000,$1EF180B0,$9FFB9B0F,$9FB9BBF0,$FBDDDD00,$B0000000,	 0,	   0; 11200
-		dc.l	     0,	       0,	 0,	   9,	     9,	       9,      $99,	$988,	  $987,	    $976,     $987,	 $97,	   $98,	      $D,	$D,	   0; 11216
-		dc.l	   $88,	    $888,    $988B,    $9999,	   $DD,	    $DD9,     $D78,	 $87,	   $98,	       9,	 0,	  $D,	    $D,	      $D,	$D,	  $D; 11232
-		dc.l	     0,	       0,	 0,	$900,$90009880,$99009878,$99909767,$79999766,$67999766,$66799766,$6669197C,$66711DCC,$76CC1DCC,$CCCC10DD,$CCCCC097,$DCCC6DDB; 11248
-		dc.l $DDD7EBEE,$BD9DFEBE,$BBDDFFEE,$B0DFF766,$BDDBF666,$99DB7777,$889DB888,$77877899,$78966666,$99766666,$DBF76666,$FBFF7666,$F6BF6776,$F66B7699,$F77DD779,$BBB0BBBB; 11264
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,$80000000,$70000000,$70000000,$CC000000,$CC000000,$CC000000,$CC000000,$D6000000,$7E078800,$E0766680; 11280
-		dc.l $ED766770,$FBD79790,$EEB99900,$66B9D000,$77998D00,$78988800,$898888D0,$98888880,$66778880,$66777880,$66677880,$66677800,$66667800,$76677800,$6B779900,$BD000100; 11296
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	 $980000,  $988800,  $987788,	$98767,	  $98776,    $9987,    $9998; 11312
-		dc.l	  $D9B,	   $77DD,   $97667,   $97666,	$98766,	   $997D,      $DD,	  $D,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 11328
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,  $777000, $9666700,$897666D0,$897666CD,$6B976CCC,$BBBDDDCC; 11344
-		dc.l $BBBBDDD8,$BBBBDD86,$DBDDBC8B,$CDDBBFDB,$CCCDFFED,$CCCDDEE7,$DD66ED76,$C88BF766,$DBBDB888,$DB99D999,$D9888988, $9988988, $9988988,	$D999000,	 0,	   0; 11360
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0,	     0,	       0,$B0000000,$CBB00000; 11376
-		dc.l $CEE768BB,$DE666690,$ED766790,$EBD77890,$77899900,$67867800,$68966800,$78966700,$99666700,$98767800,$87777000,$77778900,$88809900,	       0,	 0,	   0; 11392
-		dc.l	     0,	       0,	 0,	  $B,$878000DB,$876600DB,$987668BB, $987668B, $9886EEB,	 $98FEEF,  $DBBFEE,   $DBBFF,	 $DDDB,	  $88DBB,  $8779BB, $87789BD; 11408
-		dc.l	     0,	 $BBBBBD,$BBFEEFBB,$BFEEEEFF,$FFE6EEFF,$FFFEEFFF,$FFFFFFFF,$BFFFFFFB,$BBBFFBBB,$BBDDDDFF,$FDBFEDBB,$FBFE6EFD,$BDF111F8,$BDF11DD7,$DB1D1CD7,$1BDD1CC6; 11424
-		dc.l  $BFBD000,$BFBD0000,$BDD00000,$BDD00000,$BBD00000,$BBBD0000,$BBBD0000,$B8780000,$86678000,$87787000,$97788000,$19990000,$97890000,$98910000,$80000000,$80000000; 11440
-		dc.l $888899D1,$99999000,      $11,	$D1C,	 $DD1C,	   $D91C,   $99960,   $99760,	$97600,	 $977000,  $700000,	   0,	     0,	       0,	 0,	   0; 11456
-		dc.l $DDDD1CC6,	$DD99CC0,$CD9996C0,$C9997600,$99996000,$99976000,$99970000, $9900000,	     0,	       0,	 0,	   0,	     0,	       0,	 0,	   0; 11472
-		dc.l	     0,	       0,	 0,	   0,	     0,	       0,	 0,    $7700,	 $8677,	   $9766,     $866,	$987,	  $998,	     $DB,	$D,	   0; 11488
-		dc.l	     0,	       0,	$F,	 $88,	   $88,	    $888,     $889,	$899,	  $911,	    $10D,      $99,	 $99,	   $99,	     $99,      $97,	   0; 11504
-		dc.l  $D000BBB,	$DDBFFFF,$DDBFFEEE,$DDFFEEEE,$DDFFEEEE,$DBFFEEEE,$DBFFEEEE,$DBFFFEEE,$DBFFFFFE,$7BBFFFFF,$6EBBFFFF,$6EEBBBBB,$FEEEBDD9,$FFEEDBFE,$BFFEEFFE,$DDDFEFFF; 11520
-		dc.l  $BDDEBFF,$FFBBBBBF,$FBBDDB11,$BBD101D1,$8D1DBDD1,$9D1CBDDD,$911C1DD9,$1DDC1999,$DDCC9996,$99679996,$96679997,$96709997,$67009970,$70009700,	 0,	   0; 11536
-		dc.l	     0,	       0,	 0,	   0,	  $B00,	  $DEB00,$BBDEEB00,$FDEEFB00,$EEFFBDB0,$EEEFBD0F,$EEEEFB00,$EEEEFFB0,$6EEEFF70,$EEEFFF70,$FF67F790,$FF769780; 11552
-		dc.l $BBD98668,$EEB96668,$FBD98689,$BD699990,$6E680000,$EE680000,$FF780000,$B7880000,$8E900000,$CB000000,$CB000000,$CC000000,$C0000000,$C0000000,$C0000000,$70000000; 11568
 SonicDynPLC:	incbin	"mappings/spriteDPLC/Sonic.bin"
 		even
 Nem_Shield:	dc.b $80,$20,$80,  4,  8,$14,  9,$25,$16,$34, $A,$45,$1A,$55,$17,$65,$1B,$72,  0,$81,  4,  4,$16,$39,$26,$3A,$37,$76,$82,  5,$18,$17,$79,$83,  4,  5,$17,$77,$28,$F5,$84,  4,  6,$17,$78,$28,$F4,$85,  5,$19,$28,$FA,$86,  6,$38,$87,  4,  7,$17,$7B,$28,$F8,$38,$F9; 0
@@ -43649,764 +41224,14 @@ Nem_Stars:	dc.b   0,$22,$80,  6,$3C,$16,$3D,$25,$1A,$35,$1C,$45,$1D,$55,$1B,$64,
 		dc.b $F2,$B3,$58,$FE,$99,$CD,$65,$66,$DB,$C0,  0,  0, $F,$5E,$63,$F6,$D0,  0,  0,$CB,$6E,$AE,$9D,$FE,$99,$CD,$53,$BA,$B6,$F0,  0,  0,$DB,$73,$AC,$7C,$FC,$A3,$FB,$6E,$B1,$B9,$68,  1,$2E,$5B,$75,$74,$EE,$A6,$E9,$8F,$3F,$8C,$FE,$52,$98,$F2,$A6,$E9,$DD,$5B,$72,$E0; 64
 		dc.b   0,  0,  0,  1,$FA,$46,$34,  0,  0,  0,  0,  0,  0,$7A,$8E,$B3,$8C,$F2,$72,$54,$7B,$29,$D6,$4F,$9F,$F6,$AD,$64,$F9,$5D,$94,$F2,$54,$78,$CF,$26,$9D,$67,$A8,  0,  0,$76,$5C,$B9,$6D,$B6,$DD,$5D,$5D,$5D,$75,$F2,$B3,$4F,$B5,$3C,$8E,$A9,$95,$35,$4D,$4E,$7D,$F9; 128
 		dc.b $33,$DF,$FB,$7D,$F9,$33,$DA,$6A,$72,$99,$53,$55,$3C,$8E,$AB,$34,$FB,$5D,$7C,$AB,$AB,$AB,$6D,$B6,$E5,$CB,$80,  0,  0,  0,$17,$F5,$8F,$E9,  0,  0,  0,  0,  0; 192
-;
-; some unused uncompressed art
-;
-Unused_Art_9E1FB:dc.b	0,  0,	0,  0,	0,  0,	0,  0,	0,  0,	0,  0,$EE,  0,	0,$EE,$EE,  0, $E,$EE,$EE,  0, $E,$EE,$EE,  0, $E,$EE,$EE,  0,$EE,$EE,$EE,  0,$EE,$EE,$EE,  0,$EE,$EE,$EE,  0,$EE,$EE,$EE,  0,$EE,$EE,$EE,  0, $E,$EE,$EE,  0,	0, $E,$EE,  0,	0,  0,$EE,  0,	0,  0; 0
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$E0, $E,  0,  0,$EE,$EE,$EE,  0,$EE,$EE,$EE,  0,$EE,$EE,$EE,$E0,$EE,$EE,$EE,$E0,$EE,$EE,$EE,$E0,$EE,$EE,$EE,  0,$EE,$EE,$EE,$E0,$EE,$EE,$EE,$E0,$EE,$EE,$EE,  0,$EE,$EE,$EE,  0,$EE,$EE,  0,  0,$EE,  0,  0; 64
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$EE,$E0,  0,  0,$EE,$EE,  0,$EE,$EE,$EE,  0,$EE,$EE,$EE,  0,$EE,$EE,$EE,  0,$EE,$EE,$EE,  0,  0,$EE,$E0,  0,  0,  0,  0,  0,  0, $E,$E0,  0,  0,$EE,$E0,  0,  0,$EE,$E0,  0,  0,  0; 128
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,$EE,  0,  0, $E,$EE,$E0,  0,  0,$EE,$E0,  0, $E,$EE,$E0,  0,  0,$EE,  0,  0,  0,  0,  0,  0,  0, $E,  0,  0, $E,$EE,$E0,  0,$EE,$EE,$E0,  0,$EE,$EE,$E0,  0,  0,$EE,$E0,  0,  0,  0,  0,  0,  0,  0,  0; 192
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$EE,  0,  0, $E,$EE, $E,  0, $E,$EE,  0,  0,  0,$E0,  0,  0, $E,  0,$E0,  0,  0,  0,  0,  0, $E,$E0,  0,  0,  0, $E,$E0,  0,  0, $E,$E0,  0,  0,  0,  0,  0,  0,  0; 256
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,$E0,  0,  0, $E,$E0,  0,  0,  0,  0,$E0,  0,  0,$E0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E, $E,  0,  0, $E,  0,  0,  0,  0,$EE,  0,  0, $E,$EE,  0,  0,  0,  0,  0,  0,  0,  0,  0; 320
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$EE,  0,  0,  0,$EE,  0,  0,  0,  0,  0,  0,  0,$E0,  0,  0,  0,  0,  0,  0,  0,$E0,  0,  0,  0,  0,  0,  0,  0,  0,$E0,  0,  0,  0,  0,  0,  0,  0; 384
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,$E0,  0,  0, $E,$E0,  0,  0,  0,  0,  0,  0,  0, $E,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,$E0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 448
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$EE,  0,  0,  0,$EE,  0, $E,$E0,  0, $E,$EE,  0,  0, $E,$EE,  0,  0,$EE,$EE,$EE,$EE,$EE; 512
-		dc.b $E0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,$EE,$EE,  0, $E,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$E0,$EE,$EE,$EE,$EE,  0,  0,$EE,$EE,  0,  0,  0; 576
-		dc.b  $E,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,$EE,$E0,  0,$EE,$EE,$EE,$E0,$EE,$EE,$EE,$E0,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE, $E, $E,$EE,$EE,$EE,$E0, $E,$EE,$EE,$EE,$E0; 640
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$E0,  0,  0,  0,$E0,  0,  0,  0,$EE,  0,  0,  0,$EE,$EE,  0,  0,  0,$EE,$EE; 704
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$EE,  0,  0, $E,$EE,  0,  0, $E,$EE,  0, $E,$EE,$EE,  0,$EE,$EE,$EE, $E,$EE,$E0,  0,$EE,$E0,  0; 768
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$EE,  0,  0, $E,$EE,  0,  0, $E,$EE,  0, $E,$EE,$EE, $E,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$E0,$EE,$EE,$EE,$EE,$E0,$EE,$EE,$EE,$EE, $E, $E, $E,$EE,$EE,  0, $E,$EE,$EE; 832
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$EE,  0,  0,  0,$EE,$EE,  0,  0,$EE,$EE,$E0,  0,$EE,$EE,$EE,  0,$EE,$EE,$EE,  0,$EE,$EE,$EE,$E0,$EE,$EE,$EE,$E0,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,  0,$EE,$EE; 896
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$EE,  0,  0,  0,$EE,$EE,  0,  0,$EE,$EE,$EE; 960
-		dc.b $E0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,  0,$EE,$E0,  0, $E,$E0,$EE,  0,$EE,$EE,$EE,  0, $E,$EE,$EE,  0, $E,$EE,$E0,  0,$EE,$E0,$E0, $E, $E,$E0; 1024
-		dc.b  $E,  0,$EE,$E0,  0, $E,$EE,$E0,$E0,  0,$EE,  0, $E,$E0,  0, $E, $E,  0,$EE,$EE,$EE, $E,$EE,$EE,$EE, $E,$EE,$EE,$EE, $E,$EE,$EE,$EE, $E,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE, $E,$EE,$EE,$E0,$EE,$EE,$EE, $E,$E0,$EE,$EE,  0,$E0,$EE,$EE,  0,$E0, $E; 1088
-		dc.b  $E,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$E0,  0,  0,  0,$EE,  0,  0,  0,$EE,$E0,  0,  0,$EE,$EE,  0,  0,$EE,$EE,$E0,  0,$EE,$EE,$E0,  0,$EE,$EE,$EE,  0,$EE,$EE,$EE,$E0,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE; 1152
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$EE,  0,  0,  0,$EE,$EE,$EE; 1216
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$EE,  0,  0,  0,$EE,  0; 1280
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,  0,  0,  0,$EE,  0,  0,  0,$EE,  0,  0,  0,$EE,  0,  0,  0,$EE,  0,  0,  0,$EE,  0,  0,  0,$EE,  0,$E0,  0,$EE,  0,$EE,$EE,$EE,  0, $E,$E0,  0, $E,$E0,$EE,$EE,  0, $E, $E,$E0,  0,$EE, $E,$E0, $E, $E,$E0; 1344
-		dc.b $E0,$E0,  0,  0,$E0,  0,  0,$E0,  0,$EE,$EE,  0, $E,$EE,$EE,  0,$EE,$EE,$EE,$EE,$E0,$EE,$EE,$EE,$E0,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$E0, $E,$EE,$EE, $E,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,  0, $E,$EE; 1408
-		dc.b $EE,  0,  0,  0,  0, $E,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$E0,  0,  0,  0,$EE,  0,  0,  0,$EE,  0,  0,  0,$EE,  0,  0,  0,$EE,$E0,  0,  0,$EE,$EE,$E0,  0,$EE,$EE,$EE,$E0,$EE,  0,$EE; 1472
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$EE,$EE,$E0; 1536
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$EE,  0,  0,  0,$EE,  0,  0,  0,  0,  0,  0,$E0,  0; 1600
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,  0,  0,  0,  0,  0, $E,  0,  0,  0,  0,  0,  0; 1664
-		dc.b   0,  0,  0,  0,  0,  0,  0, $E,$EE,  0,  0, $E,$EE,  0,  0,$EE,$E0,  0, $E,$EE,$EE,  0, $E,$EE,$EE,  0, $E,$EE,$EE,  0,  0,$EE,$EE,  0,  0,$EE,$EE,  0,$EE,$EE,$EE,$EE,$EE,$E0,$EE, $E,$E0,$E0, $E,$EE,$E0,$EE,$E0,$EE,$E0,$EE,$EE, $E,$E0, $E,$EE,  0, $E,$E0; 1728
-		dc.b $EE,$E0,  0,  0,  0,$E0,  0,$EE, $E,  0,  0,$EE,  0,  0,  0,  0,  0,  0,  0,  0,$E0,$EE, $E,  0,  0,$E0, $E,  0,  0,$E0, $E,$E0,  0,$E0,$EE,$EE,  0,$EE,$EE,$EE,  0,$EE,$EE,$EE,  0,$EE,$EE,$EE,$E0,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$E0,$EE,$EE,$E0,$EE,$EE,$E0,  0; 1792
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$EE,  0,  0,  0,$EE,$EE,  0,  0,$EE,$EE,$EE; 1856
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$EE,$EE,$EE; 1920
-		dc.b $E0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,$E0,  0,  0, $E; 1984
-		dc.b $E0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$E0,  0,  0,  0,$E0,  0,  0,  0,  0, $E,  0,  0,  0, $E,  0,  0,  0,  0,  0,  0; 2048
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$E0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 2112
-		dc.b   0,  0,  0,  0,  0,  0,  0,$E0,  0,  0,  0,  0,  0,  0,  0,$EE,$E0,  0, $E,$EE,$E0,  0,$EE,$EE,  0,  0,$E0,$EE,$EE,  0,$E0,$EE,$E0,  0,  0,  0,  0,  0,  0,$E0,  0,  0, $E,$E0,  0,  0,$EE,$EE,$EE,  0,$E0,$EE,$EE, $E,$EE,  0, $E,  0,  0,$EE,$E0,$E0, $E, $E; 2176
-		dc.b $E0,  0,  0,  0,$E0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$E0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,  0,  0,  0,  0,  0,  0,  0,  0,$E0,  0,$EE,  0,$EE,  0,$EE, $E,$EE,  0,$E0,  0,  0,  0,$EE,  0,  0,  0,$EE,  0,  0,$E0,$EE,$EE,$EE,$EE, $E,$EE,$EE; 2240
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$E0,  0,  0,  0,  0,  0, $E,$E0,$E0,  0,$EE,$EE,$EE,$EE,$EE; 2304
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,$EE,  0,  0,$EE,$EE,$EE,  0,$EE,$EE,$EE; 2368
-		dc.b $E0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,  0,  0,  0; 2432
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 2496
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$E0,  0,  0,  0,  0,  0,  0, $E,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 2560
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,  0,  0,  0, $E,  0,  0,  0,$EE,  0,  0,  0,  0, $E,  0,  0,  0, $E,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,  0,  0,  0,$EE,  0,  0, $E,$E0,  0,  0, $E,$E0,  0,$E0, $E,$EE,  0,$EE,$EE,$EE,$EE,$EE,$E0,$E0,$EE; 2624
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$E0,  0,$E0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$E0,  0,  0,  0,$EE,  0,  0,$EE,$EE,$EE,$EE; 2688
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$EE,$E0,  0, $E,$EE,$EE, $E,$EE,$EE,$EE, $E,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE, $E; 2752
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$E0,  0,  0,  0,$EE,$EE,  0,  0,$EE,$EE,  0,  0, $E,$EE,$EE,  0, $E,$EE,$EE; 2816
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$E0,  0,  0,  0,$EE,  0,  0,  0, $E,  0,  0,$EE,$EE,  0,  0, $E,$EE,  0,  0,  0,$EE,  0,  0,$EE; 2880
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,  0,  0,  0, $E,  0,  0,  0, $E,$E0,  0,  0, $E,$E0,  0,  0, $E,$EE,  0,  0,$EE,$EE, $E,  0,$EE,$EE,$EE,$E0,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE; 2944
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,  0, $E,  0,$EE,  0,$E0,  0,$EE,  0,$E0,  0,$EE, $E,$E0,  0,$EE,$EE,  0,  0,$EE,$EE, $E,  0,$EE,$EE,$E0,  0,$EE,$EE,  0,  0,$EE,$EE,$EE; 3008
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 3072
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$E0,  0,  0,  0,$EE,  0,  0,  0, $E,$E0,  0,$E0, $E,$EE,  0, $E, $E,$EE,$E0,  0, $E,$EE,$EE,$E0,  0,$EE,$EE, $E,  0,$EE; 3136
-		dc.b $EE, $E,$E0,$EE,$EE,  0,$EE,$EE,$EE,  0,$EE,$EE,$EE,  0, $E,$EE,$EE,  0, $E,$EE,$EE,  0,  0,$EE,$EE,  0,  0,$EE,$EE,  0,  0, $E,$EE,  0,$E0, $E,$EE,  0, $E,$EE,$EE,  0,  0,$EE,$EE,  0,  0, $E,$EE,  0,  0,  0,$EE,  0,  0, $E,$EE,  0,  0,  0,$EE,  0,  0,$EE; 3200
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,$E0,  0,  0,  0,$E0,  0,  0,  0,$EE,  0,  0,  0,$EE,  0,  0,  0,$EE,  0,  0,  0,$EE,$E0,  0,  0, $E,$E0,  0,  0, $E,$EE,  0,  0, $E,$EE,  0,  0, $E,$EE,  0,  0, $E,$EE,$E0,  0, $E,$EE,$E0,  0,$EE,$EE,$EE,  0,$EE,$EE,$EE; 3264
-		dc.b   0,$EE,$EE,$EE,  0,$EE,$EE,$EE,$E0,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE; 3328
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$E0, $E,  0, $E,$E0,  0,  0, $E,$E0, $E,  0,$EE,  0, $E,  0,$EE,  0,$EE, $E,$EE,  0,$EE,$EE,$EE,  0,$EE,$EE,$EE; 3392
-		dc.b   0,$EE,$EE,$EE,  0,$EE,$EE,$E0, $E,$EE,$EE,$E0,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE; 3456
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,  0,  0,  0,$E0,  0,  0,  0,  0,  0,  0,  0,$E0,  0,  0, $E,$E0,  0,  0,$EE,  0; 3520
-		dc.b   0,$EE,$EE,  0,  0,$EE,$E0,  0,  0,$EE,$E0,  0,  0,$EE,  0,  0,  0,$EE,  0,  0,  0,$E0,  0,  0,  0,$E0,  0,  0,  0,  0, $E,$E0,  0, $E,$EE,$E0,  0,$EE,$EE,  0,  0,$EE,$E0,  0,  0,$EE,  0,  0,  0,$E0,  0,  0,  0,  0,  0,  0,  0,$E0,  0,  0,  0,$EE,  0,  0; 3584
-		dc.b   0,  0,  0,  0,  0, $E,  0,  0,  0, $E,$E0,  0,  0, $E,$E0,  0,  0,  0,$EE,  0,$E0,  0,$EE,  0,$E0,  0,$EE,$E0,$EE,  0,$E0,$E0,$EE,  0,$E0,$EE,$EE,  0, $E,$EE,$EE,  0, $E,$EE,$EE,  0, $E,$EE,$EE, $E, $E,$EE,$EE, $E, $E,$EE,$EE, $E,$E0,$EE,$EE,  0,$EE,$EE; 3648
-		dc.b $EE,  0,$EE,$EE,$EE,  0,$E0,$EE,$EE,  0, $E,$EE,$EE,  0, $E,$EE,$EE,  0, $E,$EE,$EE, $E,  0,$EE,$EE, $E,$E0,$EE,$EE,  0,$E0,$EE,$EE,  0, $E, $E,$EE,  0, $E,$EE,$EE,  0,  0,$EE,$EE,  0,  0, $E,$EE,  0,  0, $E,$EE,  0,  0, $E,$EE,  0,  0,$EE,$EE,  0,$EE,$EE; 3712
-		dc.b $EE,$E0,  0,  0,  0,$EE,  0,  0,  0,$EE,  0,  0,  0, $E,$E0,  0,  0, $E,$E0,  0,  0, $E,$E0,  0,  0, $E,$E0,  0,  0, $E,$EE,  0,  0,$EE,$EE,  0,  0,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE; 3776
-		dc.b $EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE; 3840
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,$E0,  0,  0,$EE,$E0,  0, $E,$EE,$EE,  0, $E,$EE,$EE,  0,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE; 3904
-		dc.b $EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE; 3968
-		dc.b $EE, $E,  0,  0,  0, $E,  0,  0,  0,$EE,  0,  0,  0,$EE,  0,  0,  0,$E0,  0,  0,  0,$E0,  0,  0,$E0,$E0,  0, $E,$E0,$E0,  0, $E,  0,  0,  0,$EE,  0,  0, $E,$E0,  0,  0,$EE,$E0,  0, $E,$EE,  0,  0,$EE, $E,  0,  0,$EE,$EE,  0, $E,$EE,$E0,  0,$EE,$EE,$E0, $E; 4032
-		dc.b $E0,$EE,$E0,$EE,  0,$EE,$EE,$E0,  0,$EE,$EE,$E0,  0,$EE,$EE,  0,  0,$EE,$EE,  0,  0,$EE,$E0,  0,  0,$EE,$E0,  0,  0,$EE,  0,$E0,  0,$EE,  0,  0,  0,$EE,  0,  0,  0,$E0, $E,  0,  0,$E0,  0,  0,  0,$E0,  0,  0,  0,$EE,$E0,  0,  0,$EE,$E0,  0,  0,$EE,$EE,  0; 4096
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,$E0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,  0,  0,  0,  0,  0,$E0,  0,  0,  0,$EE,  0,  0,  0,$EE,  0,  0,  0, $E,  0,  0,  0, $E,  0,  0,$E0, $E,  0,  0,$EE, $E,  0,  0,$EE, $E, $E,  0, $E,$EE,  0,$E0, $E,$EE,  0,  0, $E; 4160
-		dc.b $EE,  0,  0, $E, $E,  0, $E, $E,$EE,  0,  0,  0,$EE,  0,  0,  0,$EE,  0,  0,  0,$EE,  0,  0,  0,$EE,  0,  0,  0, $E,  0,  0,  0, $E,  0,  0,  0, $E,  0,  0,  0, $E,  0,  0,  0, $E,  0,  0,  0, $E,  0,  0,  0,$EE,  0,  0,  0,$EE,  0,  0, $E,$EE,  0, $E,$EE; 4224
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$E0,$E0,  0,  0,$E0,$E0,  0,  0,$E0,$E0,  0,  0,$E0, $E,  0, $E,$EE, $E,  0, $E,$EE, $E,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE; 4288
-		dc.b $EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE; 4352
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,  0,  0,  0,$EE,  0,  0, $E,$EE,  0,  0,$EE, $E,  0,  0,$EE,$E0,$EE,$EE,$EE,$E0,$EE,$EE,$EE,$E0,$EE,$EE,$EE,  0,$EE,$EE,$EE,  0,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE; 4416
-		dc.b $EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE; 4480
-		dc.b $EE,  0,  0,  0,  0,  0,  0,$E0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,  0,  0,  0, $E,  0,  0, $E,$E0,  0,  0, $E,$E0,  0,  0,$EE,$E0,  0,  0,$EE,  0,  0,  0,$EE,  0,  0,$E0,$EE,  0,  0,  0,$E0, $E,  0,  0,$E0,$EE,  0; 4544
-		dc.b   0,$EE,$EE,  0,  0,$EE,$E0, $E,  0,$EE,$E0,  0,  0,$EE,  0,  0,  0,$EE,  0,  0,  0,$EE,  0,  0,  0,$EE,  0,  0,  0,$EE,  0,  0,  0,$E0,  0,  0,  0,$E0,  0,  0,  0,$E0,  0,  0,  0,$E0,  0,  0,  0,$E0,  0,  0,  0,$EE,  0,  0,  0,$EE,$E0,  0,  0,$EE,$EE,$EE; 4608
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 4672
-		dc.b $E0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$E0, $E,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,  0,  0,$EE, $E,  0, $E,$EE,$EE, $E,$EE,$EE; 4736
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$E0,  0,  0,  0,  0,  0,  0,  0,  0,$E0,  0,  0,  0,$E0,  0,  0,  0,$E0,  0,  0,  0,$E0, $E,  0, $E,$E0, $E,$E0, $E,$E0, $E,$EE,$EE,$E0, $E,$EE,$EE,$EE, $E,$EE,$EE,$EE, $E,$EE,$EE; 4800
-		dc.b $EE, $E,$EE,$EE,$EE,$EE,$EE,$EE,$EE, $E,$EE,$EE,$EE, $E,$EE,$EE,$EE, $E,$EE,$EE,$EE, $E,$EE,$EE,$EE, $E,$EE,$EE,$EE, $E,$EE,$EE,$EE, $E,$EE,$EE,$EE, $E,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE; 4864
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$E0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,  0,  0,  0, $E,  0,  0,$E0, $E,  0, $E,$E0, $E,  0, $E,$E0, $E,  0, $E,$E0,$EE,  0, $E,$E0,$EE,  0, $E,$EE,$EE,  0,$EE,$EE,$EE; 4928
-		dc.b $EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE; 4992
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$E0, $E,  0,  0,$E0,  0,  0; 5056
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,  0,  0,  0,  0,  0,  0,$E0,  0,  0,  0,$E0,  0,  0,  0,$E0,  0,  0,  0,$E0,  0,  0,  0,$E0,  0,  0,  0,$EE, $E,$E0,  0,$EE,$EE,$EE,  0,$EE,$EE,$EE; 5120
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$E0,  0,  0,  0,  0,  0,  0,  0,  0; 5184
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,$E0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$E0,  0,  0,  0,  0,  0,  0, $E,  0,  0,  0,  0,  0,  0,  0,$E0,  0, $E,  0,$EE,$E0, $E, $E,$EE,$EE,$EE,$EE,$EE,$EE; 5248
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,$E0,  0,  0,  0; 5312
-		dc.b $E0,  0,$E0,  0,$E0,  0,  0,  0,$E0,  0,  0,  0,$EE,  0,$E0,$EE,$EE,  0, $E,$EE,$EE,  0, $E,$EE,$EE,  0,$EE,$EE,$EE,  0,$EE,$EE,$EE,$E0,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE; 5376
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$E0, $E,  0,  0,  0, $E,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 5440
-		dc.b   0,  0,  0, $E,  0,  0,$E0,  0,  0, $E,$E0,  0,$E0, $E,$E0,  0,$E0,$EE,$E0,  0,$E0,$EE,$E0, $E,$E0,$EE,$EE, $E,$E0,$EE,$EE, $E,$E0,$EE,$EE,$EE,$E0,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE; 5504
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 5568
-		dc.b   0,  0,  0,  0,  0,  0, $E,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,  0,  0,$E0,  0,  0,  0,$EE,  0,  0,  0,$EE,$EE,  0,  0,$EE,$EE,$E0,$EE,$EE,$EE,$EE; 5632
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,  0,  0,  0,  0,  0,  0,  0,$E0,  0,  0,$EE,$E0,$EE,$EE,$EE,$EE; 5696
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,  0,  0,  0, $E,  0,  0,  0, $E,  0,  0,  0,$EE, $E,  0,  0,$EE,  0, $E,  0,$EE,$EE, $E,  0,$EE,$EE, $E,  0,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE; 5760
-		dc.b $EE,  0,  0,  0,  0,  0,$E0,  0,  0,  0,$E0,  0,  0,  0,$E0,  0,  0,  0,$E0,  0,  0, $E,$E0,  0,  0, $E,$E0,  0,  0, $E,$E0,  0,$E0, $E,$E0,  0,  0, $E,$EE, $E,  0, $E,$E0,$EE,  0, $E,$EE,$EE,$E0,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE; 5824
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$E0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$E0,  0,  0,  0,$E0,  0,  0,  0,$E0, $E,  0,  0,$EE,  0,  0,  0,$EE,$EE, $E,$E0,$EE,$E0,$EE,$E0,$EE,$EE,$EE; 5888
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$EE,$EE,$EE, $E,$EE,$EE,$EE,$EE,$EE,$EE; 5952
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$EE,$E0,  0, $E,$EE,$EE,$EE,$EE,$EE,$EE,$EE,$EE; 6016
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$E0,  0,  0,  0,  0,  0,  0,$E0,  0,$EE,$EE,$EE,  0,$EE,$EE,$EE; 6080
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$EE,$EE,  0,$EE,$EE,$EE,$EE,$EE,$EE,$EE; 6144
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,$EE,$EE,$EE,$EE; 6208
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,$E0,  0,$EE,$EE,$EE,$EE,$EE; 6272
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, $E,  0,  0,$E0,$EE,  0,  0,$EE,$EE,$EE; 6336
-		dc.b $EE,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$EE,$E0,  0,  0,$EE,$EE,$EE; 6400
-		dc.b $E0		; 6464
-Map_Tails:	dc.w word_9FC46-Map_Tails,word_9FC48-Map_Tails;	0 ; DATA XREF: ROM:00010C68o
-					; ROM:00011D94o ...
-		dc.w word_9FC5A-Map_Tails,word_9FC6C-Map_Tails;	2
-		dc.w word_9FC7E-Map_Tails,word_9FC90-Map_Tails;	4
-		dc.w word_9FC9A-Map_Tails,word_9FCA4-Map_Tails;	6
-		dc.w word_9FCB6-Map_Tails,word_9FCC8-Map_Tails;	8
-		dc.w word_9FCD2-Map_Tails,word_9FCDC-Map_Tails;	10
-		dc.w word_9FCE6-Map_Tails,word_9FCF0-Map_Tails;	12
-		dc.w word_9FCFA-Map_Tails,word_9FD14-Map_Tails;	14
-		dc.w word_9FD2E-Map_Tails,word_9FD48-Map_Tails;	16
-		dc.w word_9FD62-Map_Tails,word_9FD7C-Map_Tails;	18
-		dc.w word_9FD96-Map_Tails,word_9FDB0-Map_Tails;	20
-		dc.w word_9FDCA-Map_Tails,word_9FDE4-Map_Tails;	22
-		dc.w word_9FDFE-Map_Tails,word_9FE18-Map_Tails;	24
-		dc.w word_9FE32-Map_Tails,word_9FE4C-Map_Tails;	26
-		dc.w word_9FE66-Map_Tails,word_9FE80-Map_Tails;	28
-		dc.w word_9FE9A-Map_Tails,word_9FEB4-Map_Tails;	30
-		dc.w word_9FECE-Map_Tails,word_9FEE8-Map_Tails;	32
-		dc.w word_9FF02-Map_Tails,word_9FF1C-Map_Tails;	34
-		dc.w word_9FF36-Map_Tails,word_9FF50-Map_Tails;	36
-		dc.w word_9FF6A-Map_Tails,word_9FF7C-Map_Tails;	38
-		dc.w word_9FF96-Map_Tails,word_9FFA8-Map_Tails;	40
-		dc.w word_9FFC2-Map_Tails,word_9FFD4-Map_Tails;	42
-		dc.w word_9FFEE-Map_Tails,word_A0000-Map_Tails;	44
-		dc.w word_A001A-Map_Tails,word_A002C-Map_Tails;	46
-		dc.w word_A003E-Map_Tails,word_A0050-Map_Tails;	48
-		dc.w word_A0062-Map_Tails,word_A0074-Map_Tails;	50
-		dc.w word_A0086-Map_Tails,word_A00A0-Map_Tails;	52
-		dc.w word_A00BA-Map_Tails,word_A00D4-Map_Tails;	54
-		dc.w word_A00EE-Map_Tails,word_A0108-Map_Tails;	56
-		dc.w word_A0122-Map_Tails,word_A013C-Map_Tails;	58
-		dc.w word_A0156-Map_Tails,word_A013C-Map_Tails;	60
-		dc.w word_A0170-Map_Tails,word_A018A-Map_Tails;	62
-		dc.w word_A01A4-Map_Tails,word_A01BE-Map_Tails;	64
-		dc.w word_A01D8-Map_Tails,word_A01F2-Map_Tails;	66
-		dc.w word_A020C-Map_Tails,word_A0226-Map_Tails;	68
-		dc.w word_A0240-Map_Tails,word_A024A-Map_Tails;	70
-		dc.w word_A0254-Map_Tails,word_A025E-Map_Tails;	72
-		dc.w word_A0268-Map_Tails,word_A0272-Map_Tails;	74
-		dc.w word_A027C-Map_Tails,word_A0286-Map_Tails;	76
-		dc.w word_A0290-Map_Tails,word_A029A-Map_Tails;	78
-		dc.w word_A02A4-Map_Tails,word_A02AE-Map_Tails;	80
-		dc.w word_A02B8-Map_Tails,word_A02C2-Map_Tails;	82
-		dc.w word_A02CC-Map_Tails,word_A02D6-Map_Tails;	84
-		dc.w word_A02E0-Map_Tails,word_A02EA-Map_Tails;	86
-		dc.w word_A02F4-Map_Tails,word_A02FE-Map_Tails;	88
-		dc.w word_A0310-Map_Tails,word_A0322-Map_Tails;	90
-		dc.w word_A032C-Map_Tails,word_A0336-Map_Tails;	92
-		dc.w word_A0340-Map_Tails,word_A0352-Map_Tails;	94
-		dc.w word_A0364-Map_Tails,word_A036E-Map_Tails;	96
-		dc.w word_A0378-Map_Tails,word_A0382-Map_Tails;	98
-		dc.w word_A0394-Map_Tails,word_A03A6-Map_Tails;	100
-		dc.w word_A03B8-Map_Tails,word_A03CA-Map_Tails;	102
-		dc.w word_A03DC-Map_Tails,word_A03EE-Map_Tails;	104
-		dc.w word_A0400-Map_Tails,word_A0412-Map_Tails;	106
-		dc.w word_A041C-Map_Tails,word_A042E-Map_Tails;	108
-		dc.w word_A0440-Map_Tails,word_A0452-Map_Tails;	110
-		dc.w word_A0464-Map_Tails,word_A0476-Map_Tails;	112
-		dc.w word_A0488-Map_Tails,word_A049A-Map_Tails;	114
-		dc.w word_A04AC-Map_Tails,word_A04B6-Map_Tails;	116
-		dc.w word_A04C0-Map_Tails,word_A04D2-Map_Tails;	118
-		dc.w word_A04DC-Map_Tails,word_A04E6-Map_Tails;	120
-		dc.w word_A04F0-Map_Tails,word_A04FA-Map_Tails;	122
-		dc.w word_A0504-Map_Tails,word_A050E-Map_Tails;	124
-		dc.w word_A0518-Map_Tails,word_A0522-Map_Tails;	126
-		dc.w word_A0534-Map_Tails,word_A0546-Map_Tails;	128
-		dc.w word_A0550-Map_Tails,word_A055A-Map_Tails;	130
-		dc.w word_A0564-Map_Tails; 132
-word_9FC46:	dc.w 0			; DATA XREF: ROM:Map_Tailso
-word_9FC48:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F009,    0,    0,$FFF4; 0
-		dc.w	 9,    6,    3,$FFF4; 4
-word_9FC5A:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F009,    0,    0,$FFF4; 0
-		dc.w	 9,    6,    3,$FFF4; 4
-word_9FC6C:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F009,    0,    0,$FFF4; 0
-		dc.w	 9,    6,    3,$FFF4; 4
-word_9FC7E:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F009,    0,    0,$FFF4; 0
-		dc.w	 9,    6,    3,$FFF4; 4
-word_9FC90:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F00B,    0,    0,$FFF4; 0
-word_9FC9A:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F00B,    0,    0,$FFF4; 0
-word_9FCA4:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F009,    0,    0,$FFF4; 0
-		dc.w	 9,    6,    3,$FFF4; 4
-word_9FCB6:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F009,    0,    0,$FFF4; 0
-		dc.w	 9,    6,    3,$FFF4; 4
-word_9FCC8:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F007,    0,    0,$FFEC; 0
-word_9FCD2:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F00B,    0,    0,$FFE4; 0
-word_9FCDC:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F00B,    0,    0,$FFE4; 0
-word_9FCE6:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w	 9,    0,    0,$FFE4; 0
-word_9FCF0:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F00B,    0,    0,$FFE4; 0
-word_9FCFA:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $EC09,    0,    0,$FFF0; 0
-		dc.w $FC0D,    6,    3,$FFF0; 4
-		dc.w $FC09,   $E,    7,$FFE2; 8
-word_9FD14:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $F009,    0,    0,$FFF3; 0
-		dc.w	$D,    6,    3,$FFF0; 4
-		dc.w	 9,   $E,    7,$FFE4; 8
-word_9FD2E:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $F009,    0,    0,$FFF8; 0
-		dc.w	 9,    6,    3,$FFF3; 4
-		dc.w $FD09,   $C,    6,$FFE4; 8
-word_9FD48:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $F009,    0,    0,$FFF2; 0
-		dc.w	 9,    6,    3,$FFF2; 4
-		dc.w $FD09,   $C,    6,$FFE6; 8
-word_9FD62:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $EC09,    0,    0,$FFF0; 0
-		dc.w $FC0D,    6,    3,$FFF0; 4
-		dc.w $FC09,   $E,    7,$FFE2; 8
-word_9FD7C:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $F009,    0,    0,$FFF3; 0
-		dc.w	$D,    6,    3,$FFF0; 4
-		dc.w	 9,   $E,    7,$FFE4; 8
-word_9FD96:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $F009,    0,    0,$FFF8; 0
-		dc.w	 9,    6,    3,$FFF1; 4
-		dc.w $FD09,   $C,    6,$FFE4; 8
-word_9FDB0:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $F009,    0,    0,$FFF2; 0
-		dc.w	 9,    6,    3,$FFF2; 4
-		dc.w $FD09,   $C,    6,$FFE6; 8
-word_9FDCA:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $E301,    0,    0,$FFF3; 0
-		dc.w $F303,    2,    1,$FFEC; 4
-		dc.w $F30B,    6,    3,$FFF4; 8
-word_9FDE4:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $E705,    0,    0,$FFF6; 0
-		dc.w $F70B,    4,    2,$FFEE; 4
-		dc.w $FE05,  $10,    8,	   6; 8
-word_9FDFE:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $E605,    0,    0,$FFF8; 0
-		dc.w $F603,    4,    2,$FFEF; 4
-		dc.w $F60B,    8,    4,$FFF7; 8
-word_9FE18:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $E301,    0,    0,$FFF7; 0
-		dc.w $F30F,    2,    1,$FFEC; 4
-		dc.w $FB01,  $12,    9,	  $C; 8
-word_9FE32:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $E301,    0,    0,$FFF3; 0
-		dc.w $F303,    2,    1,$FFEC; 4
-		dc.w $F30B,    6,    3,$FFF4; 8
-word_9FE4C:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $E705,    0,    0,$FFF6; 0
-		dc.w $F70B,    4,    2,$FFEE; 4
-		dc.w $FF05,  $10,    8,	   6; 8
-word_9FE66:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $E605,    0,    0,$FFF8; 0
-		dc.w $F603,    4,    2,$FFEF; 4
-		dc.w $F60B,    8,    4,$FFF7; 8
-word_9FE80:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $E301,    0,    0,$FFF7; 0
-		dc.w $F30F,    2,    1,$FFEC; 4
-		dc.w  $301,  $12,    9,	  $C; 8
-word_9FE9A:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $F007,    0,    0,$FFEC; 0
-		dc.w $F007,    8,    4,$FFFC; 4
-		dc.w  $607,  $10,    8,$FFFC; 8
-word_9FEB4:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $F007,    0,    0,$FFF0; 0
-		dc.w $F007,    8,    4,	   0; 4
-		dc.w  $407,  $10,    8,	   0; 8
-word_9FECE:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $F007,    0,    0,$FFF0; 0
-		dc.w $F007,    8,    4,	   0; 4
-		dc.w  $407,  $10,    8,$FFFD; 8
-word_9FEE8:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $F007,    0,    0,$FFF0; 0
-		dc.w $F007,    8,    4,	   0; 4
-		dc.w  $407,  $10,    8,$FFFD; 8
-word_9FF02:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $F007,    0,    0,$FFEC; 0
-		dc.w $F007,    8,    4,$FFFC; 4
-		dc.w  $607,  $10,    8,$FFFC; 8
-word_9FF1C:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $F007,    0,    0,$FFF0; 0
-		dc.w $F007,    8,    4,	   0; 4
-		dc.w  $407,  $10,    8,	   0; 8
-word_9FF36:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $F007,    0,    0,$FFF0; 0
-		dc.w $F007,    8,    4,	   0; 4
-		dc.w  $407,  $10,    8,$FFFD; 8
-word_9FF50:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $F007,    0,    0,$FFF0; 0
-		dc.w $F007,    8,    4,	   0; 4
-		dc.w  $407,  $10,    8,$FFFD; 8
-word_9FF6A:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w  $401,    0,    0,$FFEB; 0
-		dc.w $F40F,    2,    1,$FFF3; 4
-word_9FF7C:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $E205,    0,    0,$FFF8; 0
-		dc.w $FA01,    4,    2,$FFF0; 4
-		dc.w $F20F,    6,    3,$FFF8; 8
-word_9FF96:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F901,    0,    0,$FFEC; 0
-		dc.w $F10F,    2,    1,$FFF4; 4
-word_9FFA8:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $FC01,    0,    0,$FFEF; 0
-		dc.w $E501,    2,    1,$FFFF; 4
-		dc.w $F50F,    4,    2,$FFF7; 8
-word_9FFC2:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w  $401,    0,    0,$FFEB; 0
-		dc.w $F40F,    2,    1,$FFF3; 4
-word_9FFD4:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $E201,    0,    0,	   0; 0
-		dc.w $FA01,    2,    1,$FFF0; 4
-		dc.w $F20F,    4,    2,$FFF8; 8
-word_9FFEE:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F901,    0,    0,$FFEC; 0
-		dc.w $F10F,    2,    1,$FFF4; 4
-word_A0000:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-word_A0002:	dc.w $E401,    0,    0,$FFFF; 0
-		dc.w $FC01,    2,    1,$FFEF; 4
-		dc.w $F40F,    4,    2,$FFF7; 8
-word_A001A:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F00F,    0,    0,$FFF0; 0
-		dc.w $F007,  $10,    8,$FFEA; 4
-word_A002C:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F00F,    0,    0,$FFF0; 0
-		dc.w $F805,  $10,    8,$FFEA; 4
-word_A003E:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F00F,    0,    0,$FFF0; 0
-		dc.w $F805,  $10,    8,$FFEA; 4
-word_A0050:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F00F,    0,    0,$FFF0; 0
-		dc.w $F805,$1010,$1008,$FFEA; 4
-word_A0062:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F00F,    0,    0,$FFF0; 0
-		dc.w $F007,  $10,    8,$FFEA; 4
-word_A0074:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F00F,    0,    0,$FFF0; 0
-		dc.w $F007,$1810,$1808,$FFEA; 4
-word_A0086:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $E401,    0,    0,$FFFA; 0
-		dc.w $F40B,    2,    1,$FFF0; 4
-		dc.w $FE0B,   $E,    7,$FFE8; 8
-word_A00A0:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $E405,    0,    0,$FFF8; 0
-		dc.w $F40B,    4,    2,$FFF0; 4
-		dc.w  $405,  $10,    8,$FFEF; 8
-word_A00BA:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $E401,    0,    0,$FFFA; 0
-		dc.w $F40B,    2,    1,$FFF0; 4
-		dc.w  $405,   $E,    7,$FFEF; 8
-word_A00D4:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $E405,    0,    0,$FFF8; 0
-		dc.w $F40B,    4,    2,$FFF0; 4
-		dc.w  $405,  $10,    8,$FFEF; 8
-word_A00EE:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $E401,    0,    0,$FFFA; 0
-		dc.w $F40B,    2,    1,$FFF0; 4
-		dc.w $FC0B,   $E,    7,$FFEA; 8
-word_A0108:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $E405,    0,    0,$FFF8; 0
-		dc.w $F40B,    4,    2,$FFF0; 4
-		dc.w $E90B,$1810,$1808,$FFF2; 8
-word_A0122:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $F009,    0,    0,$FFF0; 0
-		dc.w	$D,    6,    3,$FFF0; 4
-		dc.w  $60D,   $E,    7,$FFF0; 8
-word_A013C:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $F009,    0,    0,$FFF0; 0
-		dc.w	$D,    6,    3,$FFF0; 4
-		dc.w  $605,   $E,    7,$FFF8; 8
-word_A0156:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $F009,    0,    0,$FFF0; 0
-		dc.w	$D,    6,    3,$FFF0; 4
-		dc.w  $605,   $E,    7,$FFF8; 8
-word_A0170:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $F009,    0,    0,$FFF0; 0
-		dc.w	$D,    6,    3,$FFF0; 4
-		dc.w  $60D,   $E,    7,$FFF0; 8
-word_A018A:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $F009,    0,    0,$FFF0; 0
-		dc.w	$D,    6,    3,$FFF0; 4
-		dc.w  $60D,   $E,    7,$FFF0; 8
-word_A01A4:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $F80B,    0,    0,$FFEC; 0
-		dc.w $F805,   $C,    6,	   4; 4
-		dc.w $FE0B, $810, $808,	   0; 8
-word_A01BE:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $F80B,    0,    0,$FFEC; 0
-		dc.w $F805,   $C,    6,	   4; 4
-		dc.w  $105, $810, $808,	   4; 8
-word_A01D8:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $F80B,    0,    0,$FFEC; 0
-		dc.w $F805,   $C,    6,	   4; 4
-		dc.w  $105, $810, $808,	   4; 8
-word_A01F2:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $F80B,    0,    0,$FFEC; 0
-		dc.w $F805,   $C,    6,	   4; 4
-		dc.w  $105, $810, $808,	   4; 8
-word_A020C:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $F80B,    0,    0,$FFEC; 0
-		dc.w $F805,   $C,    6,	   4; 4
-		dc.w $FC0B, $810, $808,$FFFE; 8
-word_A0226:	dc.w 3			; DATA XREF: ROM:Map_Tailso
-		dc.w $F80B,    0,    0,$FFEC; 0
-		dc.w $F805,   $C,    6,	   4; 4
-		dc.w $FC0B,$1010,$1008,	   6; 8
-word_A0240:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F00F,    0,    0,$FFF0; 0
-word_A024A:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F00F,    0,    0,$FFF0; 0
-word_A0254:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F00F,    0,    0,$FFF0; 0
-word_A025E:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F809,    0,    0,$FFDC; 0
-word_A0268:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F809,    0,    0,$FFDC; 0
-word_A0272:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F809,    0,    0,$FFDC; 0
-word_A027C:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F809,    0,    0,$FFDC; 0
-word_A0286:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w  $709,    0,    0,$FFE1; 0
-word_A0290:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w  $709,    0,    0,$FFE1; 0
-word_A029A:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w  $709,    0,    0,$FFE1; 0
-word_A02A4:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w  $709,    0,    0,$FFE1; 0
-word_A02AE:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w  $C07,    0,    0,$FFF8; 0
-word_A02B8:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w  $C07,    0,    0,$FFF8; 0
-word_A02C2:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w  $C07,    0,    0,$FFF8; 0
-word_A02CC:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w  $C07,    0,    0,$FFF8; 0
-word_A02D6:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w  $707,    0,    0,	   7; 0
-word_A02E0:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w  $707,    0,    0,	   7; 0
-word_A02EA:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w  $707,    0,    0,	   7; 0
-word_A02F4:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w  $707,    0,    0,	   7; 0
-word_A02FE:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $E805,    0,    0,$FFF8; 0
-		dc.w $F80B,    4,    2,$FFF0; 4
-word_A0310:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $E805,    0,    0,$FFF8; 0
-		dc.w $F80B,    4,    2,$FFF0; 4
-word_A0322:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F00B,    0,    0,$FFF9; 0
-word_A032C:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F00F,    0,    0,$FFF0; 0
-word_A0336:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F00F,    0,    0,$FFF0; 0
-word_A0340:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F00F,    0,    0,$FFF0; 0
-		dc.w $E40D,  $10,    8,$FFEA; 4
-word_A0352:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F00F,    0,    0,$FFF0; 0
-		dc.w $E40D, $810, $808,$FFEA; 4
-word_A0364:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F40F,    0,    0,$FFF0; 0
-word_A036E:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F40F,    0,    0,$FFF0; 0
-word_A0378:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F40F,    0,    0,$FFF0; 0
-word_A0382:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F009,    0,    0,$FFF8; 0
-		dc.w	$D,    6,    3,$FFF0; 4
-word_A0394:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F009,    0,    0,$FFF8; 0
-		dc.w	 9,    6,    3,$FFF8; 4
-word_A03A6:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F009,    0,    0,$FFF8; 0
-		dc.w	 9,    6,    3,$FFF8; 4
-word_A03B8:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F009,    0,    0,$FFF8; 0
-		dc.w	 9,    6,    3,$FFF8; 4
-word_A03CA:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F009,    0,    0,$FFF0; 0
-		dc.w	$D,    6,    3,$FFF0; 4
-word_A03DC:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F009,    0,    0,$FFF0; 0
-		dc.w	$D,    6,    3,$FFF0; 4
-word_A03EE:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F801,    0,    0,$FFF0; 0
-		dc.w $F00B,    2,    1,$FFF8; 4
-word_A0400:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F009,    0,    0,$FFF8; 0
-		dc.w	$D,    6,    3,$FFF0; 4
-word_A0412:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F00F,    0,    0,$FFF0; 0
-word_A041C:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F00F,    0,    0,$FFEC; 0
-		dc.w $F003,  $10,    8,	  $C; 4
-word_A042E:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F00F,    0,    0,$FFEC; 0
-		dc.w $F003,  $10,    8,	  $C; 4
-word_A0440:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F805,    0,    0,$FFEC; 0
-		dc.w $F00B,    4,    2,$FFFC; 4
-word_A0452:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F007,    0,    0,$FFF0; 0
-		dc.w $F007, $800, $800,	   0; 4
-word_A0464:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F805, $800, $800,	   4; 0
-		dc.w $F00B, $804, $802,$FFEC; 4
-word_A0476:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F007,    0,    0,$FFF0; 0
-		dc.w $F805,    8,    4,	   0; 4
-word_A0488:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F007, $800, $800,	   0; 0
-		dc.w $F805, $808, $804,$FFF0; 4
-word_A049A:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F805,    0,    0,$FFEC; 0
-		dc.w $F00B,    4,    2,$FFFC; 4
-word_A04AC:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F00F,    0,    0,$FFF0; 0
-word_A04B6:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F00B,    0,    0,$FFF1; 0
-word_A04C0:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $E405,    0,    0,$FFF8; 0
-		dc.w $F40B,    4,    2,$FFF1; 4
-word_A04D2:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F20B,    0,    0,$FFF2; 0
-word_A04DC:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F40B,    0,    0,$FFF0; 0
-word_A04E6:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F30B,    0,    0,$FFF2; 0
-word_A04F0:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F20B,    0,    0,$FFF2; 0
-word_A04FA:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F20B,    0,    0,$FFF2; 0
-word_A0504:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F00B,    0,    0,$FFF1; 0
-word_A050E:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $ED0B,    0,    0,$FFF0; 0
-word_A0518:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $EC0B,    0,    0,$FFF1; 0
-word_A0522:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F409,    0,    0,$FFF3; 0
-		dc.w  $405,    6,    3,$FFF3; 4
-word_A0534:	dc.w 2			; DATA XREF: ROM:Map_Tailso
-		dc.w $F207,    0,    0,$FFF0; 0
-		dc.w $EC03,    8,    4,	   0; 4
-word_A0546:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F809,    0,    0,$FFE0; 0
-word_A0550:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F809,    0,    0,$FFE0; 0
-word_A055A:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F809,    0,    0,$FFE0; 0
-word_A0564:	dc.w 1			; DATA XREF: ROM:Map_Tailso
-		dc.w $F809,    0,    0,$FFE0; 0
-TailsDynPLC:	dc.w byte_A0678-TailsDynPLC,byte_A067A-TailsDynPLC; 0
-					; DATA XREF: LoadTailsTailsDynPLC+10o
-					; LoadTailsDynPLC+10o ...
-		dc.w byte_A0680-TailsDynPLC,byte_A0686-TailsDynPLC; 2
-		dc.w byte_A068C-TailsDynPLC,byte_A0692-TailsDynPLC; 4
-		dc.w byte_A0696-TailsDynPLC,byte_A069A-TailsDynPLC; 6
-		dc.w byte_A06A0-TailsDynPLC,byte_A06A6-TailsDynPLC; 8
-		dc.w byte_A06AA-TailsDynPLC,byte_A06AE-TailsDynPLC; 10
-		dc.w byte_A06B2-TailsDynPLC,byte_A06B6-TailsDynPLC; 12
-		dc.w byte_A06BA-TailsDynPLC,byte_A06C2-TailsDynPLC; 14
-		dc.w byte_A06CA-TailsDynPLC,byte_A06D2-TailsDynPLC; 16
-		dc.w byte_A06DA-TailsDynPLC,byte_A06E2-TailsDynPLC; 18
-		dc.w byte_A06EA-TailsDynPLC,byte_A06F2-TailsDynPLC; 20
-		dc.w byte_A06FA-TailsDynPLC,byte_A0702-TailsDynPLC; 22
-		dc.w byte_A070A-TailsDynPLC,byte_A0712-TailsDynPLC; 24
-		dc.w byte_A071A-TailsDynPLC,byte_A0722-TailsDynPLC; 26
-		dc.w byte_A072A-TailsDynPLC,byte_A0732-TailsDynPLC; 28
-		dc.w byte_A073A-TailsDynPLC,byte_A0742-TailsDynPLC; 30
-		dc.w byte_A074A-TailsDynPLC,byte_A0752-TailsDynPLC; 32
-		dc.w byte_A075A-TailsDynPLC,byte_A0762-TailsDynPLC; 34
-		dc.w byte_A076A-TailsDynPLC,byte_A0772-TailsDynPLC; 36
-		dc.w byte_A077A-TailsDynPLC,byte_A0780-TailsDynPLC; 38
-		dc.w word_A0788-TailsDynPLC,word_A078E-TailsDynPLC; 40
-		dc.w word_A0796-TailsDynPLC,word_A079C-TailsDynPLC; 42
-		dc.w word_A07A4-TailsDynPLC,word_A07AA-TailsDynPLC; 44
-		dc.w word_A07B2-TailsDynPLC,word_A07B8-TailsDynPLC; 46
-		dc.w word_A07BE-TailsDynPLC,word_A07B8-TailsDynPLC; 48
-		dc.w word_A07C4-TailsDynPLC,word_A07CA-TailsDynPLC; 50
-		dc.w word_A07D0-TailsDynPLC,word_A07D8-TailsDynPLC; 52
-		dc.w word_A07E0-TailsDynPLC,word_A07E8-TailsDynPLC; 54
-		dc.w word_A07F0-TailsDynPLC,word_A07F8-TailsDynPLC; 56
-		dc.w word_A0800-TailsDynPLC,word_A0808-TailsDynPLC; 58
-		dc.w word_A0810-TailsDynPLC,word_A0808-TailsDynPLC; 60
-		dc.w word_A0818-TailsDynPLC,word_A0820-TailsDynPLC; 62
-		dc.w word_A0828-TailsDynPLC,word_A0830-TailsDynPLC; 64
-		dc.w word_A0838-TailsDynPLC,word_A0840-TailsDynPLC; 66
-		dc.w word_A0848-TailsDynPLC,word_A0850-TailsDynPLC; 68
-		dc.w word_A0858-TailsDynPLC,word_A085C-TailsDynPLC; 70
-		dc.w word_A0860-TailsDynPLC,word_A0864-TailsDynPLC; 72
-		dc.w word_A0868-TailsDynPLC,word_A086C-TailsDynPLC; 74
-		dc.w word_A0870-TailsDynPLC,word_A0874-TailsDynPLC; 76
-		dc.w word_A0878-TailsDynPLC,word_A087C-TailsDynPLC; 78
-		dc.w word_A0880-TailsDynPLC,word_A0884-TailsDynPLC; 80
-		dc.w word_A0888-TailsDynPLC,word_A088C-TailsDynPLC; 82
-		dc.w word_A0890-TailsDynPLC,word_A0894-TailsDynPLC; 84
-		dc.w word_A0898-TailsDynPLC,word_A089C-TailsDynPLC; 86
-		dc.w word_A08A0-TailsDynPLC,word_A08A4-TailsDynPLC; 88
-		dc.w word_A08AA-TailsDynPLC,word_A08B0-TailsDynPLC; 90
-		dc.w word_A08B4-TailsDynPLC,word_A08B8-TailsDynPLC; 92
-		dc.w word_A08BC-TailsDynPLC,word_A08BC-TailsDynPLC; 94
-		dc.w word_A08C2-TailsDynPLC,word_A08C6-TailsDynPLC; 96
-		dc.w word_A08CA-TailsDynPLC,word_A08CE-TailsDynPLC; 98
-		dc.w word_A08D4-TailsDynPLC,word_A08DA-TailsDynPLC; 100
-		dc.w word_A08E0-TailsDynPLC,word_A08E6-TailsDynPLC; 102
-		dc.w word_A08EC-TailsDynPLC,word_A08F2-TailsDynPLC; 104
-		dc.w word_A08F8-TailsDynPLC,word_A08FE-TailsDynPLC; 106
-		dc.w word_A0902-TailsDynPLC,word_A0908-TailsDynPLC; 108
-		dc.w word_A090E-TailsDynPLC,word_A0914-TailsDynPLC; 110
-		dc.w word_A090E-TailsDynPLC,word_A091A-TailsDynPLC; 112
-		dc.w word_A091A-TailsDynPLC,word_A0920-TailsDynPLC; 114
-		dc.w word_A0926-TailsDynPLC,word_A092A-TailsDynPLC; 116
-		dc.w word_A092E-TailsDynPLC,word_A0934-TailsDynPLC; 118
-		dc.w word_A0938-TailsDynPLC,word_A093C-TailsDynPLC; 120
-		dc.w word_A0940-TailsDynPLC,word_A0944-TailsDynPLC; 122
-		dc.w word_A0948-TailsDynPLC,word_A094C-TailsDynPLC; 124
-		dc.w word_A0950-TailsDynPLC,word_A0954-TailsDynPLC; 126
-		dc.w word_A095A-TailsDynPLC,word_A0864-TailsDynPLC; 128
-		dc.w word_A0868-TailsDynPLC,word_A086C-TailsDynPLC; 130
-		dc.w word_A0870-TailsDynPLC; 132
-byte_A0678:	dc.b   0,  0		; 0 ; DATA XREF: ROM:TailsDynPLCo
-byte_A067A:	dc.b   0,  2,$50,  0,$50,  6; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A0680:	dc.b   0,  2,$50, $C,$50,  6; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A0686:	dc.b   0,  2,$50,$12,$50,  6; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A068C:	dc.b   0,  2,$50,$18,$50,  6; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A0692:	dc.b   0,  1,$B0,$1E	; 0 ; DATA XREF: ROM:TailsDynPLCo
-byte_A0696:	dc.b   0,  1,$B0,$2A	; 0 ; DATA XREF: ROM:TailsDynPLCo
-byte_A069A:	dc.b   0,  2,$50,$36,$50,$3C; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A06A0:	dc.b   0,  2,$50,$36,$50,$42; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A06A6:	dc.b   0,  1,$70,$48	; 0 ; DATA XREF: ROM:TailsDynPLCo
-byte_A06AA:	dc.b   0,  1,$B0,$50	; 0 ; DATA XREF: ROM:TailsDynPLCo
-byte_A06AE:	dc.b   0,  1,$B0,$5C	; 0 ; DATA XREF: ROM:TailsDynPLCo
-byte_A06B2:	dc.b   0,  1,$50,$68	; 0 ; DATA XREF: ROM:TailsDynPLCo
-byte_A06B6:	dc.b   0,  1,$B0,$6E	; 0 ; DATA XREF: ROM:TailsDynPLCo
-byte_A06BA:	dc.b   0,  3,$50,$7A,$70,$80,$50,$CA; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A06C2:	dc.b   0,  3,$50,$88,$70,$8E,$50,$D0; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A06CA:	dc.b   0,  3,$50,$96,$50,$9C,$50,$D6; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A06D2:	dc.b   0,  3,$50,$A2,$50,$A8,$50,$DC; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A06DA:	dc.b   0,  3,$50,$7A,$70,$AE,$50,$CA; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A06E2:	dc.b   0,  3,$50,$88,$70,$B6,$50,$D0; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A06EA:	dc.b   0,  3,$50,$96,$50,$BE,$50,$D6; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A06F2:	dc.b   0,  3,$50,$A2,$50,$C4,$50,$DC; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A06FA:	dc.b   0,  3,$10,$E2,$30,$E4,$B0,$E8; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A0702:	dc.b   0,  3,$30,$F4,$B0,$F8,$31,  4; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A070A:	dc.b   0,  3,$31,  8,$31, $C,$B1,$10; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A0712:	dc.b   0,  3,$11,$1C,$F1,$1E,$11,$2E; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A071A:	dc.b   0,  3,$10,$E2,$30,$E4,$B1,$30; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A0722:	dc.b   0,  3,$30,$F4,$B1,$3C,$31,$48; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A072A:	dc.b   0,  3,$31,  8,$31, $C,$B1,$4C; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A0732:	dc.b   0,  3,$11,$1C,$F1,$58,$11,$68; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A073A:	dc.b   0,  3,$71,$6A,$71,$72,$71,$CA; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A0742:	dc.b   0,  3,$71,$7A,$71,$82,$71,$D2; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A074A:	dc.b   0,  3,$71,$8A,$71,$92,$71,$DA; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A0752:	dc.b   0,  3,$71,$9A,$71,$A2,$71,$E2; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A075A:	dc.b   0,  3,$71,$6A,$71,$AA,$71,$CA; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A0762:	dc.b   0,  3,$71,$7A,$71,$B2,$71,$D2; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A076A:	dc.b   0,  3,$71,$8A,$71,$BA,$71,$DA; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A0772:	dc.b   0,  3,$71,$9A,$71,$C2,$71,$E2; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A077A:	dc.b   0,  2,$11,$EA,$F1,$EC; 0	; DATA XREF: ROM:TailsDynPLCo
-byte_A0780:	dc.b   0,  3,$31,$FC,$12,  0,$F2,  2; 0	; DATA XREF: ROM:TailsDynPLCo
-word_A0788:	dc.w	 2,$1212,$F214	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A078E:	dc.w	 3,$1224,$1226,$F228; 0	; DATA XREF: ROM:TailsDynPLCo
-word_A0796:	dc.w	 2,$11EA,$F238	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A079C:	dc.w	 3,$1248,$1200,$F24A; 0	; DATA XREF: ROM:TailsDynPLCo
-word_A07A4:	dc.w	 2,$1212,$F25A	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A07AA:	dc.w	 3,$126A,$1224,$F26C; 0	; DATA XREF: ROM:TailsDynPLCo
-word_A07B2:	dc.w	 2,$F27C,$729C	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A07B8:	dc.w	 2,$F28C,$32A4	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A07BE:	dc.w	 2,$F27C,$32A8	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A07C4:	dc.w	 2,$F27C,$72AC	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A07CA:	dc.w	 2,$F28C,$72AC	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A07D0:	dc.w	 3,$12B4,$B2B6,$B2D2; 0	; DATA XREF: ROM:TailsDynPLCo
-word_A07D8:	dc.w	 3,$32C2,$B2C6,$32DE; 0	; DATA XREF: ROM:TailsDynPLCo
-word_A07E0:	dc.w	 3,$12B4,$B2B6,$32E2; 0	; DATA XREF: ROM:TailsDynPLCo
-word_A07E8:	dc.w	 3,$32C2,$B2C6,$32E6; 0	; DATA XREF: ROM:TailsDynPLCo
-word_A07F0:	dc.w	 3,$12B4,$B2B6,$B2EA; 0	; DATA XREF: ROM:TailsDynPLCo
-word_A07F8:	dc.w	 3,$32C2,$B2C6,$B2EA; 0	; DATA XREF: ROM:TailsDynPLCo
-word_A0800:	dc.w	 3,$52F6,$72FC,$7312; 0	; DATA XREF: ROM:TailsDynPLCo
-word_A0808:	dc.w	 3,$5304,$730A,$331E; 0	; DATA XREF: ROM:TailsDynPLCo
-word_A0810:	dc.w	 3,$52F6,$72FC,$331A; 0	; DATA XREF: ROM:TailsDynPLCo
-word_A0818:	dc.w	 3,$52F6,$72FC,$7322; 0	; DATA XREF: ROM:TailsDynPLCo
-word_A0820:	dc.w	 3,$5304,$730A,$7322; 0	; DATA XREF: ROM:TailsDynPLCo
-word_A0828:	dc.w	 3,$B32A,$3336,$B2D2; 0	; DATA XREF: ROM:TailsDynPLCo
-word_A0830:	dc.w	 3,$B33A,$3346,$32DE; 0	; DATA XREF: ROM:TailsDynPLCo
-word_A0838:	dc.w	 3,$B32A,$3336,$32E2; 0	; DATA XREF: ROM:TailsDynPLCo
-word_A0840:	dc.w	 3,$B33A,$3346,$32E6; 0	; DATA XREF: ROM:TailsDynPLCo
-word_A0848:	dc.w	 3,$B32A,$3336,$B2EA; 0	; DATA XREF: ROM:TailsDynPLCo
-word_A0850:	dc.w	 3,$B33A,$3346,$B2EA; 0	; DATA XREF: ROM:TailsDynPLCo
-word_A0858:	dc.w	 1,$F34A	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A085C:	dc.w	 1,$F35A	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A0860:	dc.w	 1,$F36A	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A0864:	dc.w	 1,$50CA	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A0868:	dc.w	 1,$50D0	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A086C:	dc.w	 1,$50D6	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A0870:	dc.w	 1,$50DC	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A0874:	dc.w	 1,$537A	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A0878:	dc.w	 1,$5380	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A087C:	dc.w	 1,$5386	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A0880:	dc.w	 1,$538C	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A0884:	dc.w	 1,$71CA	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A0888:	dc.w	 1,$71D2	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A088C:	dc.w	 1,$71DA	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A0890:	dc.w	 1,$71E2	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A0894:	dc.w	 1,$7392	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A0898:	dc.w	 1,$739A	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A089C:	dc.w	 1,$73A2	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A08A0:	dc.w	 1,$73AA	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A08A4:	dc.w	 2,$33B2,$B3B6	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A08AA:	dc.w	 2,$33B2,$B3C2	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A08B0:	dc.w	 1,$B3CE	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A08B4:	dc.w	 1,$F3DA	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A08B8:	dc.w	 1,$F3EA	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A08BC:	dc.w	 2,$F3FA,$740A	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A08C2:	dc.w	 1,$F412	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A08C6:	dc.w	 1,$F422	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A08CA:	dc.w	 1,$F432	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A08CE:	dc.w	 2,$5442,$7448	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A08D4:	dc.w	 2,$5442,$5450	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A08DA:	dc.w	 2,$5442,$5456	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A08E0:	dc.w	 2,$5442,$545C	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A08E6:	dc.w	 2,$5462,$7468	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A08EC:	dc.w	 2,$5470,$7476	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A08F2:	dc.w	 2,$147E,$B480	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A08F8:	dc.w	 2,$548C,$7492	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A08FE:	dc.w	 1,$F49A	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A0902:	dc.w	 2,$F4AA,$34BA	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A0908:	dc.w	 2,$F4BE,$34CE	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A090E:	dc.w	 2,$34D2,$B4D6	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A0914:	dc.w	 2,$74E2,$74E2	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A091A:	dc.w	 2,$74EA,$34F2	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A0920:	dc.w	 2,$34F6,$B4FA	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A0926:	dc.w	 1,$F506	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A092A:	dc.w	 1,$B516	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A092E:	dc.w	 2,$3522,$B526	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A0934:	dc.w	 1,$B532	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A0938:	dc.w	 1,$B53E	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A093C:	dc.w	 1,$B54A	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A0940:	dc.w	 1,$B556	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A0944:	dc.w	 1,$B562	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A0948:	dc.w	 1,$B56E	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A094C:	dc.w	 1,$B57A	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A0950:	dc.w	 1,$B586	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A0954:	dc.w	 2,$5592,$3598	; 0 ; DATA XREF: ROM:TailsDynPLCo
-word_A095A:	dc.w	 2,$759C,$35A4	; 0 ; DATA XREF: ROM:TailsDynPLCo
+Art_SplashDust:	incbin	"art/uncompressed/Dust and water splash.bin"
+		even
+Map_Tails:	incbin	"mappings/sprite/Tails.bin"
+TailsDynPLC:	incbin	"mappings/spriteDPLC/Tails.bin"
+		even
+; ---------------------------------------------------------------------------
+; Sega and title screen assets
+; ---------------------------------------------------------------------------
 Nem_SegaLogo:	dc.b $80,$7D,$80,  5,$16,$15,$1B,$26,$3A,$35,$1C,$45,$19,$54,  9,$64,  7,$72,  0,$81,  5,$18,$15,$1A,$27,$77,$37,$76,$47,$78,$58,$F8,$77,$79,$82,  4, $A,$83,  4,  8,$84,  4,  6,$17,$7A,$85,  4,  5,$86,  4,  4,$17,$7B,$87,  5,$17,$FF,  0,  0,$F1,$FA,$20,  0,$3F; 0
 					; DATA XREF: ROM:0000310Ao
 		dc.b $27,$FA,$2D,$20,  0,$1E,$FF,$2F,$FA,$6C,  0,  1,$FF,$20,  0,$3F,$FC,  0,  7,$FC,$80,  0,$FF,$B0,  0,$1F,$F2,  0,  3,$F7,$FF,$BD,  0,  3,$F6,$5F,$B6,  0,  3,$F6,$DF,$B2,  0,  3,$F6,$5F,$BE,  0,  3,$F7,$DF,$B2,  0,  3,$F6,$5F,$B6,  0,  3,$F6,$DF,$B2,  0,  3; 64
@@ -44611,6 +41436,9 @@ Nem_TitleSonicTails:dc.b $80,$C1,$80,  4,  4,$14,  5,$25, $E,$35, $F,$45,$12,$55
 		dc.b $69,$39,$17,$DE,  5,$EB,$83,$22,$98,$39,$60,$BF,$AD,$7F,$31,$BF,$F9,$A0,  0,  6,$9C,$43,$3E,$99,$C1,$FE,$52,$FD,$EA,$9B,$64,$6D,$5B,$B1,$FB,$FC,$27,$7E,$22,$87, $B,$FA,$42,$87,$F4,$8E,$FF,$6E,$80,  0,  4,$3C,$F7,$B7,$E9,$10,$A6,$2D,$22,$98,$E2,$45,$31,$C1; 2752
 		dc.b $B3,$8A,$63,$78,$79,$71,$48,$C8,$D7,$FF,$20,  0,  7,$7E,$3F,$77,$84,$29,$CD,$27,$2E,$6A,$5D,$35,$9C,$B9,$A6,$F7,$FE,$B9,$37,$8D,$F5,$F3,$FE,$2E,$80,  0,  6,$5F,$95,$F4,$C3,$2C,$FF,$31,$87,$4D,$CC,$8C,$F9,$A5,$17,$F5,$C1,$28,$D2,$A4,$EF,$17,$A7,$E9,$5B,$F5; 2816
 		dc.b $A0,  0,  0,$40	; 2880
+; ---------------------------------------------------------------------------
+; Green Hill Zone stage assets
+; ---------------------------------------------------------------------------
 S1Nem_GHZFlowerBits:dc.b   0,  4,$80,$24, $B,$34, $A,$43,  3,$55,$1E,$74, $D,$8E,  2,  0,$34, $C,$8F,  3,  4,$13,  2,$24, $E,$FF,$9B, $F,$63,$99,$7F,$DE,$B9,$95,$3F,$5D,$58,$D0,$D0,$D0,$D0,$D7,$EB,$AD,$7F,$3B,$F0,  8,$FE,$69, $D,$DD,$F1,$1F,$5F,$F3,$FF,  1,$FE,$FF,$E1,$75,$7E,  9; 0
 		dc.b $AA,$11,$5C,$D0,$E1,$E9,$FE,  3,$FC,  0; 64
 Nem_SwingPlatform:dc.b $80, $E,$80,  4,	 2,$14,	 3,$24,	 4,$36,$37,$45,$1A,$56,$39,$66,$2C,$74,	 5,$81,	 3,  0,$15,$19,$26,$3C,$75,$14,$82,  5,$15,$75,	$C,$83,	 5, $D,$17,$7B,$84,  4,	 7,$17,$7C,$85,	 6,$2D,$77,$7A,$86,  5,$17,$87,	 4,  8,$16,$38,$76,$3A,$88,  6,$36,$89,	 5,$12;	0
@@ -46132,14 +42960,6 @@ S1Nem_EndingSONICText:dc.b $80,$30,$80,	 6,$3A,$15,$1B,$24,  9,$35,$1A,$45,$18,$
 
 Leftover_E166F:
 		incbin	"misc/leftovers/E166F.bin"
-
-
-
-
-
-
-
-
 
 ; end of 'ROM'
 		END
