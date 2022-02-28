@@ -11,133 +11,7 @@
 ; This file should be compiled with "as	-M"
 
 
-; ===========================================================================
-; ---------------------------------------------------------------------------
-; Object Status Table offsets
-; ---------------------------------------------------------------------------
-; universally followed object conventions:
-routine:		equ $24
-
-; ===========================================================================
-; ---------------------------------------------------------------------------
-; some variables and functions to help define those constants (redefined before a new set of IDs)
-; V-Int routines
-
-VintID_Lag:			equ (Vint_Lag_ptr-Vint_SwitchTbl)		; 0
-VintID_SEGA:			equ (Vint_SEGA_ptr-Vint_SwitchTbl)		; 2
-VintID_Title:			equ (Vint_Title_ptr-Vint_SwitchTbl)		; 4
-VintID_Unused6:			equ (Vint_Unused6_ptr-Vint_SwitchTbl)		; 6
-VintID_Level:			equ (Vint_Level_ptr-Vint_SwitchTbl)		; 8
-VintID_S1SS:			equ (Vint_S1SS_ptr-Vint_SwitchTbl)		; $A
-VintID_TitleCard:		equ (Vint_TitleCard_ptr-Vint_SwitchTbl)		; $C
-VintID_UnusedE:			equ (Vint_UnusedE_ptr-Vint_SwitchTbl)		; $E
-VintID_Pause:			equ (Vint_Pause_ptr-Vint_SwitchTbl)		; $10
-VintID_Fade:			equ (Vint_Fade_ptr-Vint_SwitchTbl)		; $12
-VintID_PCM:			equ (Vint_PCM_ptr-Vint_SwitchTbl)		; $14
-VintID_SSResults:		equ (Vint_SSResults_ptr-Vint_SwitchTbl)		; $16
-VintID_TitleCard2:		equ (Vint_TitleCard2_ptr-Vint_SwitchTbl)	; $18
-
-; Game modes
-GameModeID_SegaScreen:		equ (GameMode_SegaScreen-GameModeArray)		; 0
-GameModeID_TitleScreen:		equ (GameMode_TitleScreen-GameModeArray)	; 4
-GameModeID_Demo:		equ (GameMode_Demo-GameModeArray)		; 8
-GameModeID_Level:		equ (GameMode_Level-GameModeArray)		; $C
-GameModeID_SpecialStage:	equ (GameMode_SpecialStage-GameModeArray)	; $10
-GameModeID_ContinueScreen:	equ $14						; $14 ; referenced despite it not existing
-GameModeID_S1Ending:		equ $18						; $18 ; referenced despite it not existing
-GameModeID_S1Credits:		equ $1C						; $1C ; referenced despite it not existing
-GameModeFlag_TitleCard:		equ 7 ; flag bit
-GameModeID_TitleCard:		equ 1<<GameModeFlag_TitleCard			; $80 ; flag mask
-
-; Music IDs
-
-; ---------------------------------------------------------------------------
-; Main RAM
-Decomp_Buffer:			equ $FFFFAA00
-
-VDP_Command_Buffer:		equ $FFFFDC00
-VDP_Command_Buffer_Slot:	equ $FFFFDCFC
-
-Sonic_Stat_Record_Buf:		equ $FFFFE400
-Sonic_Pos_Record_Buf:		equ $FFFFE500
-Tails_Pos_Record_Buf:		equ $FFFFE600
-
-Ring_Positions:			equ $FFFFE800
-
-Sonic_Pos_Record_Index:		equ $FFFFEED2
-
-Game_Mode:			equ $FFFFF600
-
-Demo_Time_left:			equ $FFFFF614
-
-Hint_counter_reserve:		equ $FFFFF624
-Vint_routine:			equ $FFFFF62A
-DMA_data_thunk:			equ $FFFFF640
-Hint_flag:			equ $FFFFF644
-Water_fullscreen_flag:		equ $FFFFF64E
-Do_Updates_in_H_int:		equ $FFFFF64F
-
-Rings_manager_routine:		equ $FFFFF710
-Level_started_flag:		equ $FFFFF711
-Ring_start_addr:		equ $FFFFF712
-Ring_end_addr:			equ $FFFFF714
-Ring_start_addr_P2:		equ $FFFFF716
-Ring_end_addr_P2:		equ $FFFFF718
-
-Water_flag:			equ $FFFFF730
-
-Sonic_top_speed:		equ $FFFFF760
-Sonic_acceleration:		equ $FFFFF762
-Sonic_deceleration:		equ $FFFFF764
-Sonic_LastLoadedDPLC:		equ $FFFFF766
-
-Obj_placement_routine:		equ $FFFFF76C
-Camera_X_pos_last:		equ $FFFFF76E
-Obj_load_addr_right:		equ $FFFFF770
-Obj_load_addr_left:		equ $FFFFF774
-Obj_load_addr_2:		equ $FFFFF778
-Obj_load_addr_3:		equ $FFFFF77C
-
-Camera_X_pos_last_P2:		equ $FFFFF78C
-
-Tails_LastLoadedDPLC:		equ $FFFFF7DE
-TailsTails_LastLoadedDPLC:	equ $FFFFF7DF
-
-Anim_Counters:			equ $FFFFF7F0
-
-Debug_object:			equ $FFFFFE06
-Debug_placement_mode:		equ $FFFFFE08
-Debug_Accel_Timer:		equ $FFFFFE0A
-Debug_Speed:			equ $FFFFFE0B
-
-Vint_runcount:			equ $FFFFFE0C
-
-Current_ZoneAndAct:		equ $FFFFFE10
-Current_Zone:			equ $FFFFFE10
-Current_Act:			equ $FFFFFE11
-
-Two_player_mode:		equ $FFFFFFE8
-
-Debug_mode_flag:		equ $FFFFFFFA
-
-; ---------------------------------------------------------------------------
-; I/O Area 
-HW_Version:			equ $A10001
-HW_Port_1_Data:			equ $A10003
-HW_Port_2_Data:			equ $A10005
-HW_Expansion_Data:		equ $A10007
-HW_Port_1_Control:		equ $A10009
-HW_Port_2_Control:		equ $A1000B
-HW_Expansion_Control:		equ $A1000D
-HW_Port_1_TxData:		equ $A1000F
-HW_Port_1_RxData:		equ $A10011
-HW_Port_1_SCtrl:		equ $A10013
-HW_Port_2_TxData:		equ $A10015
-HW_Port_2_RxData:		equ $A10017
-HW_Port_2_SCtrl:		equ $A10019
-HW_Expansion_TxData:		equ $A1001B
-HW_Expansion_RxData:		equ $A1001D
-HW_Expansion_SCtrl:		equ $A1001F
+	include	"s2.constants.asm"
 
 ; ---------------------------------------------------------------------------
 ; Macros
@@ -146,13 +20,13 @@ align macro
 	endm
 
 stopZ80 macro
-	move.w	#$100,($A11100).l
-@loop:	btst	#0,($A11100).l
+	move.w	#$100,(Z80_Bus_Request).l
+@loop:	btst	#0,(Z80_Bus_Request).l
 	bne.s	@loop
 	endm
 
 startZ80 macro
-	move.w	#0,($A11100).l
+	move.w	#0,(Z80_Bus_Request).l
 	endm
 
 StartOfRom:
@@ -283,11 +157,11 @@ InitValues:	dc.w $8000
 		dc.w $3FFF
 		dc.w $100
 
-		dc.l $A00000		; Z80 RAM start	location
-dword_29E:	dc.l $A11100		; Z80 bus request
-		dc.l $A11200		; Z80 reset
-		dc.l $C00000		; VDP data port
-		dc.l $C00004		; VDP control port
+		dc.l Z80_RAM		; Z80 RAM start	location
+dword_29E:	dc.l Z80_Bus_Request	; Z80 bus request
+		dc.l Z80_Reset		; Z80 reset
+		dc.l VDP_data_port	; VDP data port
+		dc.l VDP_control_port	; VDP control port
 
 		dc.b   4,$14,$30,$3C	; 0 ; values for VDP registers
 		dc.b   7,$6C,  0,  0	; 4
@@ -311,7 +185,7 @@ dword_29E:	dc.l $A11100		; Z80 bus request
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 GameProgram:
-		tst.w	($C00004).l
+		tst.w	(VDP_control_port).l
 		btst	#6,(HW_Expansion_Control).l
 		beq.s	ChecksumTest
 		cmpi.l	#'init',($FFFFFFFC).w
@@ -374,11 +248,11 @@ GameMode_SpecialStage:	bra.w	SpecialStage	; Special Stage play mode
 ; Leftover from Sonic 1, turns the screen red if the checksum check fails
 ChecksumError:
 		bsr.w	VDPSetupGame
-		move.l	#$C0000000,($C00004).l
+		move.l	#$C0000000,(VDP_control_port).l
 		moveq	#$3F,d7
 
 Checksum_Red:
-		move.w	#$E,($C00000).l
+		move.w	#$E,(VDP_data_port).l
 		dbf	d7,Checksum_Red
 
 ChecksumFailed_Loop:
@@ -474,8 +348,8 @@ ErrorMsg_Wait:
 
 
 ShowErrorMsg:
-		lea	($C00000).l,a6
-		move.l	#$78000003,($C00004).l
+		lea	(VDP_data_port).l,a6
+		move.l	#$78000003,(VDP_control_port).l
 		lea	(Art_Text).l,a0
 		move.w	#$27F,d1
 
@@ -488,7 +362,7 @@ Error_LoadGfx:
 loc_4A6:
 		move.w	ErrorText(pc,d0.w),d0
 		lea	ErrorText(pc,d0.w),a0
-		move.l	#$46040003,($C00004).l
+		move.l	#$46040003,(VDP_control_port).l
 		moveq	#$12,d1
 
 Error_CharsLoop:
@@ -578,11 +452,11 @@ V_Int:
 		beq.s	Vint_Lag
 
 loc_B12:
-		move.w	($C00004).l,d0
+		move.w	(VDP_control_port).l,d0
 		andi.w	#8,d0
 		beq.s	loc_B12
-		move.l	#$40000010,($C00004).l
-		move.l	($FFFFF616).w,($C00000).l
+		move.l	#$40000010,(VDP_control_port).l
+		move.l	(Vscroll_Factor).w,(VDP_data_port).l
 		btst	#6,($FFFFFFF8).w
 		beq.s	loc_B40
 		move.w	#$700,d0
@@ -634,7 +508,7 @@ Vint_Lag:
 loc_BA0:
 		tst.b	(Water_flag).w
 		beq.w	Vint0_noWater
-		move.w	($C00004).l,d0
+		move.w	(VDP_control_port).l,d0
 		btst	#6,($FFFFFFF8).w
 		beq.s	loc_BBE
 		move.w	#$700,d0
@@ -647,7 +521,7 @@ loc_BBE:
 		stopZ80
 		tst.b	(Water_fullscreen_flag).w
 		bne.s	loc_C02
-		lea	($C00004).l,a5
+		lea	(VDP_control_port).l,a5
 		move.l	#$94009340,(a5)
 		move.l	#$96FD9580,(a5)
 		move.w	#$977F,(a5)
@@ -658,7 +532,7 @@ loc_BBE:
 ; ---------------------------------------------------------------------------
 
 loc_C02:
-		lea	($C00004).l,a5
+		lea	(VDP_control_port).l,a5
 		move.l	#$94009340,(a5)
 		move.l	#$96FD9540,(a5)
 		move.w	#$977F,(a5)
@@ -668,15 +542,15 @@ loc_C02:
 
 loc_C26:
 		move.w	(Hint_counter_reserve).w,(a5)
-		move.w	#$8230,($C00004).l
+		move.w	#$8230,(VDP_control_port).l
 		startZ80
 		bra.w	Vint_SoundDriver
 ; ---------------------------------------------------------------------------
 ; loc_C3E:
 Vint0_noWater:
-		move.w	($C00004).l,d0
-		move.l	#$40000010,($C00004).l
-		move.l	($FFFFF616).w,($C00000).l
+		move.w	(VDP_control_port).l,d0
+		move.l	#$40000010,(VDP_control_port).l
+		move.l	(Vscroll_Factor).w,(VDP_data_port).l
 		btst	#6,($FFFFFFF8).w
 		beq.s	loc_C66
 		move.w	#$700,d0
@@ -686,10 +560,10 @@ loc_C62:
 
 loc_C66:
 		move.w	#1,(Hint_flag).w
-		move.w	(Hint_counter_reserve).w,($C00004).l
-		move.w	#$8230,($C00004).l
+		move.w	(Hint_counter_reserve).w,(VDP_control_port).l
+		move.w	#$8230,(VDP_control_port).l
 		move.l	($FFFFF61E).w,($FFFFEEF0).w
-		lea	($C00004).l,a5
+		lea	(VDP_control_port).l,a5
 		move.l	#$94019340,(a5)
 		move.l	#$96FC9500,(a5)
 		move.w	#$977F,(a5)
@@ -739,7 +613,7 @@ Vint_Level:
 		tst.b	(Water_fullscreen_flag).w
 		bne.s	loc_D24
 
-		lea	($C00004).l,a5
+		lea	(VDP_control_port).l,a5
 		move.l	#$94009340,(a5)
 		move.l	#$96FD9580,(a5)
 		move.w	#$977F,(a5)
@@ -750,7 +624,7 @@ Vint_Level:
 ; ---------------------------------------------------------------------------
 
 loc_D24:
-		lea	($C00004).l,a5
+		lea	(VDP_control_port).l,a5
 		move.l	#$94009340,(a5)
 
 loc_D30:
@@ -762,8 +636,8 @@ loc_D30:
 
 loc_D48:
 		move.w	(Hint_counter_reserve).w,(a5)
-		move.w	#$8230,($C00004).l
-		lea	($C00004).l,a5
+		move.w	#$8230,(VDP_control_port).l
+		lea	(VDP_control_port).l,a5
 		move.l	#$940193C0,(a5)
 
 loc_D60:
@@ -772,7 +646,7 @@ loc_D60:
 		move.w	#$7C00,(a5)
 		move.w	#$83,(DMA_data_thunk).w
 		move.w	(DMA_data_thunk).w,(a5)
-		lea	($C00004).l,a5
+		lea	(VDP_control_port).l,a5
 		move.l	#$94019340,(a5)
 		move.l	#$96FC9500,(a5)
 		move.w	#$977F,(a5)
@@ -818,21 +692,21 @@ Do_Updates_End:
 Vint_S1SS:
 		stopZ80
 		bsr.w	ReadJoypads
-		lea	($C00004).l,a5
+		lea	(VDP_control_port).l,a5
 		move.l	#$94009340,(a5)
 		move.l	#$96FD9580,(a5)
 		move.w	#$977F,(a5)
 		move.w	#$C000,(a5)
 		move.w	#$80,(DMA_data_thunk).w
 		move.w	(DMA_data_thunk).w,(a5)
-		lea	($C00004).l,a5
+		lea	(VDP_control_port).l,a5
 		move.l	#$94019340,(a5)
 		move.l	#$96FC9500,(a5)
 		move.w	#$977F,(a5)
 		move.w	#$7800,(a5)
 		move.w	#$83,(DMA_data_thunk).w
 		move.w	(DMA_data_thunk).w,(a5)
-		lea	($C00004).l,a5
+		lea	(VDP_control_port).l,a5
 		move.l	#$940193C0,(a5)
 		move.l	#$96F09500,(a5)
 		move.w	#$977F,(a5)
@@ -855,7 +729,7 @@ Vint_TitleCard:
 		bsr.w	ReadJoypads
 		tst.b	(Water_fullscreen_flag).w
 		bne.s	loc_EE4
-		lea	($C00004).l,a5
+		lea	(VDP_control_port).l,a5
 		move.l	#$94009340,(a5)
 		move.l	#$96FD9580,(a5)
 		move.w	#$977F,(a5)
@@ -866,7 +740,7 @@ Vint_TitleCard:
 ; ---------------------------------------------------------------------------
 
 loc_EE4:
-		lea	($C00004).l,a5
+		lea	(VDP_control_port).l,a5
 
 loc_EEA:
 		move.l	#$94009340,(a5)
@@ -878,14 +752,14 @@ loc_EEA:
 
 loc_F08:
 		move.w	(Hint_counter_reserve).w,(a5)
-		lea	($C00004).l,a5
+		lea	(VDP_control_port).l,a5
 		move.l	#$940193C0,(a5)
 		move.l	#$96F09500,(a5)
 		move.w	#$977F,(a5)
 		move.w	#$7C00,(a5)
 		move.w	#$83,(DMA_data_thunk).w
 		move.w	(DMA_data_thunk).w,(a5)
-		lea	($C00004).l,a5
+		lea	(VDP_control_port).l,a5
 		move.l	#$94019340,(a5)
 		move.l	#$96FC9500,(a5)
 		move.w	#$977F,(a5)
@@ -920,21 +794,21 @@ Vint_Fade:
 Vint_SSResults:
 		stopZ80
 		bsr.w	ReadJoypads
-		lea	($C00004).l,a5
+		lea	(VDP_control_port).l,a5
 		move.l	#$94009340,(a5)
 		move.l	#$96FD9580,(a5)
 		move.w	#$977F,(a5)
 		move.w	#$C000,(a5)
 		move.w	#$80,(DMA_data_thunk).w
 		move.w	(DMA_data_thunk).w,(a5)
-		lea	($C00004).l,a5
+		lea	(VDP_control_port).l,a5
 		move.l	#$94019340,(a5)
 		move.l	#$96FC9500,(a5)
 		move.w	#$977F,(a5)
 		move.w	#$7800,(a5)
 		move.w	#$83,(DMA_data_thunk).w
 		move.w	(DMA_data_thunk).w,(a5)
-		lea	($C00004).l,a5
+		lea	(VDP_control_port).l,a5
 		move.l	#$940193C0,(a5)
 		move.l	#$96F09500,(a5)
 		move.w	#$977F,(a5)
@@ -957,7 +831,7 @@ Do_ControllerPal:
 		bsr.w	ReadJoypads
 		tst.b	(Water_fullscreen_flag).w
 		bne.s	loc_107E
-		lea	($C00004).l,a5
+		lea	(VDP_control_port).l,a5
 		move.l	#$94009340,(a5)
 		move.l	#$96FD9580,(a5)
 		move.w	#$977F,(a5)
@@ -968,7 +842,7 @@ Do_ControllerPal:
 ; ---------------------------------------------------------------------------
 
 loc_107E:
-		lea	($C00004).l,a5
+		lea	(VDP_control_port).l,a5
 		move.l	#$94009340,(a5)
 		move.l	#$96FD9540,(a5)
 		move.w	#$977F,(a5)
@@ -977,14 +851,14 @@ loc_107E:
 		move.w	(DMA_data_thunk).w,(a5)
 
 loc_10A2:
-		lea	($C00004).l,a5
+		lea	(VDP_control_port).l,a5
 		move.l	#$94019340,(a5)
 		move.l	#$96FC9500,(a5)
 		move.w	#$977F,(a5)
 		move.w	#$7800,(a5)
 		move.w	#$83,(DMA_data_thunk).w
 		move.w	(DMA_data_thunk).w,(a5)
-		lea	($C00004).l,a5
+		lea	(VDP_control_port).l,a5
 		move.l	#$940193C0,(a5)
 		move.l	#$96F09500,(a5)
 		move.w	#$977F,(a5)
@@ -994,6 +868,7 @@ loc_10A2:
 		startZ80
 		rts
 ; End of function Do_ControllerPal
+
 ; ||||||||||||||| E N D   O F   V - I N T |||||||||||||||||||||||||||||||||||
 
 ; ===========================================================================
@@ -1008,16 +883,16 @@ H_Int:
 		move.l	d0,-(sp)
 
 loc_110E:
-		move.w	($C00004).l,d0
+		move.w	(VDP_control_port).l,d0
 		andi.w	#4,d0
 		beq.s	loc_110E
-		move.w	($FFFFF60C).w,d0
+		move.w	(VDP_Reg1_val).w,d0
 		andi.b	#$BF,d0
-		move.w	d0,($C00004).l
-		move.w	#$8228,($C00004).l
-		move.l	#$40000010,($C00004).l
-		move.l	($FFFFEEF0).w,($C00000).l
-		lea	($C00004).l,a5
+		move.w	d0,(VDP_control_port).l
+		move.w	#$8228,(VDP_control_port).l
+		move.l	#$40000010,(VDP_control_port).l
+		move.l	($FFFFEEF0).w,(VDP_data_port).l
+		lea	(VDP_control_port).l,a5
 		move.l	#$94019340,(a5)
 		move.l	#$96EE9580,(a5)
 		move.w	#$977F,(a5)
@@ -1026,12 +901,12 @@ loc_110E:
 		move.w	(DMA_data_thunk).w,(a5)
 
 loc_1166:
-		move.w	($C00004).l,d0
+		move.w	(VDP_control_port).l,d0
 		andi.w	#4,d0
 		beq.s	loc_1166
-		move.w	($FFFFF60C).w,d0
+		move.w	(VDP_Reg1_val).w,d0
 		ori.b	#$40,d0
-		move.w	d0,($C00004).l
+		move.w	d0,(VDP_control_port).l
 		move.l	(sp)+,d0
 		movea.l	(sp)+,a5
 
@@ -1044,7 +919,7 @@ PalToCRAM:
 		move	#$2700,sr
 		move.w	#0,(Hint_flag).w
 		movem.l	a0-a1,-(sp)
-		lea	($C00000).l,a1
+		lea	(VDP_data_port).l,a1
 		lea	($FFFFFA80).w,a0	; load palette from RAM
 		move.l	#$C0000000,4(a1)	; set VDP to write to CRAM address $00
 	rept 32
@@ -1124,8 +999,8 @@ Joypad_Read:
 
 
 VDPSetupGame:
-		lea	($C00004).l,a0
-		lea	($C00000).l,a1
+		lea	(VDP_control_port).l,a0
+		lea	(VDP_data_port).l,a1
 		lea	(VDPSetupArray).l,a2
 		moveq	#$12,d7
 
@@ -1133,27 +1008,27 @@ VDP_Loop:
 		move.w	(a2)+,(a0)
 		dbf	d7,VDP_Loop
 		move.w	(VDPSetupArray+2).l,d0
-		move.w	d0,($FFFFF60C).w
+		move.w	d0,(VDP_Reg1_val).w
 		move.w	#$8ADF,(Hint_counter_reserve).w
 		moveq	#0,d0
-		move.l	#$40000010,($C00004).l
+		move.l	#$40000010,(VDP_control_port).l
 		move.w	d0,(a1)
 		move.w	d0,(a1)
-		move.l	#$C0000000,($C00004).l
+		move.l	#$C0000000,(VDP_control_port).l
 		move.w	#$3F,d7
 
 VDP_ClrCRAM:
 		move.w	d0,(a1)
 		dbf	d7,VDP_ClrCRAM
-		clr.l	($FFFFF616).w
+		clr.l	(Vscroll_Factor).w
 		clr.l	($FFFFF61A).w
 		move.l	d1,-(sp)
-		lea	($C00004).l,a5
+		lea	(VDP_control_port).l,a5
 		move.w	#$8F01,(a5)
 		move.l	#$94FF93FF,(a5)
 		move.w	#$9780,(a5)
 		move.l	#$40000080,(a5)
-		move.w	#0,($C00000).l
+		move.w	#0,(VDP_data_port).l
 
 VDP_WaitDMA:
 		move.w	(a5),d1
@@ -1191,24 +1066,24 @@ VDPSetupArray:	dc.w $8004
 
 
 ClearScreen:
-		lea	($C00004).l,a5
+		lea	(VDP_control_port).l,a5
 		move.w	#$8F01,(a5)
 		move.l	#$940F93FF,(a5)
 		move.w	#$9780,(a5)
 		move.l	#$40000083,(a5)
-		move.w	#0,($C00000).l
+		move.w	#0,(VDP_data_port).l
 
 ClearScreen_DMAWait:
 		move.w	(a5),d1
 		btst	#1,d1
 		bne.s	ClearScreen_DMAWait
 		move.w	#$8F02,(a5)
-		lea	($C00004).l,a5
+		lea	(VDP_control_port).l,a5
 		move.w	#$8F01,(a5)
 		move.l	#$940F93FF,(a5)
 		move.w	#$9780,(a5)
 		move.l	#$60000083,(a5)
-		move.w	#0,($C00000).l
+		move.w	#0,(VDP_data_port).l
 
 ClearScreen_DMAWait2:	
 		move.w	(a5),d1
@@ -1217,9 +1092,9 @@ ClearScreen_DMAWait2:
 		move.w	#$8F02,(a5)
 
 loc_1388:
-		clr.l	($FFFFF616).w
+		clr.l	(Vscroll_Factor).w
 		clr.l	($FFFFF61A).w
-		lea	($FFFFF800).w,a1
+		lea	(Sprite_Table).w,a1
 		moveq	#0,d0
 		move.w	#$A0,d1
 
@@ -1246,17 +1121,17 @@ ClearScreen_ClearBuffer2:
 ; loc_380
 SoundDriverLoad:
 		nop
-		move.w	#$100,($A11100).l
-		move.w	#$100,($A11200).l
+		move.w	#$100,(Z80_Bus_Request).l
+		move.w	#$100,(Z80_Reset).l
 		lea	(Kos_Z80).l,a0
-		lea	($A00000).l,a1
+		lea	(Z80_RAM).l,a1
 		bsr.w	KosDec
-		move.w	#0,($A11200).l
+		move.w	#0,(Z80_Reset).l
 		nop
 		nop
 		nop
 		nop
-		move.w	#$100,($A11200).l
+		move.w	#$100,(Z80_Reset).l
 		startZ80
 		rts
 ; End of function SoundDriverLoad
@@ -1266,7 +1141,7 @@ SoundDriverLoad:
 
 
 PlaySound:
-		move.b	d0,($FFFFF00A).w
+		move.b	d0,($FFFFF000+SFXToPlay).w
 		rts
 ; End of function PlaySound
 
@@ -1275,7 +1150,7 @@ PlaySound:
 
 
 PlaySound_Special:
-		move.b	d0,($FFFFF00B).w
+		move.b	d0,($FFFFF000+SFXToPlay2).w
 		rts
 ; End of function PlaySound_Special
 
@@ -1284,9 +1159,10 @@ PlaySound_Special:
 
 
 PlaySound_Unk:
-		move.b	d0,($FFFFF00C).w
+		move.b	d0,($FFFFF000+SFXToPlay3).w
 		rts
 ; End of functions PlaySound_Unk
+
 
 ; ---------------------------------------------------------------------------
 ; Subroutine to pause the game
@@ -1306,7 +1182,7 @@ PauseGame:
 
 Pause_AlreadyPaused:
 		move.w	#1,($FFFFF63A).w
-		move.b	#1,($FFFFF003).w
+		move.b	#1,($FFFFF000+StopMusic).w
 
 Pause_Loop:
 		move.b	#VintID_Pause,(Vint_routine).w
@@ -1331,7 +1207,7 @@ Pause_ChkStart:
 		beq.s	Pause_Loop
 ; loc_1464:
 Pause_Resume:
-		move.b	#$80,($FFFFF003).w
+		move.b	#$80,($FFFFF000+StopMusic).w
 
 Unpause:
 		move.w	#0,($FFFFF63A).w
@@ -1342,7 +1218,7 @@ Pause_DoNothing:
 ; loc_1472:
 Pause_SlowMo:
 		move.w	#1,($FFFFF63A).w
-		move.b	#$80,($FFFFF003).w
+		move.b	#$80,($FFFFF000+StopMusic).w
 		rts
 ; End of function PauseGame
 
@@ -1378,7 +1254,7 @@ Pause_SlowMo:
 
 ; ShowVDPGraphics: PlaneMapToVRAM:
 PlaneMapToVRAM_H40:
-		lea	($C00000).l,a6
+		lea	(VDP_data_port).l,a6
 		move.l	#$800000,d4
 
 PlaneMapToVRAM_H40_LineLoop:
@@ -1459,7 +1335,7 @@ QueueDMATransfer_Done:
 
 ; CopyToVRAM: IssueVDPCommands: Process_DMA: Process_DMA_Queue:
 ProcessDMAQueue:
-		lea	($C00004).l,a5
+		lea	(VDP_control_port).l,a5
 		lea	(VDP_Command_Buffer).w,a1
 
 ProcessDMAQueue_Loop:
@@ -1482,8 +1358,6 @@ ProcessDMAQueue_Done:
 		rts
 ; End of function ProcessDMAQueue
 
-
-
 ; ---------------------------------------------------------------------------
 ; START OF NEMESIS DECOMPRESSOR
 
@@ -1495,8 +1369,8 @@ ProcessDMAQueue_Done:
 ; Nemesis decompression to VRAM
 NemDec:
 		movem.l	d0-a1/a3-a5,-(sp)
-		lea	(NemDec_WriteAndStay).l,a3
-		lea	($C00000).l,a4
+		lea	(NemDec_WriteAndStay).l,a3	; write all data to the same location
+		lea	(VDP_data_port).l,a4		; specifically, to the VDP data port
 		bra.s	NemDecMain
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
@@ -1506,7 +1380,7 @@ NemDec:
 
 NemDecToRAM:
 		movem.l	d0-a1/a3-a5,-(sp)
-		lea	(NemDec_WriteAndAdvance).l,a3
+		lea	(NemDec_WriteAndAdvance).l,a3	; advance to the next location after each write
 
 ; loc_154C:
 NemDecMain:
@@ -1717,7 +1591,7 @@ LoadPLC:
 		add.w	d0,d0
 		move.w	(a1,d0.w),d0
 		lea	(a1,d0.w),a1
-		lea	($FFFFF680).w,a2
+		lea	(Plc_Buffer).w,a2
 
 loc_1688:
 		tst.l	(a2)
@@ -1760,7 +1634,7 @@ LoadPLC2:
 		move.w	(a1,d0.w),d0
 		lea	(a1,d0.w),a1
 		bsr.s	ClearPLC
-		lea	($FFFFF680).w,a2
+		lea	(Plc_Buffer).w,a2
 		move.w	(a1)+,d0
 		bmi.s	loc_16C8
 
@@ -1780,7 +1654,7 @@ loc_16C8:
 ; Clear the pattern load queue ($FFF680 - $FFF700)
 
 ClearPLC:
-		lea	($FFFFF680).w,a2
+		lea	(Plc_Buffer).w,a2
 		moveq	#$1F,d0
 
 loc_16D4:
@@ -1798,11 +1672,11 @@ loc_16D4:
 
 ; RunPLC:
 RunPLC_RAM:
-		tst.l	($FFFFF680).w
+		tst.l	(Plc_Buffer).w
 		beq.s	locret_1730
-		tst.w	($FFFFF6F8).w
+		tst.w	(Plc_Buffer_Reg18).w
 		bne.s	locret_1730
-		movea.l	($FFFFF680).w,a0
+		movea.l	(Plc_Buffer).w,a0
 		lea	NemDec_WriteAndStay(pc),a3
 		nop
 		lea	(Decomp_Buffer).w,a1
@@ -1812,20 +1686,20 @@ RunPLC_RAM:
 
 loc_16FE:
 		andi.w	#$7FFF,d2
-		move.w	d2,($FFFFF6F8).w
+		move.w	d2,(Plc_Buffer_Reg18).w
 		bsr.w	NemDecPrepare
 		move.b	(a0)+,d5
 		asl.w	#8,d5
 		move.b	(a0)+,d5
 		moveq	#$10,d6
 		moveq	#0,d0
-		move.l	a0,($FFFFF680).w
-		move.l	a3,($FFFFF6E0).w
-		move.l	d0,($FFFFF6E4).w
-		move.l	d0,($FFFFF6E8).w
-		move.l	d0,($FFFFF6EC).w
-		move.l	d5,($FFFFF6F0).w
-		move.l	d6,($FFFFF6F4).w
+		move.l	a0,(Plc_Buffer).w
+		move.l	a3,(Plc_Buffer_Reg0).w
+		move.l	d0,(Plc_Buffer_Reg4).w
+		move.l	d0,(Plc_Buffer_Reg8).w
+		move.l	d0,(Plc_Buffer_RegC).w
+		move.l	d5,(Plc_Buffer_Reg10).w
+		move.l	d6,(Plc_Buffer_Reg14).w
 
 locret_1730:
 		rts
@@ -1837,12 +1711,12 @@ locret_1730:
 
 ; sub_1732:
 ProcessDPLC:
-		tst.w	($FFFFF6F8).w
+		tst.w	(Plc_Buffer_Reg18).w
 		beq.w	locret_17CA
-		move.w	#9,($FFFFF6FA).w
+		move.w	#9,(Plc_Buffer_Reg1A).w
 		moveq	#0,d0
-		move.w	($FFFFF684).w,d0
-		addi.w	#$120,($FFFFF684).w
+		move.w	(Plc_Buffer+4).w,d0
+		addi.w	#$120,(Plc_Buffer+4).w
 		bra.s	ProcessDPLC_Main
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
@@ -1850,44 +1724,44 @@ ProcessDPLC:
 
 ; loc_174E:
 ProcessDPLC2:
-		tst.w	($FFFFF6F8).w
+		tst.w	(Plc_Buffer_Reg18).w
 		beq.s	locret_17CA
-		move.w	#3,($FFFFF6FA).w
+		move.w	#3,(Plc_Buffer_Reg1A).w
 		moveq	#0,d0
-		move.w	($FFFFF684).w,d0
-		addi.w	#$60,($FFFFF684).w
+		move.w	(Plc_Buffer+4).w,d0
+		addi.w	#$60,(Plc_Buffer+4).w
 ; loc_1766:
 ProcessDPLC_Main:
-		lea	($C00004).l,a4
+		lea	(VDP_control_port).l,a4
 		lsl.l	#2,d0
 		lsr.w	#2,d0
 		ori.w	#$4000,d0
 		swap	d0
 		move.l	d0,(a4)
 		subq.w	#4,a4
-		movea.l	($FFFFF680).w,a0
-		movea.l	($FFFFF6E0).w,a3
-		move.l	($FFFFF6E4).w,d0
-		move.l	($FFFFF6E8).w,d1
-		move.l	($FFFFF6EC).w,d2
-		move.l	($FFFFF6F0).w,d5
-		move.l	($FFFFF6F4).w,d6
+		movea.l	(Plc_Buffer).w,a0
+		movea.l	(Plc_Buffer_Reg0).w,a3
+		move.l	(Plc_Buffer_Reg4).w,d0
+		move.l	(Plc_Buffer_Reg8).w,d1
+		move.l	(Plc_Buffer_RegC).w,d2
+		move.l	(Plc_Buffer_Reg10).w,d5
+		move.l	(Plc_Buffer_Reg14).w,d6
 		lea	(Decomp_Buffer).w,a1
 
 loc_179A:
 		movea.w	#8,a5
 		bsr.w	NemDec_WriteIter
-		subq.w	#1,($FFFFF6F8).w
+		subq.w	#1,(Plc_Buffer_Reg18).w
 		beq.s	ProcessDPLC_Pop
-		subq.w	#1,($FFFFF6FA).w
+		subq.w	#1,(Plc_Buffer_Reg1A).w
 		bne.s	loc_179A
-		move.l	a0,($FFFFF680).w
-		move.l	a3,($FFFFF6E0).w
-		move.l	d0,($FFFFF6E4).w
-		move.l	d1,($FFFFF6E8).w
-		move.l	d2,($FFFFF6EC).w
-		move.l	d5,($FFFFF6F0).w
-		move.l	d6,($FFFFF6F4).w
+		move.l	a0,(Plc_Buffer).w
+		move.l	a3,(Plc_Buffer_Reg0).w
+		move.l	d0,(Plc_Buffer_Reg4).w
+		move.l	d1,(Plc_Buffer_Reg8).w
+		move.l	d2,(Plc_Buffer_RegC).w
+		move.l	d5,(Plc_Buffer_Reg10).w
+		move.l	d6,(Plc_Buffer_Reg14).w
 
 locret_17CA:
 		rts
@@ -1895,7 +1769,7 @@ locret_17CA:
 ; pop one request off the buffer so that the next one can be filled
 ; loc_17CC:
 ProcessDPLC_Pop:
-		lea	($FFFFF680).w,a0
+		lea	(Plc_Buffer).w,a0
 		moveq	#$15,d0
 
 loc_17D2:
@@ -1928,7 +1802,7 @@ loc_17EE:
 		lsr.w	#2,d0
 		ori.w	#$4000,d0
 		swap	d0
-		move.l	d0,($C00004).l
+		move.l	d0,(VDP_control_port).l
 		bsr.w	NemDec
 		dbf	d1,loc_17EE
 		rts
@@ -3832,7 +3706,6 @@ loc_2C88:
 		rts
 ; End of function WaitForVint
 
-
 ; ---------------------------------------------------------------------------
 ; Subroutine to generate a pseudo-random number in d0
 ; d0 = (RNG & $FFFF0000) | ((RNG*41 & $FFFF) + ((RNG*41 & $FFFF0000) >> 16))
@@ -3867,7 +3740,6 @@ loc_2C9C:
 		move.l	d1,($FFFFF636).w
 		rts
 ; End of function RandomNumber
-
 
 ; ---------------------------------------------------------------------------
 ; Subroutine to calculate sine and cosine of an angle
@@ -4044,7 +3916,7 @@ SegaScreen:
 		bsr.w	PlaySound_Special
 		bsr.w	ClearPLC
 		bsr.w	Pal_FadeToBlack
-		lea	($C00004).l,a6
+		lea	(VDP_control_port).l,a6
 		move.w	#$8004,(a6)
 		move.w	#$8230,(a6)
 		move.w	#$8407,(a6)
@@ -4053,11 +3925,11 @@ SegaScreen:
 		move.w	#$8C81,(a6)
 		clr.b	(Water_fullscreen_flag).w
 		move	#$2700,sr
-		move.w	($FFFFF60C).w,d0
+		move.w	(VDP_Reg1_val).w,d0
 		andi.b	#$BF,d0
-		move.w	d0,($C00004).l
+		move.w	d0,(VDP_control_port).l
 		bsr.w	ClearScreen
-		move.l	#$40000000,($C00004).l
+		move.l	#$40000000,(VDP_control_port).l
 		lea	(Nem_SegaLogo).l,a0
 		bsr.w	NemDec
 		lea	($FF0000).l,a1
@@ -4090,9 +3962,9 @@ loc_316A:
 		move.w	#0,($FFFFF634).w
 		move.w	#0,($FFFFF662).w
 		move.w	#0,($FFFFF660).w
-		move.w	($FFFFF60C).w,d0
+		move.w	(VDP_Reg1_val).w,d0
 		ori.b	#$40,d0
-		move.w	d0,($C00004).l
+		move.w	d0,(VDP_control_port).l
 
 Sega_WaitPalette:
 		move.b	#VintID_SEGA,(Vint_routine).w
@@ -4128,7 +4000,7 @@ TitleScreen:				; CODE XREF: ROM:000003A0j
 		bsr.w	Pal_FadeToBlack
 		move	#$2700,sr
 		bsr.w	SoundDriverLoad
-		lea	($C00004).l,a6
+		lea	(VDP_control_port).l,a6
 		move.w	#$8004,(a6)
 		move.w	#$8230,(a6)
 		move.w	#$8407,(a6)
@@ -4178,13 +4050,13 @@ loc_3270:				; CODE XREF: ROM:00003272j
 		bsr.w	PalLoad1
 		bsr.w	Pal_FadeFromBlack
 		move	#$2700,sr
-		move.l	#$40000000,($C00004).l
+		move.l	#$40000000,(VDP_control_port).l
 		lea	(Nem_Title).l,a0
 		bsr.w	NemDec
-		move.l	#$40000001,($C00004).l
+		move.l	#$40000001,(VDP_control_port).l
 		lea	(Nem_TitleSonicTails).l,a0
 		bsr.w	NemDec
-		lea	($C00000).l,a6
+		lea	(VDP_data_port).l,a6
 		move.l	#$50000003,4(a6)
 		lea	(Art_Text).l,a5
 		move.w	#$28F,d1
@@ -4232,7 +4104,7 @@ loc_3330:
 		bsr.w	PlaneMapToVRAM_H40
 		moveq	#1,d0
 		bsr.w	PalLoad1
-		move.b	#$8A,d0
+		move.b	#MusID_Title,d0
 		bsr.w	PlaySound_Special
 		move.b	#0,(Debug_mode_flag).w
 		move.w	#0,(Two_player_mode).w
@@ -4256,9 +4128,9 @@ loc_339A:				; CODE XREF: ROM:0000339Cj
 		move.w	#$300,(Current_ZoneAndAct).w
 		move.w	#4,(Sonic_Pos_Record_Index).w
 		move.w	#0,(Sonic_Pos_Record_Buf).w
-		move.w	($FFFFF60C).w,d0
+		move.w	(VDP_Reg1_val).w,d0
 		ori.b	#$40,d0	; '@'
-		move.w	d0,($C00004).l
+		move.w	d0,(VDP_control_port).l
 		bsr.w	Pal_FadeFromBlack
 
 TitleScreen_Loop:			; CODE XREF: ROM:0000349Aj
@@ -4337,10 +4209,10 @@ Title_CheckLvlSel:			; CODE XREF: ROM:0000365Cj
 LevelSelect_ClearScroll:		; CODE XREF: ROM:000034B8j
 		move.l	d0,(a1)+
 		dbf	d1,LevelSelect_ClearScroll
-		move.l	d0,($FFFFF616).w
+		move.l	d0,(Vscroll_Factor).w
 		move	#$2700,sr
-		lea	($C00000).l,a6
-		move.l	#$60000003,($C00004).l
+		lea	(VDP_data_port).l,a6
+		move.l	#$60000003,(VDP_control_port).l
 		move.w	#$3FF,d1
 
 LevelSelect_ClearVRAM:			; CODE XREF: ROM:000034DAj
@@ -4353,7 +4225,7 @@ LevelSelect_Loop:
 		bsr.w	WaitForVint
 		bsr.w	LevelSelect_Controls
 		bsr.w	RunPLC_RAM
-		tst.l	($FFFFF680).w
+		tst.l	(Plc_Buffer).w
 		bne.s	LevelSelect_Loop
 		andi.b	#$F0,($FFFFF605).w
 		beq.s	LevelSelect_Loop
@@ -4591,7 +4463,7 @@ locret_377A:				; CODE XREF: LevelSelect_Controls+50j
 LevelSelect_TextLoad:			; CODE XREF: ROM:000034DEp
 					; LevelSelect_Controls+44p ...
 		lea	(LevelSelect_Text).l,a1
-		lea	($C00000).l,a6
+		lea	(VDP_data_port).l,a6
 		move.l	#$62100003,d4
 		move.w	#$8680,d3
 		moveq	#$14,d1
@@ -4623,7 +4495,7 @@ loc_3794:				; CODE XREF: LevelSelect_TextLoad+26j
 		move.w	#$C680,d3
 
 loc_37E6:				; CODE XREF: LevelSelect_TextLoad+64j
-		move.l	#$6C300003,($C00004).l
+		move.l	#$6C300003,(VDP_control_port).l
 		move.w	($FFFFFF84).w,d0
 		addi.w	#$80,d0	; '€'
 		move.b	d0,d2
@@ -4793,7 +4665,14 @@ loc_3AFC:				; CODE XREF: UnknownSub_4+12j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		nop
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-MusicList:	dc.b $81,$82,$83,$84,$85,$86,$8D,  0
+MusicList:	dc.b MusID_GHZ
+		dc.b MusID_LZ
+		dc.b MusID_CPZ
+		dc.b MusID_EHZ
+		dc.b MusID_HPZ
+		dc.b MusID_HTZ
+		dc.b $8D
+		dc.b 0
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Level
@@ -4813,16 +4692,16 @@ loc_3B38:
 		tst.w	($FFFFFFF0).w
 		bmi.s	loc_3BB6
 		move	#$2700,sr
-		move.l	#$70000002,($C00004).l
+		move.l	#$70000002,(VDP_control_port).l
 		lea	(Nem_S1TitleCard).l,a0
 		bsr.w	NemDec
 		bsr.w	ClearScreen
-		lea	($C00004).l,a5
+		lea	(VDP_control_port).l,a5
 		move.w	#$8F01,(a5)
 		move.l	#$940F93FF,(a5)
 		move.w	#$9780,(a5)
 		move.l	#$60000082,(a5)
-		move.w	#0,($C00000).l
+		move.w	#0,(VDP_data_port).l
 
 loc_3B84:
 		move.w	(a5),d1
@@ -4886,7 +4765,7 @@ loc_3C00:
 		move.w	#0,(Two_player_mode).w
 
 loc_3C1A:
-		lea	($C00004).l,a6
+		lea	(VDP_control_port).l,a6
 		move.w	#$8B03,(a6)
 		move.w	#$8230,(a6)
 		move.w	#$8407,(a6)
@@ -4966,7 +4845,7 @@ LevelInit_TitleCard:
 		move.w	($FFFFB108).w,d0
 		cmp.w	($FFFFB130).w,d0
 		bne.s	LevelInit_TitleCard
-		tst.l	($FFFFF680).w
+		tst.l	(Plc_Buffer).w
 		bne.s	LevelInit_TitleCard
 		jsr	(HUD_Base).l
 
@@ -6189,22 +6068,22 @@ SpecialStage:
 		bsr.w	PlaySound_Special
 		bsr.w	Pal_MakeFlash
 		move	#$2700,sr
-		lea	($C00004).l,a6
+		lea	(VDP_control_port).l,a6
 		move.w	#$8B03,(a6)
 		move.w	#$8004,(a6)
 		move.w	#$8AAF,(Hint_counter_reserve).w
 		move.w	#$9011,(a6)
-		move.w	($FFFFF60C).w,d0
+		move.w	(VDP_Reg1_val).w,d0
 		andi.b	#$BF,d0
-		move.w	d0,($C00004).l
+		move.w	d0,(VDP_control_port).l
 		bsr.w	ClearScreen
 		move	#$2300,sr
-		lea	($C00004).l,a5
+		lea	(VDP_control_port).l,a5
 		move.w	#$8F01,(a5)
 		move.l	#$946F93FF,(a5)
 		move.w	#$9780,(a5)
 		move.l	#$50000081,(a5)
-		move.w	#0,($C00000).l
+		move.w	#0,(VDP_data_port).l
 
 loc_507C:
 		move.w	(a5),d1
@@ -6253,7 +6132,7 @@ loc_50CC:
 		bsr.w	PalCycle_S1SS
 		clr.w	($FFFFF780).w
 		move.w	#$40,($FFFFF782).w
-		move.w	#$89,d0
+		move.w	#MusID_SpecialStage,d0
 		bsr.w	PlaySound
 		move.w	#0,($FFFFF790).w
 		lea	(Demo_Index).l,a1
@@ -6273,9 +6152,9 @@ loc_50CC:
 		move.b	#1,(Debug_mode_flag).w
 
 loc_5158:
-		move.w	($FFFFF60C).w,d0
+		move.w	(VDP_Reg1_val).w,d0
 		ori.b	#$40,d0
-		move.w	d0,($C00004).l
+		move.w	d0,(VDP_control_port).l
 		bsr.w	Pal_MakeWhite
 
 loc_516A:
@@ -6326,12 +6205,12 @@ loc_5214:
 		tst.w	(Demo_Time_left).w
 		bne.s	loc_51DA
 		move	#$2700,sr
-		lea	($C00004).l,a6
+		lea	(VDP_control_port).l,a6
 		move.w	#$8230,(a6)
 		move.w	#$8407,(a6)
 		move.w	#$9001,(a6)
 		bsr.w	ClearScreen
-		move.l	#$70000002,($C00004).l
+		move.l	#$70000002,(VDP_control_port).l
 		lea	(Nem_S1TitleCard).l,a0
 		bsr.w	NemDec
 		jsr	(HUD_Base).l
@@ -6367,7 +6246,7 @@ loc_529C:
 		bsr.w	RunPLC_RAM
 		tst.w	($FFFFFE02).w
 		beq.s	loc_529C
-		tst.l	($FFFFF680).w
+		tst.l	(Plc_Buffer).w
 		bne.s	loc_529C
 		move.w	#$CA,d0
 		bsr.w	PlaySound_Special
@@ -6465,7 +6344,7 @@ PalCycle_S1SS:				; CODE XREF: ROM:00000E90p
 		bne.s	locret_5424
 		subq.w	#1,($FFFFF79C).w
 		bpl.s	locret_5424
-		lea	($C00004).l,a6
+		lea	(VDP_control_port).l,a6
 		move.w	($FFFFF79A).w,d0
 		addq.w	#1,($FFFFF79A).w
 		andi.w	#$1F,d0
@@ -6486,12 +6365,12 @@ loc_53D0:				; CODE XREF: PalCycle_S1SS+2Aj
 		move.w	#$8200,d0
 		move.b	(a1)+,d0
 		move.w	d0,(a6)
-		move.b	(a1),($FFFFF616).w
+		move.b	(a1),(Vscroll_Factor).w
 		move.w	#$8400,d0
 		move.b	(a0)+,d0
 		move.w	d0,(a6)
-		move.l	#$40000010,($C00004).l
-		move.l	($FFFFF616).w,($C00000).l
+		move.l	#$40000010,(VDP_control_port).l
+		move.l	(Vscroll_Factor).w,(VDP_data_port).l
 		moveq	#0,d0
 		move.b	(a0)+,d0
 		bmi.s	loc_5426
@@ -6996,7 +6875,7 @@ loc_5AA4:				; CODE XREF: DeformBGLayer+4j
 
 loc_5B2A:				; CODE XREF: DeformBGLayer+5Cj
 		bsr.w	DynScreenResizeLoad
-		move.w	($FFFFEE04).w,($FFFFF616).w
+		move.w	($FFFFEE04).w,(Vscroll_Factor).w
 		move.w	($FFFFEE0C).w,($FFFFF618).w
 		moveq	#0,d0
 		move.b	(Current_Zone).w,d0
@@ -7150,7 +7029,7 @@ loc_5C94:				; CODE XREF: ROM:00005C90j
 		move.w	d0,d4
 		lsr.w	#1,d4
 		move.w	d0,($FFFFF618).w
-		andi.l	#$FFFEFFFE,($FFFFF616).w
+		andi.l	#$FFFEFFFE,(Vscroll_Factor).w
 		move.w	($FFFFEE00).w,d0
 		cmpi.b	#GameModeID_TitleScreen,(Game_Mode).w
 		bne.s	loc_5CB6
@@ -7630,7 +7509,7 @@ loc_620E:				; CODE XREF: Deform_TitleScreen+28j
 
 loc_621C:				; CODE XREF: Deform_TitleScreen+172j
 		move.w	($FFFFEE0C).w,($FFFFF618).w
-		andi.l	#$FFFEFFFE,($FFFFF616).w
+		andi.l	#$FFFEFFFE,(Vscroll_Factor).w
 		lea	($FFFFE000).w,a1
 		move.w	($FFFFEE00).w,d0
 		move.w	#$A,d1
@@ -8418,8 +8297,8 @@ locret_681E:				; CODE XREF: ScrollBlock6+1Aj
 ; End of function ScrollBlock6
 
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-		lea	($C00004).l,a5
-		lea	($C00000).l,a6
+		lea	(VDP_control_port).l,a5
+		lea	(VDP_data_port).l,a6
 		lea	($FFFFEE52).w,a2
 		lea	($FFFFEE08).w,a3
 		lea	($FFFF8080).w,a4
@@ -8433,8 +8312,8 @@ locret_681E:				; CODE XREF: ScrollBlock6+1Aj
 
 
 LoadTilesAsYouMove:			; CODE XREF: Do_Updatesp	ROM:00000F78p
-		lea	($C00004).l,a5
-		lea	($C00000).l,a6
+		lea	(VDP_control_port).l,a5
+		lea	(VDP_data_port).l,a6
 		lea	($FFFFEEA2).w,a2
 		lea	($FFFFEE68).w,a3
 		lea	($FFFF8080).w,a4
@@ -9483,8 +9362,8 @@ LoadTilesFromStart:			; CODE XREF: ROM:00003D48p
 
 ; FUNCTION CHUNK AT 000071A0 SIZE 0000002A BYTES
 
-		lea	($C00004).l,a5
-		lea	($C00000).l,a6
+		lea	(VDP_control_port).l,a5
+		lea	(VDP_data_port).l,a6
 		tst.w	(Two_player_mode).w
 		beq.s	loc_711E
 		lea	($FFFFEE20).w,a3
@@ -10143,7 +10022,7 @@ loc_7672:				; CODE XREF: ROM:0000766Cj
 		move.w	#$280,$C(a1)
 
 loc_7692:				; CODE XREF: ROM:0000767Ej
-		move.w	#$8C,d0	; 'Œ'
+		move.w	#MusID_Boss,d0
 		bsr.w	PlaySound
 		move.b	#1,($FFFFF7AA).w
 		addq.b	#2,($FFFFEEDF).w
@@ -10202,7 +10081,7 @@ loc_76EA:				; CODE XREF: ROM:000076D2j
 		move.b	#$77,0(a1) ; 'w'
 
 loc_770C:				; CODE XREF: ROM:00007704j
-		move.w	#$8C,d0	; 'Œ'
+		move.w	#MusID_Boss,d0
 		bsr.w	PlaySound
 		move.b	#1,($FFFFF7AA).w
 		addq.b	#2,($FFFFEEDF).w
@@ -10449,7 +10328,7 @@ DynResize_EHZ2_01:			; DATA XREF: ROM:DynResize_EHZ2_Indexo
 		move.w	#$426,$C(a1)
 
 loc_7946:				; CODE XREF: ROM:0000792Ej
-		move.w	#$8C,d0	; 'Œ'
+		move.w	#MusID_Boss,d0
 		bsr.w	PlaySound
 		move.b	#1,($FFFFF7AA).w
 		moveq	#$11,d0
@@ -10515,7 +10394,7 @@ loc_79AA:				; DATA XREF: ROM:00007992o
 		move.b	#$7A,(a1) ; 'z'
 
 loc_79BC:				; CODE XREF: ROM:000079B6j
-		move.w	#$8C,d0	; 'Œ'
+		move.w	#MusID_Boss,d0
 		bsr.w	PlaySound
 		move.b	#1,($FFFFF7AA).w
 		addq.b	#2,($FFFFEEDF).w
@@ -10602,7 +10481,7 @@ loc_7A48:				; DATA XREF: ROM:00007A2Co
 		addq.b	#2,($FFFFEEDF).w
 
 loc_7A64:				; CODE XREF: ROM:00007A5Aj
-		move.w	#$8C,d0	; 'Œ'
+		move.w	#MusID_Boss,d0
 		bsr.w	PlaySound
 		move.b	#1,($FFFFF7AA).w
 		moveq	#$11,d0
@@ -14377,7 +14256,7 @@ sub_A8DE:				; CODE XREF: ROM:0000A8B6p
 loc_A90C:				; CODE XREF: sub_A8DE+1Cj
 		addq.b	#1,($FFFFFE12).w
 		addq.b	#1,($FFFFFE1C).w
-		move.w	#$88,d0	; 'ˆ'
+		move.w	#MusID_ExtraLife,d0
 
 loc_A918:				; CODE XREF: sub_A8DE+14j sub_A8DE+24j ...
 		jmp	(PlaySound_Special).l
@@ -15011,14 +14890,14 @@ Monitor_SonicLife:			; CODE XREF: ROM:0000B11Aj
 					; DATA XREF: ...
 		addq.b	#1,($FFFFFE12).w
 		addq.b	#1,($FFFFFE1C).w
-		move.w	#$88,d0	; 'ˆ'
+		move.w	#MusID_ExtraLife,d0
 		jmp	(PlaySound).l
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 Monitor_TailsLife:			; DATA XREF: ROM:0000B0CAo
 		addq.b	#1,($FFFFFE12).w
 		addq.b	#1,($FFFFFE1C).w
-		move.w	#$88,d0	; 'ˆ'
+		move.w	#MusID_ExtraLife,d0
 		jmp	(PlaySound).l
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -15066,7 +14945,7 @@ Monitor_Invincibility:			; DATA XREF: ROM:0000B0D4o
 		bne.s	locret_B1A8
 		cmpi.w	#$C,($FFFFFE14).w
 		bls.s	locret_B1A8
-		move.w	#$87,d0	; '‡'
+		move.w	#MusID_Invincible,d0
 		jmp	(PlaySound).l
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -15722,7 +15601,7 @@ Obj39_Index:	dc.w loc_BA98-Obj39_Index ; DATA XREF: ROM:Obj39_Indexo
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_BA98:				; DATA XREF: ROM:Obj39_Indexo
-		tst.l	($FFFFF680).w
+		tst.l	(Plc_Buffer).w
 		beq.s	loc_BAA0
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -15808,7 +15687,7 @@ Obj3A_Index:	dc.w Obj3A_ChkPLC-Obj3A_Index
 ; ===========================================================================
 ; loc_BB5C:
 Obj3A_ChkPLC:
-		tst.l	($FFFFF680).w
+		tst.l	(Plc_Buffer).w
 		beq.s	Obj3A_Config
 		rts
 ; ---------------------------------------------------------------------------
@@ -16036,7 +15915,7 @@ S1Obj7E_Index:	dc.w loc_BDA6-S1Obj7E_Index ; DATA XREF: ROM:S1Obj7E_Indexo
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_BDA6:				; DATA XREF: ROM:S1Obj7E_Indexo
-		tst.l	($FFFFF680).w
+		tst.l	(Plc_Buffer).w
 		beq.s	loc_BDAE
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -17092,7 +16971,7 @@ Obj_Index:
 		dc.l Obj4C		; BBat from HPZ
 		dc.l Obj4D		; Stego/Stegway from HPZ
 		dc.l Obj4E		; Gator from HPZ
-		dc.l Obj4F		; Redz from HPZ
+		dc.l Obj4F		; Redz (dinosaur badnik) from HPZ
 		dc.l Obj50		; Seahorse/Aquis from HPZ
 		dc.l Obj51		; Skyhorse from HPZ
 		dc.l Obj52		; BFish from HPZ
@@ -17516,7 +17395,7 @@ BldSpr_ScrPos:	dc.l 0
 BuildSprites:
 		tst.w	(Two_player_mode).w
 		bne.w	BuildSprites_2p
-		lea	($FFFFF800).w,a2
+		lea	(Sprite_Table).w,a2
 		moveq	#0,d5
 		moveq	#0,d4
 		tst.b	(Level_started_flag).w
@@ -17867,7 +17746,7 @@ BuildSprites_2p:			; CODE XREF: BuildSprites+4j
 					; BuildSprites+2FAj
 		tst.w	(Hint_flag).w
 		bne.s	BuildSprites_2p
-		lea	($FFFFF800).w,a2
+		lea	(Sprite_Table).w,a2
 		moveq	#2,d5
 		moveq	#0,d4
 		move.l	#$1D80F01,(a2)+
@@ -21925,7 +21804,12 @@ Obj01_Modes:	dc.w Obj01_MdNormal-Obj01_Modes
 		dc.w Obj01_MdRoll-Obj01_Modes
 		dc.w Obj01_MdJump-Obj01_Modes
 
-MusicList_Sonic:	dc.b $81,$82,$83,$84,$85,$86
+MusicList_Sonic:dc.b MusID_GHZ
+		dc.b MusID_LZ
+		dc.b MusID_CPZ
+		dc.b MusID_EHZ
+		dc.b MusID_HPZ
+		dc.b MusID_HTZ
 
 ; ===========================================================================
 
@@ -23904,12 +23788,12 @@ Obj02_Modes:	dc.w Obj02_MdNormal-Obj02_Modes
 		dc.w Obj02_MdJump2-Obj02_Modes
 ; ===========================================================================
 ; same as Sonic's...
-MusicList_Tails:dc.b $81
-		dc.b $82
-		dc.b $83
-		dc.b $84
-		dc.b $85
-		dc.b $86
+MusicList_Tails:dc.b MusID_GHZ
+		dc.b MusID_LZ
+		dc.b MusID_CPZ
+		dc.b MusID_EHZ
+		dc.b MusID_HPZ
+		dc.b MusID_HTZ
 		even
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
@@ -26161,20 +26045,20 @@ ResumeMusic:				; CODE XREF: Sonic_Water+1Ap
 					; Sonic_Water+62p ...
 		cmpi.w	#$C,($FFFFFE14).w
 		bhi.s	loc_12310
-		move.w	#$82,d0	; '‚'
+		move.w	#MusID_LZ,d0
 		cmpi.w	#$103,(Current_ZoneAndAct).w
 		bne.s	loc_122F6
-		move.w	#$86,d0	; '†'
+		move.w	#MusID_HTZ,d0
 
 loc_122F6:				; CODE XREF: ResumeMusic+12j
 		tst.b	($FFFFFE2D).w
 		beq.s	loc_12300
-		move.w	#$87,d0	; '‡'
+		move.w	#MusID_Invincible,d0
 
 loc_12300:				; CODE XREF: ResumeMusic+1Cj
 		tst.b	($FFFFF7AA).w
 		beq.s	loc_1230A
-		move.w	#$8C,d0	; 'Œ'
+		move.w	#MusID_Boss,d0
 
 loc_1230A:				; CODE XREF: ResumeMusic+26j
 		jsr	(PlaySound).l
@@ -26326,7 +26210,7 @@ S1Obj4A_Index:	dc.w S1Obj4A_Init-S1Obj4A_Index
 ; ===========================================================================
 
 S1Obj4A_Init:
-		tst.l	($FFFFF680).w	; are the pattern load cues empty?
+		tst.l	(Plc_Buffer).w	; are the pattern load cues empty?
 		beq.s	loc_124D4	; if yes, branch
 		rts
 ; ---------------------------------------------------------------------------
@@ -30808,26 +30692,26 @@ j_AnimateSprite_1:			; CODE XREF: ROM:00015C0Cp
 
 j_ObjectMove_2:				; CODE XREF: ROM:00015C10p
 		jmp	ObjectMove
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		align 4
-;----------------------------------------------------
-; Object 4F - Dinobot badnik
-;----------------------------------------------------
 
-Obj4F:					; DATA XREF: ROM:Obj_Indexo
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Object 4F - Redz (dinosaur badnik) from HPZ
+; ---------------------------------------------------------------------------
+
+Obj4F:
 		moveq	#0,d0
 		move.b	routine(a0),d0
 		move.w	Obj4F_Index(pc,d0.w),d1
 		jmp	Obj4F_Index(pc,d1.w)
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-Obj4F_Index:	dc.w Obj4F_Init-Obj4F_Index ; DATA XREF: ROM:Obj4F_Indexo
-					; ROM:00015DB4o ...
+; ===========================================================================
+Obj4F_Index:	dc.w Obj4F_Init-Obj4F_Index
 		dc.w Obj4F_Main-Obj4F_Index
 		dc.w Obj4F_Delete-Obj4F_Index
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; ===========================================================================
 
-Obj4F_Init:				; DATA XREF: ROM:Obj4F_Indexo
-		move.l	#Map_Obj4F,4(a0)
+Obj4F_Init:
+		move.l	#Map_obj4F,4(a0)
 		move.w	#$500,2(a0)
 		move.b	#4,1(a0)
 		move.b	#4,$18(a0)
@@ -30836,7 +30720,7 @@ Obj4F_Init:				; DATA XREF: ROM:Obj4F_Indexo
 		move.b	#6,$17(a0)
 		move.b	#$C,$20(a0)
 		bsr.w	j_ObjectMoveAndFall_1
-		jsr	ObjHitFloor
+		jsr	(ObjHitFloor).l
 		tst.w	d1
 		bpl.s	locret_15E0C
 		add.w	d1,$C(a0)
@@ -30846,16 +30730,16 @@ loc_15DFC:
 		addq.b	#2,routine(a0)
 		bchg	#0,$22(a0)
 
-locret_15E0C:				; CODE XREF: ROM:00015DF6j
+locret_15E0C:
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; ===========================================================================
 
-Obj4F_Main:				; DATA XREF: ROM:00015DB4o
+Obj4F_Main:
 		moveq	#0,d0
 		move.b	$25(a0),d0
 		move.w	Obj4F_SubIndex(pc,d0.w),d1
 		jsr	Obj4F_SubIndex(pc,d1.w)
-		lea	(Ani_Obj4F).l,a1
+		lea	(Ani_obj4F).l,a1
 		bsr.w	j_AnimateSprite_2
 		move.w	8(a0),d0
 		andi.w	#$FF80,d0
@@ -30863,26 +30747,25 @@ Obj4F_Main:				; DATA XREF: ROM:00015DB4o
 		cmpi.w	#$280,d0
 		bhi.w	loc_15E3E
 		bra.w	loc_15EE8
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; ---------------------------------------------------------------------------
 
-loc_15E3E:				; CODE XREF: ROM:00015E36j
+loc_15E3E:
 		lea	($FFFFFC00).w,a2
 		moveq	#0,d0
 		move.b	$23(a0),d0
 		beq.s	loc_15E50
 		bclr	#7,2(a2,d0.w)
 
-loc_15E50:				; CODE XREF: ROM:00015E48j
-		bra.w	j_DeleteObject
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-Obj4F_SubIndex:	dc.w loc_15E58-Obj4F_SubIndex ;	DATA XREF: ROM:Obj4F_SubIndexo
-					; ROM:00015E56o
-		dc.w loc_15E7C-Obj4F_SubIndex
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_15E58:				; DATA XREF: ROM:Obj4F_SubIndexo
-		subq.w	#1,$30(a0)
-		bpl.s	locret_15E7A
+loc_15E50:
+		bra.w	JmpTo_DeleteObject
+; ===========================================================================
+Obj4F_SubIndex:	dc.w Obj4F_MoveLeft-Obj4F_SubIndex
+		dc.w Obj4F_ChkFloor-Obj4F_SubIndex
+; ===========================================================================
+; loc_15E58:
+Obj4F_MoveLeft:
+		subq.w	#1,$30(a0)	; is Redz not moving?
+		bpl.s	locret_15E7A	; if not, branch
 		addq.b	#2,$25(a0)
 		move.w	#$FF80,$10(a0)
 		move.b	#1,$1C(a0)
@@ -30890,58 +30773,49 @@ loc_15E58:				; DATA XREF: ROM:Obj4F_SubIndexo
 		bne.s	locret_15E7A
 		neg.w	$10(a0)
 
-locret_15E7A:				; CODE XREF: ROM:00015E5Cj
-					; ROM:00015E74j
+locret_15E7A:
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_15E7C:				; DATA XREF: ROM:00015E56o
+; ===========================================================================
+; loc_15E7C:
+Obj4F_ChkFloor:
 		bsr.w	j_ObjectMove_3
-		jsr	ObjHitFloor
+		jsr	(ObjHitFloor).l
 		cmpi.w	#$FFF8,d1
-		blt.s	loc_15E98
+		blt.s	Obj4F_StopMoving
 		cmpi.w	#$C,d1
-		bge.s	loc_15E98
+		bge.s	Obj4F_StopMoving
 		add.w	d1,$C(a0)
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_15E98:				; CODE XREF: ROM:00015E8Aj
-					; ROM:00015E90j
+; ---------------------------------------------------------------------------
+; loc_15E98:
+Obj4F_StopMoving:
 		subq.b	#2,$25(a0)
-		move.w	#$3B,$30(a0) ; ';'
+		move.w	#1*60,$30(a0)	; pause for 1 second
 		move.w	#0,$10(a0)
 		move.b	#0,$1C(a0)
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; ===========================================================================
 
-Obj4F_Delete:				; DATA XREF: ROM:00015DB6o
-		bra.w	j_DeleteObject
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-Ani_Obj4F:	dc.w byte_15EB8-Ani_Obj4F ; DATA XREF: ROM:00015E1Co
-					; ROM:Ani_Obj4Fo ...
-		dc.w byte_15EBB-Ani_Obj4F
-byte_15EB8:	dc.b   9,  1,$FF	; 0 ; DATA XREF: ROM:Ani_Obj4Fo
-byte_15EBB:	dc.b   9,  0,  1,  2,  1,$FF,  0; 0 ; DATA XREF: ROM:00015EB6o
-Map_Obj4F:	dc.w word_15EC8-Map_Obj4F ; DATA XREF: ROM:Obj4F_Inito
-					; ROM:Map_Obj4Fo ...
-		dc.w word_15ED2-Map_Obj4F
-		dc.w word_15EDC-Map_Obj4F
-word_15EC8:	dc.w 1			; DATA XREF: ROM:Map_Obj4Fo
-		dc.w $F00F,    0,    0,$FFF0; 0
-word_15ED2:	dc.w 1			; DATA XREF: ROM:00015EC4o
-		dc.w $F00F,  $10,    8,$FFF0; 0
-word_15EDC:	dc.w 1			; DATA XREF: ROM:00015EC6o
-		dc.w $F00F,  $20,  $10,$FFF0; 0
+Obj4F_Delete:
+		bra.w	JmpTo_DeleteObject
+; ===========================================================================
+; animation script
+Ani_obj4F:	dc.w byte_15EB8-Ani_obj4F
+		dc.w byte_15EBB-Ani_obj4F
+byte_15EB8:	dc.b   9,  1,$FF
+byte_15EBB:	dc.b   9,  0,  1,  2,  1,$FF,  0
+; ---------------------------------------------------------------------------
+; Sprite mappings - Redz (dinosaur badnik) from HPZ
+; ---------------------------------------------------------------------------
+Map_obj4F:	incbin	"mappings/sprite/obj4F.bin"
 		align 4
 
 loc_15EE8:				; CODE XREF: ROM:00015E3Aj
 		jmp	DisplaySprite
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
-j_DeleteObject:				; CODE XREF: ROM:loc_15E50j
-					; ROM:Obj4F_Deletej
-		jmp	DeleteObject
+JmpTo_DeleteObject:
+		jmp	(DeleteObject).l
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 j_AnimateSprite_2:			; CODE XREF: ROM:00015E22p
@@ -34511,7 +34385,7 @@ loc_18FD8:				; CODE XREF: ROM:00018FC6j
 
 loc_18FE0:				; CODE XREF: ROM:00018FC8j
 		clr.w	$12(a0)
-		move.w	#$81,d0	; ''
+		move.w	#MusID_GHZ,d0	; ''
 		jsr	(PlaySound).l
 
 loc_18FEE:				; CODE XREF: ROM:00018FB8j
@@ -36860,7 +36734,7 @@ loc_1A800:				; CODE XREF: Obj09_ChkItems+3Ej
 loc_1A814:				; CODE XREF: Obj09_ChkItems+80j
 		addq.b	#1,($FFFFFE12).w
 		addq.b	#1,($FFFFFE1C).w
-		move.w	#$88,d0	; 'ˆ'
+		move.w	#MusID_ExtraLife,d0
 		jsr	(PlaySound).l
 		moveq	#0,d4
 		rts
@@ -37221,7 +37095,7 @@ loc_1AB1A:
 		addq.w	#2,a3		; Advance to next script's slot in a3 (usually Anim_Counters)
 		dbf	d6,loc_1AACA
 		rts
-;n===========================================================================
+; ===========================================================================
 AnimCue_EHZ:	dc.w 4
 		dc.l Art_EHZFlower1+$FF000000
 		dc.w $7280
@@ -37370,6 +37244,7 @@ AnimCue_CPZ:	dc.w 7
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 
+
 ; sub_1AC1E: ShiftCPZBackground:
 		cmpi.b	#2,(Current_Zone).w	; is this Chemical Plant Zone?
 		beq.s	loc_1AC28		; if yes, branch
@@ -37452,8 +37327,8 @@ LoadAnimatedBlocks:
 		moveq	#0,d0
 		move.b	(Current_Zone).w,d0
 		add.w	d0,d0
-		move.w	Map16Delta_Index(pc,d0.w),d0
-		lea	Map16Delta_Index(pc,d0.w),a0
+		move.w	AnimPatMaps(pc,d0.w),d0
+		lea	AnimPatMaps(pc,d0.w),a0
 		tst.w	(a0)
 		beq.s	locret_1AD1A
 		lea	($FFFF9000).w,a1
@@ -37483,51 +37358,55 @@ LoadLevelBlocks_2P:
 ; End of function LoadAnimatedBlocks
 
 ; ===========================================================================
-Map16Delta_Index:
-		dc.w Map16Delta_GHZ1-Map16Delta_Index
-		dc.w Map16Delta_GHZ2-Map16Delta_Index
-		dc.w Map16Delta_GHZ3-Map16Delta_Index
-		dc.w Map16Delta_GHZ1-Map16Delta_Index
-		dc.w Map16Delta_CPZ1-Map16Delta_Index
-		dc.w Map16Delta_GHZ1-Map16Delta_Index
-		dc.w Map16Delta_GHZ2-Map16Delta_Index
-		dc.w Map16Delta_GHZ2-Map16Delta_Index
-		dc.w Map16Delta_CPZ1-Map16Delta_Index
-		dc.w Map16Delta_GHZ2-Map16Delta_Index
-		dc.w Map16Delta_GHZ2-Map16Delta_Index
-		dc.w Map16Delta_GHZ2-Map16Delta_Index
-		dc.w Map16Delta_GHZ2-Map16Delta_Index
-		dc.w Map16Delta_GHZ3-Map16Delta_Index
-		dc.w Map16Delta_GHZ2-Map16Delta_Index
-		dc.w Map16Delta_GHZ2-Map16Delta_Index
-Map16Delta_GHZ1:dc.w $1788,  $3B,$4502,$4504,$4503,$4505,$4506,$4508,$4507,$4509,$450A,$450C,$450B,$450D,$450E,$4510; 0
-					; DATA XREF: ROM:Map16Delta_Indexo
-		dc.w $450F,$4511,$4512,$4514,$4513,$4515,$4516,$4518,$4517,$4519,$651A,$651C,$651B,$651D,$651E,$6520; 16
-		dc.w $651F,$6521,$439C,$4B9C,$439D,$4B9D,$4158,$439C,$4159,$439D,$4B9C,$4958,$4B9D,$4959,$6394,$6B94; 32
-		dc.w $6395,$6B95,$E396,$EB96,$E397,$EB97,$6398,$6B98,$6399,$6B99,$E39A,$EB9A,$E39B,$EB9B; 48
-Map16Delta_GHZ2:dc.w	 0, $C80,  $9B,$43A1,$43A2,$43A3,$43A4,$43A5,$43A6,$43A7,$43A8,$43A9,$43AA,$43AB,$43AC,$43AD; 0
-					; DATA XREF: ROM:Map16Delta_Indexo
-		dc.w $43AE,$43AF,$43B0,$43B1,$43B2,$43B3,$43B4,$43B5,$43B6,$43B7,$43B8,$43B9,$43BA,$43BB,$43BC,$43BD; 16
-		dc.w $43BE,$43BF,$43C0,$43C1,$43C2,$43C3,$43C4,$63A0,$63A0,$63A0,$63A0,$63A0,$63A0,$63A0,$63A0,	   0; 32
-		dc.w	 0,$6340,$6344,	   0,	 0,$6348,$634C,$6341,$6345,$6342,$6346,$6349,$634D,$634A,$634E,$6343; 48
-		dc.w $6347,$4358,$4359,$634B,$634F,$435A,$435B,$6380,$6384,$6381,$6385,$6388,$638C,$6389,$638D,$6382; 64
-		dc.w $6386,$6383,$6387,$638A,$638E,$638B,$638F,$6390,$6394,$6391,$6395,$6398,$639C,$6399,$639D,$6392; 80
-		dc.w $6396,$6393,$6397,$639A,$639E,$639B,$639F,$4378,$4379,$437A,$437B,$437C,$437D,$437E,$437F,$235C; 96
-		dc.w $235D,$235E,$235F,$2360,$2361,$2362,$2363,$2364,$2365,$2366,$2367,$2368,$2369,$236A,$236B,	   0; 112
-		dc.w	 0,$636C,$636D,	   0,	 0,$636E,    0,$636F,$6370,$6371,$6372,$6373,	 0,$6374,    0,$6375; 128
-		dc.w $6376,$4358,$4359,$6377,	 0,$435A,$435B,$C378,$C379,$C37A,$C37B,$C37C,$C37D,$C37E,$C37F;	144
-Map16Delta_GHZ3:dc.w $17E0,   $F,$43D1,$43D1,$43D1,$43D1,$43D2,$43D2,$43D3,$43D3,$43D4,$43D4,$43D5,$43D5,$43D6,$43D6; 0
-					; DATA XREF: ROM:Map16Delta_Indexo
-		dc.w $43D7,$43D7	; 16
-Map16Delta_CPZ1:dc.w $1710,  $77,$62E8,$62E9,$62EA,$62EB,$62EC,$62ED,$62EE,$62EF,$62F0,$62F1,$62F2,$62F3,$62F4,$62F5; 0
-					; DATA XREF: ROM:Map16Delta_Indexo
-		dc.w $62F6,$62F7,$62F8,$62F9,$62FA,$62FB,$62FC,$62FD,$62FE,$62FF,$42E8,$42E9,$42EA,$42EB,$42EC,$42ED; 16
-		dc.w $42EE,$42EF,$42F0,$42F1,$42F2,$42F3,$42F4,$42F5,$42F6,$42F7,$42F8,$42F9,$42FA,$42FB,$42FC,$42FD; 32
-		dc.w $42FE,$42FF,    0,$62E8,	 0,$62EA,$62E9,$62EC,$62EB,$62EE,$62ED,	   0,$62EF,    0,    0,$62F0; 48
-		dc.w	 0,$62F2,$62F1,$62F4,$62F3,$62F6,$62F5,	   0,$62F7,    0,    0,$62F8,	 0,$62FA,$62F9,$62FC; 64
-		dc.w $62FB,$62FE,$62FD,	   0,$62FF,    0,    0,$42E8,	 0,$42EA,$42E9,$42EC,$42EB,$42EE,$42ED,	   0; 80
-		dc.w $42EF,    0,    0,$42F0,	 0,$42F2,$42F1,$42F4,$42F3,$42F6,$42F5,	   0,$42F7,    0,    0,$42F8; 96
-		dc.w	 0,$42FA,$42F9,$42FC,$42FB,$42FE,$42FD,	   0,$42FF,    0; 112
+; like with the animated stage art, this already lists stages up to $0F and
+; includes an entry for the final HPZ level slot, and this time even lists
+; CPZ's final level slot
+; Map16Delta_Index:
+AnimPatMaps:
+		dc.w APM_GHZ-AnimPatMaps
+		dc.w APM_LZ-AnimPatMaps
+		dc.w APM_CPZ-AnimPatMaps
+		dc.w APM_GHZ-AnimPatMaps
+		dc.w APM_HPZ-AnimPatMaps
+		dc.w APM_GHZ-AnimPatMaps
+		dc.w APM_LZ-AnimPatMaps
+		dc.w APM_LZ-AnimPatMaps
+		dc.w APM_HPZ-AnimPatMaps
+		dc.w APM_LZ-AnimPatMaps
+		dc.w APM_LZ-AnimPatMaps
+		dc.w APM_LZ-AnimPatMaps
+		dc.w APM_LZ-AnimPatMaps
+		dc.w APM_CPZ-AnimPatMaps
+		dc.w APM_LZ-AnimPatMaps
+		dc.w APM_LZ-AnimPatMaps
+
+APM_GHZ:	dc.w $1788,  $3B,$4502,$4504,$4503,$4505,$4506,$4508,$4507,$4509,$450A,$450C,$450B,$450D,$450E,$4510
+		dc.w $450F,$4511,$4512,$4514,$4513,$4515,$4516,$4518,$4517,$4519,$651A,$651C,$651B,$651D,$651E,$6520
+		dc.w $651F,$6521,$439C,$4B9C,$439D,$4B9D,$4158,$439C,$4159,$439D,$4B9C,$4958,$4B9D,$4959,$6394,$6B94
+		dc.w $6395,$6B95,$E396,$EB96,$E397,$EB97,$6398,$6B98,$6399,$6B99,$E39A,$EB9A,$E39B,$EB9B
+
+APM_LZ:		dc.w	 0, $C80,  $9B,$43A1,$43A2,$43A3,$43A4,$43A5,$43A6,$43A7,$43A8,$43A9,$43AA,$43AB,$43AC,$43AD
+		dc.w $43AE,$43AF,$43B0,$43B1,$43B2,$43B3,$43B4,$43B5,$43B6,$43B7,$43B8,$43B9,$43BA,$43BB,$43BC,$43BD
+		dc.w $43BE,$43BF,$43C0,$43C1,$43C2,$43C3,$43C4,$63A0,$63A0,$63A0,$63A0,$63A0,$63A0,$63A0,$63A0,	   0
+		dc.w	 0,$6340,$6344,	   0,	 0,$6348,$634C,$6341,$6345,$6342,$6346,$6349,$634D,$634A,$634E,$6343
+		dc.w $6347,$4358,$4359,$634B,$634F,$435A,$435B,$6380,$6384,$6381,$6385,$6388,$638C,$6389,$638D,$6382
+		dc.w $6386,$6383,$6387,$638A,$638E,$638B,$638F,$6390,$6394,$6391,$6395,$6398,$639C,$6399,$639D,$6392
+		dc.w $6396,$6393,$6397,$639A,$639E,$639B,$639F,$4378,$4379,$437A,$437B,$437C,$437D,$437E,$437F,$235C
+		dc.w $235D,$235E,$235F,$2360,$2361,$2362,$2363,$2364,$2365,$2366,$2367,$2368,$2369,$236A,$236B,	   0
+		dc.w	 0,$636C,$636D,	   0,	 0,$636E,    0,$636F,$6370,$6371,$6372,$6373,	 0,$6374,    0,$6375
+		dc.w $6376,$4358,$4359,$6377,	 0,$435A,$435B,$C378,$C379,$C37A,$C37B,$C37C,$C37D,$C37E,$C37F
+
+APM_CPZ:	dc.w $17E0,   $F,$43D1,$43D1,$43D1,$43D1,$43D2,$43D2,$43D3,$43D3,$43D4,$43D4,$43D5,$43D5,$43D6,$43D6
+		dc.w $43D7,$43D7
+
+APM_HPZ:	dc.w $1710,  $77,$62E8,$62E9,$62EA,$62EB,$62EC,$62ED,$62EE,$62EF,$62F0,$62F1,$62F2,$62F3,$62F4,$62F5
+		dc.w $62F6,$62F7,$62F8,$62F9,$62FA,$62FB,$62FC,$62FD,$62FE,$62FF,$42E8,$42E9,$42EA,$42EB,$42EC,$42ED
+		dc.w $42EE,$42EF,$42F0,$42F1,$42F2,$42F3,$42F4,$42F5,$42F6,$42F7,$42F8,$42F9,$42FA,$42FB,$42FC,$42FD
+		dc.w $42FE,$42FF,    0,$62E8,	 0,$62EA,$62E9,$62EC,$62EB,$62EE,$62ED,	   0,$62EF,    0,    0,$62F0
+		dc.w	 0,$62F2,$62F1,$62F4,$62F3,$62F6,$62F5,	   0,$62F7,    0,    0,$62F8,	 0,$62FA,$62F9,$62FC
+		dc.w $62FB,$62FE,$62FD,	   0,$62FF,    0,    0,$42E8,	 0,$42EA,$42E9,$42EC,$42EB,$42EE,$42ED,	   0
+		dc.w $42EF,    0,    0,$42F0,	 0,$42F2,$42F1,$42F4,$42F3,$42F6,$42F5,	   0,$42F7,    0,    0,$42F8
+		dc.w	 0,$42FA,$42F9,$42FC,$42FB,$42FE,$42FD,	   0,$42FF,    0
 		nop
 
 ; ===========================================================================
@@ -37584,15 +37463,19 @@ Obj21_Display2:
 		jmp	(DisplaySprite).l
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
-; Sprite mappings
+; Sprite mappings - SCORE, TIME, RINGS
 ; ---------------------------------------------------------------------------
 Map_obj21:	incbin	"mappings/sprite/obj21.bin"
 
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Subroutine to add points to the score counter
+; ---------------------------------------------------------------------------
+
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 
 
-AddPoints:				; CODE XREF: ROM:loc_BC66p
-					; ROM:0000BE82p ...
+AddPoints:
 		move.b	#1,($FFFFFE1F).w
 		lea	($FFFFFE26).w,a3
 		add.l	d0,(a3)
@@ -37601,21 +37484,19 @@ AddPoints:				; CODE XREF: ROM:loc_BC66p
 		bhi.s	loc_1B214
 		move.l	d1,(a3)
 
-loc_1B214:				; CODE XREF: AddPoints+14j
+loc_1B214:
 		move.l	(a3),d0
 		cmp.l	($FFFFFFC0).w,d0
 		bcs.s	locret_1B23C
 		addi.l	#5000,($FFFFFFC0).w
-		tst.b	($FFFFFFF8).w
-		bmi.s	locret_1B23C
+		tst.b	($FFFFFFF8).w	; is this a Japanese console?
+		bmi.s	locret_1B23C	; if not, branch
 		addq.b	#1,($FFFFFE12).w
 		addq.b	#1,($FFFFFE1C).w
-		move.w	#$88,d0	; 'ˆ'
+		move.w	#MusID_ExtraLife,d0
 		jmp	(PlaySound).l
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
-locret_1B23C:				; CODE XREF: AddPoints+1Ej
-					; AddPoints+2Cj
+locret_1B23C:
 		rts
 ; End of function AddPoints
 
@@ -37625,7 +37506,7 @@ locret_1B23C:				; CODE XREF: AddPoints+1Ej
 
 HudUpdate:
 		nop
-		lea	($C00000).l,a6
+		lea	(VDP_data_port).l,a6
 		tst.w	(Debug_mode_flag).w
 		bne.w	loc_1B330
 		tst.b	($FFFFFE1F).w
@@ -37635,20 +37516,20 @@ HudUpdate:
 		move.l	($FFFFFE26).w,d1
 		bsr.w	HUD_Score
 
-loc_1B266:				; CODE XREF: HudUpdate+14j
+loc_1B266:
 		tst.b	($FFFFFE1D).w
 		beq.s	loc_1B286
 		bpl.s	loc_1B272
 		bsr.w	HUD_LoadZero
 
-loc_1B272:				; CODE XREF: HudUpdate+2Ej
+loc_1B272:
 		clr.b	($FFFFFE1D).w
 		move.l	#$5F400003,d0
 		moveq	#0,d1
 		move.w	($FFFFFE20).w,d1
 		bsr.w	HUD_Rings
 
-loc_1B286:				; CODE XREF: HudUpdate+2Cj
+loc_1B286:
 		tst.b	($FFFFFE1E).w
 		beq.s	loc_1B2E2
 		tst.w	($FFFFF63A).w
@@ -37657,11 +37538,11 @@ loc_1B286:				; CODE XREF: HudUpdate+2Cj
 		cmpi.l	#$93B3B,(a1)+	; if the timer has passed 9:59...
 		nop			; ...do nothing since this has been nopped out
 		addq.b	#1,-(a1)
-		cmpi.b	#$3C,(a1) ; '<'
+		cmpi.b	#$3C,(a1)
 		bcs.s	loc_1B2E2
 		move.b	#0,(a1)
 		addq.b	#1,-(a1)
-		cmpi.b	#$3C,(a1) ; '<'
+		cmpi.b	#$3C,(a1)
 		bcs.s	loc_1B2C2
 		move.b	#0,(a1)
 		addq.b	#1,-(a1)
@@ -37669,8 +37550,7 @@ loc_1B286:				; CODE XREF: HudUpdate+2Cj
 		bcs.s	loc_1B2C2
 		move.b	#9,(a1)
 
-loc_1B2C2:				; CODE XREF: HudUpdate+72j
-					; HudUpdate+7Ej
+loc_1B2C2:
 		move.l	#$5E400003,d0
 		moveq	#0,d1
 		move.b	($FFFFFE23).w,d1
@@ -37680,18 +37560,17 @@ loc_1B2C2:				; CODE XREF: HudUpdate+72j
 		move.b	($FFFFFE24).w,d1
 		bsr.w	HUD_Secs
 
-loc_1B2E2:				; CODE XREF: HudUpdate+4Cj
-					; HudUpdate+52j ...
+loc_1B2E2:
 		tst.b	($FFFFFE1C).w
 		beq.s	loc_1B2F0
 		clr.b	($FFFFFE1C).w
 		bsr.w	HUD_Lives
 
-loc_1B2F0:				; CODE XREF: HudUpdate+A8j
+loc_1B2F0:
 		tst.b	($FFFFF7D6).w
 		beq.s	locret_1B318
 		clr.b	($FFFFF7D6).w
-		move.l	#$6E000002,($C00004).l
+		move.l	#$6E000002,(VDP_control_port).l
 		moveq	#0,d1
 		move.w	($FFFFF7D2).w,d1
 		bsr.w	HUD_TimeRingBonus
@@ -37699,11 +37578,12 @@ loc_1B2F0:				; CODE XREF: HudUpdate+A8j
 		move.w	($FFFFF7D4).w,d1
 		bsr.w	HUD_TimeRingBonus
 
-locret_1B318:				; CODE XREF: HudUpdate+B6j
+locret_1B318:
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-S1TimeOver:				; leftover from	Sonic 1
+; ===========================================================================
+; kills the player if the time has reached 9:59, except now it's unused due
+; to its "beq" command being noped out above
+S1TimeOver:
 		clr.b	($FFFFFE1E).w
 		lea	($FFFFB000).w,a0
 		movea.l	a0,a2
@@ -37740,7 +37620,7 @@ loc_1B372:				; CODE XREF: HudUpdate+12Aj
 		tst.b	($FFFFF7D6).w
 		beq.s	locret_1B39A
 		clr.b	($FFFFF7D6).w
-		move.l	#$6E000002,($C00004).l
+		move.l	#$6E000002,(VDP_control_port).l
 		moveq	#0,d1
 		move.w	($FFFFF7D2).w,d1
 		bsr.w	HUD_TimeRingBonus
@@ -37758,7 +37638,7 @@ locret_1B39A:				; CODE XREF: HudUpdate+138j
 
 HUD_LoadZero:				; CODE XREF: HudUpdate+30p
 					; HudUpdate+FEp
-		move.l	#$5F400003,($C00004).l
+		move.l	#$5F400003,(VDP_control_port).l
 		lea	HUD_TilesZero(pc),a2
 		move.w	#2,d2
 		bra.s	loc_1B3CC
@@ -37770,9 +37650,9 @@ HUD_LoadZero:				; CODE XREF: HudUpdate+30p
 
 HUD_Base:				; CODE XREF: ROM:00003D24p
 					; ROM:00005248p
-		lea	($C00000).l,a6
+		lea	(VDP_data_port).l,a6
 		bsr.w	HUD_Lives
-		move.l	#$5C400003,($C00004).l
+		move.l	#$5C400003,(VDP_control_port).l
 		lea	HUD_TilesBase(pc),a2
 		move.w	#$E,d2
 
@@ -37811,7 +37691,7 @@ HUD_TilesZero:	dc.b $FF,$FF,  0,  0	; 0 ; DATA XREF: HUD_LoadZero+At
 
 
 HUDDebug_XY:				; CODE XREF: HudUpdate:loc_1B330p
-		move.l	#$5C400003,($C00004).l
+		move.l	#$5C400003,(VDP_control_port).l
 		move.w	($FFFFEE00).w,d1
 		swap	d1
 		move.w	($FFFFB008).w,d1
@@ -37925,8 +37805,8 @@ loc_1B4BC:				; CODE XREF: HUD_Score+26j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 HUD_Unk:
-		move.l	#$5F800003,($C00004).l
-		lea	($C00000).l,a6
+		move.l	#$5F800003,(VDP_control_port).l
+		lea	(VDP_data_port).l,a6
 		lea	(HUD_10).l,a2
 		moveq	#1,d6
 		moveq	#0,d4
@@ -38548,7 +38428,7 @@ Debug_EHZ:	dc.w $13		; DATA XREF: ROM:0001BCF2o
 		dc.b   0,  0,  4,  2	; 0
 		dc.l Map_obj53+$53000000
 		dc.b   0,  0,  4,$1C	; 0
-		dc.l Map_Obj4F+$4F000000
+		dc.l Map_obj4F+$4F000000
 		dc.b   0,  0,  5,  0	; 0
 		dc.l Map_Obj52+$52000000
 		dc.b   0,  0,$25,$30	; 0
@@ -38619,7 +38499,7 @@ Debug_HPZ:	dc.w $F			; DATA XREF: ROM:0001BCF4o
 		dc.b   0,  0,$44,$75	; 0
 		dc.l Map_Obj03+$03000000
 		dc.b   0,  0,$26,$BC	; 0
-		dc.l Map_Obj4F+$4F000000
+		dc.l Map_obj4F+$4F000000
 		dc.b   0,  0,  5,  0	; 0
 		dc.l Map_Obj52+$52000000
 		dc.b   0,  0,$25,$30	; 0
@@ -38685,13 +38565,13 @@ levartptrs macro plc1,plc2,palette,art,map16x16,map128x128,music
 
 ; MainLoadBlocks:
 LevelArtPointers:
-		levartptrs  4,  5,  4, Nem_GHZ, Map16_GHZ, UnkComp_Map128_GHZ, $81	;   0 ; GHZ  ; GREEN HILL ZONE
-		levartptrs  6,  7,  5, Nem_CPZ, Map16_CPZ, Map128_CPZ, $82		;   1 ; LZ   ; LABYRINTH ZONE
-		levartptrs  8,  9,  6, Nem_CPZ, Map16_CPZ, Map128_CPZ, $83		;   2 ; CPZ  ; CHEMICAL PLANT ZONE
-		levartptrs $A, $B,  7, Nem_EHZ, Map16_EHZ, Map128_EHZ, $84		;   3 ; EHZ  ; EMERALD HILL ZONE
-		levartptrs $C, $D,  8, Nem_HPZ, Map16_HPZ, Map128_HPZ, $85		;   4 ; HPZ  ; HIDDEN PALACE ZONE
-		levartptrs $E, $F,  9, Nem_EHZ, Map16_EHZ, Map128_EHZ, $86		;   5 ; HTZ  ; HILL TOP ZONE
-		levartptrs  0,  0,$13, Nem_GHZ, Map16_GHZ, UnkComp_Map128_GHZ, $86	;   6 ; LEV6 ; LEVEL 6 (UNUSED, SONIC 1 ENDING)
+		levartptrs  4,  5,  4, Nem_GHZ, Map16_GHZ, UnkComp_Map128_GHZ, MusID_GHZ	;   0 ; GHZ  ; GREEN HILL ZONE
+		levartptrs  6,  7,  5, Nem_CPZ, Map16_CPZ, Map128_CPZ, MusID_LZ			;   1 ; LZ   ; LABYRINTH ZONE
+		levartptrs  8,  9,  6, Nem_CPZ, Map16_CPZ, Map128_CPZ, MusID_CPZ		;   2 ; CPZ  ; CHEMICAL PLANT ZONE
+		levartptrs $A, $B,  7, Nem_EHZ, Map16_EHZ, Map128_EHZ, MusID_EHZ		;   3 ; EHZ  ; EMERALD HILL ZONE
+		levartptrs $C, $D,  8, Nem_HPZ, Map16_HPZ, Map128_HPZ, MusID_HPZ		;   4 ; HPZ  ; HIDDEN PALACE ZONE
+		levartptrs $E, $F,  9, Nem_EHZ, Map16_EHZ, Map128_EHZ, MusID_HTZ		;   5 ; HTZ  ; HILL TOP ZONE
+		levartptrs  0,  0,$13, Nem_GHZ, Map16_GHZ, UnkComp_Map128_GHZ, MusID_HTZ	;   6 ; LEV6 ; LEVEL 6 (UNUSED, SONIC 1 ENDING)
 
 ; ---------------------------------------------------------------------------
 ; PATTERN LOAD REQUEST LISTS
@@ -38860,7 +38740,7 @@ PLC_HPZ_End:
 ; Hidden Palace Zone secondary
 ; --------------------------------------------------------------------------------------
 PLC_HPZ2:	dc.w ((PLC_HPZ2_End-PLC_HPZ2)/6)-1
-		plreq $500, Nem_Dinobot
+		plreq $500, Nem_Redz
 word_1C1E2:	plreq $530, Nem_Bat
 PLC_HPZ2_End:
 		; unused PLR entries
@@ -38868,7 +38748,7 @@ PLC_HPZ2_End:
 		plreq $32C, Nem_Buzzer
 		plreq $350, Nem_Bat
 		plreq $3C4, Nem_Triceratops
-		plreq $500, Nem_Dinobot
+		plreq $500, Nem_Redz
 		plreq $530, Nem_HPZ_Piranha
 ; --------------------------------------------------------------------------------------
 ; PATTERN LOAD REQUEST LIST
@@ -41706,24 +41586,8 @@ Nem_Triceratops:dc.b   0,$32,$80,  5,$15,$16,$30,$26,$2E,$36,$33,$47,$71,$57,$75
 		dc.b $F4,$13,$C2,$DB,$BA,$71,$EF,$DB,$BF,$6E,$F2,$EA,$6F,$97,$19,$45,$F2,$CE,$C8,$BE,$45,$6B,$C2, $A,$3A,$F0,$29,$CD,$6C,$3E,$55,$9F,$93,$33,$33,$36,  7,$F1,$BE,$9F,$BD,$9F,$F7,$67,$FD,$5E,$83,$FA,$22,$7A,$A6, $E,$A9,$89,$F9,$11,$30,$42,$EC,$26,$BB,  3,$BF,$61; 832
 		dc.b $FA,$8B,$42,$FF,$87,$2F,$3F,$3B,$AD,$FF,$EF,$FF,$7F,$EB,$E7,$FC,$9B,$7C,$BA,$78,$41,$3F,  5,$C4,$D5,$27,$41,$3F,$D4,$1A,$6D,$BE,$8F,$6F,$22, $D,$7F,$4E,$44,$EB,$D0,$4F,  3,$8C,$EE,$E9,$C7,$BF,$6E,$FD,$BB,$CB,$A9,$BE,$5C,$65,$17,$CB,$3B,$22,$F9,$15,$AF,  8; 896
 		dc.b $28,$EB,$C0,$A7,$35,$B0,$F9,$56,$7E,$4C,$CC,$CC,$CC,$CC,$CC,$CC,$CD,$76,$BE,$31,$F8,$CD,$2E,$A7,$EB,$35,$E1,$CB,$F1,$9F,$B3,$AC,$7E,$33,$4C,$F5,$B3,$33,$33,$33,$33,$75,$D3,$38,$F4,$D3, $E,$5E,$9A,$56,$9F,$BC,$FD,$9F,$A6,$97,$68,$D9,$80,  0; 960
-Nem_Dinobot:	dc.b   0,$30,$80,  5,$14,$15,$11,$25,$16,$35,$18,$47,$73,$56,$37,$67,$72,$75,$15,$81,  3,  0,$15,$12,$26,$33,$36,$36,$58,$F8,$86,  4,  6,$17,$76,$87,  4,  5,$16,$38,$88,  6,$34,$89,  4,  7,$17,$77,$8C,  4,  4,$16,$32,$26,$3A,$37,$7A,$47,$79,$8D,  3,  1,$15,$13; 0
-					; DATA XREF: ROM:0001C1DAo
-					; ROM:0001C1FEo
-		dc.b $25,$17,$47,$7B,$8E,  7,$78,$8F,  5,$10,$16,$35,$FF,$AD,$79,$1C,$5D,$2C,$B3,$CA,$DC, $C,$AD,$2E,$AC,$7D,$44,$F9,$89,$41,$90,$89,$41,$90,$8F,$F7,$6C,$D4,$CE,$CB,$B6,$3F,$6F,$CF,$F5,$35,$E4,$98,$E9,$E3,$F1,$45, $A,$C2,$6A,$15,$A5,$37, $E,$29,$9D,$79,$3E,$EE; 64
-		dc.b $BB,$BA,$F2,$7A,$F2,$4A,$2B,$38,$ED,$FA,$77,$E1,$95,$E3,$FF,$DF,$27,$FD,$87,$D4,$10,$C3,$2D,$50,$C1,$52, $D,  3, $E,$13,$53,  9,$34,$3A,$59,$37,$A3,$FA,$61,$D4,$FC,$DE,$57,$D9,$DB,$6E,$1D,$73,$E1,$C7,$6E,$1F,$3F,$D4,$E6,$AD,$1F,$84,$D9,$7B, $A,$77,$D8,$8E; 128
-		dc.b $FF,$AE,$69,$43,$E0,$F5,$AA,  3,$96,$AD,  0,$7A,$D5,$18,$1F,$2C,$13,$DA,$BC,$92,$FF,$B9,$DA,$9B,$59,$35,$42,$23,$AA,$4C,$47,$2B,$88,$91,$BC,$E5,$8F,$DE,$8B,$40,$5C,$45,$60,$2E,$29,$C2,  9,$8A,$76,$41,$31,$4E,$C8,$26,$28,$C8,$2E,$28,$83,$F7,$A2,$9E,$C4,$6F; 192
-		dc.b $2B,$67,$CC,$69,$9C,$22,$A3,$41,$AC,$42,$8F,$10,  4,$28,$F1,  0,$99,$F8,$80,$86,$6D,$E0,$20,$D4,$B0,$C9,$58,$2C,  1,$56, $A,$D7,$59,$28,$49,$A8,$2A,$13,$DF,$7F,$61,$D7,$D8,$75,$FD,$EC,$BB,$FF,$85,$FF,$E3,$B8,$4E,$6E,$C3, $E,$AC,$2B,$5A,$D5,$2A,$46,$E8,$46; 256
-		dc.b $E4,$6F,$31,$CC,$A0,$E6,$50,$8C,$14,$23,  5,  8,$B1,$C8,$8B,$14,$81,$11,$28,$C8,$44,$42,$41,  8,$8C,$B2,$22,$33,  8,$44,$58,$82,$2D,$99,$16,$CC,$8B,$77,$23, $A,$CE,$31,$FA,$61,$8F,$D3,$8C,$70,$E3,$1D,$C7,$3D,$B0,$9A,$A0,$B0,$76,$41,$67,$E1,  5,$6B,$58,$9C; 320
-		dc.b $5D,$2C,$B3,$CA,$DC, $C,$AD,$2E,$AC,$7D,$44,$F9,$89,$41,$90,$89,$41,$90,$8F,$F7,$77,$95,$9A,$99,$D9,$76,$C7,$ED,$F9,$FE,$A7,$92,$63,$A7,$8F,$C5,$14,$2B,  9,$A8,$56,$94,$DC,$38,$A6,$75,$AD,$6B,$5A,$F2,$7E,$6E,$DA,$63,$46,$57,$8F,$FF,$7C,$9F,$F6,$1F,$50,$43; 384
-		dc.b  $C,$B5,$43,  5,$48,$34, $C,$38,$4D,$4C,$24,$D0,$E9,$64,$DE,$8F,$E9,$87,$53,$F3,$79,$5F,$67,$F8,$57,$6D,$95,$C2,$E6,$AF,$2E,$DC,$38,$56,$FD,$CE,$C9,$B2,$F6, $F,$F8,$B7,$D8,$8F,$CD,$FE,$B9,$A5,$F8,$BF,$83,$D6,$A8, $E,$5A,$B4,  1,$EB,$54,$50,$7C,$FE,$61,$3D; 448
-		dc.b $D1,$E4,$97,$8F,$7D,$AD,$B5,$13,$5C,$88,$A3,$AB,$14,$98,$5E,$D7,$1A,$11,$BC,$E5,$8F,$DE,$8B,$40,$5C,$45,$60,$2E,$29,$C2,  9,$8A,$76,$41,$31,$4E,$C8,$26,$28,$C8,$2E,$28,$83,$F7,$A2,$9E,$C4,$6F,$2B,$67,$CC,$69,$9C,$22,$A3,$41,$AC,$42,$8F,$10,  4,$28,$F1,  0; 512
-		dc.b $99,$F8,$80,$86,$6D,$E0,$20,$D4,$B0,$C9,$58,$2C,  1,$56, $A,$D7,$59,$28,$49,$A8,$2A,$13,$F7,$BF,$A9,$B8,$7D,$15,$AE,$1F,$4E,$3F,$7B,$2F,$CC,$7F,  7,$40,$F6,$1F,$A8,$14,$EF,$E8,$BB,$2B,$AB,  4,$65,$7E,$18,$25,$6B,$5A,$D8,$F2,$23,$91,$1B,$91,$B9,$1B,$91,$BC; 576
-		dc.b $C7,$39,$8C,$14,$23,  5,  8,$B1,$48,$11,$43,$94,$10,$8A,  4,$86,$44,$52,$59,$4C,$52,$61,  8,$8B,$11,$31,$1C,$C8,$B6,$64,$59,$C1,$18,$79,$73,$D1,$F7,$D1,$F7,$7A,$F2,$1C,$88,$DC,$8D,$D0,$56,$B5,$E6,$71,$74,$B2,$CF,$2B,$70,$32,$B4,$BA,$B1,$F5,$13,$E6,$25,  6; 640
-		dc.b $42,$25,  6,$42,$3F,$DD,$E4,$39, $C,$35,$25,$85,$CF,$9F,$E9,$F9,$26,$3A,$78,$FC,$51,$42,$B0,$9A,$85,$69,$4D,$C3,$8A,$67,$5A,$D6,$B5,$AD,$6B,$58,$FF,$F7,$C9,$FF,$61,$F5,  4,$30,$CB,$54,$30,$54,$83,$40,$C3,$84,$D4,$C2,$4D, $E,$96,$4D,$E8,$FE,$98,$75,$3F,$37; 704
-		dc.b $95,$F6,$7F,$85,$7F,$85,$70,$D9,$AB,$C9,$64,$A1,$59,$7B,$2E,$C9,$B2,$F6, $F,$F8,$B7,$D8,$8F,$CD,$FE,$B9,$A5,$F8,$BF,$83,$D6,$A8, $E,$5A,$B4,  1,$EB,$54,$91,$F3,$DD,$3D,$D1,$E4,$97,$8F,$7D,$B1,$B6,  5,$E3,$2D,$18,$69,$2D,$15,$86,$8A,$46,$F3,$96,$3F,$7A,$2D; 768
-		dc.b   1,$71,$15,$80,$B8,$A7,  8,$26,$29,$D9,  4,$C5,$3B,$20,$98,$A3,$20,$B8,$A2, $F,$DE,$8A,$7B,$11,$BC,$AD,$9F,$31,$A6,$70,$8A,$8D,  6,$B1, $A,$3C,$40,$10,$A3,$C4,  2,$67,$E2,  2,$19,$B7,$80,$83,$52,$C3,$25,$60,$B0,  5,$58,$2B,$5D,$64,$A1,$26,$A0,$A8,$4F,$6F; 832
-		dc.b $A4,$C3,$E8,$AC,$B3, $F,$A7,$1A,$4C,$77,$FC,$C3,$C9,$74,$71,$DE,$9C,$69,$28,$CF,$47,$16,$6E,$88,$8F,$64,$98,$AD,$6B,$5D,$C8,$E4,$46,$E4,$6F,$31,$CE,$63,$9C,$C7,$39,$8C,$14,$23,  5,  8,$B1,$48,$11,$19,$C1,  5,$2F,  4,$22,$81,$21,$91,$14,$96,$53,$14,$98,$43; 896
-		dc.b $2A,$31,  9,$28,$E6,$92,$8E,$64,$5B,$B9,$18,$70,$E3, $F,$2E,$6E,$37,$7A,$D6,$B5,$AF,$20; 960
+Nem_Redz:	incbin	"art/nemesis/Redz.bin"
+		even
 Nem_HPZ_Piranha:dc.b   0,$40,$80,  5,$10,$15,$14,$25,$12,$36,$34,$46,$30,$56,$2F,$66,$2D,$74,  3,$81,  3,  0,$15,$13,$26,$31,$37,$75,$82,  5,$11,$17,$6B,$28,$F4,$83,  6,$33,$84,  7,$73,$86,  5, $C,$17,$71,$28,$F7,$87,  4,  5,$16,$2C,$27,$74,$88,  4,  4,$15, $D,$27,$72,$37,$70; 0
 					; DATA XREF: ROM:0001C204o
 		dc.b $89,  4,  2,$16,$2A,$27,$64,$36,$36,$48,$F3,$8A,  7,$6A,$18,$F5,$27,$78,$48,$EC,$8B,  5, $E,$17,$6E,$27,$6F,$8C,  6,$2E,$18,$ED,$28,$F2,$8D,  6,$2B,$17,$65,$8E,  5, $F,$17,$77,$FF,$33,$33,$33,$33,$33,$BE,$AD,$2A,$6C,$8B,$85,  9,$B5,$F6,$D0,$92,$BF,$28,$12; 64

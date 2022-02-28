@@ -21,8 +21,19 @@ byte_71A94:	dc.b   7,$72,$73,$26,$15,  8,$FF,  5
 ; ---------------------------------------------------------------------------
 ; Music	Pointers
 ; ---------------------------------------------------------------------------
-MusicIndex:	dc.l Music81, Music82, Music83,	Music84, Music85, Music86
-		dc.l Music87, Music88, Music89,	Music8A, Music8B, Music8C
+MusicIndex:
+MusPtr_GHZ:		dc.l Music81
+MusPtr_LZ:		dc.l Music82
+MusPtr_CPZ:		dc.l Music83
+MusPtr_EHZ:		dc.l Music84
+MusPtr_HPZ:		dc.l Music85
+MusPtr_HTZ:		dc.l Music86
+MusPtr_Invincible:	dc.l Music87
+MusPtr_ExtraLife:	dc.l Music88
+MusPtr_SpecialStage:	dc.l Music89
+MusPtr_Title:		dc.l Music8A
+MusPtr_Ending:		dc.l Music8B
+MusPtr_Boss:		dc.l Music8C
 		dc.l Music8D, Music8E, Music8F,	Music90, Music91, Music92
 		dc.l Music93
 ; ---------------------------------------------------------------------------
@@ -40,16 +51,16 @@ SoundTypes:	dc.b $90,$90,$90,$90,$90,$90,$90,$90,$90,$90,$90,$90,$90,$90,$90,$90
 
 
 sub_71B4C:
-		move.w	#$100,($A11100).l ; stop the Z80
+		move.w	#$100,(Z80_Bus_Request).l ; stop the Z80
 		nop
 		nop
 		nop
 
-loc_71B5A:				; CODE XREF: sub_71B4C+16j
-		btst	#0,($A11100).l
+loc_71B5A:
+		btst	#0,(Z80_Bus_Request).l
 		bne.s	loc_71B5A
 		btst	#7,($A01FFD).l
-		beq.s	loc_71B82
+		beq.s	UpdateMusic
 		startZ80
 		nop
 		nop
@@ -57,93 +68,93 @@ loc_71B5A:				; CODE XREF: sub_71B4C+16j
 		nop
 		nop
 		bra.s	sub_71B4C
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_71B82:				; CODE XREF: sub_71B4C+20j
+; ===========================================================================
+; loc_71B82:
+UpdateMusic:
 		lea	($FFF000).l,a6
 		clr.b	$E(a6)
-		tst.b	3(a6)		; is music paused?
+		tst.b	StopMusic(a6)	; is music paused?
 		bne.w	loc_71E50	; if yes, branch
-		subq.b	#1,1(a6)
+		subq.b	#1,TempoTimeout(a6)
 		bne.s	loc_71B9E
-		jsr	sub_7260C(pc)
+		jsr	TempoWait(pc)
 
-loc_71B9E:				; CODE XREF: sub_71B4C+4Cj
-		move.b	4(a6),d0
+loc_71B9E:
+		move.b	FadeOutCounter(a6),d0
 		beq.s	loc_71BA8
 		jsr	sub_72504(pc)
 
-loc_71BA8:				; CODE XREF: sub_71B4C+56j
+loc_71BA8:
 		tst.b	$24(a6)
 		beq.s	loc_71BB2
 		jsr	sub_7267C(pc)
 
-loc_71BB2:				; CODE XREF: sub_71B4C+60j
-		tst.w	$A(a6)		; is music or sound being played?
+loc_71BB2:
+		tst.w	SFXToPlay(a6)	; is music or sound being played?
 		beq.s	loc_71BBC	; if not, branch
-		jsr	Sound_Play(pc)
+		jsr	CycleQueue(pc)
 
-loc_71BBC:				; CODE XREF: sub_71B4C+6Aj
-		cmpi.b	#-$80,9(a6)
+loc_71BBC:
+		cmpi.b	#$80,QueueToPlay(a6)
 		beq.s	loc_71BC8
-		jsr	Sound_ChkValue(pc)
+		jsr	PlaySoundByIndex(pc)
 
-loc_71BC8:				; CODE XREF: sub_71B4C+76j
+loc_71BC8:
 		lea	$40(a6),a5
 		tst.b	(a5)
 		bpl.s	loc_71BD4
-		jsr	sub_71C4E(pc)
+		jsr	DACUpdateTrack(pc)
 
-loc_71BD4:				; CODE XREF: sub_71B4C+82j
-		clr.b	8(a6)
+loc_71BD4:
+		clr.b	DACUpdating(a6)
 		moveq	#5,d7
 
-loc_71BDA:				; CODE XREF: sub_71B4C:loc_71BE6j
+loc_71BDA:
 		adda.w	#$30,a5
 		tst.b	(a5)
 		bpl.s	loc_71BE6
-		jsr	sub_71CCA(pc)
+		jsr	FMUpdateTrack(pc)
 
-loc_71BE6:				; CODE XREF: sub_71B4C+94j
+loc_71BE6:
 		dbf	d7,loc_71BDA
 		moveq	#2,d7
 
-loc_71BEC:				; CODE XREF: sub_71B4C:loc_71BF8j
+loc_71BEC:
 		adda.w	#$30,a5
 		tst.b	(a5)
 		bpl.s	loc_71BF8
 		jsr	sub_72850(pc)
 
-loc_71BF8:				; CODE XREF: sub_71B4C+A6j
+loc_71BF8:
 		dbf	d7,loc_71BEC
 		move.b	#-$80,$E(a6)
 		moveq	#2,d7
 
-loc_71C04:				; CODE XREF: sub_71B4C:loc_71C10j
+loc_71C04:
 		adda.w	#$30,a5
 		tst.b	(a5)
 		bpl.s	loc_71C10
-		jsr	sub_71CCA(pc)
+		jsr	FMUpdateTrack(pc)
 
-loc_71C10:				; CODE XREF: sub_71B4C+BEj
+loc_71C10:
 		dbf	d7,loc_71C04
 		moveq	#2,d7
 
-loc_71C16:				; CODE XREF: sub_71B4C:loc_71C22j
+loc_71C16:
 		adda.w	#$30,a5
 		tst.b	(a5)
 		bpl.s	loc_71C22
 		jsr	sub_72850(pc)
 
-loc_71C22:				; CODE XREF: sub_71B4C+D0j
+loc_71C22:
 		dbf	d7,loc_71C16
 		move.b	#$40,$E(a6)
 		adda.w	#$30,a5
 		tst.b	(a5)
 		bpl.s	loc_71C38
-		jsr	sub_71CCA(pc)
+		jsr	FMUpdateTrack(pc)
 
-loc_71C38:				; CODE XREF: sub_71B4C+E6j
+loc_71C38:
 		adda.w	#$30,a5
 		tst.b	(a5)
 		bpl.s	loc_71C44
@@ -155,25 +166,25 @@ loc_71C44:
 ; End of function sub_71B4C
 
 
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
+; ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
 
-
-sub_71C4E:				; DATA XREF: sub_71B4C+84t
+; sub_71C4E:
+DACUpdateTrack:
 		subq.b	#1,$E(a5)
 		bne.s	locret_71CAA
-		move.b	#-$80,8(a6)
+		move.b	#$80,DACUpdating(a6)
 		movea.l	4(a5),a4
 
-loc_71C5E:				; CODE XREF: sub_71C4E+1Ej
+loc_71C5E:
 		moveq	#0,d5
 		move.b	(a4)+,d5
 		cmpi.b	#$E0,d5
 		bcs.s	loc_71C6E
-		jsr	sub_72A5A(pc)
+		jsr	CoordFlag(pc)
 		bra.s	loc_71C5E
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; ===========================================================================
 
-loc_71C6E:				; CODE XREF: sub_71C4E+18j
+loc_71C6E:
 		tst.b	d5
 		bpl.s	loc_71C84
 		move.b	d5,$10(a5)
@@ -181,68 +192,63 @@ loc_71C6E:				; CODE XREF: sub_71C4E+18j
 		bpl.s	loc_71C84
 		subq.w	#1,a4
 		move.b	$F(a5),$E(a5)
-		bra.s	loc_71C88
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+		bra.s	DACAfterDur
+; ===========================================================================
 
-loc_71C84:				; CODE XREF: sub_71C4E+22j
-					; sub_71C4E+2Aj
-		jsr	sub_71D40(pc)
-
-loc_71C88:				; CODE XREF: sub_71C4E+34j
+loc_71C84:
+		jsr	SetDuration(pc)
+; loc_71C88:
+DACAfterDur:
 		move.l	a4,4(a5)
 		btst	#2,(a5)
 		bne.s	locret_71CAA
 		moveq	#0,d0
 		move.b	$10(a5),d0
-		cmpi.b	#-$80,d0
+		cmpi.b	#$80,d0
 		beq.s	locret_71CAA
 		btst	#3,d0
-		bne.s	loc_71CAC
+		bne.s	SetTimpaniTempo
 		move.b	d0,($A01FFF).l
 
-locret_71CAA:				; CODE XREF: sub_71C4E+4j
-					; sub_71C4E+42j ...
+locret_71CAA:
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_71CAC:				; CODE XREF: sub_71C4E+54j
-		subi.b	#-$78,d0
-		move.b	byte_71CC4(pc,d0.w),d0
+; ===========================================================================
+; loc_71CAC:
+SetTimpaniTempo:
+		subi.b	#$88,d0
+		move.b	TimpaniTempo(pc,d0.w),d0
 		move.b	d0,($A000EA).l
-		move.b	#-$7D,($A01FFF).l
+		move.b	#$83,($A01FFF).l
 		rts
-; End of function sub_71C4E
+; End of function DACUpdateTrack
 
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-byte_71CC4:	dc.b $12,$15,$1C,$1D,$FF,$FF; 0
+; ===========================================================================
+; byte_71CC4:
+TimpaniTempo:	dc.b $12,$15,$1C,$1D,$FF,$FF
 
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
+; ||||||||||||||| S U B R O U T I N E||||||||||||||||||||||||||||||||||||||||
 
-
-sub_71CCA:				; DATA XREF: sub_71B4C+96t
-					; sub_71B4C+C0t ...
-
-; FUNCTION CHUNK AT 000726E2 SIZE 0000001C BYTES
-
+; sub_71CCA:
+FMUpdateTrack:
 		subq.b	#1,$E(a5)
 		bne.s	loc_71CE0
 		bclr	#4,(a5)
 		jsr	sub_71CEC(pc)
 		jsr	sub_71E18(pc)
 		bra.w	loc_726E2
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; ===========================================================================
 
-loc_71CE0:				; CODE XREF: sub_71CCA+4j
+loc_71CE0:				; CODE XREF: FMUpdateTrack+4j
 		jsr	sub_71D9E(pc)
 		jsr	sub_71DC6(pc)
 		bra.w	loc_71E24
-; End of function sub_71CCA
+; End of function FMUpdateTrack
 
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
 
 
-sub_71CEC:				; DATA XREF: sub_71CCA+At
+sub_71CEC:				; DATA XREF: FMUpdateTrack+At
 		movea.l	4(a5),a4
 		bclr	#1,(a5)
 
@@ -251,7 +257,7 @@ loc_71CF4:				; CODE XREF: sub_71CEC+16j
 		move.b	(a4)+,d5
 		cmpi.b	#$E0,d5
 		bcs.s	loc_71D04
-		jsr	sub_72A5A(pc)
+		jsr	CoordFlag(pc)
 		bra.s	loc_71CF4
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -268,7 +274,7 @@ loc_71D04:				; CODE XREF: sub_71CEC+10j
 
 loc_71D1A:				; CODE XREF: sub_71CEC+1Ej
 					; sub_71CEC+26j
-		jsr	sub_71D40(pc)
+		jsr	SetDuration(pc)
 		bra.w	sub_71D60
 ; End of function sub_71CEC
 
@@ -276,42 +282,38 @@ loc_71D1A:				; CODE XREF: sub_71CEC+1Ej
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
 
 
-sub_71D22:				; DATA XREF: sub_71CEC+20t
-
-; FUNCTION CHUNK AT 00071D58 SIZE 00000008 BYTES
-
+sub_71D22:
 		subi.b	#-$80,d5
 		beq.s	loc_71D58
 		add.b	8(a5),d5
 		andi.w	#$7F,d5
 		lsl.w	#1,d5
-		lea	word_72790(pc),a0
+		lea	FMFrequencies(pc),a0
 		move.w	(a0,d5.w),d6
 		move.w	d6,$10(a5)
 		rts
 ; End of function sub_71D22
 
 
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
+; ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
 
-
-sub_71D40:				; DATA XREF: sub_71C4E:loc_71C84t
-					; sub_71CEC:loc_71D1At	...
+; sub_71D40:
+SetDuration:	
 		move.b	d5,d0
 		move.b	2(a5),d1
 
-loc_71D46:				; CODE XREF: sub_71D40+Cj
+loc_71D46:
 		subq.b	#1,d1
 		beq.s	loc_71D4E
 		add.b	d5,d0
 		bra.s	loc_71D46
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; ===========================================================================
 
-loc_71D4E:				; CODE XREF: sub_71D40+8j
+loc_71D4E:
 		move.b	d0,$F(a5)
 		move.b	d0,$E(a5)
 		rts
-; End of function sub_71D40
+; End of function SetDuration
 
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 ; START	OF FUNCTION CHUNK FOR sub_71D22
@@ -352,7 +354,7 @@ locret_71D9C:				; CODE XREF: sub_71D60+Ej
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
 
 
-sub_71D9E:				; DATA XREF: sub_71CCA:loc_71CE0t
+sub_71D9E:				; DATA XREF: FMUpdateTrack:loc_71CE0t
 					; sub_72850:loc_72866t
 		tst.b	$12(a5)
 		beq.s	locret_71DC4
@@ -378,7 +380,7 @@ locret_71DC4:				; CODE XREF: sub_71D9E+4j sub_71D9E+Aj
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
 
 
-sub_71DC6:				; DATA XREF: sub_71CCA+1At
+sub_71DC6:				; DATA XREF: FMUpdateTrack+1At
 					; sub_72850+1Et
 		addq.w	#4,sp
 		btst	#3,(a5)
@@ -422,13 +424,13 @@ locret_71E16:				; CODE XREF: sub_71DC6+6j
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
 
 
-sub_71E18:				; DATA XREF: sub_71CCA+Et
+sub_71E18:				; DATA XREF: FMUpdateTrack+Et
 		btst	#1,(a5)
 		bne.s	locret_71E48
 		move.w	$10(a5),d6
 		beq.s	loc_71E4A
 
-loc_71E24:				; CODE XREF: sub_71CCA+1Ej
+loc_71E24:				; CODE XREF: FMUpdateTrack+1Ej
 		move.b	$1E(a5),d0
 		ext.w	d0
 		add.w	d0,d6
@@ -437,10 +439,10 @@ loc_71E24:				; CODE XREF: sub_71CCA+1Ej
 		move.w	d6,d1
 		lsr.w	#8,d1
 		move.b	#$A4,d0
-		jsr	sub_72722(pc)
+		jsr	WriteFMIorII(pc)
 		move.b	d6,d1
 		move.b	#$A0,d0
-		jsr	sub_72722(pc)
+		jsr	WriteFMIorII(pc)
 
 locret_71E48:				; CODE XREF: sub_71E18+4j
 					; sub_71E18+18j
@@ -457,16 +459,16 @@ loc_71E4A:				; CODE XREF: sub_71E18+Aj
 
 loc_71E50:				; CODE XREF: sub_71B4C+44j
 		bmi.s	loc_71E94
-		cmpi.b	#2,3(a6)
+		cmpi.b	#2,StopMusic(a6)
 		beq.w	loc_71EFE
-		move.b	#2,3(a6)
+		move.b	#2,StopMusic(a6)
 		moveq	#2,d3
 		move.b	#$B4,d0
 		moveq	#0,d1
 
 loc_71E6A:				; CODE XREF: sub_71B4C+328j
-		jsr	sub_7272E(pc)
-		jsr	sub_72764(pc)
+		jsr	WriteFMI(pc)
+		jsr	WriteFMII(pc)
 		addq.b	#1,d0
 		dbf	d3,loc_71E6A
 		moveq	#2,d3
@@ -474,16 +476,16 @@ loc_71E6A:				; CODE XREF: sub_71B4C+328j
 
 loc_71E7C:				; CODE XREF: sub_71B4C+33Cj
 		move.b	d3,d1
-		jsr	sub_7272E(pc)
+		jsr	WriteFMI(pc)
 		addq.b	#4,d1
-		jsr	sub_7272E(pc)
+		jsr	WriteFMI(pc)
 		dbf	d3,loc_71E7C
 		jsr	sub_729B6(pc)
 		bra.w	loc_71C44
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_71E94:				; CODE XREF: sub_71B4C:loc_71E50j
-		clr.b	3(a6)
+		clr.b	StopMusic(a6)
 		moveq	#$30,d3
 		lea	$40(a6),a5
 		moveq	#6,d4
@@ -495,7 +497,7 @@ loc_71EA0:				; CODE XREF: sub_71B4C+36Ej
 		bne.s	loc_71EB8
 		move.b	#$B4,d0
 		move.b	$A(a5),d1
-		jsr	sub_72722(pc)
+		jsr	WriteFMIorII(pc)
 
 loc_71EB8:				; CODE XREF: sub_71B4C+358j
 					; sub_71B4C+35Ej
@@ -511,7 +513,7 @@ loc_71EC4:				; CODE XREF: sub_71B4C+392j
 		bne.s	loc_71EDC
 		move.b	#$B4,d0
 		move.b	$A(a5),d1
-		jsr	sub_72722(pc)
+		jsr	WriteFMIorII(pc)
 
 loc_71EDC:				; CODE XREF: sub_71B4C+37Cj
 					; sub_71B4C+382j
@@ -524,169 +526,165 @@ loc_71EDC:				; CODE XREF: sub_71B4C+37Cj
 		bne.s	loc_71EFE
 		move.b	#$B4,d0
 		move.b	$A(a5),d1
-		jsr	sub_72722(pc)
+		jsr	WriteFMIorII(pc)
 
-loc_71EFE:				; CODE XREF: sub_71B4C+30Cj
-					; sub_71B4C+39Ej ...
+loc_71EFE:
 		bra.w	loc_71C44
-; END OF FUNCTION CHUNK	FOR sub_71B4C
+
 ; ---------------------------------------------------------------------------
-; Subroutine to	play a sound or	music track
+; Subroutine to	cycle through the sound queue
 ; ---------------------------------------------------------------------------
 
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 
-
-Sound_Play:				; DATA XREF: sub_71B4C+6Ct
+; Sound_Play:
+CycleQueue:
 		movea.l	(Go_SoundTypes).l,a0
-		lea	$A(a6),a1	; load music track number
-		move.b	0(a6),d3
+		lea	SFXToPlay(a6),a1	; load music track number
+		move.b	SFXPriorityVal(a6),d3
 		moveq	#2,d4
 
-loc_71F12:				; CODE XREF: Sound_Play:loc_71F3Ej
+loc_71F12:
 		move.b	(a1),d0		; move track number to d0
 		move.b	d0,d1
 		clr.b	(a1)+
-		subi.b	#-$7F,d0
+		subi.b	#MusID__First,d0
 		bcs.s	loc_71F3E
-		cmpi.b	#-$80,9(a6)
+		cmpi.b	#$80,QueueToPlay(a6)
 		beq.s	loc_71F2C
-		move.b	d1,$A(a6)
+		move.b	d1,SFXToPlay(a6)
 		bra.s	loc_71F3E
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; ---------------------------------------------------------------------------
 
-loc_71F2C:				; CODE XREF: Sound_Play+22j
+loc_71F2C:
 		andi.w	#$7F,d0
 		move.b	(a0,d0.w),d2
 		cmp.b	d3,d2
 		bcs.s	loc_71F3E
 		move.b	d2,d3
-		move.b	d1,9(a6)	; set music flag
+		move.b	d1,QueueToPlay(a6)	; set music flag
 
-loc_71F3E:				; CODE XREF: Sound_Play+1Aj
-					; Sound_Play+28j ...
+loc_71F3E:
 		dbf	d4,loc_71F12
 		tst.b	d3
 		bmi.s	locret_71F4A
-		move.b	d3,0(a6)
+		move.b	d3,SFXPriorityVal(a6)
 
-locret_71F4A:				; CODE XREF: Sound_Play+42j
+locret_71F4A:
 		rts
-; End of function Sound_Play
+; End of function CycleQueue
 
 
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 
-
-Sound_ChkValue:				; DATA XREF: sub_71B4C+78t
-
-; FUNCTION CHUNK AT 000724E6 SIZE 0000001E BYTES
-; FUNCTION CHUNK AT 0007259E SIZE 0000002C BYTES
-; FUNCTION CHUNK AT 00072624 SIZE 00000058 BYTES
-
+; loc_71F4C: Sound_ChkValue:
+PlaySoundByIndex:
 		moveq	#0,d7
-		move.b	9(a6),d7
+		move.b	QueueToPlay(a6),d7
 		beq.w	Sound_E4
 		bpl.s	locret_71F8C
-		move.b	#$80,9(a6)	; reset	music flag
-		cmpi.b	#$9F,d7
-		bls.w	loc_71FD2	; music	$81-$9F
+		move.b	#$80,QueueToPlay(a6)	; reset	music flag
+		; music
+		cmpi.b	#$9F,d7	
+		bls.w	PlayMusic
+		; redundant check unless the above is changed to a lower value
 		cmpi.b	#$A0,d7
 		bcs.w	locret_71F8C
+		; sounds
 		cmpi.b	#$CF,d7
-		bls.w	loc_721C6	; sound	$A0-$CF
+		bls.w	PlaySound_CheckRing
+		; redundant check unless the above is changed to a lower value
 		cmpi.b	#$D0,d7
 		bcs.w	locret_71F8C
+		; special sounds
 		cmpi.b	#$E0,d7
-		bcs.w	loc_7230C	; sound	$D0-$DF
+		bcs.w	loc_7230C
+		; sound commands
 		cmpi.b	#$E4,d7
-		bls.s	loc_71F8E	; sound	$E0-$E4
+		bls.s	PlayCommand
 
-locret_71F8C:				; CODE XREF: Sound_ChkValue+Aj
-					; Sound_ChkValue+1Ej ...
+locret_71F8C:
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_71F8E:				; CODE XREF: Sound_ChkValue+3Ej
+; ---------------------------------------------------------------------------
+; loc_71F8E:
+PlayCommand:
 		subi.b	#$E0,d7
 		lsl.w	#2,d7
-		jmp	loc_71F98(pc,d7.w)
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_71F98:
+		jmp	CommandIndex(pc,d7.w)
+; ===========================================================================
+; loc_71F98:
+CommandIndex:
 		bra.w	Sound_E0
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-		bra.w	loc_71FAC
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+		bra.w	PlaySegaSound
 		bra.w	Sound_E2
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		bra.w	Sound_E3
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		bra.w	Sound_E4
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; ===========================================================================
 ; ---------------------------------------------------------------------------
-; Play "Say-gaa" PCM sound
+; Play the 'SEEEEEEEEGA!' sound
 ; ---------------------------------------------------------------------------
-
-loc_71FAC:				; CODE XREF: Sound_ChkValue+50j
+; loc_71FAC: Sound_E1:
+PlaySegaSound:
 		move.b	#$88,($A01FFF).l
 		startZ80
 		move.w	#$11,d1
 
-loc_71FC0:				; CODE XREF: Sound_ChkValue+7Ej
-		move.w	#$FFFF,d0
+loc_71FC0:
+		move.w	#-1,d0
 
-loc_71FC4:				; CODE XREF: Sound_ChkValue+7Aj
+loc_71FC4:
 		nop
 		dbf	d0,loc_71FC4
 		dbf	d1,loc_71FC0
 		addq.w	#4,sp
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-; ---------------------------------------------------------------------------
-; Play music track $81-$9F
-; ---------------------------------------------------------------------------
+; End of function PlaySegaSound
 
-loc_71FD2:				; CODE XREF: Sound_ChkValue+16j
-		cmpi.b	#$88,d7		; is "extra life" music	played?
-		bne.s	loc_72024	; if not, branch
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Play music tracks (uses sound IDs $81-$9F)
+; ---------------------------------------------------------------------------
+; loc_71FD2: Music_81to9F:
+PlayMusic:
+		cmpi.b	#MusID_ExtraLife,d7	; is "extra life" music	played?
+		bne.s	loc_72024		; if not, branch
 		tst.b	$27(a6)
 		bne.w	loc_721B6
 		lea	$40(a6),a5
 		moveq	#9,d0
 
-loc_71FE6:				; CODE XREF: Sound_ChkValue+A2j
+loc_71FE6:				; CODE XREF: PlaySoundByIndex+A2j
 		bclr	#2,(a5)
 		adda.w	#$30,a5
 		dbf	d0,loc_71FE6
 		lea	$220(a6),a5
 		moveq	#5,d0
 
-loc_71FF8:				; CODE XREF: Sound_ChkValue+B4j
+loc_71FF8:				; CODE XREF: PlaySoundByIndex+B4j
 		bclr	#7,(a5)
 		adda.w	#$30,a5
 		dbf	d0,loc_71FF8
-		clr.b	0(a6)
+		clr.b	SFXPriorityVal(a6)
 		movea.l	a6,a0
 		lea	$3A0(a6),a1
 		move.w	#$87,d0
 
-loc_72012:				; CODE XREF: Sound_ChkValue+C8j
+loc_72012:				; CODE XREF: PlaySoundByIndex+C8j
 		move.l	(a0)+,(a1)+
 		dbf	d0,loc_72012
 		move.b	#-$80,$27(a6)
-		clr.b	0(a6)
+		clr.b	SFXPriorityVal(a6)
 		bra.s	loc_7202C
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
-loc_72024:				; CODE XREF: Sound_ChkValue+8Aj
+loc_72024:				; CODE XREF: PlaySoundByIndex+8Aj
 		clr.b	$27(a6)
 		clr.b	$26(a6)
 
-loc_7202C:				; CODE XREF: Sound_ChkValue+D6j
+loc_7202C:				; CODE XREF: PlaySoundByIndex+D6j
 		jsr	sub_725CA(pc)
 		movea.l	(off_719A0).l,a4
-		subi.b	#-$7F,d7
+		subi.b	#MusID__First,d7
 		move.b	(a4,d7.w),$29(a6)
 		movea.l	(Go_MusicIndex).l,a4
 		lsl.w	#2,d7
@@ -701,9 +699,9 @@ loc_7202C:				; CODE XREF: Sound_ChkValue+D6j
 		beq.s	loc_72068
 		move.b	$29(a6),d0
 
-loc_72068:				; CODE XREF: Sound_ChkValue+116j
-		move.b	d0,2(a6)
-		move.b	d0,1(a6)
+loc_72068:				; CODE XREF: PlaySoundByIndex+116j
+		move.b	d0,CurrentTempo(a6)
+		move.b	d0,TempoTimeout(a6)
 		moveq	#0,d1
 		movea.l	a4,a3
 		addq.w	#6,a4
@@ -718,7 +716,7 @@ loc_72068:				; CODE XREF: Sound_ChkValue+116j
 		lea	$40(a6),a1
 		lea	byte_721BA(pc),a2
 
-loc_72098:				; CODE XREF: Sound_ChkValue+174j
+loc_72098:				; CODE XREF: PlaySoundByIndex+174j
 		bset	#7,(a1)
 		move.b	(a2)+,1(a1)
 		move.b	d4,2(a1)
@@ -736,32 +734,32 @@ loc_72098:				; CODE XREF: Sound_ChkValue+174j
 		bne.s	loc_720D8
 		moveq	#$2B,d0
 		moveq	#0,d1
-		jsr	sub_7272E(pc)
+		jsr	WriteFMI(pc)
 		bra.w	loc_72114
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
-loc_720D8:				; CODE XREF: Sound_ChkValue+17Ej
+loc_720D8:				; CODE XREF: PlaySoundByIndex+17Ej
 		moveq	#$28,d0
 		moveq	#6,d1
-		jsr	sub_7272E(pc)
+		jsr	WriteFMI(pc)
 		move.b	#$42,d0
 		moveq	#$7F,d1
-		jsr	sub_72764(pc)
+		jsr	WriteFMII(pc)
 		move.b	#$4A,d0
 		moveq	#$7F,d1
-		jsr	sub_72764(pc)
+		jsr	WriteFMII(pc)
 		move.b	#$46,d0
 		moveq	#$7F,d1
-		jsr	sub_72764(pc)
+		jsr	WriteFMII(pc)
 		move.b	#$4E,d0
 		moveq	#$7F,d1
-		jsr	sub_72764(pc)
+		jsr	WriteFMII(pc)
 		move.b	#$B6,d0
 		move.b	#$C0,d1
-		jsr	sub_72764(pc)
+		jsr	WriteFMII(pc)
 
-loc_72114:				; CODE XREF: Sound_ChkValue+130j
-					; Sound_ChkValue+188j
+loc_72114:				; CODE XREF: PlaySoundByIndex+130j
+					; PlaySoundByIndex+188j
 		moveq	#0,d7
 		move.b	3(a3),d7
 		beq.s	loc_72154
@@ -769,7 +767,7 @@ loc_72114:				; CODE XREF: Sound_ChkValue+130j
 		lea	$190(a6),a1
 		lea	byte_721C2(pc),a2
 
-loc_72126:				; CODE XREF: Sound_ChkValue+204j
+loc_72126:				; CODE XREF: PlaySoundByIndex+204j
 		bset	#7,(a1)
 		move.b	(a2)+,1(a1)
 		move.b	d4,2(a1)
@@ -785,11 +783,11 @@ loc_72126:				; CODE XREF: Sound_ChkValue+204j
 		adda.w	d6,a1
 		dbf	d7,loc_72126
 
-loc_72154:				; CODE XREF: Sound_ChkValue+1CEj
+loc_72154:				; CODE XREF: PlaySoundByIndex+1CEj
 		lea	$220(a6),a1
 		moveq	#5,d7
 
-loc_7215A:				; CODE XREF: Sound_ChkValue+232j
+loc_7215A:				; CODE XREF: PlaySoundByIndex+232j
 		tst.b	(a1)
 		bpl.w	loc_7217C
 		moveq	#0,d0
@@ -800,56 +798,56 @@ loc_7215A:				; CODE XREF: Sound_ChkValue+232j
 		bra.s	loc_72170
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
-loc_7216E:				; CODE XREF: Sound_ChkValue+21Aj
+loc_7216E:				; CODE XREF: PlaySoundByIndex+21Aj
 		lsr.b	#3,d0
 
-loc_72170:				; CODE XREF: Sound_ChkValue+220j
+loc_72170:				; CODE XREF: PlaySoundByIndex+220j
 		lea	dword_722CC(pc),a0
 		movea.l	(a0,d0.w),a0
 		bset	#2,(a0)
 
-loc_7217C:				; CODE XREF: Sound_ChkValue+210j
+loc_7217C:				; CODE XREF: PlaySoundByIndex+210j
 		adda.w	d6,a1
 		dbf	d7,loc_7215A
 		tst.w	$340(a6)
 		bpl.s	loc_7218E
 		bset	#2,$100(a6)
 
-loc_7218E:				; CODE XREF: Sound_ChkValue+23Aj
+loc_7218E:				; CODE XREF: PlaySoundByIndex+23Aj
 		tst.w	$370(a6)
 		bpl.s	loc_7219A
 		bset	#2,$1F0(a6)
 
-loc_7219A:				; CODE XREF: Sound_ChkValue+246j
+loc_7219A:				; CODE XREF: PlaySoundByIndex+246j
 		lea	$70(a6),a5
 		moveq	#5,d4
 
-loc_721A0:				; CODE XREF: Sound_ChkValue+25Aj
+loc_721A0:				; CODE XREF: PlaySoundByIndex+25Aj
 		jsr	sub_726FE(pc)
 		adda.w	d6,a5
 		dbf	d4,loc_721A0
 		moveq	#2,d4
 
-loc_721AC:				; CODE XREF: Sound_ChkValue+266j
+loc_721AC:				; CODE XREF: PlaySoundByIndex+266j
 		jsr	sub_729A0(pc)
 		adda.w	d6,a5
 		dbf	d4,loc_721AC
 
-loc_721B6:				; CODE XREF: Sound_ChkValue+90j
+loc_721B6:				; CODE XREF: PlaySoundByIndex+90j
 		addq.w	#4,sp
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-byte_721BA:	dc.b 6,	0, 1, 2, 4, 5, 6, 0 ; DATA XREF: Sound_ChkValue+148t
-byte_721C2:	dc.b $80, $A0, $C0, 0	; DATA XREF: Sound_ChkValue+1D6t
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+byte_721BA:	dc.b 6,	0, 1, 2, 4, 5, 6, 0 ; DATA XREF: PlaySoundByIndex+148t
+byte_721C2:	dc.b $80, $A0, $C0, 0	; DATA XREF: PlaySoundByIndex+1D6t
+; ===========================================================================
 ; ---------------------------------------------------------------------------
-; Play normal sound effect
+; Play normal sound effect (uses IDs $A0-$CF)
 ; ---------------------------------------------------------------------------
-
-loc_721C6:				; CODE XREF: Sound_ChkValue+26j
+; loc_721C6:
+PlaySound_CheckRing:
 		tst.b	$27(a6)
 		bne.w	loc_722C6
-		tst.b	4(a6)
+		tst.b	FadeOutCounter(a6)
 		bne.w	loc_722C6
 		tst.b	$24(a6)
 		bne.w	loc_722C6
@@ -859,17 +857,17 @@ loc_721C6:				; CODE XREF: Sound_ChkValue+26j
 		bne.s	loc_721EE
 		move.b	#-$32,d7	; play ring sound in left speaker
 
-loc_721EE:				; CODE XREF: Sound_ChkValue+29Cj
+loc_721EE:
 		bchg	#0,$2B(a6)	; change speaker
 
-loc_721F4:				; CODE XREF: Sound_ChkValue+296j
+loc_721F4:
 		cmpi.b	#-$59,d7	; is "pushing" sound played?
 		bne.s	loc_72208	; if not, branch
 		tst.b	$2C(a6)
 		bne.w	locret_722C4
 		move.b	#-$80,$2C(a6)
 
-loc_72208:				; CODE XREF: Sound_ChkValue+2ACj
+loc_72208:
 		movea.l	(Go_SoundIndex).l,a0
 		subi.b	#-$60,d7
 		lsl.w	#2,d7
@@ -883,7 +881,7 @@ loc_72208:				; CODE XREF: Sound_ChkValue+2ACj
 		subq.b	#1,d7
 		moveq	#$30,d6
 
-loc_72228:				; CODE XREF: Sound_ChkValue:loc_722A8j
+loc_72228:				; CODE XREF: PlaySoundByIndex:loc_722A8j
 		moveq	#0,d3
 		move.b	1(a1),d3
 		move.b	d3,d4
@@ -896,7 +894,7 @@ loc_72228:				; CODE XREF: Sound_ChkValue:loc_722A8j
 		bra.s	loc_7226E
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
-loc_72244:				; CODE XREF: Sound_ChkValue+2E4j
+loc_72244:				; CODE XREF: PlaySoundByIndex+2E4j
 		lsr.w	#3,d3
 		lea	dword_722CC(pc),a5
 		movea.l	(a5,d3.w),a5
@@ -905,17 +903,17 @@ loc_72244:				; CODE XREF: Sound_ChkValue+2E4j
 		bne.s	loc_7226E
 		move.b	d4,d0
 		ori.b	#$1F,d0
-		move.b	d0,($C00011).l
+		move.b	d0,(PSG_input).l
 		bchg	#5,d0
-		move.b	d0,($C00011).l
+		move.b	d0,(PSG_input).l
 
-loc_7226E:				; CODE XREF: Sound_ChkValue+2F6j
-					; Sound_ChkValue+30Aj
+loc_7226E:				; CODE XREF: PlaySoundByIndex+2F6j
+					; PlaySoundByIndex+30Aj
 		movea.l	dword_722EC(pc,d3.w),a5
 		movea.l	a5,a2
 		moveq	#$B,d0
 
-loc_72276:				; CODE XREF: Sound_ChkValue+32Cj
+loc_72276:				; CODE XREF: PlaySoundByIndex+32Cj
 		clr.l	(a2)+
 		dbf	d0,loc_72276
 		move.w	(a1)+,(a5)
@@ -932,30 +930,29 @@ loc_72276:				; CODE XREF: Sound_ChkValue+32Cj
 		move.b	#-$40,$A(a5)
 		move.l	d1,$20(a5)
 
-loc_722A8:				; CODE XREF: Sound_ChkValue+350j
+loc_722A8:				; CODE XREF: PlaySoundByIndex+350j
 		dbf	d7,loc_72228
 		tst.b	$250(a6)
 		bpl.s	loc_722B8
 		bset	#2,$340(a6)
 
-loc_722B8:				; CODE XREF: Sound_ChkValue+364j
+loc_722B8:				; CODE XREF: PlaySoundByIndex+364j
 		tst.b	$310(a6)
 		bpl.s	locret_722C4
 		bset	#2,$370(a6)
 
-locret_722C4:				; CODE XREF: Sound_ChkValue+2B2j
-					; Sound_ChkValue+370j
+locret_722C4:				; CODE XREF: PlaySoundByIndex+2B2j
+					; PlaySoundByIndex+370j
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
-loc_722C6:				; CODE XREF: Sound_ChkValue+27Ej
-					; Sound_ChkValue+286j ...
-		clr.b	0(a6)
+loc_722C6:
+		clr.b	SFXPriorityVal(a6)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 dword_722CC:	dc.l   $FFF0D0,	       0,  $FFF100,  $FFF130; 0
-					; DATA XREF: Sound_ChkValue:loc_72170t
-					; Sound_ChkValue+2EAt ...
+					; DATA XREF: PlaySoundByIndex:loc_72170t
+					; PlaySoundByIndex+2EAt ...
 		dc.l   $FFF190,	 $FFF1C0,  $FFF1F0,  $FFF1F0; 4
 dword_722EC:	dc.l   $FFF220,	       0,  $FFF250,  $FFF280; 0
 		dc.l   $FFF2B0,	 $FFF2E0,  $FFF310,  $FFF310; 4
@@ -964,10 +961,10 @@ dword_722EC:	dc.l   $FFF220,	       0,  $FFF250,  $FFF280; 0
 ; Play GHZ waterfall sound
 ; ---------------------------------------------------------------------------
 
-loc_7230C:				; CODE XREF: Sound_ChkValue+36j
+loc_7230C:				; CODE XREF: PlaySoundByIndex+36j
 		tst.b	$27(a6)
 		bne.w	locret_723C6
-		tst.b	4(a6)
+		tst.b	FadeOutCounter(a6)
 		bne.w	locret_723C6
 		tst.b	$24(a6)
 		bne.w	locret_723C6
@@ -985,7 +982,7 @@ loc_7230C:				; CODE XREF: Sound_ChkValue+36j
 		subq.b	#1,d7
 		moveq	#$30,d6
 
-loc_72348:				; CODE XREF: Sound_ChkValue:loc_72396j
+loc_72348:				; CODE XREF: PlaySoundByIndex:loc_72396j
 		move.b	1(a1),d4
 		bmi.s	loc_7235A
 		bset	#2,$100(a6)
@@ -993,15 +990,15 @@ loc_72348:				; CODE XREF: Sound_ChkValue:loc_72396j
 		bra.s	loc_72364
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
-loc_7235A:				; CODE XREF: Sound_ChkValue+400j
+loc_7235A:				; CODE XREF: PlaySoundByIndex+400j
 		bset	#2,$1F0(a6)
 		lea	$370(a6),a5
 
-loc_72364:				; CODE XREF: Sound_ChkValue+40Cj
+loc_72364:				; CODE XREF: PlaySoundByIndex+40Cj
 		movea.l	a5,a2
 		moveq	#$B,d0
 
-loc_72368:				; CODE XREF: Sound_ChkValue+41Ej
+loc_72368:				; CODE XREF: PlaySoundByIndex+41Ej
 		clr.l	(a2)+
 		dbf	d0,loc_72368
 		move.w	(a1)+,(a5)
@@ -1017,25 +1014,25 @@ loc_72368:				; CODE XREF: Sound_ChkValue+41Ej
 		bmi.s	loc_72396
 		move.b	#-$40,$A(a5)
 
-loc_72396:				; CODE XREF: Sound_ChkValue+442j
+loc_72396:				; CODE XREF: PlaySoundByIndex+442j
 		dbf	d7,loc_72348
 		tst.b	$250(a6)
 		bpl.s	loc_723A6
 		bset	#2,$340(a6)
 
-loc_723A6:				; CODE XREF: Sound_ChkValue+452j
+loc_723A6:				; CODE XREF: PlaySoundByIndex+452j
 		tst.b	$310(a6)
 		bpl.s	locret_723C6
 		bset	#2,$370(a6)
 		ori.b	#$1F,d4
-		move.b	d4,($C00011).l
+		move.b	d4,(PSG_input).l
 		bchg	#5,d4
-		move.b	d4,($C00011).l
+		move.b	d4,(PSG_input).l
 
-locret_723C6:				; CODE XREF: Sound_ChkValue+3C4j
-					; Sound_ChkValue+3CCj ...
+locret_723C6:				; CODE XREF: PlaySoundByIndex+3C4j
+					; PlaySoundByIndex+3CCj ...
 		rts
-; End of function Sound_ChkValue
+; End of function PlaySoundByIndex
 
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		dc.l $FFF100, $FFF1F0, $FFF250,	$FFF310, $FFF340, $FFF370
@@ -1043,8 +1040,8 @@ locret_723C6:				; CODE XREF: Sound_ChkValue+3C4j
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
 
 
-Snd_FadeOut1:				; DATA XREF: Sound_ChkValue:Sound_E0t
-		clr.b	0(a6)
+Snd_FadeOut1:				; DATA XREF: PlaySoundByIndex:Sound_E0t
+		clr.b	SFXPriorityVal(a6)
 		lea	$220(a6),a5
 		moveq	#5,d7
 
@@ -1100,7 +1097,7 @@ loc_7245A:				; CODE XREF: Snd_FadeOut1+68j
 		bset	#1,(a0)
 		cmpi.b	#-$20,1(a0)
 		bne.s	loc_72472
-		move.b	$1F(a0),($C00011).l
+		move.b	$1F(a0),(PSG_input).l
 
 loc_72472:				; CODE XREF: Snd_FadeOut1+Cj
 					; Snd_FadeOut1+5Aj ...
@@ -1113,7 +1110,7 @@ loc_72472:				; CODE XREF: Snd_FadeOut1+Cj
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
 
 
-Snd_FadeOut2:				; DATA XREF: Sound_ChkValue+59Et
+Snd_FadeOut2:				; DATA XREF: PlaySoundByIndex+59Et
 		lea	$340(a6),a5
 		tst.b	(a5)
 		bpl.s	loc_724AE
@@ -1146,7 +1143,7 @@ loc_724AE:				; CODE XREF: Snd_FadeOut2+6j
 		bpl.s	locret_724E4
 		cmpi.b	#$E0,1(a5)
 		bne.s	locret_724E4
-		move.b	$1F(a5),($C00011).l
+		move.b	$1F(a5),(PSG_input).l
 
 locret_724E4:				; CODE XREF: Snd_FadeOut2+38j
 					; Snd_FadeOut2+42j ...
@@ -1157,32 +1154,32 @@ locret_724E4:				; CODE XREF: Snd_FadeOut2+38j
 ; ---------------------------------------------------------------------------
 ; Fade out music
 ; ---------------------------------------------------------------------------
-; START	OF FUNCTION CHUNK FOR Sound_ChkValue
+; START	OF FUNCTION CHUNK FOR PlaySoundByIndex
 
-Sound_E0:				; CODE XREF: Sound_ChkValue:loc_71F98j
+Sound_E0:				; CODE XREF: PlaySoundByIndex:CommandIndexj
 		jsr	Snd_FadeOut1(pc)
 		jsr	Snd_FadeOut2(pc)
-		move.b	#3,6(a6)
-		move.b	#$28,4(a6)
+		move.b	#3,FadeOutDelay(a6)
+		move.b	#$28,FadeOutCounter(a6)
 		clr.b	$40(a6)
 		clr.b	$2A(a6)
 		rts
-; END OF FUNCTION CHUNK	FOR Sound_ChkValue
+; END OF FUNCTION CHUNK	FOR PlaySoundByIndex
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
 
 
 sub_72504:				; DATA XREF: sub_71B4C+58t
-		move.b	6(a6),d0
+		move.b	FadeOutDelay(a6),d0
 		beq.s	loc_72510
-		subq.b	#1,6(a6)
+		subq.b	#1,FadeOutDelay(a6)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_72510:				; CODE XREF: sub_72504+4j
-		subq.b	#1,4(a6)
+		subq.b	#1,FadeOutCounter(a6)
 		beq.w	Sound_E4
-		move.b	#3,6(a6)
+		move.b	#3,FadeOutDelay(a6)
 		lea	$70(a6),a5
 		moveq	#5,d7
 
@@ -1216,7 +1213,7 @@ loc_72542:				; CODE XREF: sub_72504+60j
 
 loc_72558:				; CODE XREF: sub_72504+4Cj
 		move.b	9(a5),d6
-		jsr	sub_7296A(pc)
+		jsr	PSGUpdateVol(pc)
 
 loc_72560:				; CODE XREF: sub_72504+40j
 					; sub_72504+52j
@@ -1229,16 +1226,16 @@ loc_72560:				; CODE XREF: sub_72504+40j
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
 
 
-sub_7256A:				; DATA XREF: Sound_ChkValue+676t
+sub_7256A:				; DATA XREF: PlaySoundByIndex+676t
 					; sub_725CA+3At
 		moveq	#2,d3
 		moveq	#$28,d0
 
 loc_7256E:				; CODE XREF: sub_7256A+10j
 		move.b	d3,d1
-		jsr	sub_7272E(pc)
+		jsr	WriteFMI(pc)
 		addq.b	#4,d1
-		jsr	sub_7272E(pc)
+		jsr	WriteFMI(pc)
 		dbf	d3,loc_7256E
 		moveq	#$40,d0
 		moveq	#$7F,d1
@@ -1248,8 +1245,8 @@ loc_72584:				; CODE XREF: sub_7256A+2Ej
 		moveq	#3,d3
 
 loc_72586:				; CODE XREF: sub_7256A+26j
-		jsr	sub_7272E(pc)
-		jsr	sub_72764(pc)
+		jsr	WriteFMI(pc)
+		jsr	WriteFMII(pc)
 		addq.w	#4,d0
 		dbf	d3,loc_72586
 		subi.b	#$F,d0
@@ -1261,87 +1258,87 @@ loc_72586:				; CODE XREF: sub_7256A+26j
 ; ---------------------------------------------------------------------------
 ; Stop music
 ; ---------------------------------------------------------------------------
-; START	OF FUNCTION CHUNK FOR Sound_ChkValue
+; START	OF FUNCTION CHUNK FOR PlaySoundByIndex
 
-Sound_E4:				; CODE XREF: Sound_ChkValue+6j
-					; Sound_ChkValue+5Cj ...
+Sound_E4:				; CODE XREF: PlaySoundByIndex+6j
+					; PlaySoundByIndex+5Cj ...
 		moveq	#$2B,d0
 		move.b	#-$80,d1
-		jsr	sub_7272E(pc)
+		jsr	WriteFMI(pc)
 		moveq	#$27,d0
 		moveq	#0,d1
-		jsr	sub_7272E(pc)
+		jsr	WriteFMI(pc)
 		movea.l	a6,a0
 		move.w	#$E3,d0
 
-loc_725B6:				; CODE XREF: Sound_ChkValue+66Cj
+loc_725B6:				; CODE XREF: PlaySoundByIndex+66Cj
 		clr.l	(a0)+
 		dbf	d0,loc_725B6
-		move.b	#-$80,9(a6)	; set music to $80 (silence)
+		move.b	#$80,QueueToPlay(a6)	; set music to $80 (silence)
 		jsr	sub_7256A(pc)
 		bra.w	sub_729B6
-; END OF FUNCTION CHUNK	FOR Sound_ChkValue
+; END OF FUNCTION CHUNK	FOR PlaySoundByIndex
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
 
 
-sub_725CA:				; DATA XREF: Sound_ChkValue:loc_7202Ct
+sub_725CA:				; DATA XREF: PlaySoundByIndex:loc_7202Ct
 		movea.l	a6,a0
-		move.b	0(a6),d1
+		move.b	SFXPriorityVal(a6),d1
 		move.b	$27(a6),d2
 		move.b	$2A(a6),d3
 		move.b	$26(a6),d4
-		move.w	$A(a6),d5
+		move.w	SFXToPlay(a6),d5
 		move.w	#$87,d0
 
 loc_725E4:				; CODE XREF: sub_725CA+1Cj
 		clr.l	(a0)+
 		dbf	d0,loc_725E4
-		move.b	d1,0(a6)
+
+		move.b	d1,SFXPriorityVal(a6)
 		move.b	d2,$27(a6)
 		move.b	d3,$2A(a6)
 		move.b	d4,$26(a6)
-		move.w	d5,$A(a6)
-		move.b	#-$80,9(a6)
+		move.w	d5,SFXToPlay(a6)
+		move.b	#$80,QueueToPlay(a6)
 		jsr	sub_7256A(pc)
 		bra.w	sub_729B6
 ; End of function sub_725CA
 
 
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 
-
-sub_7260C:				; DATA XREF: sub_71B4C+4Et
-		move.b	2(a6),1(a6)
+; sub_7260C:
+TempoWait:
+		move.b	CurrentTempo(a6),TempoTimeout(a6)
 		lea	$4E(a6),a0
 		moveq	#$30,d0
 		moveq	#9,d1
 
-loc_7261A:				; CODE XREF: sub_7260C+12j
+loc_7261A:
 		addq.b	#1,(a0)
 		adda.w	d0,a0
 		dbf	d1,loc_7261A
 		rts
-; End of function sub_7260C
+; End of function TempoWait
 
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Speed	up music
 ; ---------------------------------------------------------------------------
-; START	OF FUNCTION CHUNK FOR Sound_ChkValue
 
-Sound_E2:				; CODE XREF: Sound_ChkValue+54j
+Sound_E2:
 		tst.b	$27(a6)
 		bne.s	loc_7263E
-		move.b	$29(a6),2(a6)
-		move.b	$29(a6),1(a6)
+		move.b	$29(a6),CurrentTempo(a6)
+		move.b	$29(a6),TempoTimeout(a6)
 		move.b	#-$80,$2A(a6)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
-loc_7263E:				; CODE XREF: Sound_ChkValue+6DCj
-		move.b	$3C9(a6),$3A2(a6)
-		move.b	$3C9(a6),$3A1(a6)
+loc_7263E:				; CODE XREF: PlaySoundByIndex+6DCj
+		move.b	$3C9(a6),$3A0+CurrentTempo(a6)
+		move.b	$3C9(a6),$3A0+TempoTimeout(a6)
 		move.b	#-$80,$3CA(a6)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -1349,21 +1346,21 @@ loc_7263E:				; CODE XREF: Sound_ChkValue+6DCj
 ; Change music back to normal speed
 ; ---------------------------------------------------------------------------
 
-Sound_E3:				; CODE XREF: Sound_ChkValue+58j
+Sound_E3:				; CODE XREF: PlaySoundByIndex+58j
 		tst.b	$27(a6)
 		bne.s	loc_7266A
-		move.b	$28(a6),2(a6)
-		move.b	$28(a6),1(a6)
+		move.b	$28(a6),CurrentTempo(a6)
+		move.b	$28(a6),TempoTimeout(a6)
 		clr.b	$2A(a6)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
-loc_7266A:				; CODE XREF: Sound_ChkValue+70Aj
-		move.b	$3C8(a6),$3A2(a6)
-		move.b	$3C8(a6),$3A1(a6)
+loc_7266A:				; CODE XREF: PlaySoundByIndex+70Aj
+		move.b	$3C8(a6),$3A0+CurrentTempo(a6)
+		move.b	$3C8(a6),$3A0+TempoTimeout(a6)
 		clr.b	$3CA(a6)
 		rts
-; END OF FUNCTION CHUNK	FOR Sound_ChkValue
+; END OF FUNCTION CHUNK	FOR PlaySoundByIndex
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
 
@@ -1404,7 +1401,7 @@ loc_726B4:				; CODE XREF: sub_7267C+54j
 		moveq	#$F,d6
 
 loc_726C8:				; CODE XREF: sub_7267C+48j
-		jsr	sub_7296A(pc)
+		jsr	PSGUpdateVol(pc)
 
 loc_726CC:				; CODE XREF: sub_7267C+3Aj
 		adda.w	#$30,a5
@@ -1419,9 +1416,9 @@ loc_726D6:				; CODE XREF: sub_7267C+10j
 ; End of function sub_7267C
 
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-; START	OF FUNCTION CHUNK FOR sub_71CCA
+; START	OF FUNCTION CHUNK FOR FMUpdateTrack
 
-loc_726E2:				; CODE XREF: sub_71CCA+12j
+loc_726E2:				; CODE XREF: FMUpdateTrack+12j
 		btst	#1,(a5)
 		bne.s	locret_726FC
 		btst	#2,(a5)
@@ -1429,13 +1426,13 @@ loc_726E2:				; CODE XREF: sub_71CCA+12j
 		moveq	#$28,d0
 		move.b	1(a5),d1
 		ori.b	#$F0,d1
-		bra.w	sub_7272E
+		bra.w	WriteFMI
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
-locret_726FC:				; CODE XREF: sub_71CCA+A1Cj
-					; sub_71CCA+A22j
+locret_726FC:				; CODE XREF: FMUpdateTrack+A1Cj
+					; FMUpdateTrack+A22j
 		rts
-; END OF FUNCTION CHUNK	FOR sub_71CCA
+; END OF FUNCTION CHUNK	FOR FMUpdateTrack
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
 
@@ -1450,7 +1447,7 @@ sub_726FE:				; DATA XREF: sub_71CEC:loc_71D04t
 loc_7270A:				; DATA XREF: Snd_FadeOut2+12t
 		moveq	#$28,d0
 		move.b	1(a5),d1
-		bra.w	sub_7272E
+		bra.w	WriteFMI
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 locret_72714:				; CODE XREF: sub_726FE+4j sub_726FE+Aj
@@ -1462,80 +1459,72 @@ locret_72714:				; CODE XREF: sub_726FE+4j sub_726FE+Aj
 loc_72716:				; CODE XREF: ROM:00072AE6j
 		btst	#2,(a5)
 		bne.s	locret_72720
-		bra.w	sub_72722
+		bra.w	WriteFMIorII
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 locret_72720:				; CODE XREF: ROM:0007271Aj
 		rts
 
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 
-
-sub_72722:				; CODE XREF: ROM:0007271Cj
-					; DATA XREF: sub_71E18+22t ...
-
-; FUNCTION CHUNK AT 0007275A SIZE 0000000A BYTES
-
+; sub_72722:
+WriteFMIorII:
 		btst	#2,1(a5)
-		bne.s	loc_7275A
+		bne.s	WriteFMIIPart
 		add.b	1(a5),d0
-; End of function sub_72722
+; End of function WriteFMIorII
 
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-sub_7272E:				; CODE XREF: sub_71CCA+A2Ej
-					; sub_726FE+12j ...
-		move.b	($A04000).l,d2
+; sub_7272E:
+WriteFMI:
+		move.b	(YM2612_A0).l,d2
 		btst	#7,d2
-		bne.s	sub_7272E
-		move.b	d0,($A04000).l
+		bne.s	WriteFMI
+		move.b	d0,(YM2612_A0).l
 		nop
 		nop
 		nop
 
-loc_72746:				; CODE XREF: sub_7272E+22j
-		move.b	($A04000).l,d2
+loc_72746:
+		move.b	(YM2612_A0).l,d2
 		btst	#7,d2
 		bne.s	loc_72746
-		move.b	d1,($A04001).l
+		move.b	d1,(YM2612_D0).l
 		rts
-; End of function sub_7272E
+; End of function WriteFMI
 
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-; START	OF FUNCTION CHUNK FOR sub_72722
-
-loc_7275A:				; CODE XREF: sub_72722+6j
+; ===========================================================================
+; loc_7275A:
+WriteFMIIPart:
 		move.b	1(a5),d2
 		bclr	#2,d2
 		add.b	d2,d0
-; END OF FUNCTION CHUNK	FOR sub_72722
+; End of function WriteFMIIPart
 
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 
-
-sub_72764:				; CODE XREF: sub_72764+Aj
-					; DATA XREF: sub_71B4C+322t ...
-		move.b	($A04000).l,d2
+; sub_72764:
+WriteFMII:
+		move.b	(YM2612_A0).l,d2
 		btst	#7,d2
-		bne.s	sub_72764
-		move.b	d0,($A04002).l
+		bne.s	WriteFMII
+		move.b	d0,(YM2612_A1).l
 		nop
 		nop
 		nop
 
-loc_7277C:				; CODE XREF: sub_72764+22j
-		move.b	($A04000).l,d2
+loc_7277C:
+		move.b	(YM2612_A0).l,d2
 		btst	#7,d2
 		bne.s	loc_7277C
-		move.b	d1,($A04003).l
+		move.b	d1,(YM2612_D1).l
 		rts
-; End of function sub_72764
+; End of function WriteFMII
 
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-word_72790:	dc.w $25E, $284, $2AB, $2D3, $2FE, $32D, $35C, $38F, $3C5
-					; DATA XREF: sub_71D22+10t
+; ===========================================================================
+; word_72790:
+FMFrequencies:	dc.w $25E, $284, $2AB, $2D3, $2FE, $32D, $35C, $38F, $3C5
 		dc.w $3FF, $43C, $47C, $A5E, $A84, $AAB, $AD3, $AFE, $B2D
 		dc.w $B5C, $B8F, $BC5, $BFF, $C3C, $C7C, $125E,	$1284
 		dc.w $12AB, $12D3, $12FE, $132D, $135C,	$138F, $13C5, $13FF
@@ -1557,15 +1546,15 @@ sub_72850:				; DATA XREF: sub_71B4C+A8t
 		bne.s	loc_72866
 		bclr	#4,(a5)
 		jsr	sub_72878(pc)
-		jsr	sub_728DC(pc)
-		bra.w	loc_7292E
+		jsr	PSGDoNoteOn(pc)
+		bra.w	PSGDoVolFX
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_72866:				; CODE XREF: sub_72850+4j
 		jsr	sub_71D9E(pc)
-		jsr	sub_72926(pc)
+		jsr	PSGUpdateVolFX(pc)
 		jsr	sub_71DC6(pc)
-		jsr	sub_728E2(pc)
+		jsr	PSGUpdateFreq(pc)
 		rts
 ; End of function sub_72850
 
@@ -1582,7 +1571,7 @@ loc_72880:				; CODE XREF: sub_72878+16j
 		move.b	(a4)+,d5
 		cmpi.b	#-$20,d5
 		bcs.s	loc_72890
-		jsr	sub_72A5A(pc)
+		jsr	CoordFlag(pc)
 		bra.s	loc_72880
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -1599,7 +1588,7 @@ loc_72890:				; CODE XREF: sub_72878+10j
 
 loc_728A4:				; CODE XREF: sub_72878+1Aj
 					; sub_72878+24j
-		jsr	sub_71D40(pc)
+		jsr	SetDuration(pc)
 		bra.w	sub_71D60
 ; End of function sub_72878
 
@@ -1613,14 +1602,14 @@ sub_728AC:				; DATA XREF: sub_72878+1Ct
 		add.b	8(a5),d5
 		andi.w	#$7F,d5
 		lsl.w	#1,d5
-		lea	word_729CE(pc),a0
+		lea	PSGFrequencies(pc),a0
 		move.w	(a0,d5.w),$10(a5)
 		bra.w	sub_71D60
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
-loc_728CA:				; CODE XREF: sub_728AC+4j
+loc_728CA:
 		bset	#1,(a5)
-		move.w	#$FFFF,$10(a5)
+		move.w	#-1,$10(a5)
 		jsr	sub_71D60(pc)
 		bra.w	sub_729A0
 ; End of function sub_728AC
@@ -1628,20 +1617,12 @@ loc_728CA:				; CODE XREF: sub_728AC+4j
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
 
-
-sub_728DC:				; DATA XREF: sub_72850+Et
-
-; FUNCTION CHUNK AT 00072920 SIZE 00000006 BYTES
-
+; sub_728DC:
+PSGDoNoteOn:
 		move.w	$10(a5),d6
-		bmi.s	loc_72920
-; End of function sub_728DC
-
-
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-sub_728E2:				; DATA XREF: sub_72850+22t
+		bmi.s	SetRest
+; sub_728E2:
+PSGUpdateFreq:
 		move.b	$1E(a5),d0
 		ext.w	d0
 		add.w	d0,d6
@@ -1650,47 +1631,42 @@ sub_728E2:				; DATA XREF: sub_72850+22t
 		btst	#1,(a5)
 		bne.s	locret_7291E
 		move.b	1(a5),d0
-		cmpi.b	#-$20,d0
+		cmpi.b	#$E0,d0
 		bne.s	loc_72904
-		move.b	#-$40,d0
+		move.b	#$C0,d0
 
-loc_72904:				; CODE XREF: sub_728E2+1Cj
+loc_72904:
 		move.w	d6,d1
 		andi.b	#$F,d1
 		or.b	d1,d0
 		lsr.w	#4,d6
 		andi.b	#$3F,d6
-		move.b	d0,($C00011).l
-		move.b	d6,($C00011).l
+		move.b	d0,(PSG_input).l
+		move.b	d6,(PSG_input).l
 
-locret_7291E:				; CODE XREF: sub_728E2+Cj
-					; sub_728E2+12j
+locret_7291E:
 		rts
-; End of function sub_728E2
+; End of function PSGDoNoteOn
 
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-; START	OF FUNCTION CHUNK FOR sub_728DC
-
-loc_72920:				; CODE XREF: sub_728DC+4j
+; ===========================================================================
+; loc_72920:
+SetRest:
 		bset	#1,(a5)
 		rts
-; END OF FUNCTION CHUNK	FOR sub_728DC
+; End of function PSGDoNoteOn
 
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 
-
-sub_72926:				; DATA XREF: sub_72850+1At
-
-; FUNCTION CHUNK AT 0007299A SIZE 00000006 BYTES
-
+; sub_72926:
+PSGUpdateVolFX:
 		tst.b	$B(a5)
 		beq.w	locret_7298A
-
-loc_7292E:				; CODE XREF: sub_72850+12j
+; loc_7292E:
+PSGDoVolFX:
 		move.b	9(a5),d6
 		moveq	#0,d0
 		move.b	$B(a5),d0
-		beq.s	sub_7296A
+		beq.s	PSGUpdateVol
 		movea.l	(Go_PSGIndex).l,a0
 		subq.w	#1,d0
 		lsl.w	#2,d0
@@ -1701,54 +1677,49 @@ loc_7292E:				; CODE XREF: sub_72850+12j
 		btst	#7,d0
 		beq.s	loc_72960
 		cmpi.b	#-$80,d0
-		beq.s	loc_7299A
+		beq.s	VolEnvHold
 
-loc_72960:				; CODE XREF: sub_72926+32j
+loc_72960:
 		add.w	d0,d6
 		cmpi.b	#$10,d6
-		bcs.s	sub_7296A
+		bcs.s	PSGUpdateVol
 		moveq	#$F,d6
-; End of function sub_72926
+; End of function PSGUpdateVolFX
 
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-sub_7296A:				; CODE XREF: sub_72926+12j
-					; sub_72926+40j
-					; DATA XREF: ...
+; sub_7296A:
+PSGUpdateVol:
 		btst	#1,(a5)
 		bne.s	locret_7298A
 		btst	#2,(a5)
 		bne.s	locret_7298A
 		btst	#4,(a5)
-		bne.s	loc_7298C
-
-loc_7297C:				; CODE XREF: sub_7296A+26j
-					; sub_7296A+2Cj
+		bne.s	PSGCheckNoteFill
+; loc_7297C:
+PSGSendVol:
 		or.b	1(a5),d6
 		addi.b	#$10,d6
-		move.b	d6,($C00011).l
+		move.b	d6,(PSG_input).l
 
-locret_7298A:				; CODE XREF: sub_72926+4j sub_7296A+4j ...
+locret_7298A:
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_7298C:				; CODE XREF: sub_7296A+10j
+; ===========================================================================
+; loc_7298C:
+PSGCheckNoteFill:
 		tst.b	$13(a5)
-		beq.s	loc_7297C
+		beq.s	PSGSendVol
 		tst.b	$12(a5)
-		bne.s	loc_7297C
+		bne.s	PSGSendVol
 		rts
-; End of function sub_7296A
+; End of function PSGUpdateVol
 
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-; START	OF FUNCTION CHUNK FOR sub_72926
-
-loc_7299A:				; CODE XREF: sub_72926+38j
+; ===========================================================================
+; loc_7299A:
+VolEnvHold:
 		subq.b	#1,$C(a5)
 		rts
-; END OF FUNCTION CHUNK	FOR sub_72926
+; END OF FUNCTION CHUNK	FOR PSGUpdateVolFX
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
 
@@ -1761,7 +1732,7 @@ sub_729A0:				; CODE XREF: sub_728AC+2Cj
 loc_729A6:				; DATA XREF: Snd_FadeOut2+44t
 		move.b	1(a5),d0
 		ori.b	#$1F,d0
-		move.b	d0,($C00011).l
+		move.b	d0,(PSG_input).l
 
 locret_729B4:				; CODE XREF: sub_729A0+4j
 		rts
@@ -1771,10 +1742,8 @@ locret_729B4:				; CODE XREF: sub_729A0+4j
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
 
 
-sub_729B6:				; CODE XREF: Sound_ChkValue+67Aj
-					; sub_725CA+3Ej
-					; DATA XREF: ...
-		lea	($C00011).l,a0
+sub_729B6:
+		lea	(PSG_input).l,a0
 		move.b	#-$61,(a0)
 		move.b	#-$41,(a0)
 		move.b	#-$21,(a0)
@@ -1782,9 +1751,9 @@ sub_729B6:				; CODE XREF: Sound_ChkValue+67Aj
 		rts
 ; End of function sub_729B6
 
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-word_729CE:	dc.w $356, $326, $2F9, $2CE, $2A5, $280, $25C, $23A, $21A
-					; DATA XREF: sub_728AC+10t
+; ===========================================================================
+; word_729CE:
+PSGFrequencies:	dc.w $356, $326, $2F9, $2CE, $2A5, $280, $25C, $23A, $21A
 		dc.w $1FB, $1DF, $1C4, $1AB, $193, $17D, $167, $153, $140
 		dc.w $12E, $11D, $10D, $FE, $EF, $E2, $D6, $C9,	$BE, $B4
 		dc.w $A9, $A0, $97, $8F, $87, $7F, $78,	$71, $6B, $65
@@ -1793,73 +1762,47 @@ word_729CE:	dc.w $356, $326, $2F9, $2CE, $2A5, $280, $25C, $23A, $21A
 		dc.w $1F, $1D, $1B, $1A, $18, $17, $16,	$15, $13, $12
 		dc.w $11, 0
 
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 
-
-sub_72A5A:				; DATA XREF: sub_71C4E+1At
-					; sub_71CEC+12t ...
+; sub_72A5A:
+CoordFlag:
 		subi.w	#$E0,d5
 		lsl.w	#2,d5
-		jmp	loc_72A64(pc,d5.w)
-; End of function sub_72A5A
+		jmp	coordflagLookup(pc,d5.w)
+; End of function CoordFlag
 
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_72A64:
-		bra.w	loc_72ACC
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-		bra.w	loc_72AEC
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-		bra.w	loc_72AF2
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-		bra.w	loc_72AF8
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-		bra.w	loc_72B14
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; ===========================================================================
+; loc_72A64:
+coordflagLookup:
+		bra.w	cfPanningAMSFMS
+		bra.w	cfDetune
+		bra.w	cfSetCommunication
+		bra.w	cfJumpReturn
+		bra.w	cfFadeInToPrevious
 		bra.w	loc_72B9E
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		bra.w	loc_72BA4
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		bra.w	loc_72BAE
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		bra.w	loc_72BB4
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		bra.w	loc_72BBE
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		bra.w	loc_72BC6
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		bra.w	loc_72BD0
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		bra.w	loc_72BE6
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		bra.w	loc_72BEE
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		bra.w	loc_72BF4
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		bra.w	loc_72C26
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		bra.w	loc_72D30
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		bra.w	loc_72D52
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		bra.w	loc_72D58
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		bra.w	loc_72E06
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		bra.w	loc_72E20
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		bra.w	loc_72E26
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		bra.w	loc_72E2C
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		bra.w	loc_72E38
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		bra.w	loc_72E52
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-		bra.w	loc_72E64
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_72ACC:				; CODE XREF: ROM:loc_72A64j
+		bra.w	cfOpF9
+; ===========================================================================
+; loc_72ACC:
+cfPanningAMSFMS:
 		move.b	(a4)+,d1
 		tst.b	1(a5)
 		bmi.s	locret_72AEA
@@ -1869,23 +1812,23 @@ loc_72ACC:				; CODE XREF: ROM:loc_72A64j
 		move.b	d1,$A(a5)
 		move.b	#-$4C,d0
 		bra.w	loc_72716
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; ---------------------------------------------------------------------------
 
-locret_72AEA:				; CODE XREF: ROM:00072AD2j
+locret_72AEA:
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_72AEC:				; CODE XREF: ROM:00072A68j
+; ===========================================================================
+; loc_72AEC:
+cfDetune:
 		move.b	(a4)+,$1E(a5)
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_72AF2:				; CODE XREF: ROM:00072A6Cj
-		move.b	(a4)+,7(a6)
+; ===========================================================================
+; loc_72AF2:
+cfSetCommunication:
+		move.b	(a4)+,Communication(a6)
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_72AF8:				; CODE XREF: ROM:00072A70j
+; ===========================================================================
+; loc_72AF8:
+cfJumpReturn:
 		moveq	#0,d0
 		move.b	$D(a5),d0
 		movea.l	(a5,d0.w),a4
@@ -1894,14 +1837,14 @@ loc_72AF8:				; CODE XREF: ROM:00072A70j
 		addq.b	#4,d0
 		move.b	d0,$D(a5)
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_72B14:				; CODE XREF: ROM:00072A74j
+; ===========================================================================
+; loc_72B14:
+cfFadeInToPrevious:
 		movea.l	a6,a0
 		lea	$3A0(a6),a1
 		move.w	#$87,d0
 
-loc_72B1E:				; CODE XREF: ROM:00072B20j
+loc_72B1E:
 		move.l	(a1)+,(a0)+
 		dbf	d0,loc_72B1E
 		bset	#2,$40(a6)
@@ -1911,7 +1854,7 @@ loc_72B1E:				; CODE XREF: ROM:00072B20j
 		moveq	#5,d7
 		lea	$70(a6),a5
 
-loc_72B3A:				; CODE XREF: ROM:00072B60j
+loc_72B3A:
 		btst	#7,(a5)
 		beq.s	loc_72B5C
 		bset	#1,(a5)
@@ -1923,20 +1866,19 @@ loc_72B3A:				; CODE XREF: ROM:00072B60j
 		movea.l	$18(a6),a1
 		jsr	sub_72C4E(pc)
 
-loc_72B5C:				; CODE XREF: ROM:00072B3Ej
-					; ROM:00072B4Cj
+loc_72B5C:
 		adda.w	#$30,a5
 		dbf	d7,loc_72B3A
 		moveq	#2,d7
 
-loc_72B66:				; CODE XREF: ROM:00072B7Cj
+loc_72B66:
 		btst	#7,(a5)
 		beq.s	loc_72B78
 		bset	#1,(a5)
 		jsr	sub_729A0(pc)
 		add.b	d6,9(a5)
 
-loc_72B78:				; CODE XREF: ROM:00072B6Aj
+loc_72B78:
 		adda.w	#$30,a5
 		dbf	d7,loc_72B66
 		movea.l	a3,a5
@@ -1946,9 +1888,9 @@ loc_72B78:				; CODE XREF: ROM:00072B6Aj
 		startZ80
 		addq.w	#8,sp
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; ===========================================================================
 
-loc_72B9E:				; CODE XREF: ROM:00072A78j
+loc_72B9E:
 		move.b	(a4)+,2(a5)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -1977,8 +1919,8 @@ loc_72BBE:				; CODE XREF: ROM:00072A88j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_72BC6:				; CODE XREF: ROM:00072A8Cj
-		move.b	(a4),2(a6)
-		move.b	(a4)+,1(a6)
+		move.b	(a4),CurrentTempo(a6)
+		move.b	(a4)+,TempoTimeout(a6)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -2059,14 +2001,14 @@ loc_72C5C:				; CODE XREF: sub_72C4E+2j
 		move.b	d1,$1F(a5)
 		move.b	d1,d4
 		move.b	#-$50,d0
-		jsr	sub_72722(pc)
+		jsr	WriteFMIorII(pc)
 		lea	byte_72D18(pc),a2
 		moveq	#$13,d3
 
 loc_72C72:				; CODE XREF: sub_72C4E+2Cj
 		move.b	(a2)+,d0
 		move.b	(a1)+,d1
-		jsr	sub_72722(pc)
+		jsr	WriteFMIorII(pc)
 		dbf	d3,loc_72C72
 		moveq	#3,d5
 		andi.w	#7,d4
@@ -2081,11 +2023,11 @@ loc_72C8C:				; CODE XREF: sub_72C4E+4Cj
 		add.b	d3,d1
 
 loc_72C96:				; CODE XREF: sub_72C4E+44j
-		jsr	sub_72722(pc)
+		jsr	WriteFMIorII(pc)
 		dbf	d5,loc_72C8C
 		move.b	#-$4C,d0
 		move.b	$A(a5),d1
-		jsr	sub_72722(pc)
+		jsr	WriteFMIorII(pc)
 
 locret_72CAA:				; CODE XREF: ROM:00072C32j
 		rts
@@ -2139,7 +2081,7 @@ loc_72D02:				; CODE XREF: sub_72CB4:loc_72D12j
 		bcc.s	loc_72D12
 		add.b	d3,d1
 		bcs.s	loc_72D12
-		jsr	sub_72722(pc)
+		jsr	WriteFMIorII(pc)
 
 loc_72D12:				; CODE XREF: sub_72CB4+54j
 					; sub_72CB4+58j
@@ -2180,7 +2122,7 @@ loc_72D58:				; CODE XREF: ROM:00072AACj
 		bclr	#4,(a5)
 		tst.b	1(a5)
 		bmi.s	loc_72D74
-		tst.b	8(a6)
+		tst.b	DACUpdating(a6)
 		bmi.w	loc_72E02
 		jsr	sub_726FE(pc)
 		bra.s	loc_72D78
@@ -2192,7 +2134,7 @@ loc_72D74:				; CODE XREF: ROM:00072D64j
 loc_72D78:				; CODE XREF: ROM:00072D72j
 		tst.b	$E(a6)
 		bpl.w	loc_72E02
-		clr.b	0(a6)
+		clr.b	SFXPriorityVal(a6)
 		moveq	#0,d0
 		move.b	1(a5),d0
 		bmi.s	loc_72DCC
@@ -2247,7 +2189,7 @@ loc_72DEA:				; CODE XREF: ROM:00072DD8j
 		bset	#1,(a0)
 		cmpi.b	#-$20,1(a0)
 		bne.s	loc_72E02
-		move.b	$1F(a0),($C00011).l
+		move.b	$1F(a0),(PSG_input).l
 
 loc_72E02:				; CODE XREF: ROM:00072D6Aj
 					; ROM:00072D7Cj ...
@@ -2260,7 +2202,7 @@ loc_72E06:				; CODE XREF: ROM:00072AB0j
 		move.b	(a4)+,$1F(a5)
 		btst	#2,(a5)
 		bne.s	locret_72E1E
-		move.b	-1(a4),($C00011).l
+		move.b	-1(a4),(PSG_input).l
 
 locret_72E1E:				; CODE XREF: ROM:00072E14j
 		rts
@@ -2308,15 +2250,15 @@ loc_72E52:				; CODE XREF: ROM:00072AC4j
 		move.l	a4,(a5,d0.w)
 		move.b	d0,$D(a5)
 		bra.s	loc_72E2C
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_72E64:				; CODE XREF: ROM:00072AC8j
+; ===========================================================================
+; loc_72E64:
+cfOpF9:
 		move.b	#-$78,d0
 		move.b	#$F,d1
-		jsr	sub_7272E(pc)
+		jsr	WriteFMI(pc)
 		move.b	#-$74,d0
 		move.b	#$F,d1
-		bra.w	sub_7272E
+		bra.w	WriteFMI
 ; ===========================================================================
 Kos_Z80:	incbin	"sound/Z80.bin"
 		even
