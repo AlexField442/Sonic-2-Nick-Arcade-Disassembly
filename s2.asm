@@ -29858,8 +29858,8 @@ Obj19_Main:				; DATA XREF: ROM:000152C8o
 		andi.w	#$FF80,d0
 		sub.w	($FFFFF7DA).w,d0
 		cmpi.w	#$280,d0
-		bhi.w	NemDecMain6
-		bra.w	NemDecMain0
+		bhi.w	loc_154C6
+		bra.w	loc_154C0
 
 ; ЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫ S U B	R O U T	I N E ЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫЫ
 
@@ -29975,7 +29975,7 @@ loc_15418:				; CODE XREF: ROM:00015412j
 		andi.w	#$FF80,d0
 		sub.w	($FFFFF7DA).w,d0
 		cmpi.w	#$280,d0
-		bhi.w	NemDecMain6
+		bhi.w	loc_154C6
 		rts
 ; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
 
@@ -30045,11 +30045,11 @@ word_154AE:	dc.w 2			; DATA XREF: ROM:Map_Obj19o
 		dc.w $F00F, $800, $800,	   0; 4
 ; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
 
-NemDecMain0:				; CODE XREF: ROM:0001534Cj
+loc_154C0:				; CODE XREF: ROM:0001534Cj
 		jmp	DisplaySprite
 ; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
 
-NemDecMain6:				; CODE XREF: ROM:00015348j
+loc_154C6:				; CODE XREF: ROM:00015348j
 					; ROM:0001542Aj
 		jmp	DeleteObject
 ; ДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДДД
