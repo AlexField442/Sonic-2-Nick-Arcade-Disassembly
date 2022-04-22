@@ -4858,7 +4858,7 @@ loc_3D2A:
 		bsr.w	MainLevelLoadBlock
 		jsr	(LoadAnimatedBlocks).l
 		bsr.w	LoadTilesFromStart
-		jsr	(ConvertCollisionArray).l
+		jsr	(ApplySonic1Collision).l
 		bsr.w	LoadCollisionIndexes
 		bsr.w	WaterEffects
 		move.b	#1,($FFFFB000).w
@@ -27053,8 +27053,8 @@ loc_13014:				; CODE XREF: FindWall2+74j
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 
-; FloorLog_Unk:
-ConvertCollisionArray:
+; FloorLog_Unk: ConvertCollisionArray:
+ApplySonic1Collision:
 		rts
 ; ---------------------------------------------------------------------------
 		lea	(ColArray1_GHZ).l,a1
@@ -27088,7 +27088,7 @@ loc_13074:
 		move.w	(a1)+,(a2)+
 		dbf	d1,loc_13074
 		rts
-; End of function ConvertCollisionArray
+; End of function ApplySonic1Collision
 
 
 ; ллллллллллллллл S U B	R O U T	I N E ллллллллллллллллллллллллллллллллллллллл
