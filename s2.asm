@@ -38096,8 +38096,11 @@ j_Adjust2PArtPointer_8:
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
-; When debug mode is currently in use
+; When debug mode is currently in use, you can actually find the original
+; source code for it within the leftovers at $50A9C, which includes the
+; code that has been commented out below
 ; ---------------------------------------------------------------------------
+
 DebugMode:
 		moveq	#0,d0
 		move.b	(Debug_placement_mode).w,d0
@@ -38107,7 +38110,6 @@ DebugMode:
 DebugIndex:	dc.w Debug_Init-DebugIndex
 		dc.w Debug_Main-DebugIndex
 ; ===========================================================================
-
 Debug_Init:
 		addq.b	#2,(Debug_placement_mode).w
 		move.w	($FFFFEECC).w,($FFFFFEF0).w
@@ -38123,6 +38125,9 @@ Debug_Init:
 ; Debug_CheckSS:
 		cmpi.b	#GameModeID_SpecialStage,(Game_Mode).w	; is this the Special Stage?
 		bne.s	loc_1BB04	; if not, branch
+		;move.b	#7-1,(Current_Zone).w	; sets the debug object list and resets Special Stage rotation
+		;move.w	#0,($FFFFF782).w
+		;move.w	#0,($FFFFF780).w
 		moveq	#6,d0		; force zone 6's debug object list (was the ending in S1)
 		bra.s	loc_1BB0A
 ; ===========================================================================
@@ -38159,6 +38164,7 @@ loc_1BB44:
 		adda.w	(a2,d0.w),a2
 		move.w	(a2)+,d6
 		bsr.w	Debug_Control
+		;bsr.w	dirsprset		; I have no idea what this branches to, since it can't be found within the symbol tables
 		jmp	(DisplaySprite).l
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
@@ -38183,6 +38189,7 @@ Debug_ContinueMoving:
 		bne.s	Debug_TimerNotOver
 		move.b	#1,(Debug_Accel_Timer).w
 		addq.b	#1,(Debug_Speed).w
+		;cmpi.b	#-1,(Debug_Speed).w	; this effectively resets the Debug movement speed when it reaches 255
 		bne.s	Debug_Move
 		move.b	#-1,(Debug_Speed).w
 ; loc_1BB9E:
@@ -38295,6 +38302,12 @@ loc_1BC98:
 		move.w	($FFFFFEF2).w,($FFFFEEC6).w
 		cmpi.b	#GameModeID_SpecialStage,(Game_Mode).w	; is this the Special Stage?
 		bne.s	locret_1BCCA		; if not, branch
+
+		;clr.w	($FFFFF780).w		; again, this resets the Special Stage rotation
+		;move.w	#$40,($FFFFF782).w	; and Sonic's art for whatever reason
+		;move.l	#Map_Sonic,($FFFFD004).w
+		;move.w	#$780,($FFFFD002).w
+
 		move.b	#2,($FFFFB01C).w
 		bset	#2,($FFFFB022).w
 		bset	#1,($FFFFB022).w
@@ -38314,6 +38327,7 @@ LoadDebugObjectSprite:
 		move.l	(a2,d0.w),4(a0)
 		move.w	6(a2,d0.w),2(a0)
 		move.b	5(a2,d0.w),$1A(a0)
+		;move.b	4(a2,d0.w),$28(a0)	; this does... something with the object's subtype
 		bsr.w	j_Adjust2PArtPointer_1
 		rts
 ; End of function Debug_ShowItem
@@ -41002,7 +41016,14 @@ ObjPos_S1Ending:dc.w   $10, $170,$280C	; 0 ; DATA XREF: ROM:ObjPos_Indexo
 		dc.w $FFFF,    0,    0
 ObjPos_Null:	dc.w $FFFF,    0,    0
 ; ---------------------------------------------------------------------------
-; Leftover symbol tables due to compiler weirdness
+; Leftover symbol tables due to compiler weirdness; these are formatted
+; with a Unix-like line break instead of a DOS-like line break, suggesting
+; Sonic 2 wasn't developed on a DOS environment; in addition, the locations
+; that can be extracted don't even match up with the prototype
+;
+; Read more about it here:
+; https://clownacy.wordpress.com/2022/03/30/everything-that-i-know-about-sonic-the-hedgehogs-source-code/
+; https://tcrf.net/Proto:Sonic_the_Hedgehog_2_(Genesis)/Nick_Arcade_Prototype/Symbol_Tables
 ; ---------------------------------------------------------------------------
 Leftover_418A8:	incbin	"misc/leftovers/418A8.bin"
 		even
@@ -41066,8 +41087,9 @@ RingPos_CPZ1:	incbin	"level/rings/CPZ_1.bin"
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
-; Now THIS is the biggest chunk of leftovers, you can find practically
-; anything here, but most notably, some of the Debug Mode source code
+; Yet another symbol table that doesn't match up with the prototype, also
+; containing the RAW Debug Mode source code
+; :o
 ; ---------------------------------------------------------------------------
 
 Leftover_50A9C:
