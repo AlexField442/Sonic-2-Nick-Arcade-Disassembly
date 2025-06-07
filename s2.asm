@@ -4569,8 +4569,8 @@ loc_3A3A:				; CODE XREF: ROM:00003A4Cj
 ; 컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴�
 
 UnknownSub_2:
-		lea	($FFFE0000).l,a1
-		lea	($FFFE0080).l,a2
+		lea	($00FE0000).l,a1
+		lea	($00FE0080).l,a2
 		lea	($FFFF0000).l,a3
 		move.w	#$3F,d1	; '?'
 
@@ -4578,8 +4578,8 @@ loc_3A68:				; CODE XREF: ROM:00003A70j
 		bsr.w	UnknownSub_4
 		bsr.w	UnknownSub_4
 		dbf	d1,loc_3A68
-		lea	($FFFE0000).l,a1
-		lea	($FFFF0000).l,a2
+		lea	($00FE0000).l,a1
+		lea	($00FF0000).l,a2
 		move.w	#$3F,d1	; '?'
 
 loc_3A84:				; CODE XREF: ROM:00003A88j
@@ -4594,7 +4594,7 @@ loc_3A90:				; CODE XREF: ROM:00003A92j
 ; 컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴�
 
 UnknownSub_3:
-		lea	($FFFE0000).l,a1
+		lea	($00FE0000).l,a1
 		lea	($FFFF0000).l,a3
 		moveq	#$1F,d0
 
@@ -4602,7 +4602,7 @@ loc_3AA6:				; CODE XREF: ROM:00003AA8j
 		move.l	(a1)+,(a3)+
 		dbf	d0,loc_3AA6
 		moveq	#0,d7
-		lea	($FFFE0000).l,a1
+		lea	($00FE0000).l,a1
 		move.w	#$FF,d5
 
 loc_3AB8:				; CODE XREF: ROM:00003AD8j
