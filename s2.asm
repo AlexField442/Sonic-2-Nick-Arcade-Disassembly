@@ -30,7 +30,7 @@ startZ80 macro
 	endm
 
 StartOfRom:
-Vectors:	dc.l $FFFE00,EntryPoint,BusError,AddressError
+Vectors:	dc.l $FFFFFE00,EntryPoint,BusError,AddressError
 		dc.l IllegalInstr,ZeroDivide,ChkInstr,TrapvInstr
 		dc.l PrivilegeViol,Trace,Line1010Emu,Line1111Emu
 		dc.l ErrorExcept,ErrorExcept,ErrorExcept,ErrorExcept
@@ -662,7 +662,7 @@ loc_D60:
 		movem.l	($FFFFEE50).w,d0-d3
 		movem.l	d0-d3,($FFFFEEA0).w
 		move.l	($FFFFF61E).w,($FFFFEEF0).w
-		cmpi.b	#96,(Hint_counter_reserve+1).w
+		cmpi.b	#92,(Hint_counter_reserve+1).w
 		bcc.s	Do_Updates
 		move.b	#1,(Do_Updates_in_H_int).w
 		addq.l	#4,sp
@@ -3660,7 +3660,7 @@ PalPointers:	palptr	Pal_SegaBG,$FB00,$1F
 		palptr	Pal_HPZWater,$FB00,$1F
 		; the following are leftover Sonic 1 entries
 		palptr	Pal_LZ4,$FB20,$17
-		palptr	Pal_LZ4Water,$FB00,$17
+		palptr	Pal_LZ4Water,$FB00,$1F
 		palptr	Pal_HTZ,$FB20,$17
 		palptr	Pal_LZSonicWater,$FB00,7
 		palptr	Pal_LZ4SonicWater,$FB00,7
@@ -3932,16 +3932,16 @@ SegaScreen:
 		move.l	#$40000000,(VDP_control_port).l
 		lea	(Nem_SegaLogo).l,a0
 		bsr.w	NemDec
-		lea	($FF0000).l,a1
+		lea	($FFFF0000).l,a1
 		lea	(Eni_SegaLogo).l,a0
 		move.w	#0,d0
 		bsr.w	EniDec
-		lea	($FF0000).l,a1
+		lea	($FFFF0000).l,a1
 		move.l	#$65100003,d0
 		moveq	#$17,d1
 		moveq	#7,d2
 		bsr.w	PlaneMapToVRAM_H40
-		lea	($FF0180).l,a1
+		lea	($FFFF0180).l,a1
 		move.l	#$40000003,d0
 		moveq	#$27,d1
 		moveq	#$1B,d2
@@ -3949,7 +3949,7 @@ SegaScreen:
 		tst.b	($FFFFFFF8).w	; is console Japanese?
 		bmi.s	loc_316A	; if not, branch
 		; hide 'TM' symbol
-		lea	($FF0A40).l,a1
+		lea	($FFFF0A40).l,a1
 		move.l	#$453A0003,d0
 		moveq	#2,d1
 		moveq	#1,d2
@@ -4553,7 +4553,7 @@ LevelSelect_Text:	incbin	"mappings/misc/Level select text.bin"
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 UnknownSub_1:
-		lea	($FF0000).l,a1
+		lea	($FFFF0000).l,a1
 		move.w	#$2EB,d2
 
 loc_3A3A:				; CODE XREF: ROM:00003A4Cj
@@ -4569,17 +4569,17 @@ loc_3A3A:				; CODE XREF: ROM:00003A4Cj
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 UnknownSub_2:
-		lea	($FE0000).l,a1
-		lea	($FE0080).l,a2
-		lea	($FF0000).l,a3
+		lea	($FFFE0000).l,a1
+		lea	($FFFE0080).l,a2
+		lea	($FFFF0000).l,a3
 		move.w	#$3F,d1	; '?'
 
 loc_3A68:				; CODE XREF: ROM:00003A70j
 		bsr.w	UnknownSub_4
 		bsr.w	UnknownSub_4
 		dbf	d1,loc_3A68
-		lea	($FE0000).l,a1
-		lea	($FF0000).l,a2
+		lea	($FFFE0000).l,a1
+		lea	($FFFF0000).l,a2
 		move.w	#$3F,d1	; '?'
 
 loc_3A84:				; CODE XREF: ROM:00003A88j
@@ -4594,20 +4594,20 @@ loc_3A90:				; CODE XREF: ROM:00003A92j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 UnknownSub_3:
-		lea	($FE0000).l,a1
-		lea	($FF0000).l,a3
+		lea	($FFFE0000).l,a1
+		lea	($FFFF0000).l,a3
 		moveq	#$1F,d0
 
 loc_3AA6:				; CODE XREF: ROM:00003AA8j
 		move.l	(a1)+,(a3)+
 		dbf	d0,loc_3AA6
 		moveq	#0,d7
-		lea	($FE0000).l,a1
+		lea	($FFFE0000).l,a1
 		move.w	#$FF,d5
 
 loc_3AB8:				; CODE XREF: ROM:00003AD8j
 					; ROM:00003AF4j
-		lea	($FF0000).l,a3
+		lea	($FFFF0000).l,a3
 		move.w	d7,d6
 
 loc_3AC0:				; CODE XREF: ROM:00003AE6j
@@ -6051,12 +6051,19 @@ Demo_S1SS:	dc.b   0,$26,  4,  5,  0,$2A,  8,$1B,  0,  6,  4,  9,  0,  6,$20,  1;
 		dc.b $20,  9,$24,$12,  4, $E,$24, $E,  4, $A,  0,  9,  8,$16,$28,  0; 208
 		dc.b $20, $F,$28,  4,$29,$1B,  9,  5,$29, $C,  9,  0,  8,  7,  0,$A0; 224
 		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 240
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; ---------------------------------------------------------------------------
+; As a quirk with ProASM (the compiler used for Sonic 2), it generates these
+; "jump to" code blocks at the end of every source file which did not have the
+; listed address. As a result, we can get a pretty good picture of how the
+; assembly code was structured during development, such as the main level
+; execution code being its own file.
+;
+; Read more about it here:
+; https://clownacy.wordpress.com/2022/03/30/everything-that-i-know-about-sonic-the-hedgehogs-source-code/
+; ---------------------------------------------------------------------------
 
 j_AniArt_Load:
 		jmp	(AniArt_Load).l
-
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		align 4
 
 ; ===========================================================================
@@ -9521,10 +9528,12 @@ loc_725A:				; CODE XREF: sub_7232+Aj
 ; End of function sub_7232
 
 
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Subroutine to load blocks, chunks, PLCs, and tiles for the current zone
+; ---------------------------------------------------------------------------
 
-
-MainLevelLoadBlock:			; CODE XREF: ROM:00003D3Ep
+MainLevelLoadBlock:
 		moveq	#0,d0
 		move.b	(Current_Zone).w,d0
 		lsl.w	#4,d0
@@ -9533,68 +9542,70 @@ MainLevelLoadBlock:			; CODE XREF: ROM:00003D3Ep
 		move.l	a2,-(sp)
 		addq.l	#4,a2
 		movea.l	(a2)+,a0
-		tst.b	(Current_Zone).w
-		beq.s	MainLevelLoadBlock_Convert16
-		bra.s	MainLevelLoadBlock_Convert16
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-MainLevelLoadBlock_Skip16Convert:	; leftover from	a previous build
+		tst.b	(Current_Zone).w		; is this Green Hill Zone?
+		beq.s	@uncompressedBlocks		; if yes... jump to where we were going anyways
+		bra.s	@uncompressedBlocks
+; ---------------------------------------------------------------------------
+; Sonic 1 compresses its 16x16 blocks in Enigma; Sonic 2 Nick Arcade leaves
+; them uncompressed, likely so that the developers wouldn't have to recompress
+; them every time a change was made.
+; MainLevelLoadBlock_Skip16Convert:
+@enigmaBlocks:
 		lea	($FFFF9000).w,a1
 		move.w	#0,d0
 		bsr.w	EniDec
 		bra.s	loc_72C2
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-MainLevelLoadBlock_Convert16:		; CODE XREF: MainLevelLoadBlock+1Cj
-					; MainLevelLoadBlock+1Ej
+; ---------------------------------------------------------------------------
+; MainLevelLoadBlock_Convert16:
+@uncompressedBlocks:
 		lea	($FFFF9000).w,a1
 		move.w	#$BFF,d2
-
-MainLevelLoadBlock_ConvertLoop:		; CODE XREF: MainLevelLoadBlock+4Ej
+; MainLevelLoadBlock_ConvertLoop:
+@uncompressedLoop:
 		move.w	(a0)+,d0
 		tst.w	(Two_player_mode).w
-		beq.s	MainLevelLoadBlock_Not2p
+		beq.s	@notTwoPlayer
 		move.w	d0,d1
 		andi.w	#$F800,d0
 		andi.w	#$7FF,d1
 		lsr.w	#1,d1
 		or.w	d1,d0
-
-MainLevelLoadBlock_Not2p:		; CODE XREF: MainLevelLoadBlock+3Cj
+; MainLevelLoadBlock_Not2p:
+@notTwoPlayer:
 		move.w	d0,(a1)+
-		dbf	d2,MainLevelLoadBlock_ConvertLoop
+		dbf	d2,@uncompressedLoop
 
-loc_72C2:				; CODE XREF: MainLevelLoadBlock+2Cj
+loc_72C2:
 		cmpi.b	#5,(Current_Zone).w
-		bne.s	loc_72F4
+		bne.s	@loadChunks
 		lea	($FFFF9980).w,a1
 		lea	(Map16_HTZ).l,a0
 		move.w	#$3FF,d2
-
-loc_72D8:				; CODE XREF: MainLevelLoadBlock+80j
+; loc_72D8:
+@uncompressedLoop2:
 		move.w	(a0)+,d0
 		tst.w	(Two_player_mode).w
-		beq.s	loc_72EE
+		beq.s	@notTwoPlayer2
 		move.w	d0,d1
 		andi.w	#$F800,d0
 		andi.w	#$7FF,d1
 		lsr.w	#1,d1
 		or.w	d1,d0
-
-loc_72EE:				; CODE XREF: MainLevelLoadBlock+6Ej
+; loc_72EE:
+@notTwoPlayer2:
 		move.w	d0,(a1)+
-		dbf	d2,loc_72D8
-
-loc_72F4:				; CODE XREF: MainLevelLoadBlock+58j
+		dbf	d2,@uncompressedLoop2
+; loc_72F4:
+@loadChunks:
 		movea.l	(a2)+,a0
 		cmpi.b	#2,(Current_Zone).w
-		beq.s	loc_7338
+		beq.s	@uncompressedChunks
 		cmpi.b	#3,(Current_Zone).w
-		beq.s	loc_7338
+		beq.s	@uncompressedChunks
 		cmpi.b	#4,(Current_Zone).w
-		beq.s	loc_7338
+		beq.s	@uncompressedChunks
 		cmpi.b	#5,(Current_Zone).w
-		beq.s	loc_7338
+		beq.s	@uncompressedChunks
 		move.l	a2,-(sp)
 		moveq	#0,d1
 		moveq	#0,d2
@@ -9602,43 +9613,42 @@ loc_72F4:				; CODE XREF: MainLevelLoadBlock+58j
 		lea	(a0,d0.w),a1
 		lea	($FFFF0000).l,a2
 		lea	($FFFF8000).w,a3
-
-loc_732C:				; CODE XREF: MainLevelLoadBlock+C2j
+; loc_732C:
+@chameleonChunks:
 		bsr.w	ChaDec
 		tst.w	d0
-		bmi.s	loc_732C
+		bmi.s	@chameleonChunks
 		movea.l	(sp)+,a2
-		bra.s	loc_7348
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_7338:				; CODE XREF: MainLevelLoadBlock+8Cj
-					; MainLevelLoadBlock+94j ...
+		bra.s	@loadLevelAndPalette
+; ---------------------------------------------------------------------------
+; loc_7338:
+@uncompressedChunks:
 		lea	($FFFF0000).l,a1
 		move.w	#$3FFF,d0
-
-loc_7342:				; CODE XREF: MainLevelLoadBlock+D4j
+; loc_7342:
+@uncompressedLoop3:
 		move.w	(a0)+,(a1)+
-		dbf	d0,loc_7342
-
-loc_7348:				; CODE XREF: MainLevelLoadBlock+C6j
+		dbf	d0,@uncompressedLoop3
+; loc_7348:
+@loadLevelAndPalette:
 		bsr.w	LevelLayoutLoad
 		move.w	(a2)+,d0
 		move.w	(a2),d0
 		andi.w	#$FF,d0
 		cmpi.w	#$103,(Current_ZoneAndAct).w
-		bne.s	loc_735E
+		bne.s	@notLZ4
 		moveq	#$C,d0
-
-loc_735E:				; CODE XREF: MainLevelLoadBlock+EAj
+; loc_735E:
+@notLZ4:
 		cmpi.w	#$501,(Current_ZoneAndAct).w
-		beq.s	loc_736E
+		beq.s	@notSBZ2
 		cmpi.w	#$502,(Current_ZoneAndAct).w
-		bne.s	loc_7370
-
-loc_736E:				; CODE XREF: MainLevelLoadBlock+F4j
+		bne.s	@loadPaletteAndPLC
+; loc_736E:
+@notSBZ2:
 		moveq	#$E,d0
-
-loc_7370:				; CODE XREF: MainLevelLoadBlock+FCj
+; loc_7370:
+@loadPaletteAndPLC:
 		bsr.w	PalLoad1
 		movea.l	(sp)+,a2
 		addq.w	#4,a2
@@ -9647,7 +9657,7 @@ loc_7370:				; CODE XREF: MainLevelLoadBlock+FCj
 		beq.s	locret_7382
 		bsr.w	LoadPLC
 
-locret_7382:				; CODE XREF: MainLevelLoadBlock+10Cj
+locret_7382:
 		rts
 ; End of function MainLevelLoadBlock
 
@@ -16295,10 +16305,7 @@ Map_S1Obj7E:	dc.w word_C406-Map_S1Obj7E ; DATA XREF:	ROM:0000BDDCo
 					; ROM:Map_S1Obj7Eo ...
 		dc.w word_C470-Map_S1Obj7E
 		dc.w word_C4A2-Map_S1Obj7E
-		; for some reason, this part of the mappings references a PLR list,
-		; meaning in order to use macros for it, we need this hackish fix,
-		; AND we can't compile it...
-		dc.w word_1C1E2+1-Map_S1Obj7E
+		dc.w word_C1E4-Map_S1Obj7E	; drx originally screwed up here and had it reference a PLR list lol
 		dc.w word_C4DC-Map_S1Obj7E
 		dc.w word_C4FE-Map_S1Obj7E
 		dc.w word_C520-Map_S1Obj7E
@@ -30790,7 +30797,7 @@ Obj4F_ChkFloor:
 ; loc_15E98:
 Obj4F_StopMoving:
 		subq.b	#2,$25(a0)
-		move.w	#1*60,$30(a0)	; pause for 1 second
+		move.w	#(1*60)-1,$30(a0)	; pause for 1 second
 		move.w	#0,$10(a0)
 		move.b	#0,$1C(a0)
 		rts
@@ -38643,7 +38650,7 @@ PLC_Main:	dc.w ((PLC_Main_End-PLC_Main)/6)-1
 		plreq $6CA, Nem_HUD
 		plreq $7D4, Nem_Lives
 		plreq $6BC, Nem_Ring
-		plreq $41C, Nem_Points
+		plreq $4AC, Nem_Points
 PLC_Main_End:
 ; --------------------------------------------------------------------------------------
 ; PATTERN LOAD REQUEST LIST
@@ -38683,6 +38690,7 @@ PLC_GHZ:	dc.w ((PLC_GHZ_End-PLC_GHZ)/6)-1
 		plreq $4E0, Nem_Motobug
 		plreq $6C0, Nem_GHZ_Rock
 PLC_GHZ_End:
+
 ; --------------------------------------------------------------------------------------
 ; PATTERN LOAD REQUEST LIST
 ; Green Hill Zone secondary
@@ -38774,7 +38782,7 @@ PLC_HTZ:	dc.w ((PLC_HTZ_End-PLC_HTZ)/6)-1
 		plreq $500, Nem_HTZ_AniPlaceholders
 		plreq $39E, Nem_EHZ_Fireball
 		plreq $3AE, Nem_HTZ_Fireball
-		plreq $3DE, Nem_HTZ_AutomaticDoor
+		plreq $3BE, Nem_HTZ_AutomaticDoor
 		plreq $3C6, Nem_EHZ_Bridge
 		plreq $3CE, Nem_HTZ_Seesaw
 		plreq $434, Nem_VSpikes
@@ -38829,10 +38837,10 @@ PLC_Signpost_End:
 ; --------------------------------------------------------------------------------------
 ; PATTERN LOAD REQUEST LIST
 ; Sonic 1 Special Stage, although since it's blank, using it will crash the game
-; unless you remove the +$10
+; unless you remove the +$11
 ; --------------------------------------------------------------------------------------
 ; PLC_Invalid:
-PLC_S1SpecialStage:	dc.w ((PLC_S1SpecialStage_End-PLC_S1SpecialStage)/6)-1+$10
+PLC_S1SpecialStage:	dc.w ((PLC_S1SpecialStage_End-PLC_S1SpecialStage)/6)-1+$11
 PLC_S1SpecialStage_End:
 ; --------------------------------------------------------------------------------------
 ; PATTERN LOAD REQUEST LIST
@@ -41017,9 +41025,8 @@ ObjPos_S1Ending:dc.w   $10, $170,$280C	; 0 ; DATA XREF: ROM:ObjPos_Indexo
 ObjPos_Null:	dc.w $FFFF,    0,    0
 ; ---------------------------------------------------------------------------
 ; Leftover symbol tables due to compiler weirdness; these are formatted
-; with a Unix-like line break instead of a DOS-like line break, suggesting
-; Sonic 2 wasn't developed on a DOS environment; in addition, the locations
-; that can be extracted don't even match up with the prototype
+; with a Unix-like line break instead of a DOS-like line break, as Sonic 2
+; was made using ProASM rather than 2500AD.
 ;
 ; Read more about it here:
 ; https://clownacy.wordpress.com/2022/03/30/everything-that-i-know-about-sonic-the-hedgehogs-source-code/
