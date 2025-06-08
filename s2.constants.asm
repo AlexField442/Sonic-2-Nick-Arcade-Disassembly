@@ -92,6 +92,11 @@ Plc_Buffer_Reg14:		equ $FFFFF6F4
 Plc_Buffer_Reg18:		equ $FFFFF6F8
 Plc_Buffer_Reg1A:		equ $FFFFF6FA
 
+unk_F700:			equ $FFFFF700
+Tails_control_counter:		equ $FFFFF702
+unk_F706:			equ $FFFFF706
+Tails_CPU_routine:		equ $FFFFF708
+
 Rings_manager_routine:		equ $FFFFF710
 Level_started_flag:		equ $FFFFF711
 Ring_start_addr:		equ $FFFFF712
