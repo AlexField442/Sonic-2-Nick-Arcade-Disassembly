@@ -4018,7 +4018,7 @@ TitleScreen:				; CODE XREF: ROM:000003A0j
 loc_3230:				; CODE XREF: ROM:00003232j
 		move.l	d0,(a1)+
 		dbf	d1,loc_3230
-		lea	($FFFFB000).w,a1
+		lea	(Object_RAM).w,a1
 		moveq	#0,d0
 		move.w	#$7FF,d1
 
@@ -4109,16 +4109,16 @@ loc_3330:
 		move.b	#0,(Debug_mode_flag).w
 		move.w	#0,(Two_player_mode).w
 		move.w	#$178,(Demo_Time_left).w
-		lea	($FFFFB080).w,a1
+		lea	(Object_RAM+$80).w,a1
 		moveq	#0,d0
 		move.w	#$F,d1
 
 loc_339A:				; CODE XREF: ROM:0000339Cj
 		move.l	d0,(a1)+
 		dbf	d1,loc_339A
-		move.b	#$E,($FFFFB040).w
-		move.b	#$E,($FFFFB080).w
-		move.b	#1,($FFFFB09A).w
+		move.b	#$E,(Object_RAM+$40).w
+		move.b	#$E,(Object_RAM+$80).w
+		move.b	#1,(Object_RAM+$80+mapping_frame).w
 		jsr	(RunObjects).l
 		jsr	(BuildSprites).l
 		moveq	#0,d0
@@ -4329,9 +4329,9 @@ loc_3630:
 		move.b	#VintID_Title,(Vint_routine).w
 		bsr.w	WaitForVint
 		bsr.w	RunPLC_RAM
-		move.w	($FFFFB008).w,d0
+		move.w	(MainCharacter+x_pos).w,d0
 		addq.w	#2,d0
-		move.w	d0,($FFFFB008).w
+		move.w	d0,(MainCharacter+x_pos).w
 		cmpi.w	#$1C00,d0
 		bcs.s	RunDemo
 		move.b	#GameModeID_SegaScreen,(Game_Mode).w
@@ -4550,27 +4550,36 @@ loc_382E:				; CODE XREF: sub_381C+6j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 LevelSelect_Text:	incbin	"mappings/misc/Level select text.bin"
 		even
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
-UnknownSub_1:
+; ===========================================================================
+; The following are a set of routines that, in theory, convert the 256x256
+; chunks of Sonic 1 to the new 128x128 format of Sonic 2; they require a
+; special cartridge/emulator that can write to extended RAM region $FEXXXX.
+; For some reason, most of these routines are duplicated at LevelLayout_Convert,
+;
+; This first routine converts blocks in chunks from the old Sonic 1 format of
+; 0PPYX0 to the new format of 00PPYX. Unlike the others, this is done on the
+; fly and works without needing extended RAM.
+; UnknownSub_1:
+ConvertChunkFlags:
 		lea	($FFFF0000).l,a1
-		move.w	#$2EB,d2
-
-loc_3A3A:				; CODE XREF: ROM:00003A4Cj
-		move.w	(a1),d0
+		move.w	#$2EC-1,d2
+; loc_3A3A:
+@loopPerBlock:
+		move.w	(a1),d0			; get block info from chunk
 		move.w	d0,d1
-		andi.w	#$F800,d1
-		andi.w	#$7FF,d0
-		lsr.w	#1,d0
-		or.w	d0,d1
-		move.w	d1,(a1)+
-		dbf	d2,loc_3A3A
+		andi.w	#$F800,d1		; get top bits for 0PPYX0
+		andi.w	#$7FF,d0		; retain the block number in d0
+		lsr.w	#1,d0			; perform a right-shift to convert block format to 00PPYX
+		or.w	d0,d1			; apply this new format to the block
+		move.w	d1,(a1)+		; and apply this to the chunk
+		dbf	d2,@loopPerBlock	; repeat until all blocks in the chunk are converted
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 UnknownSub_2:
-		lea	($00FE0000).l,a1
-		lea	($00FE0080).l,a2
+		lea	(ConvertedChunksLoc).l,a1
+		lea	(ConvertedChunksLoc+8*8*2).l,a2
 		lea	($FFFF0000).l,a3
 		move.w	#$3F,d1	; '?'
 
@@ -4578,7 +4587,7 @@ loc_3A68:				; CODE XREF: ROM:00003A70j
 		bsr.w	UnknownSub_4
 		bsr.w	UnknownSub_4
 		dbf	d1,loc_3A68
-		lea	($00FE0000).l,a1
+		lea	(ConvertedChunksLoc).l,a1
 		lea	($00FF0000).l,a2
 		move.w	#$3F,d1	; '?'
 
@@ -4594,7 +4603,7 @@ loc_3A90:				; CODE XREF: ROM:00003A92j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 UnknownSub_3:
-		lea	($00FE0000).l,a1
+		lea	(ConvertedChunksLoc).l,a1
 		lea	($FFFF0000).l,a3
 		moveq	#$1F,d0
 
@@ -4602,7 +4611,7 @@ loc_3AA6:				; CODE XREF: ROM:00003AA8j
 		move.l	(a1)+,(a3)+
 		dbf	d0,loc_3AA6
 		moveq	#0,d7
-		lea	($00FE0000).l,a1
+		lea	(ConvertedChunksLoc).l,a1
 		move.w	#$FF,d5
 
 loc_3AB8:				; CODE XREF: ROM:00003AD8j
@@ -4731,7 +4740,7 @@ loc_3BB6:
 loc_3BC0:
 		move.l	d0,(a1)+
 		dbf	d1,loc_3BC0
-		lea	($FFFFB000).w,a1
+		lea	(Object_RAM).w,a1
 		moveq	#0,d0
 		move.w	#$7FF,d1
 
@@ -4834,7 +4843,7 @@ loc_3CE6:
 		nop
 		move.b	(a1,d0.w),d0
 		bsr.w	PlaySound
-		move.b	#$34,($FFFFB080).w
+		move.b	#$34,(Object_RAM+$80).w
 
 LevelInit_TitleCard:
 		move.b	#VintID_TitleCard,(Vint_routine).w
@@ -4842,8 +4851,8 @@ LevelInit_TitleCard:
 		jsr	(RunObjects).l
 		jsr	(BuildSprites).l
 		bsr.w	RunPLC_RAM
-		move.w	($FFFFB108).w,d0
-		cmp.w	($FFFFB130).w,d0
+		move.w	(Object_RAM+$100+x_pixel).w,d0
+		cmp.w	(Object_RAM+$100+$30).w,d0
 		bne.s	LevelInit_TitleCard
 		tst.l	(Plc_Buffer).w
 		bne.s	LevelInit_TitleCard
@@ -4861,10 +4870,10 @@ loc_3D2A:
 		jsr	(ApplySonic1Collision).l
 		bsr.w	LoadCollisionIndexes
 		bsr.w	WaterEffects
-		move.b	#1,($FFFFB000).w
+		move.b	#1,(MainCharacter).w
 		tst.w	($FFFFFFF0).w
 		bmi.s	loc_3D6C
-		move.b	#$21,($FFFFB380).w
+		move.b	#$21,(Object_RAM+$380).w
 
 loc_3D6C:
 		tst.w	(Two_player_mode).w
@@ -4873,10 +4882,10 @@ loc_3D6C:
 		beq.s	LevelInit_SkipTails ; funny how	they skipped Tails in EHZ for the Nick Arcade show
 
 LevelInit_LoadTails:
-		move.b	#2,($FFFFB040).w
-		move.w	($FFFFB008).w,($FFFFB048).w
-		move.w	($FFFFB00C).w,($FFFFB04C).w
-		subi.w	#$20,($FFFFB048).w
+		move.b	#2,(Sidekick).w
+		move.w	(MainCharacter+x_pos).w,(Sidekick+x_pos).w
+		move.w	(MainCharacter+y_pos).w,(Sidekick+y_pos).w
+		subi.w	#$20,(Sidekick+x_pos).w
 
 LevelInit_SkipTails:
 		tst.b	($FFFFFFE2).w
@@ -4890,10 +4899,10 @@ loc_3DA6:
 		move.w	#0,($FFFFF604).w
 		tst.b	(Water_flag).w
 		beq.s	loc_3DD0
-		move.b	#4,($FFFFB780).w
-		move.w	#$60,($FFFFB788).w
-		move.b	#4,($FFFFB7C0).w
-		move.w	#$120,($FFFFB7C8).w
+		move.b	#4,(Object_RAM+$780).w
+		move.w	#$60,(Object_RAM+$780+x_pos).w
+		move.b	#4,(Object_RAM+$7C0).w
+		move.w	#$120,(Object_RAM+$7C0+x_pos).w
 
 loc_3DD0:
 		jsr	(ObjectsManager).l
@@ -4974,10 +4983,10 @@ loc_3ECC:
 		bsr.w	Pal_FadeFromBlack2
 		tst.w	($FFFFFFF0).w
 		bmi.s	Level_ClrTitleCard
-		addq.b	#2,($FFFFB080+routine).w
-		addq.b	#4,($FFFFB0C0+routine).w
-		addq.b	#4,($FFFFB100+routine).w
-		addq.b	#4,($FFFFB140+routine).w
+		addq.b	#2,(Object_RAM+$80+routine).w
+		addq.b	#4,(Object_RAM+$C0+routine).w
+		addq.b	#4,(Object_RAM+$100+routine).w
+		addq.b	#4,(Object_RAM+$140+routine).w
 		bra.s	Level_StartGame
 ; ===========================================================================
 
@@ -5007,7 +5016,7 @@ Level_MainLoop:
 		bne.w	Level
 		tst.w	(Debug_placement_mode).w
 		bne.s	loc_3F50
-		cmpi.b	#6,($FFFFB000+routine).w
+		cmpi.b	#6,(MainCharacter+routine).w
 		bcc.s	loc_3F54
 
 loc_3F50:
@@ -5086,9 +5095,9 @@ ChangeWaterSurfacePos:			; CODE XREF: ROM:loc_3F54p
 loc_402C:				; CODE XREF: ChangeWaterSurfacePos+10j
 		move.w	d1,d0
 		addi.w	#$60,d0	; '`'
-		move.w	d0,($FFFFB788).w
+		move.w	d0,(Object_RAM+$780+x_pos).w
 		addi.w	#$120,d1
-		move.w	d1,($FFFFB7C8).w
+		move.w	d1,(Object_RAM+$7C0+x_pos).w
 
 locret_403E:				; CODE XREF: ChangeWaterSurfacePos+4j
 		rts
@@ -5104,7 +5113,7 @@ WaterEffects:				; CODE XREF: ROM:00003D56p
 		beq.s	locret_4094
 		tst.b	($FFFFEEDC).w
 		bne.s	loc_4058
-		cmpi.b	#6,($FFFFB000+routine).w
+		cmpi.b	#6,(MainCharacter+routine).w
 		bcc.s	loc_4058
 		bsr.w	DynamicWaterHeight
 
@@ -5200,7 +5209,7 @@ S1DynWater_LZ1:				; leftover from	Sonic 1
 		cmpi.w	#$600,d0
 		bcs.s	loc_4148
 		move.w	#$108,d1
-		cmpi.w	#$200,($FFFFB00C).w
+		cmpi.w	#$200,(MainCharacter+y_pos).w
 		bcs.s	loc_414E
 		cmpi.w	#$C00,d0
 		bcs.s	loc_4148
@@ -5235,7 +5244,7 @@ loc_414E:				; CODE XREF: ROM:00004116j
 loc_4164:				; CODE XREF: ROM:00004100j
 		subq.b	#1,d2
 		bne.s	locret_4188
-		cmpi.w	#$2E0,($FFFFB00C).w
+		cmpi.w	#$2E0,(MainCharacter+y_pos).w
 		bcc.s	locret_4188
 		move.w	#$3A8,d1
 		cmpi.w	#$1300,d0
@@ -5274,9 +5283,9 @@ DynWater_HPZ3:				; DATA XREF: ROM:DynWater_Indexo
 		move.w	#$900,d1
 		cmpi.w	#$600,d0
 		bcs.s	loc_41E8
-		cmpi.w	#$3C0,($FFFFB00C).w
+		cmpi.w	#$3C0,(MainCharacter+y_pos).w
 		bcs.s	loc_41E8
-		cmpi.w	#$600,($FFFFB00C).w
+		cmpi.w	#$600,(MainCharacter+y_pos).w
 		bcc.s	loc_41E8
 		move.w	#$4C8,d1
 		move.b	#$4B,($FFFF8206).w ; 'K'
@@ -5302,9 +5311,9 @@ loc_41F2:				; CODE XREF: ROM:000041B4j
 		bcs.s	loc_4236
 		cmpi.w	#$508,($FFFFF64A).w
 		beq.s	loc_4222
-		cmpi.w	#$600,($FFFFB00C).w
+		cmpi.w	#$600,(MainCharacter+y_pos).w
 		bcc.s	loc_4222
-		cmpi.w	#$280,($FFFFB00C).w
+		cmpi.w	#$280,(MainCharacter+y_pos).w
 		bcc.s	loc_4236
 
 loc_4222:				; CODE XREF: ROM:00004210j
@@ -5400,15 +5409,15 @@ S1_LZWindTunnels:			; leftover from	Sonic 1's LZ
 		subq.w	#8,a2
 
 loc_42EA:				; CODE XREF: ROM:000042E4j
-		lea	($FFFFB000).w,a1
+		lea	(MainCharacter).w,a1
 
 loc_42EE:				; CODE XREF: ROM:0000438Ej
-		move.w	8(a1),d0
+		move.w	x_pos(a1),d0
 		cmp.w	(a2),d0
 		bcs.w	loc_438C
 		cmp.w	4(a2),d0
 		bcc.w	loc_438C
-		move.w	$C(a1),d2
+		move.w	y_pos(a1),d2
 		cmp.w	2(a2),d2
 		bcs.w	loc_438C
 		cmp.w	6(a2),d2
@@ -5434,22 +5443,22 @@ loc_4326:				; CODE XREF: ROM:0000431Aj
 		neg.w	d0
 
 loc_4350:				; CODE XREF: ROM:0000434Cj
-		add.w	d0,$C(a1)
+		add.w	d0,y_pos(a1)
 
 loc_4354:				; CODE XREF: ROM:00004342j
-		addi.w	#4,8(a1)
-		move.w	#$400,$10(a1)
-		move.w	#0,$12(a1)
-		move.b	#$F,$1C(a1)
-		bset	#1,$22(a1)
+		addi.w	#4,x_pos(a1)
+		move.w	#$400,x_vel(a1)
+		move.w	#0,y_vel(a1)
+		move.b	#$F,anim(a1)
+		bset	#1,status(a1)
 		btst	#0,($FFFFF604).w
 		beq.s	loc_437E
-		subq.w	#1,$C(a1)
+		subq.w	#1,y_pos(a1)
 
 loc_437E:				; CODE XREF: ROM:00004378j
 		btst	#1,($FFFFF604).w
 		beq.s	locret_438A
-		addq.w	#1,$C(a1)
+		addq.w	#1,y_pos(a1)
 
 locret_438A:				; CODE XREF: ROM:00004384j
 		rts
@@ -5461,7 +5470,7 @@ loc_438C:				; CODE XREF: ROM:000042F4j
 		dbf	d1,loc_42EE
 		tst.b	($FFFFF7C7).w
 		beq.s	locret_43A2
-		move.b	#0,$1C(a1)
+		move.b	#0,anim(a1)
 
 loc_439E:				; CODE XREF: ROM:00004334j
 		clr.b	($FFFFF7C7).w
@@ -5476,12 +5485,12 @@ S1LZWind_Data:	dc.w  $F80, $100,$1410,	$180, $460, $400, $710,	$480, $A20, $600,
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 S1_LZWaterSlides:
-		lea	($FFFFB000).w,a1
-		btst	#1,$22(a1)
+		lea	(MainCharacter).w,a1
+		btst	#1,status(a1)
 		bne.s	loc_4400
-		move.w	$C(a1),d0
+		move.w	y_pos(a1),d0
 		andi.w	#$700,d0
-		move.b	8(a1),d1
+		move.b	x_pos(a1),d1
 
 loc_43E4:
 		andi.w	#$7F,d1	; ''
@@ -5512,15 +5521,15 @@ loc_4412:				; CODE XREF: ROM:000043FEj
 		nop
 
 loc_441A:				; CODE XREF: ROM:00004416j
-		bclr	#0,$22(a1)
+		bclr	#0,status(a1)
 		move.b	byte_4456(pc,d1.w),d0
 		move.b	d0,$14(a1)
 		bpl.s	loc_4430
-		bset	#0,$22(a1)
+		bset	#0,status(a1)
 
 loc_4430:				; CODE XREF: ROM:00004428j
 		clr.b	$15(a1)
-		move.b	#$1B,$1C(a1)
+		move.b	#$1B,anim(a1)
 		move.b	#1,($FFFFF7CA).w
 		move.b	($FFFFFE0F).w,d0
 		andi.b	#$1F,d0
@@ -5780,7 +5789,7 @@ Osc_Data:	dc.w   $7C,  $80	; 0 ; DATA XREF: OscillateNumInit+4o
 
 
 OscillateNumDo:				; CODE XREF: ROM:00003F6Ap
-		cmpi.b	#6,($FFFFB000+routine).w
+		cmpi.b	#6,(MainCharacter+routine).w
 		bcc.s	locret_46FC
 		lea	($FFFFFE5E).w,a1
 		lea	(OscData2).l,a2
@@ -6100,7 +6109,7 @@ loc_507C:
 		bsr.w	S1_SSBGLoad
 		moveq	#$14,d0
 		bsr.w	RunPLC_ROM
-		lea	($FFFFD000).w,a1
+		lea	(Object_RAM+$2000).w,a1		; leftover RAM location from Sonic 1
 		moveq	#0,d0
 		move.w	#$7FF,d1
 
@@ -6135,7 +6144,7 @@ loc_50CC:
 		jsr	(S1SS_Load).l
 		move.l	#0,($FFFFEE00).w
 		move.l	#0,($FFFFEE04).w
-		move.b	#9,($FFFFB000).w
+		move.b	#9,(MainCharacter).w
 		bsr.w	PalCycle_S1SS
 		clr.w	($FFFFF780).w
 		move.w	#$40,($FFFFF782).w
@@ -6235,14 +6244,14 @@ loc_5214:
 		move.w	d0,($FFFFF7D4).w
 		move.w	#$8E,d0
 		jsr	(PlaySound_Special).l
-		lea	($FFFFB000).w,a1
+		lea	(Object_RAM).w,a1
 		moveq	#0,d0
 		move.w	#$7FF,d1
 
 loc_5290:
 		move.l	d0,(a1)+
 		dbf	d1,loc_5290
-		move.b	#$7E,($FFFFB5C0).w
+		move.b	#$7E,(Object_RAM+$5C0).w
 
 loc_529C:
 		bsr.w	PauseGame
@@ -6627,8 +6636,8 @@ LevelSize_CheckLamp:			; CODE XREF: LevelSizeLoad+76j
 		tst.b	($FFFFFE30).w
 		beq.s	LevelSize_StartLoc
 		jsr	(Lamppost_LoadInfo).l
-		move.w	($FFFFB008).w,d1
-		move.w	($FFFFB00C).w,d0
+		move.w	(MainCharacter+x_pos).w,d1
+		move.w	(MainCharacter+y_pos).w,d0
 		bra.s	LevelSize_StartLocLoaded
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -6648,10 +6657,10 @@ LevelSize_StartLoc:			; CODE XREF: LevelSizeLoad+17Ej
 loc_58CE:				; CODE XREF: LevelSizeLoad+1A0j
 		moveq	#0,d1
 		move.w	(a1)+,d1
-		move.w	d1,($FFFFB008).w
+		move.w	d1,(MainCharacter+x_pos).w
 		moveq	#0,d0
 		move.w	(a1),d0
-		move.w	d0,($FFFFB00C).w
+		move.w	d0,(MainCharacter+y_pos).w
 
 LevelSize_StartLocLoaded:		; CODE XREF: LevelSizeLoad+18Ej
 		subi.w	#$A0,d1	; ' '
@@ -6853,7 +6862,7 @@ loc_5AA4:				; CODE XREF: DeformBGLayer+4j
 		clr.w	($FFFFEE5A).w
 		clr.w	($FFFFEE5C).w
 		clr.w	($FFFFEE5E).w
-		lea	($FFFFB000).w,a0
+		lea	(MainCharacter).w,a0
 		lea	($FFFFEE00).w,a1
 		lea	($FFFFEE40).w,a2
 		lea	($FFFFEE50).w,a3
@@ -6867,7 +6876,7 @@ loc_5AA4:				; CODE XREF: DeformBGLayer+4j
 		bsr.w	ScrollVertical
 		tst.w	(Two_player_mode).w
 		beq.s	loc_5B2A
-		lea	($FFFFB040).w,a0
+		lea	(Sidekick).w,a0
 		lea	($FFFFEE20).w,a1
 		lea	($FFFFEE48).w,a2
 		lea	($FFFFEE58).w,a3
@@ -7895,7 +7904,7 @@ sub_6514:				; CODE XREF: ScrollHorizontal+2p
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_6536:				; CODE XREF: sub_6514+2j
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 
 loc_653A:				; CODE XREF: sub_6514+20j
 		sub.w	(a1),d0
@@ -7947,14 +7956,14 @@ loc_657A:				; CODE XREF: sub_6514+48j sub_6514+4Ej ...
 ScrollVertical:				; CODE XREF: DeformBGLayer+54p
 					; DeformBGLayer+8Ap
 		moveq	#0,d1
-		move.w	$C(a0),d0
+		move.w	y_pos(a0),d0
 		sub.w	(a1),d0
-		btst	#2,$22(a0)
+		btst	#2,status(a0)
 		beq.s	loc_6598
 		subq.w	#5,d0
 
 loc_6598:				; CODE XREF: ScrollVertical+Ej
-		btst	#1,$22(a0)
+		btst	#1,status(a0)
 		beq.s	loc_65B8
 		addi.w	#$20,d0	; ' '
 		sub.w	($FFFFEED8).w,d0
@@ -8043,9 +8052,9 @@ loc_6634:				; CODE XREF: ScrollVertical+A0j
 		cmpi.w	#$FF00,d1
 		bgt.s	loc_6656
 		andi.w	#$7FF,d1
-		andi.w	#$7FF,$C(a0)
+		andi.w	#$7FF,y_pos(a0)
 		andi.w	#$7FF,(a1)
-		andi.w	#$3FF,8(a1)
+		andi.w	#$3FF,x_pos(a1)
 		bra.s	loc_6686
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -8066,9 +8075,9 @@ loc_6664:				; CODE XREF: ScrollVertical+9Cj
 		blt.s	loc_6686
 		subi.w	#$800,d1
 		bcs.s	loc_6682
-		andi.w	#$7FF,$C(a0)
+		andi.w	#$7FF,y_pos(a0)
 		subi.w	#$800,(a1)
-		andi.w	#$3FF,8(a1)
+		andi.w	#$3FF,x_pos(a1)
 		bra.s	loc_6686
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -9914,7 +9923,7 @@ loc_756C:				; CODE XREF: DynScreenResizeLoad+1Cj
 		addi.w	#8,d0
 		cmp.w	($FFFFEECE).w,d0
 		bcs.s	loc_7586
-		btst	#1,($FFFFB022).w
+		btst	#1,(MainCharacter+status).w
 		beq.s	loc_7586
 		add.w	d1,d1
 		add.w	d1,d1
@@ -10033,8 +10042,8 @@ loc_7672:				; CODE XREF: ROM:0000766Cj
 		bsr.w	SingleObjLoad
 		bne.s	loc_7692
 		move.b	#$3D,0(a1) ; '='
-		move.w	#$2A60,8(a1)
-		move.w	#$280,$C(a1)
+		move.w	#$2A60,x_pos(a1)
+		move.w	#$280,y_pos(a1)
 
 loc_7692:				; CODE XREF: ROM:0000767Ej
 		move.w	#MusID_Boss,d0
@@ -10116,7 +10125,7 @@ locret_7726:				; CODE XREF: ROM:000076EEj
 DynResize_LZ4:				; DATA XREF: ROM:DynResize_LZ_Indexo
 		cmpi.w	#$D00,($FFFFEE00).w
 		bcs.s	locret_774E
-		cmpi.w	#$18,($FFFFB00C).w
+		cmpi.w	#$18,(MainCharacter+y_pos).w
 		bcc.s	locret_774E
 		clr.b	($FFFFFE30).w
 		move.w	#1,($FFFFFE02).w
@@ -10287,8 +10296,8 @@ DynResize_CPZ3_BossCheck:
 		bsr.w	SingleObjLoad
 		bne.s	DynResize_CPZ3_Null
 		move.b	#$55,0(a1)	; load Obj55 (EHZ boss, likely CPZ boss at one point)
-		move.w	#$680,8(a1)
-		move.w	#$540,$C(a1)
+		move.w	#$680,x_pos(a1)
+		move.w	#$540,y_pos(a1)
 		moveq	#$11,d0
 		bra.w	LoadPLC
 ; ===========================================================================
@@ -10339,8 +10348,8 @@ DynResize_EHZ2_01:			; DATA XREF: ROM:DynResize_EHZ2_Indexo
 		bne.s	loc_7946
 		move.b	#$55,(a1) ; 'U'
 		move.b	#$81,$28(a1)
-		move.w	#$29D0,8(a1)
-		move.w	#$426,$C(a1)
+		move.w	#$29D0,x_pos(a1)
+		move.w	#$426,y_pos(a1)
 
 loc_7946:				; CODE XREF: ROM:0000792Ej
 		move.w	#MusID_Boss,d0
@@ -10451,7 +10460,7 @@ DynResize_HPZ2:				; DATA XREF: ROM:000079F2o
 		cmpi.w	#$25A0,($FFFFEE00).w
 		bcs.s	locret_7A1A
 		move.w	#$420,($FFFFEEC6).w
-		cmpi.w	#$4D0,($FFFFB00C).w
+		cmpi.w	#$4D0,(MainCharacter+y_pos).w
 		bcs.s	locret_7A1A
 		move.w	#$520,($FFFFEEC6).w
 
@@ -10697,29 +10706,29 @@ Obj11_Index:	dc.w loc_7BC6-Obj11_Index ; DATA XREF: ROM:Obj11_Indexo
 
 loc_7BC6:				; DATA XREF: ROM:Obj11_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_obj11_GHZ,4(a0)
-		move.w	#$44C6,2(a0)
-		move.b	#3,$18(a0)
+		move.l	#Map_obj11_GHZ,mappings(a0)
+		move.w	#$44C6,art_tile(a0)
+		move.b	#3,priority(a0)
 		cmpi.b	#3,(Current_Zone).w
 		bne.s	loc_7BFA
-		move.l	#Map_obj11,4(a0)
-		move.w	#$43C6,2(a0)
-		move.b	#3,$18(a0)
+		move.l	#Map_obj11,mappings(a0)
+		move.w	#$43C6,art_tile(a0)
+		move.b	#3,priority(a0)
 
 loc_7BFA:				; CODE XREF: ROM:00007BE4j
 		cmpi.b	#4,(Current_Zone).w
 		bne.s	loc_7C14
 		addq.b	#4,routine(a0)
-		move.l	#Map_obj11_HPZ,4(a0)
-		move.w	#$6300,2(a0)
+		move.l	#Map_obj11_HPZ,mappings(a0)
+		move.w	#$6300,art_tile(a0)
 
 loc_7C14:				; CODE XREF: ROM:00007C00j
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,1(a0)
-		move.b	#$80,$19(a0)
-		move.w	$C(a0),d2
+		move.b	#$80,width_pixels(a0)
+		move.w	y_pos(a0),d2
 		move.w	d2,$3C(a0)
-		move.w	8(a0),d3
+		move.w	x_pos(a0),d3
 		lea	$28(a0),a2
 		moveq	#0,d1
 		move.b	(a2),d1
@@ -10732,7 +10741,7 @@ loc_7C14:				; CODE XREF: ROM:00007C00j
 		bsr.s	sub_7C76
 		move.w	$28(a1),d0
 		subq.w	#8,d0
-		move.w	d0,8(a1)
+		move.w	d0,x_pos(a1)
 		move.l	a1,$30(a0)
 		swap	d1
 		subq.w	#8,d1
@@ -10745,7 +10754,7 @@ loc_7C14:				; CODE XREF: ROM:00007C00j
 		add.w	d4,d0
 		move.w	$10(a1,d0.w),d0
 		subq.w	#8,d0
-		move.w	d0,8(a1)
+		move.w	d0,x_pos(a1)
 
 loc_7C74:				; CODE XREF: ROM:00007C5Aj
 		bra.s	loc_7CC8
@@ -10758,10 +10767,10 @@ sub_7C76:				; CODE XREF: ROM:00007C46p
 		bsr.w	SingleObjLoad2
 		bne.s	locret_7CC6
 		move.b	0(a0),0(a1)
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
-		move.l	4(a0),4(a1)
-		move.w	2(a0),2(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
+		move.l	mappings(a0),mappings(a1)
+		move.w	art_tile(a0),art_tile(a1)
 		move.b	1(a0),1(a1)
 		bset	#6,1(a1)
 		move.b	#$40,$E(a1) ; '@'
@@ -10784,7 +10793,7 @@ locret_7CC6:				; CODE XREF: sub_7C76+4j
 
 loc_7CC8:				; CODE XREF: ROM:loc_7C74j
 					; DATA XREF: ROM:00007BC0o
-		move.b	$22(a0),d0
+		move.b	status(a0),d0
 		andi.b	#$18,d0
 		bne.s	loc_7CDE
 		tst.b	$3E(a0)
@@ -10825,7 +10834,7 @@ loc_7D0A:				; CODE XREF: ROM:00007CD6j
 		addq.w	#8,d1
 		add.w	d2,d2
 		moveq	#8,d3
-		move.w	8(a0),d4
+		move.w	x_pos(a0),d4
 		bsr.w	sub_7DC0
 
 loc_7D22:				; CODE XREF: ROM:00007DBCj
@@ -10835,7 +10844,7 @@ loc_7D22:				; CODE XREF: ROM:00007DBCj
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_7D2A:				; CODE XREF: ROM:00007D26j
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	($FFFFF7DA).w,d0
 		cmpi.w	#$280,d0
@@ -10860,7 +10869,7 @@ loc_7D5A:				; DATA XREF: ROM:00007BC2o
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_7D5E:				; DATA XREF: ROM:00007BC4o
-		move.b	$22(a0),d0
+		move.b	status(a0),d0
 		andi.b	#$18,d0
 		bne.s	loc_7D74
 		tst.b	$3E(a0)
@@ -10901,7 +10910,7 @@ loc_7DA0:				; CODE XREF: ROM:00007D6Cj
 		addq.w	#8,d1
 		add.w	d2,d2
 		moveq	#8,d3
-		move.w	8(a0),d4
+		move.w	x_pos(a0),d4
 		bsr.w	sub_7DC0
 		bsr.w	sub_7E60
 		bra.w	loc_7D22
@@ -10911,13 +10920,13 @@ loc_7DA0:				; CODE XREF: ROM:00007D6Cj
 
 sub_7DC0:				; CODE XREF: ROM:00007D1Ep
 					; ROM:00007DB4p
-		lea	($FFFFB040).w,a1
+		lea	(Sidekick).w,a1
 		moveq	#4,d6
 		moveq	#$3B,d5	; ';'
 		movem.l	d1-d4,-(sp)
 		bsr.s	sub_7DDA
 		movem.l	(sp)+,d1-d4
-		lea	($FFFFB000).w,a1
+		lea	(MainCharacter).w,a1
 		subq.b	#1,d6
 		moveq	#$3F,d5	; '?'
 ; End of function sub_7DC0
@@ -10927,21 +10936,21 @@ sub_7DC0:				; CODE XREF: ROM:00007D1Ep
 
 
 sub_7DDA:				; CODE XREF: sub_7DC0+Cp
-		btst	d6,$22(a0)
+		btst	d6,status(a0)
 		beq.s	loc_7E3E
-		btst	#1,$22(a1)
+		btst	#1,status(a1)
 		bne.s	loc_7DFA
 		moveq	#0,d0
-		move.w	8(a1),d0
-		sub.w	8(a0),d0
+		move.w	x_pos(a1),d0
+		sub.w	x_pos(a0),d0
 		add.w	d1,d0
 		bmi.s	loc_7DFA
 		cmp.w	d2,d0
 		bcs.s	loc_7E08
 
 loc_7DFA:				; CODE XREF: sub_7DDA+Cj sub_7DDA+1Aj
-		bclr	#3,$22(a1)
-		bclr	d6,$22(a0)
+		bclr	#3,status(a1)
+		bclr	d6,status(a0)
 		moveq	#0,d4
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -10965,7 +10974,7 @@ loc_7E20:				; CODE XREF: sub_7DDA+3Cj
 		moveq	#0,d1
 		move.b	$16(a1),d1
 		sub.w	d1,d0
-		move.w	d0,$C(a1)
+		move.w	d0,y_pos(a1)
 		moveq	#0,d4
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -10974,11 +10983,11 @@ loc_7E3E:				; CODE XREF: sub_7DDA+4j
 		move.w	d1,-(sp)
 		bsr.w	sub_F880
 		move.w	(sp)+,d1
-		btst	d6,$22(a0)
+		btst	d6,status(a0)
 		beq.s	locret_7E5E
 		moveq	#0,d0
-		move.w	8(a1),d0
-		sub.w	8(a0),d0
+		move.w	x_pos(a1),d0
+		sub.w	x_pos(a0),d0
 		add.w	d1,d0
 		lsr.w	#4,d0
 		move.b	d0,(a0,d5.w)
@@ -10993,7 +11002,7 @@ locret_7E5E:				; CODE XREF: sub_7DDA+70j
 
 sub_7E60:				; CODE XREF: ROM:00007DB8p
 		moveq	#0,d0
-		tst.w	($FFFFB010).w
+		tst.w	(MainCharacter+x_vel).w
 		bne.s	loc_7E72
 		move.b	($FFFFFE0F).w,d0
 		andi.w	#$1C,d0
@@ -11005,7 +11014,7 @@ loc_7E72:				; CODE XREF: sub_7E60+6j
 		swap	d2
 		move.b	byte_7E9E(pc,d0.w),d2
 		moveq	#0,d0
-		tst.w	($FFFFB050).w
+		tst.w	(Sidekick+x_vel).w
 		bne.s	loc_7E90
 		move.b	($FFFFFE0F).w,d0
 		andi.w	#$1C,d0
@@ -11025,13 +11034,13 @@ byte_7E9F:	dc.b   2,  1,  2,  1,  2,  1,  2,  0,  1,  0,  0,  0,  0,  0,  1; 0
 loc_7EAE:				; CODE XREF: sub_7E60+3Cj
 		moveq	#$FFFFFFFE,d3
 		moveq	#$FFFFFFFE,d4
-		move.b	$22(a0),d0
+		move.b	status(a0),d0
 		andi.b	#8,d0
 		beq.s	loc_7EC0
 		move.b	$3F(a0),d3
 
 loc_7EC0:				; CODE XREF: sub_7E60+5Aj
-		move.b	$22(a0),d0
+		move.b	status(a0),d0
 		andi.b	#$10,d0
 		beq.s	loc_7ECE
 		move.b	$3B(a0),d4
@@ -11248,32 +11257,32 @@ Obj15_Index:	dc.w loc_821E-Obj15_Index ; DATA XREF: ROM:Obj15_Indexo
 
 loc_821E:				; DATA XREF: ROM:Obj15_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj15,4(a0)
-		move.w	#$44D0,2(a0)
+		move.l	#Map_Obj15,mappings(a0)
+		move.w	#$44D0,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,1(a0)
-		move.b	#3,$18(a0)
-		move.b	#$18,$19(a0)
-		move.b	#8,$16(a0)
-		move.w	$C(a0),$38(a0)
-		move.w	8(a0),$3A(a0)
+		move.b	#3,priority(a0)
+		move.b	#$18,width_pixels(a0)
+		move.b	#8,y_radius(a0)
+		move.w	y_pos(a0),$38(a0)
+		move.w	x_pos(a0),$3A(a0)
 		cmpi.b	#3,(Current_Zone).w
 		bne.s	loc_8284
-		move.l	#Map_Obj15_EHZ,4(a0)
-		move.w	#$43DC,2(a0)
+		move.l	#Map_Obj15_EHZ,mappings(a0)
+		move.w	#$43DC,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#$20,$19(a0) ; ' '
-		move.b	#$10,$16(a0)
+		move.b	#$20,width_pixels(a0) ; ' '
+		move.b	#$10,y_radius(a0)
 		move.b	#$99,$20(a0)
 
 loc_8284:				; CODE XREF: ROM:0000825Ej
 		cmpi.b	#2,(Current_Zone).w
 		bne.s	loc_82BE
-		move.l	#Map_Obj15_CPZ,4(a0)
-		move.w	#$2418,2(a0)
+		move.l	#Map_Obj15_CPZ,mappings(a0)
+		move.w	#$2418,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#$20,$19(a0) ; ' '
-		move.b	#$10,$16(a0)
+		move.b	#$20,width_pixels(a0) ; ' '
+		move.b	#$10,y_radius(a0)
 		lea	$28(a0),a2
 		move.b	(a2),d0
 		lsl.w	#4,d0
@@ -11295,7 +11304,7 @@ loc_82BE:				; CODE XREF: ROM:0000828Aj
 		addi.b	#8,d3
 		move.b	d3,$3C(a0)
 		subi.b	#8,d3
-		tst.b	$1A(a0)
+		tst.b	mapping_frame(a0)
 		beq.s	loc_82F0
 		addi.b	#8,d3
 		subq.w	#1,d1
@@ -11312,19 +11321,19 @@ loc_82F0:				; CODE XREF: ROM:000082E8j
 		move.b	d5,(a2)+
 		move.b	#8,routine(a1)
 		move.b	d4,0(a1)
-		move.l	4(a0),4(a1)
-		move.w	2(a0),2(a1)
-		bclr	#6,2(a1)
+		move.l	mappings(a0),mappings(a1)
+		move.w	art_tile(a0),art_tile(a1)
+		bclr	#6,art_tile(a1)
 		move.b	#4,1(a1)
-		move.b	#4,$18(a1)
-		move.b	#8,$19(a1)
-		move.b	#1,$1A(a1)
+		move.b	#4,priority(a1)
+		move.b	#8,width_pixels(a1)
+		move.b	#1,mapping_frame(a1)
 		move.b	d3,$3C(a1)
 		subi.b	#$10,d3
 		bcc.s	loc_8358
-		move.b	#2,$1A(a1)
-		move.b	#3,$18(a1)
-		bset	#6,2(a1)
+		move.b	#2,mapping_frame(a1)
+		move.b	#3,priority(a1)
+		bset	#6,art_tile(a1)
 
 loc_8358:				; CODE XREF: ROM:00008344j
 		dbf	d1,loc_82F0
@@ -11333,11 +11342,11 @@ loc_835C:				; CODE XREF: ROM:000082F4j
 		move.w	(sp)+,d1
 		btst	#4,d1
 		beq.s	loc_8388
-		move.l	#Map_Obj48,4(a0)
-		move.w	#$43AA,2(a0)
+		move.l	#Map_Obj48,mappings(a0)
+		move.w	#$43AA,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#1,$1A(a0)
-		move.b	#2,$18(a0)
+		move.b	#1,mapping_frame(a0)
+		move.b	#2,priority(a0)
 		move.b	#$81,$20(a0)
 
 loc_8388:				; CODE XREF: ROM:000082BAj
@@ -11347,18 +11356,18 @@ loc_8388:				; CODE XREF: ROM:000082BAj
 		lsr.w	#6,d5
 		andi.w	#$7F,d5	; ''
 		move.b	d5,(a2)+
-		move.w	#$4080,$26(a0)
+		move.w	#$4080,angle(a0)
 		move.w	#$FE00,$3E(a0)
 		cmpi.b	#5,(Current_Zone).w
 		beq.s	loc_83CA
 
 loc_83AA:				; DATA XREF: ROM:00008214o
-		move.w	8(a0),-(sp)
+		move.w	x_pos(a0),-(sp)
 		bsr.w	sub_83D2
 		moveq	#0,d1
-		move.b	$19(a0),d1
+		move.b	width_pixels(a0),d1
 		moveq	#0,d3
-		move.b	$16(a0),d3
+		move.b	y_radius(a0),d3
 		addq.b	#1,d3
 		move.w	(sp)+,d4
 		bsr.w	sub_F82E
@@ -11377,7 +11386,7 @@ sub_83D2:				; CODE XREF: ROM:000083AEp
 					; ROM:loc_83CAp
 		move.b	($FFFFFE78).w,d0
 		move.w	#$80,d1	; '€'
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		beq.s	loc_83E6
 		neg.w	d0
 		add.w	d1,d0
@@ -11392,7 +11401,7 @@ loc_83EA:				; CODE XREF: ROM:0001922Ap
 		move.w	$3E(a0),d0
 		addi.w	#8,d0
 		move.w	d0,$3E(a0)
-		add.w	d0,$26(a0)
+		add.w	d0,angle(a0)
 		cmpi.w	#$200,d0
 		bne.s	loc_842A
 		move.b	#1,$3D(a0)
@@ -11403,13 +11412,13 @@ loc_840E:				; CODE XREF: sub_83D2+1Cj
 		move.w	$3E(a0),d0
 		subi.w	#8,d0
 		move.w	d0,$3E(a0)
-		add.w	d0,$26(a0)
+		add.w	d0,angle(a0)
 		cmpi.w	#$FE00,d0
 		bne.s	loc_842A
 		move.b	#0,$3D(a0)
 
 loc_842A:				; CODE XREF: sub_83D2+32j sub_83D2+3Aj ...
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 
 loc_842E:				; CODE XREF: ROM:0001921Ap
 		bsr.w	CalcSine
@@ -11423,7 +11432,7 @@ loc_8442:				; CODE XREF: sub_83D2+9Aj
 		moveq	#0,d4
 		move.b	(a2)+,d4
 		lsl.w	#6,d4
-		addi.l	#$FFFFB000,d4
+		addi.l	#Object_RAM,d4
 		movea.l	d4,a1
 		moveq	#0,d4
 		move.b	$3C(a1),d4
@@ -11434,8 +11443,8 @@ loc_8442:				; CODE XREF: sub_83D2+9Aj
 		asr.l	#8,d5
 		add.w	d2,d4
 		add.w	d3,d5
-		move.w	d4,$C(a1)
-		move.w	d5,8(a1)
+		move.w	d4,y_pos(a1)
+		move.w	d5,x_pos(a1)
 		dbf	d6,loc_8442
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -11453,8 +11462,8 @@ loc_8472:				; CODE XREF: sub_83D2:loc_83E6j
 		asr.l	#8,d5
 		add.w	d2,d4
 		add.w	d3,d5
-		move.w	d4,$C(a0)
-		move.w	d5,8(a0)
+		move.w	d4,y_pos(a0)
+		move.w	d5,x_pos(a0)
 		lea	$28(a0),a2
 		moveq	#0,d6
 		move.b	(a2)+,d6
@@ -11475,15 +11484,15 @@ loc_84BA:				; CODE XREF: sub_83D2+114j
 		moveq	#0,d6
 		move.b	-(a2),d6
 		lsl.w	#6,d6
-		addi.l	#$FFFFB000,d6
+		addi.l	#Object_RAM,d6
 		movea.l	d6,a1
 		movem.l	d4-d5,-(sp)
 		swap	d4
 		swap	d5
 		add.w	d2,d4
 		add.w	d3,d5
-		move.w	d4,$C(a1)
-		move.w	d5,8(a1)
+		move.w	d4,y_pos(a1)
+		move.w	d5,x_pos(a1)
 		movem.l	(sp)+,d4-d5
 		add.l	d0,d4
 		add.l	d1,d5
@@ -11516,7 +11525,7 @@ loc_850E:				; CODE XREF: ROM:00008520j
 		moveq	#0,d0
 		move.b	(a2)+,d0
 		lsl.w	#6,d0
-		addi.l	#$FFFFB000,d0
+		addi.l	#Object_RAM,d0
 		movea.l	d0,a1
 		bsr.w	DeleteObject2
 		dbf	d2,loc_850E
@@ -11608,15 +11617,15 @@ Obj17_Index:	dc.w loc_8680-Obj17_Index ; DATA XREF: ROM:Obj17_Indexo
 
 loc_8680:				; DATA XREF: ROM:Obj17_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj17,4(a0)
-		move.w	#$4398,2(a0)
+		move.l	#Map_Obj17,mappings(a0)
+		move.w	#$4398,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#7,$22(a0)
+		move.b	#7,status(a0)
 		move.b	#4,1(a0)
-		move.b	#3,$18(a0)
-		move.b	#8,$19(a0)
-		move.w	$C(a0),d2
-		move.w	8(a0),d3
+		move.b	#3,priority(a0)
+		move.b	#8,width_pixels(a0)
+		move.w	y_pos(a0),d2
+		move.w	x_pos(a0),d3
 		move.b	0(a0),d4
 		lea	$28(a0),a2
 		moveq	#0,d1
@@ -11641,19 +11650,19 @@ loc_86D4:				; CODE XREF: ROM:loc_8746j
 		move.b	d5,(a2)+
 		move.b	#4,routine(a1)
 		move.b	d4,0(a1)
-		move.w	d2,$C(a1)
-		move.w	d3,8(a1)
-		move.l	4(a0),4(a1)
-		move.w	#$4398,2(a1)
+		move.w	d2,y_pos(a1)
+		move.w	d3,x_pos(a1)
+		move.l	mappings(a0),mappings(a1)
+		move.w	#$4398,art_tile(a1)
 		bsr.w	Adjust2PArtPointer2
 		move.b	#4,1(a1)
-		move.b	#3,$18(a1)
-		move.b	#8,$19(a1)
+		move.b	#3,priority(a1)
+		move.b	#8,width_pixels(a1)
 		move.b	d6,$3E(a1)
 		addq.b	#1,d6
 		andi.b	#7,d6
 		addi.w	#$10,d3
-		cmp.w	8(a0),d3
+		cmp.w	x_pos(a0),d3
 		bne.s	loc_8746
 		move.b	d6,$3E(a0)
 		addq.b	#1,d6
@@ -11668,7 +11677,7 @@ loc_874A:				; CODE XREF: ROM:000086D0j
 					; ROM:000086D8j
 					; DATA XREF: ...
 		bsr.w	sub_878C
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	($FFFFF7DA).w,d0
 		cmpi.w	#$280,d0
@@ -11687,7 +11696,7 @@ loc_8772:				; CODE XREF: ROM:00008784j
 		moveq	#0,d0
 		move.b	(a2)+,d0
 		lsl.w	#6,d0
-		addi.l	#$FFFFB000,d0
+		addi.l	#Object_RAM,d0
 		movea.l	d0,a1
 		bsr.w	DeleteObject2
 		dbf	d2,loc_8772
@@ -11704,7 +11713,7 @@ sub_878C:				; CODE XREF: ROM:loc_874Ap
 		move.b	#0,$20(a0)
 		add.b	$3E(a0),d0
 		andi.b	#7,d0
-		move.b	d0,$1A(a0)
+		move.b	d0,mapping_frame(a0)
 		bne.s	locret_87AA
 		move.b	#$84,$20(a0)
 
@@ -11769,31 +11778,31 @@ loc_882C:				; DATA XREF: ROM:Obj18_Indexo
 		lsr.w	#3,d0
 		andi.w	#$1E,d0
 		lea	Obj18_Conf(pc,d0.w),a2
-		move.b	(a2)+,$19(a0)
-		move.b	(a2)+,$1A(a0)
-		move.w	#$4000,2(a0)
-		move.l	#Map_Obj18,4(a0)
+		move.b	(a2)+,width_pixels(a0)
+		move.b	(a2)+,mapping_frame(a0)
+		move.w	#$4000,art_tile(a0)
+		move.l	#Map_Obj18,mappings(a0)
 		cmpi.b	#3,(Current_Zone).w
 		beq.s	loc_8866
 		cmpi.b	#5,(Current_Zone).w
 		bne.s	loc_8874
 
 loc_8866:				; CODE XREF: ROM:0000885Cj
-		move.l	#Map_obj18_EHZ,4(a0)
-		move.w	#$4000,2(a0)
+		move.l	#Map_obj18_EHZ,mappings(a0)
+		move.w	#$4000,art_tile(a0)
 
 loc_8874:				; CODE XREF: ROM:00008864j
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,1(a0)
-		move.b	#4,$18(a0)
-		move.w	$C(a0),$2C(a0)
-		move.w	$C(a0),$34(a0)
-		move.w	8(a0),$32(a0)
-		move.w	#$80,$26(a0) ; '€'
+		move.b	#4,priority(a0)
+		move.w	y_pos(a0),$2C(a0)
+		move.w	y_pos(a0),$34(a0)
+		move.w	x_pos(a0),$32(a0)
+		move.w	#$80,angle(a0) ; '€'
 		andi.b	#$F,$28(a0)
 
 loc_88A2:				; DATA XREF: ROM:0000881Co
-		move.b	$22(a0),d0
+		move.b	status(a0),d0
 		andi.b	#$18,d0
 		bne.s	loc_88B8
 		tst.b	$38(a0)
@@ -11809,11 +11818,11 @@ loc_88B8:				; CODE XREF: ROM:000088AAj
 
 loc_88C4:				; CODE XREF: ROM:000088B0j
 					; ROM:000088B6j ...
-		move.w	8(a0),-(sp)
+		move.w	x_pos(a0),-(sp)
 		bsr.w	sub_8926
 		bsr.w	sub_890C
 		moveq	#0,d1
-		move.b	$19(a0),d1
+		move.b	width_pixels(a0),d1
 		moveq	#8,d3
 		move.w	(sp)+,d4
 		bsr.w	sub_F78A
@@ -11854,7 +11863,7 @@ sub_890C:				; CODE XREF: ROM:000088CCp
 		muls.w	d1,d0
 		swap	d0
 		add.w	$2C(a0),d0
-		move.w	d0,$C(a0)
+		move.w	d0,y_pos(a0)
 		rts
 ; End of function sub_890C
 
@@ -11897,7 +11906,7 @@ locret_8956:				; DATA XREF: ROM:off_893Ao
 
 loc_8958:				; DATA XREF: ROM:00008944o
 		move.w	$32(a0),d0
-		move.b	$26(a0),d1
+		move.b	angle(a0),d1
 		neg.b	d1
 		addi.b	#$40,d1	; '@'
 		bra.s	loc_8974
@@ -11905,13 +11914,13 @@ loc_8958:				; DATA XREF: ROM:00008944o
 
 loc_8968:				; DATA XREF: ROM:0000893Co
 		move.w	$32(a0),d0
-		move.b	$26(a0),d1
+		move.b	angle(a0),d1
 		subi.b	#$40,d1	; '@'
 
 loc_8974:				; CODE XREF: ROM:00008966j
 		ext.w	d1
 		add.w	d1,d0
-		move.w	d0,8(a0)
+		move.w	d0,x_pos(a0)
 		bra.w	loc_8AD2
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -11932,7 +11941,7 @@ loc_8990:				; DATA XREF: ROM:00008952o
 
 loc_899E:				; DATA XREF: ROM:00008946o
 		move.w	$34(a0),d0
-		move.b	$26(a0),d1
+		move.b	angle(a0),d1
 		neg.b	d1
 		addi.b	#$40,d1	; '@'
 		bra.s	loc_89BA
@@ -11940,7 +11949,7 @@ loc_899E:				; DATA XREF: ROM:00008946o
 
 loc_89AE:				; DATA XREF: ROM:0000893Eo
 		move.w	$34(a0),d0
-		move.b	$26(a0),d1
+		move.b	angle(a0),d1
 		subi.b	#$40,d1	; '@'
 
 loc_89BA:				; CODE XREF: ROM:0000898Ej
@@ -11954,7 +11963,7 @@ loc_89BA:				; CODE XREF: ROM:0000898Ej
 loc_89C6:				; DATA XREF: ROM:00008940o
 		tst.w	$3A(a0)
 		bne.s	loc_89DC
-		btst	#3,$22(a0)
+		btst	#3,status(a0)
 		beq.s	locret_89DA
 		move.w	#$1E,$3A(a0)
 
@@ -11976,15 +11985,15 @@ loc_89EE:				; DATA XREF: ROM:00008942o
 		beq.s	loc_8A2E
 		subq.w	#1,$3A(a0)
 		bne.s	loc_8A2E
-		btst	#3,$22(a0)
+		btst	#3,status(a0)
 		beq.s	loc_8A28
-		lea	($FFFFB000).w,a1
-		bset	#1,$22(a1)
-		bclr	#3,$22(a1)
+		lea	(MainCharacter).w,a1
+		bset	#1,status(a1)
+		bclr	#3,status(a1)
 		move.b	#2,routine(a1)
-		bclr	#3,$22(a0)
-		clr.b	$25(a0)
-		move.w	$12(a0),$12(a1)
+		bclr	#3,status(a0)
+		clr.b	routine_secondary(a0)
+		move.w	y_vel(a0),y_vel(a1)
 
 loc_8A28:				; CODE XREF: ROM:00008A00j
 		move.b	#6,routine(a0)
@@ -11992,12 +12001,12 @@ loc_8A28:				; CODE XREF: ROM:00008A00j
 loc_8A2E:				; CODE XREF: ROM:000089F2j
 					; ROM:000089F8j
 		move.l	$2C(a0),d3
-		move.w	$12(a0),d0
+		move.w	y_vel(a0),d0
 		ext.l	d0
 		asl.l	#8,d0
 		add.l	d0,d3
 		move.l	d3,$2C(a0)
-		addi.w	#$38,$12(a0) ; '8'
+		addi.w	#$38,y_vel(a0) ; '8'
 		move.w	($FFFFEECE).w,d0
 		addi.w	#$E0,d0	; 'à'
 		cmp.w	$2C(a0),d0
@@ -12045,7 +12054,7 @@ locret_8A9E:				; CODE XREF: ROM:00008A98j
 
 loc_8AA0:				; DATA XREF: ROM:0000894Eo
 		move.w	$34(a0),d0
-		move.b	$26(a0),d1
+		move.b	angle(a0),d1
 		subi.b	#$40,d1	; '@'
 		ext.w	d1
 		asr.w	#1,d1
@@ -12056,7 +12065,7 @@ loc_8AA0:				; DATA XREF: ROM:0000894Eo
 
 loc_8ABA:				; DATA XREF: ROM:00008950o
 		move.w	$34(a0),d0
-		move.b	$26(a0),d1
+		move.b	angle(a0),d1
 		neg.b	d1
 		addi.b	#$40,d1	; '@'
 		ext.w	d1
@@ -12066,7 +12075,7 @@ loc_8ABA:				; DATA XREF: ROM:00008950o
 
 loc_8AD2:				; CODE XREF: ROM:0000897Cj
 					; ROM:000089C2j ...
-		move.b	($FFFFFE78).w,$26(a0)
+		move.b	($FFFFFE78).w,angle(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 Map_Obj18x:	dc.w word_8ADE-Map_Obj18x ; DATA XREF: ROM:Map_Obj18xo
@@ -12133,27 +12142,27 @@ Obj1A_Index:	dc.w loc_8C58-Obj1A_Index ; DATA XREF: ROM:Obj1A_Indexo
 
 loc_8C58:				; DATA XREF: ROM:Obj1A_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj1A,4(a0)
-		move.w	#$4000,2(a0)
+		move.l	#Map_Obj1A,mappings(a0)
+		move.w	#$4000,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		ori.b	#4,1(a0)
-		move.b	#4,$18(a0)
+		move.b	#4,priority(a0)
 		move.b	#7,$38(a0)
-		move.b	$28(a0),$1A(a0)
+		move.b	$28(a0),mapping_frame(a0)
 		cmpi.b	#4,(Current_Zone).w
 		bne.s	loc_8CB0
-		move.l	#Map_Obj1A_HPZ,4(a0)
-		move.w	#$434A,2(a0)
+		move.l	#Map_Obj1A_HPZ,mappings(a0)
+		move.w	#$434A,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#$30,$19(a0) ; '0'
+		move.b	#$30,width_pixels(a0) ; '0'
 		move.l	#Obj1A_Conf_HPZ,$3C(a0)
 		bra.s	loc_8CCA
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_8CB0:				; CODE XREF: ROM:00008C8Cj
 		move.l	#Obj1A_Conf,$3C(a0)
-		move.b	#$34,$19(a0) ; '4'
-		move.b	#$38,$16(a0) ; '8'
+		move.b	#$34,width_pixels(a0) ; '4'
+		move.b	#$38,y_radius(a0) ; '8'
 		bset	#4,1(a0)
 
 loc_8CCA:				; CODE XREF: ROM:00008CAEj
@@ -12165,7 +12174,7 @@ loc_8CCA:				; CODE XREF: ROM:00008CAEj
 		subq.b	#1,$38(a0)
 
 loc_8CDC:				; CODE XREF: ROM:00008CCEj
-		move.b	$22(a0),d0
+		move.b	status(a0),d0
 		andi.b	#$18,d0
 		beq.s	sub_8CEC
 		move.b	#1,$3A(a0)
@@ -12180,9 +12189,9 @@ sub_8CEC:				; CODE XREF: ROM:00008CE4j
 ; FUNCTION CHUNK AT 0000CF3A SIZE 00000002 BYTES
 
 		moveq	#0,d1
-		move.b	$19(a0),d1
+		move.b	width_pixels(a0),d1
 		movea.l	$3C(a0),a2
-		move.w	8(a0),d4
+		move.w	x_pos(a0),d4
 		bsr.w	sub_F7DC
 		bra.w	MarkObjGone
 ; End of function sub_8CEC
@@ -12202,19 +12211,19 @@ loc_8D16:				; CODE XREF: ROM:00008D0Cj
 		bsr.w	sub_8CEC
 		subq.b	#1,$38(a0)
 		bne.s	locret_8D44
-		lea	($FFFFB000).w,a1
+		lea	(MainCharacter).w,a1
 		bsr.s	sub_8D2A
-		lea	($FFFFB040).w,a1
+		lea	(Sidekick).w,a1
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
 
 
 sub_8D2A:				; CODE XREF: ROM:00008D24p
-		btst	#3,$22(a1)
+		btst	#3,status(a1)
 		beq.s	locret_8D44
-		bclr	#3,$22(a1)
-		bclr	#5,$22(a1)
-		move.b	#1,$1D(a1)
+		bclr	#3,status(a1)
+		bclr	#5,status(a1)
+		move.b	#1,prev_anim(a1)
 
 locret_8D44:				; CODE XREF: ROM:00008D1Ej sub_8D2A+6j
 		rts
@@ -12243,23 +12252,23 @@ S1Obj_53_Index:	dc.w loc_8D6A-S1Obj_53_Index ; DATA XREF: ROM:S1Obj_53_Indexo
 
 loc_8D6A:				; DATA XREF: ROM:S1Obj_53_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_S1Obj53,4(a0)
-		move.w	#$42B8,2(a0)
+		move.l	#Map_S1Obj53,mappings(a0)
+		move.w	#$42B8,art_tile(a0)
 		cmpi.b	#3,(Current_Zone).w
 		bne.s	loc_8D8E
-		move.w	#$44E0,2(a0)
-		addq.b	#2,$1A(a0)
+		move.w	#$44E0,art_tile(a0)
+		addq.b	#2,mapping_frame(a0)
 
 loc_8D8E:				; CODE XREF: ROM:00008D82j
 		cmpi.b	#5,(Current_Zone).w
 		bne.s	loc_8D9C
-		move.w	#$43F5,2(a0)
+		move.w	#$43F5,art_tile(a0)
 
 loc_8D9C:				; CODE XREF: ROM:00008D94j
 		ori.b	#4,1(a0)
-		move.b	#4,$18(a0)
+		move.b	#4,priority(a0)
 		move.b	#7,$38(a0)
-		move.b	#$44,$19(a0) ; 'D'
+		move.b	#$44,width_pixels(a0) ; 'D'
 
 loc_8DB4:				; DATA XREF: ROM:00008D66o
 		tst.b	$3A(a0)
@@ -12269,7 +12278,7 @@ loc_8DB4:				; DATA XREF: ROM:00008D66o
 		subq.b	#1,$38(a0)
 
 loc_8DC6:				; CODE XREF: ROM:00008DB8j
-		move.b	$22(a0),d0
+		move.b	status(a0),d0
 		andi.b	#$18,d0
 		beq.s	sub_8DD6
 		move.b	#1,$3A(a0)
@@ -12281,7 +12290,7 @@ sub_8DD6:				; CODE XREF: ROM:00008DCEj
 					; ROM:loc_8DFEp
 		move.w	#$20,d1	; ' '
 		move.w	#8,d3
-		move.w	8(a0),d4
+		move.w	x_pos(a0),d4
 		bsr.w	sub_F78A
 		bra.w	MarkObjGone
 ; End of function sub_8DD6
@@ -12301,19 +12310,19 @@ loc_8DFE:				; CODE XREF: ROM:00008DF4j
 		bsr.w	sub_8DD6
 		subq.b	#1,$38(a0)
 		bne.s	locret_8E2C
-		lea	($FFFFB000).w,a1
+		lea	(MainCharacter).w,a1
 		bsr.s	sub_8E12
-		lea	($FFFFB040).w,a1
+		lea	(Sidekick).w,a1
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
 
 
 sub_8E12:				; CODE XREF: ROM:00008E0Cp
-		btst	#3,$22(a1)
+		btst	#3,status(a1)
 		beq.s	locret_8E2C
-		bclr	#3,$22(a1)
-		bclr	#5,$22(a1)
-		move.b	#1,$1D(a1)
+		bclr	#3,status(a1)
+		bclr	#5,status(a1)
+		move.b	#1,prev_anim(a1)
 
 locret_8E2C:				; CODE XREF: ROM:00008E06j sub_8E12+6j
 		rts
@@ -12335,7 +12344,7 @@ loc_8E3E:				; CODE XREF: ROM:00008DBEj
 		lea	(byte_8F1F).l,a4
 
 loc_8E52:				; CODE XREF: ROM:00008E4Aj
-		addq.b	#1,$1A(a0)
+		addq.b	#1,mapping_frame(a0)
 		bra.s	loc_8E70
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -12346,13 +12355,13 @@ loc_8E58:				; CODE XREF: ROM:00008CD4j
 		lea	(byte_8F0B).l,a4
 
 loc_8E6C:				; CODE XREF: ROM:00008E64j
-		addq.b	#2,$1A(a0)
+		addq.b	#2,mapping_frame(a0)
 
 loc_8E70:				; CODE XREF: ROM:00008E56j
 		moveq	#0,d0
-		move.b	$1A(a0),d0
+		move.b	mapping_frame(a0),d0
 		add.w	d0,d0
-		movea.l	4(a0),a3
+		movea.l	mappings(a0),a3
 		adda.w	(a3,d0.w),a3
 		move.w	(a3)+,d1
 		subq.w	#1,d1
@@ -12371,14 +12380,14 @@ loc_8E96:				; CODE XREF: ROM:loc_8EE0j
 loc_8E9E:				; CODE XREF: ROM:00008E94j
 		move.b	#4,routine(a1)
 		move.b	d4,0(a1)
-		move.l	a3,4(a1)
+		move.l	a3,mappings(a1)
 		move.b	d5,1(a1)
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
-		move.w	2(a0),2(a1)
-		move.b	$18(a0),$18(a1)
-		move.b	$19(a0),$19(a1)
-		move.b	$16(a0),$16(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
+		move.w	art_tile(a0),art_tile(a1)
+		move.b	priority(a0),priority(a1)
+		move.b	width_pixels(a0),width_pixels(a1)
+		move.b	y_radius(a0),y_radius(a1)
 		move.b	(a4)+,$38(a1)
 		cmpa.l	a0,a1
 		bcc.s	loc_8EE0
@@ -12621,13 +12630,13 @@ loc_93F4:				; DATA XREF: ROM:Obj1C_Indexo
 		andi.w	#$F,d0
 		mulu.w	#$A,d0
 		lea	Obj1C_Conf(pc,d0.w),a1
-		move.l	(a1)+,4(a0)
-		move.w	(a1)+,2(a0)
+		move.l	(a1)+,mappings(a0)
+		move.w	(a1)+,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		ori.b	#4,1(a0)
-		move.b	(a1)+,$1A(a0)
-		move.b	(a1)+,$19(a0)
-		move.b	(a1)+,$18(a0)
+		move.b	(a1)+,mapping_frame(a0)
+		move.b	(a1)+,width_pixels(a0)
+		move.b	(a1)+,priority(a0)
 		move.b	(a1)+,$20(a0)
 		move.b	$28(a0),d0
 		andi.w	#$F0,d0	; 'ğ'
@@ -12635,7 +12644,7 @@ loc_93F4:				; DATA XREF: ROM:Obj1C_Indexo
 		addq.b	#2,routine(a0)
 		lsr.b	#4,d0
 		subq.b	#1,d0
-		move.b	d0,$1C(a0)
+		move.b	d0,anim(a0)
 		bra.s	loc_9464
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -12647,7 +12656,7 @@ loc_9442:				; CODE XREF: ROM:00009432j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_944C:				; CODE XREF: ROM:00009446j
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	($FFFFF7DA).w,d0
 		cmpi.w	#$280,d0
@@ -12665,7 +12674,7 @@ loc_9464:				; CODE XREF: ROM:00009440j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_9478:				; CODE XREF: ROM:00009472j
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	($FFFFF7DA).w,d0
 		cmpi.w	#$280,d0
@@ -12708,50 +12717,50 @@ Obj2A_Index:	dc.w loc_94FE-Obj2A_Index ; DATA XREF: ROM:Obj2A_Indexo
 
 loc_94FE:				; DATA XREF: ROM:Obj2A_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj2A,4(a0)
-		move.w	#$42E8,2(a0)
+		move.l	#Map_Obj2A,mappings(a0)
+		move.w	#$42E8,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		ori.b	#4,1(a0)
-		move.b	#8,$19(a0)
-		move.b	#4,$18(a0)
+		move.b	#8,width_pixels(a0)
+		move.b	#4,priority(a0)
 
 loc_9526:				; DATA XREF: ROM:000094FCo
 		move.w	#$40,d1	; '@'
-		clr.b	$1C(a0)
-		move.w	($FFFFB008).w,d0
+		clr.b	anim(a0)
+		move.w	(MainCharacter+x_pos).w,d0
 		add.w	d1,d0
-		cmp.w	8(a0),d0
+		cmp.w	x_pos(a0),d0
 		bcs.s	loc_9564
 		sub.w	d1,d0
 		sub.w	d1,d0
-		cmp.w	8(a0),d0
+		cmp.w	x_pos(a0),d0
 		bcc.s	loc_9564
 		add.w	d1,d0
-		cmp.w	8(a0),d0
+		cmp.w	x_pos(a0),d0
 		bcc.s	loc_9556
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		bne.s	loc_9564
 		bra.s	loc_955E
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_9556:				; CODE XREF: ROM:0000954Aj
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		beq.s	loc_9564
 
 loc_955E:				; CODE XREF: ROM:00009554j
-		move.b	#1,$1C(a0)
+		move.b	#1,anim(a0)
 
 loc_9564:				; CODE XREF: ROM:00009538j
 					; ROM:00009542j ...
 		lea	(Ani_Obj2A).l,a1
 		bsr.w	AnimateSprite
-		tst.b	$1A(a0)
+		tst.b	mapping_frame(a0)
 		bne.s	loc_9588
 		move.w	#$11,d1
 		move.w	#$20,d2	; ' '
 		move.w	d2,d3
 		addq.w	#1,d3
-		move.w	8(a0),d4
+		move.w	x_pos(a0),d4
 		bsr.w	SolidObject
 
 loc_9588:				; CODE XREF: ROM:00009572j
@@ -12818,21 +12827,21 @@ S1Obj_1E_Index:	dc.w loc_966E-S1Obj_1E_Index ; DATA XREF: ROM:S1Obj_1E_Indexo
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_966E:				; DATA XREF: ROM:S1Obj_1E_Indexo
-		move.b	#$13,$16(a0)
-		move.b	#8,$17(a0)
-		move.l	#Map_S1Obj1E,4(a0)
-		move.w	#$2302,2(a0)
+		move.b	#$13,y_radius(a0)
+		move.b	#8,x_radius(a0)
+		move.l	#Map_S1Obj1E,mappings(a0)
+		move.w	#$2302,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,1(a0)
-		move.b	#4,$18(a0)
+		move.b	#4,priority(a0)
 		move.b	#5,$20(a0)
-		move.b	#$C,$19(a0)
+		move.b	#$C,width_pixels(a0)
 		bsr.w	ObjectMoveAndFall
 		jsr	ObjHitFloor
 		tst.w	d1
 		bpl.s	locret_96C0
-		add.w	d1,$C(a0)
-		move.w	#0,$12(a0)
+		add.w	d1,y_pos(a0)
+		move.w	#0,y_vel(a0)
 		addq.b	#2,routine(a0)
 
 locret_96C0:				; CODE XREF: ROM:000096B0j
@@ -12842,7 +12851,7 @@ locret_96C0:				; CODE XREF: ROM:000096B0j
 loc_96C2:				; DATA XREF: ROM:0000966Co
 		lea	(Ani_S1Obj1E).l,a1
 		bsr.w	AnimateSprite
-		cmpi.b	#1,$1A(a0)
+		cmpi.b	#1,mapping_frame(a0)
 		bne.s	loc_96DC
 		tst.b	$32(a0)
 		beq.s	loc_96E4
@@ -12862,19 +12871,19 @@ loc_96E4:				; CODE XREF: ROM:000096D8j
 		bsr.w	SingleObjLoad
 		bne.s	loc_972E
 		move.b	#$20,0(a1) ; ' '
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
-		move.w	#$FF00,$10(a1)
-		move.w	#0,$12(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
+		move.w	#$FF00,x_vel(a1)
+		move.w	#0,y_vel(a1)
 		moveq	#$FFFFFFFC,d0
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		beq.s	loc_971E
 		neg.w	d0
-		neg.w	$10(a1)
+		neg.w	x_vel(a1)
 
 loc_971E:				; CODE XREF: ROM:00009716j
-		add.w	d0,8(a1)
-		addi.w	#$C,$C(a1)
+		add.w	d0,x_pos(a1)
+		addi.w	#$C,y_pos(a1)
 		move.b	$28(a0),$28(a1)
 
 loc_972E:				; CODE XREF: ROM:000096EEj
@@ -12898,42 +12907,42 @@ S1Obj20_Index:	dc.w loc_9742-S1Obj20_Index ; DATA XREF: ROM:S1Obj20_Indexo
 
 loc_9742:				; DATA XREF: ROM:S1Obj20_Indexo
 		addq.b	#2,routine(a0)
-		move.b	#7,$16(a0)
-		move.l	#Map_S1Obj1E,4(a0)
-		move.w	#$2302,2(a0)
+		move.b	#7,y_radius(a0)
+		move.l	#Map_S1Obj1E,mappings(a0)
+		move.w	#$2302,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,1(a0)
-		move.b	#3,$18(a0)
+		move.b	#3,priority(a0)
 		move.b	#$87,$20(a0)
-		move.b	#8,$19(a0)
+		move.b	#8,width_pixels(a0)
 		moveq	#0,d0
 		move.b	$28(a0),d0
 		mulu.w	#$3C,d0	; '<'
 		move.w	d0,$30(a0)
-		move.b	#4,$1A(a0)
+		move.b	#4,mapping_frame(a0)
 
 loc_978A:				; DATA XREF: ROM:00009740o
 		jsr	ObjectMoveAndFall
-		tst.w	$12(a0)
+		tst.w	y_vel(a0)
 		bmi.s	loc_97C6
 		jsr	ObjHitFloor
 		tst.w	d1
 		bpl.s	loc_97C6
-		add.w	d1,$C(a0)
-		move.w	#$FD00,$12(a0)
+		add.w	d1,y_pos(a0)
+		move.w	#$FD00,y_vel(a0)
 		tst.b	d3
 		beq.s	loc_97C6
 		bmi.s	loc_97BC
-		tst.w	$10(a0)
+		tst.w	x_vel(a0)
 		bpl.s	loc_97C6
-		neg.w	$10(a0)
+		neg.w	x_vel(a0)
 		bra.s	loc_97C6
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_97BC:				; CODE XREF: ROM:000097AEj
-		tst.w	$10(a0)
+		tst.w	x_vel(a0)
 		bmi.s	loc_97C6
-		neg.w	$10(a0)
+		neg.w	x_vel(a0)
 
 loc_97C6:				; CODE XREF: ROM:00009794j
 					; ROM:0000979Ej ...
@@ -12946,15 +12955,15 @@ loc_97C6:				; CODE XREF: ROM:00009794j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_97E2:				; CODE XREF: ROM:000097CAj
-		subq.b	#1,$1E(a0)
+		subq.b	#1,anim_frame_duration(a0)
 		bpl.s	loc_97F4
-		move.b	#5,$1E(a0)
-		bchg	#0,$1A(a0)
+		move.b	#5,anim_frame_duration(a0)
+		bchg	#0,mapping_frame(a0)
 
 loc_97F4:				; CODE XREF: ROM:000097E6j
 		move.w	($FFFFEECE).w,d0
 		addi.w	#$E0,d0	; 'à'
-		cmp.w	$C(a0),d0
+		cmp.w	y_pos(a0),d0
 		bcs.w	DeleteObject
 		bra.w	DisplaySprite
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -12976,24 +12985,24 @@ Obj24_Index:	dc.w loc_981A-Obj24_Index ; DATA XREF: ROM:Obj24_Indexo
 
 loc_981A:				; DATA XREF: ROM:Obj24_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj24,4(a0)
-		move.w	#$41C,2(a0)
+		move.l	#Map_Obj24,mappings(a0)
+		move.w	#$41C,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,1(a0)
-		move.b	#1,$18(a0)
+		move.b	#1,priority(a0)
 		move.b	#0,$20(a0)
-		move.b	#$C,$19(a0)
-		move.b	#9,$1E(a0)
-		move.b	#0,$1A(a0)
+		move.b	#$C,width_pixels(a0)
+		move.b	#9,anim_frame_duration(a0)
+		move.b	#0,mapping_frame(a0)
 		move.w	#$A5,d0	; '¥'
 		jsr	(PlaySound_Special).l
 
 loc_985E:				; DATA XREF: ROM:00009818o
-		subq.b	#1,$1E(a0)
+		subq.b	#1,anim_frame_duration(a0)
 		bpl.s	loc_9878
-		move.b	#9,$1E(a0)
-		addq.b	#1,$1A(a0)
-		cmpi.b	#4,$1A(a0)
+		move.b	#9,anim_frame_duration(a0)
+		addq.b	#1,mapping_frame(a0)
+		cmpi.b	#4,mapping_frame(a0)
 		beq.w	DeleteObject
 
 loc_9878:				; CODE XREF: ROM:00009862j
@@ -13020,32 +13029,32 @@ loc_9890:				; DATA XREF: ROM:Obj27_Indexo
 		bsr.w	SingleObjLoad
 		bne.s	loc_98B2
 		move.b	#$28,0(a1) ; '('
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
 		move.w	$3E(a0),$3E(a1)
 
 loc_98B2:				; CODE XREF: ROM:00009898j
 					; DATA XREF: ROM:0000988Co
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj27,4(a0)
-		move.w	#$5A0,2(a0)
+		move.l	#Map_Obj27,mappings(a0)
+		move.w	#$5A0,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,1(a0)
-		move.b	#1,$18(a0)
+		move.b	#1,priority(a0)
 		move.b	#0,$20(a0)
-		move.b	#$C,$19(a0)
-		move.b	#7,$1E(a0)
-		move.b	#0,$1A(a0)
+		move.b	#$C,width_pixels(a0)
+		move.b	#7,anim_frame_duration(a0)
+		move.b	#0,mapping_frame(a0)
 		move.w	#$C1,d0	; 'Á'
 		jsr	(PlaySound_Special).l
 
 loc_98F6:				; DATA XREF: ROM:0000988Eo
 					; ROM:00009924o
-		subq.b	#1,$1E(a0)
+		subq.b	#1,anim_frame_duration(a0)
 		bpl.s	loc_9910
-		move.b	#7,$1E(a0)
-		addq.b	#1,$1A(a0)
-		cmpi.b	#5,$1A(a0)
+		move.b	#7,anim_frame_duration(a0)
+		addq.b	#1,mapping_frame(a0)
+		cmpi.b	#5,mapping_frame(a0)
 		beq.w	DeleteObject
 
 loc_9910:				; CODE XREF: ROM:000098FAj
@@ -13069,15 +13078,15 @@ Obj3F_Index:	dc.w loc_9926-Obj3F_Index ; DATA XREF: ROM:Obj3F_Indexo
 
 loc_9926:				; DATA XREF: ROM:Obj3F_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj3F,4(a0)
-		move.w	#$5A0,2(a0)
+		move.l	#Map_Obj3F,mappings(a0)
+		move.w	#$5A0,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,1(a0)
-		move.b	#1,$18(a0)
+		move.b	#1,priority(a0)
 		move.b	#0,$20(a0)
-		move.b	#$C,$19(a0)
-		move.b	#7,$1E(a0)
-		move.b	#0,$1A(a0)
+		move.b	#$C,width_pixels(a0)
+		move.b	#7,anim_frame_duration(a0)
+		move.b	#0,mapping_frame(a0)
 		move.w	#$C4,d0	; 'Ä'
 		jmp	(PlaySound_Special).l
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -13224,21 +13233,21 @@ loc_9B92:				; DATA XREF: ROM:off_9AB6o
 		add.w	d0,d0
 		move.b	d0,routine(a0)
 		subi.w	#$14,d0
-		move.w	word_9B7C(pc,d0.w),2(a0)
+		move.w	word_9B7C(pc,d0.w),art_tile(a0)
 		add.w	d0,d0
-		move.l	off_9B50(pc,d0.w),4(a0)
+		move.l	off_9B50(pc,d0.w),mappings(a0)
 		lea	word_9B24(pc),a1
 		move.w	(a1,d0.w),$32(a0)
-		move.w	(a1,d0.w),$10(a0)
+		move.w	(a1,d0.w),x_vel(a0)
 		move.w	2(a1,d0.w),$34(a0)
-		move.w	2(a1,d0.w),$12(a0)
+		move.w	2(a1,d0.w),y_vel(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#$C,$16(a0)
+		move.b	#$C,y_radius(a0)
 		move.b	#4,1(a0)
 		bset	#0,1(a0)
-		move.b	#6,$18(a0)
-		move.b	#8,$19(a0)
-		move.b	#7,$1E(a0)
+		move.b	#6,priority(a0)
+		move.b	#8,width_pixels(a0)
+		move.b	#7,anim_frame_duration(a0)
 		bra.w	DisplaySprite
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -13258,32 +13267,32 @@ loc_9C00:				; CODE XREF: ROM:00009B96j
 		adda.w	d0,a1
 		move.w	(a1)+,$32(a0)
 		move.w	(a1)+,$34(a0)
-		move.l	(a1)+,4(a0)
-		move.w	#$580,2(a0)
+		move.l	(a1)+,mappings(a0)
+		move.w	#$580,art_tile(a0)
 		btst	#0,$30(a0)
 		beq.s	loc_9C4A
-		move.w	#$592,2(a0)
+		move.w	#$592,art_tile(a0)
 
 loc_9C4A:				; CODE XREF: ROM:00009C42j
 		bsr.w	Adjust2PArtPointer
-		move.b	#$C,$16(a0)
+		move.b	#$C,y_radius(a0)
 		move.b	#4,1(a0)
 		bset	#0,1(a0)
-		move.b	#6,$18(a0)
-		move.b	#8,$19(a0)
-		move.b	#7,$1E(a0)
-		move.b	#2,$1A(a0)
-		move.w	#$FC00,$12(a0)
+		move.b	#6,priority(a0)
+		move.b	#8,width_pixels(a0)
+		move.b	#7,anim_frame_duration(a0)
+		move.b	#2,mapping_frame(a0)
+		move.w	#$FC00,y_vel(a0)
 		tst.b	($FFFFF7A7).w
 		bne.s	loc_9CAA
 		bsr.w	SingleObjLoad
 		bne.s	loc_9CA6
 		move.b	#$29,0(a1) ; ')'
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
 		move.w	$3E(a0),d0
 		lsr.w	#1,d0
-		move.b	d0,$1A(a1)
+		move.b	d0,mapping_frame(a1)
 
 loc_9CA6:				; CODE XREF: ROM:00009C88j
 		bra.w	DisplaySprite
@@ -13291,7 +13300,7 @@ loc_9CA6:				; CODE XREF: ROM:00009C88j
 
 loc_9CAA:				; CODE XREF: ROM:00009C82j
 		move.b	#$12,routine(a0)
-		clr.w	$10(a0)
+		clr.w	x_vel(a0)
 		bra.w	DisplaySprite
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -13299,15 +13308,15 @@ loc_9CB8:				; DATA XREF: ROM:off_9AB6o
 		tst.b	1(a0)
 		bpl.w	DeleteObject
 		bsr.w	ObjectMoveAndFall
-		tst.w	$12(a0)
+		tst.w	y_vel(a0)
 		bmi.s	loc_9D0E
 		jsr	ObjHitFloor
 		tst.w	d1
 		bpl.s	loc_9D0E
-		add.w	d1,$C(a0)
-		move.w	$32(a0),$10(a0)
-		move.w	$34(a0),$12(a0)
-		move.b	#1,$1A(a0)
+		add.w	d1,y_pos(a0)
+		move.w	$32(a0),x_vel(a0)
+		move.w	$34(a0),y_vel(a0)
+		move.b	#1,mapping_frame(a0)
 		move.b	$30(a0),d0
 		add.b	d0,d0
 		addq.b	#4,d0
@@ -13316,7 +13325,7 @@ loc_9CB8:				; DATA XREF: ROM:off_9AB6o
 		beq.s	loc_9D0E
 		btst	#4,($FFFFFE0F).w
 		beq.s	loc_9D0E
-		neg.w	$10(a0)
+		neg.w	x_vel(a0)
 		bchg	#0,1(a0)
 
 loc_9D0E:				; CODE XREF: ROM:00009CC8j
@@ -13327,15 +13336,15 @@ loc_9D0E:				; CODE XREF: ROM:00009CC8j
 loc_9D12:				; CODE XREF: ROM:00009E60j
 					; DATA XREF: ROM:off_9AB6o
 		bsr.w	ObjectMoveAndFall
-		move.b	#1,$1A(a0)
-		tst.w	$12(a0)
+		move.b	#1,mapping_frame(a0)
+		tst.w	y_vel(a0)
 		bmi.s	loc_9D3C
-		move.b	#0,$1A(a0)
+		move.b	#0,mapping_frame(a0)
 		jsr	ObjHitFloor
 		tst.w	d1
 		bpl.s	loc_9D3C
-		add.w	d1,$C(a0)
-		move.w	$34(a0),$12(a0)
+		add.w	d1,y_pos(a0)
+		move.w	$34(a0),y_vel(a0)
 
 loc_9D3C:				; CODE XREF: ROM:00009D20j
 					; ROM:00009D30j
@@ -13349,28 +13358,28 @@ loc_9D3C:				; CODE XREF: ROM:00009D20j
 loc_9D4E:				; CODE XREF: ROM:00009E06j
 					; DATA XREF: ROM:off_9AB6o
 		bsr.w	ObjectMove
-		addi.w	#$18,$12(a0)
-		tst.w	$12(a0)
+		addi.w	#$18,y_vel(a0)
+		tst.w	y_vel(a0)
 		bmi.s	loc_9D8A
 		jsr	ObjHitFloor
 		tst.w	d1
 		bpl.s	loc_9D8A
-		add.w	d1,$C(a0)
-		move.w	$34(a0),$12(a0)
+		add.w	d1,y_pos(a0)
+		move.w	$34(a0),y_vel(a0)
 		tst.b	$28(a0)
 		beq.s	loc_9D8A
 		cmpi.b	#$A,$28(a0)
 		beq.s	loc_9D8A
-		neg.w	$10(a0)
+		neg.w	x_vel(a0)
 		bchg	#0,1(a0)
 
 loc_9D8A:				; CODE XREF: ROM:00009D5Cj
 					; ROM:00009D66j ...
-		subq.b	#1,$1E(a0)
+		subq.b	#1,anim_frame_duration(a0)
 		bpl.s	loc_9DA0
-		move.b	#1,$1E(a0)
-		addq.b	#1,$1A(a0)
-		andi.b	#1,$1A(a0)
+		move.b	#1,anim_frame_duration(a0)
+		addq.b	#1,mapping_frame(a0)
+		andi.b	#1,mapping_frame(a0)
 
 loc_9DA0:				; CODE XREF: ROM:00009D8Ej
 		tst.b	$28(a0)
@@ -13382,8 +13391,8 @@ loc_9DA0:				; CODE XREF: ROM:00009D8Ej
 
 loc_9DB2:				; CODE XREF: ROM:00009D40j
 					; ROM:00009DA4j ...
-		move.w	8(a0),d0
-		sub.w	($FFFFB008).w,d0
+		move.w	x_pos(a0),d0
+		sub.w	(MainCharacter+x_pos).w,d0
 		bcs.s	loc_9DCA
 		subi.w	#$180,d0
 		bpl.s	loc_9DCA
@@ -13401,7 +13410,7 @@ loc_9DCE:				; DATA XREF: ROM:off_9AB6o
 		subq.w	#1,$36(a0)
 		bne.w	loc_9DEA
 		move.b	#2,routine(a0)
-		move.b	#3,$18(a0)
+		move.b	#3,priority(a0)
 
 loc_9DEA:				; CODE XREF: ROM:00009DDAj
 		bra.w	DisplaySprite
@@ -13410,8 +13419,8 @@ loc_9DEA:				; CODE XREF: ROM:00009DDAj
 loc_9DEE:				; DATA XREF: ROM:off_9AB6o
 		bsr.w	sub_9F92
 		bcc.s	loc_9E0A
-		move.w	$32(a0),$10(a0)
-		move.w	$34(a0),$12(a0)
+		move.w	$32(a0),x_vel(a0)
+		move.w	$34(a0),y_vel(a0)
 		move.b	#$E,routine(a0)
 		bra.w	loc_9D4E
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -13423,17 +13432,17 @@ loc_9E0A:				; CODE XREF: ROM:00009DF2j
 loc_9E0E:				; DATA XREF: ROM:off_9AB6o
 		bsr.w	sub_9F92
 		bpl.s	loc_9E44
-		clr.w	$10(a0)
+		clr.w	x_vel(a0)
 		clr.w	$32(a0)
 		bsr.w	ObjectMove
-		addi.w	#$18,$12(a0)
+		addi.w	#$18,y_vel(a0)
 		bsr.w	sub_9F52
 		bsr.w	sub_9F7A
-		subq.b	#1,$1E(a0)
+		subq.b	#1,anim_frame_duration(a0)
 		bpl.s	loc_9E44
-		move.b	#1,$1E(a0)
-		addq.b	#1,$1A(a0)
-		andi.b	#1,$1A(a0)
+		move.b	#1,anim_frame_duration(a0)
+		addq.b	#1,mapping_frame(a0)
+		andi.b	#1,mapping_frame(a0)
 
 loc_9E44:				; CODE XREF: ROM:00009E12j
 					; ROM:00009E32j
@@ -13443,29 +13452,29 @@ loc_9E44:				; CODE XREF: ROM:00009E12j
 loc_9E48:				; DATA XREF: ROM:off_9AB6o
 		bsr.w	sub_9F92
 		bpl.s	loc_9E9E
-		move.w	$32(a0),$10(a0)
-		move.w	$34(a0),$12(a0)
+		move.w	$32(a0),x_vel(a0)
+		move.w	$34(a0),y_vel(a0)
 		move.b	#4,routine(a0)
 		bra.w	loc_9D12
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_9E64:				; DATA XREF: ROM:off_9AB6o
 		bsr.w	ObjectMoveAndFall
-		move.b	#1,$1A(a0)
-		tst.w	$12(a0)
+		move.b	#1,mapping_frame(a0)
+		tst.w	y_vel(a0)
 		bmi.s	loc_9E9E
-		move.b	#0,$1A(a0)
+		move.b	#0,mapping_frame(a0)
 		jsr	ObjHitFloor
 		tst.w	d1
 		bpl.s	loc_9E9E
 		not.b	$29(a0)
 		bne.s	loc_9E94
-		neg.w	$10(a0)
+		neg.w	x_vel(a0)
 		bchg	#0,1(a0)
 
 loc_9E94:				; CODE XREF: ROM:00009E88j
-		add.w	d1,$C(a0)
-		move.w	$34(a0),$12(a0)
+		add.w	d1,y_pos(a0)
+		move.w	$34(a0),y_vel(a0)
 
 loc_9E9E:				; CODE XREF: ROM:00009E4Cj
 					; ROM:00009E72j ...
@@ -13475,7 +13484,7 @@ loc_9E9E:				; CODE XREF: ROM:00009E4Cj
 loc_9EA2:				; DATA XREF: ROM:off_9AB6o
 		bsr.w	sub_9F92
 		bpl.s	loc_9EBC
-		clr.w	$10(a0)
+		clr.w	x_vel(a0)
 		clr.w	$32(a0)
 		bsr.w	ObjectMoveAndFall
 		bsr.w	sub_9F52
@@ -13489,17 +13498,17 @@ loc_9EC0:				; DATA XREF: ROM:off_9AB6o
 		bsr.w	sub_9F92
 		bpl.s	loc_9EFA
 		bsr.w	ObjectMoveAndFall
-		move.b	#1,$1A(a0)
-		tst.w	$12(a0)
+		move.b	#1,mapping_frame(a0)
+		tst.w	y_vel(a0)
 		bmi.s	loc_9EFA
-		move.b	#0,$1A(a0)
+		move.b	#0,mapping_frame(a0)
 		jsr	ObjHitFloor
 		tst.w	d1
 		bpl.s	loc_9EFA
-		neg.w	$10(a0)
+		neg.w	x_vel(a0)
 		bchg	#0,1(a0)
-		add.w	d1,$C(a0)
-		move.w	$34(a0),$12(a0)
+		add.w	d1,y_pos(a0)
+		move.w	$34(a0),y_vel(a0)
 
 loc_9EFA:				; CODE XREF: ROM:00009EC4j
 					; ROM:00009ED4j ...
@@ -13510,28 +13519,28 @@ loc_9EFE:				; DATA XREF: ROM:off_9AB6o
 		bsr.w	sub_9F92
 		bpl.s	loc_9F4E
 		bsr.w	ObjectMove
-		addi.w	#$18,$12(a0)
-		tst.w	$12(a0)
+		addi.w	#$18,y_vel(a0)
+		tst.w	y_vel(a0)
 		bmi.s	loc_9F38
 		jsr	ObjHitFloor
 		tst.w	d1
 		bpl.s	loc_9F38
 		not.b	$29(a0)
 		bne.s	loc_9F2E
-		neg.w	$10(a0)
+		neg.w	x_vel(a0)
 		bchg	#0,1(a0)
 
 loc_9F2E:				; CODE XREF: ROM:00009F22j
-		add.w	d1,$C(a0)
-		move.w	$34(a0),$12(a0)
+		add.w	d1,y_pos(a0)
+		move.w	$34(a0),y_vel(a0)
 
 loc_9F38:				; CODE XREF: ROM:00009F12j
 					; ROM:00009F1Cj
-		subq.b	#1,$1E(a0)
+		subq.b	#1,anim_frame_duration(a0)
 		bpl.s	loc_9F4E
-		move.b	#1,$1E(a0)
-		addq.b	#1,$1A(a0)
-		andi.b	#1,$1A(a0)
+		move.b	#1,anim_frame_duration(a0)
+		addq.b	#1,mapping_frame(a0)
+		andi.b	#1,mapping_frame(a0)
 
 loc_9F4E:				; CODE XREF: ROM:00009F02j
 					; ROM:00009F3Cj
@@ -13542,15 +13551,15 @@ loc_9F4E:				; CODE XREF: ROM:00009F02j
 
 sub_9F52:				; CODE XREF: ROM:00009E26p
 					; ROM:00009EB4p
-		move.b	#1,$1A(a0)
-		tst.w	$12(a0)
+		move.b	#1,mapping_frame(a0)
+		tst.w	y_vel(a0)
 		bmi.s	locret_9F78
-		move.b	#0,$1A(a0)
+		move.b	#0,mapping_frame(a0)
 		jsr	ObjHitFloor
 		tst.w	d1
 		bpl.s	locret_9F78
-		add.w	d1,$C(a0)
-		move.w	$34(a0),$12(a0)
+		add.w	d1,y_pos(a0)
+		move.w	$34(a0),y_vel(a0)
 
 locret_9F78:				; CODE XREF: sub_9F52+Aj sub_9F52+1Aj
 		rts
@@ -13563,8 +13572,8 @@ locret_9F78:				; CODE XREF: sub_9F52+Aj sub_9F52+1Aj
 sub_9F7A:				; CODE XREF: ROM:00009E2Ap
 					; ROM:00009EB8p
 		bset	#0,1(a0)
-		move.w	8(a0),d0
-		sub.w	($FFFFB008).w,d0
+		move.w	x_pos(a0),d0
+		sub.w	(MainCharacter+x_pos).w,d0
 		bcc.s	locret_9F90
 		bclr	#0,1(a0)
 
@@ -13578,8 +13587,8 @@ locret_9F90:				; CODE XREF: sub_9F7A+Ej
 
 sub_9F92:				; CODE XREF: ROM:loc_9DEEp
 					; ROM:loc_9E0Ep ...
-		move.w	($FFFFB008).w,d0
-		sub.w	8(a0),d0
+		move.w	(MainCharacter+x_pos).w,d0
+		sub.w	x_pos(a0),d0
 		subi.w	#$B8,d0	; '¸'
 		rts
 ; End of function sub_9F92
@@ -13602,19 +13611,19 @@ Obj29_Index:	dc.w loc_9FB2-Obj29_Index ; DATA XREF: ROM:Obj29_Indexo
 
 loc_9FB2:				; DATA XREF: ROM:Obj29_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj29,4(a0)
-		move.w	#$4AC,2(a0)
+		move.l	#Map_Obj29,mappings(a0)
+		move.w	#$4AC,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,1(a0)
-		move.b	#1,$18(a0)
-		move.b	#8,$19(a0)
-		move.w	#$FD00,$12(a0)
+		move.b	#1,priority(a0)
+		move.b	#8,width_pixels(a0)
+		move.w	#$FD00,y_vel(a0)
 
 loc_9FE0:				; DATA XREF: ROM:00009FB0o
-		tst.w	$12(a0)
+		tst.w	y_vel(a0)
 		bpl.w	DeleteObject
 		bsr.w	ObjectMove
-		addi.w	#$18,$12(a0)
+		addi.w	#$18,y_vel(a0)
 		bra.w	DisplaySprite
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 Map_Obj28a:	dc.w word_A006-Map_Obj28a ; DATA XREF: ROM:00009AF0o
@@ -13698,22 +13707,22 @@ Obj1F_Index:	dc.w Obj1F_Init-Obj1F_Index
 ; ===========================================================================
 ; loc_A0E8:
 Obj1F_Init:
-		move.b	#$10,$16(a0)
-		move.b	#8,$17(a0)
-		move.l	#Map_obj1F,4(a0)
-		move.w	#$400,2(a0)
+		move.b	#$10,y_radius(a0)
+		move.b	#8,x_radius(a0)
+		move.l	#Map_obj1F,mappings(a0)
+		move.w	#$400,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,1(a0)
-		move.b	#3,$18(a0)
+		move.b	#3,priority(a0)
 		move.b	#6,$20(a0)
-		move.b	#$15,$19(a0)
+		move.b	#$15,width_pixels(a0)
 		bsr.w	ObjectMoveAndFall
 		jsr	(ObjHitFloor).l
 		tst.w	d1
 		bpl.s	locret_A13E
-		add.w	d1,$C(a0)
-		move.b	d3,$26(a0)
-		move.w	#0,$12(a0)
+		add.w	d1,y_pos(a0)
+		move.b	d3,angle(a0)
+		move.w	#0,y_vel(a0)
 		addq.b	#2,routine(a0)
 
 locret_A13E:
@@ -13722,7 +13731,7 @@ locret_A13E:
 ; loc_A140:
 Obj1F_Main:
 		moveq	#0,d0
-		move.b	$25(a0),d0
+		move.b	routine_secondary(a0),d0
 		move.w	Obj1F_Main_Index(pc,d0.w),d1
 		jsr	Obj1F_Main_Index(pc,d1.w)
 		lea	(Ani_obj1F).l,a1
@@ -13742,15 +13751,15 @@ Obj1F_WaitMove:
 		bne.s	Obj1F_MakeFire
 ; loc_A174:
 Obj1F_Move:
-		addq.b	#2,$25(a0)
+		addq.b	#2,routine_secondary(a0)
 		move.w	#$7F,obj1F_timer(a0)
-		move.w	#$80,$10(a0)
+		move.w	#$80,x_vel(a0)
 		bsr.w	Obj1F_SetAni
 		addq.b	#3,d0
-		move.b	d0,$1C(a0)
-		bchg	#0,$22(a0)
+		move.b	d0,anim(a0)
+		bchg	#0,status(a0)
 		bne.s	locret_A19A
-		neg.w	$10(a0)
+		neg.w	x_vel(a0)
 
 locret_A19A:
 		rts
@@ -13758,25 +13767,25 @@ locret_A19A:
 ; loc_A19C:
 Obj1F_MakeFire:
 		move.w	#$3B,obj1F_timer(a0)
-		move.b	#6,$1C(a0)
+		move.b	#6,anim(a0)
 		bsr.w	SingleObjLoad
 		bne.s	Obj1F_MakeFire2
 		move.b	#$1F,0(a1)
 		move.b	#6,routine(a1)
-		move.w	8(a0),8(a1)
-		subi.w	#$10,8(a1)
-		move.w	$C(a0),$C(a1)
-		move.w	#-$100,$10(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		subi.w	#$10,x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
+		move.w	#-$100,x_vel(a1)
 ; loc_A1D2:
 Obj1F_MakeFire2:
 		bsr.w	SingleObjLoad
 		bne.s	locret_A1FC
 		move.b	#$1F,0(a1)
 		move.b	#6,routine(a1)
-		move.w	8(a0),8(a1)
-		addi.w	#$10,8(a1)
-		move.w	$C(a0),$C(a1)
-		move.w	#$100,$10(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		addi.w	#$10,x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
+		move.w	#$100,x_vel(a1)
 
 locret_A1FC:
 		rts
@@ -13788,9 +13797,9 @@ Obj1F_WalkOnFloor:
 		bsr.w	ObjectMove
 		bchg	#0,obj1F_status(a0)
 		bne.s	loc_A238
-		move.w	8(a0),d3
+		move.w	x_pos(a0),d3
 		addi.w	#$10,d3
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		beq.s	loc_A224
 		subi.w	#$20,d3
 
@@ -13805,20 +13814,20 @@ loc_A224:
 
 loc_A238:
 		jsr	(ObjHitFloor).l
-		add.w	d1,$C(a0)
-		move.b	d3,$26(a0)
+		add.w	d1,y_pos(a0)
+		move.b	d3,angle(a0)
 		bsr.w	Obj1F_SetAni
 		addq.b	#3,d0
-		move.b	d0,$1C(a0)
+		move.b	d0,anim(a0)
 		rts
 ; ===========================================================================
 
 loc_A252:
-		subq.b	#2,$25(a0)
+		subq.b	#2,routine_secondary(a0)
 		move.w	#$3B,obj1F_timer(a0)
-		move.w	#0,$10(a0)
+		move.w	#0,x_vel(a0)
 		bsr.w	Obj1F_SetAni
-		move.b	d0,$1C(a0)
+		move.b	d0,anim(a0)
 		rts
 
 ; ---------------------------------------------------------------------------
@@ -13830,12 +13839,12 @@ loc_A252:
 ; sub_A26C:
 Obj1F_SetAni:
 		moveq	#0,d0
-		move.b	$26(a0),d3
+		move.b	angle(a0),d3
 		bmi.s	loc_A288
 		cmpi.b	#6,d3
 		bcs.s	locret_A286
 		moveq	#1,d0
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		bne.s	locret_A286
 		moveq	#2,d0
 
@@ -13847,7 +13856,7 @@ loc_A288:
 		cmpi.b	#-6,d3
 		bhi.s	locret_A29A
 		moveq	#2,d0
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		bne.s	locret_A29A
 		moveq	#1,d0
 
@@ -13863,15 +13872,15 @@ Obj1F_Delete:
 ; loc_A2A0:
 Obj1F_BallInit:
 		addq.b	#2,routine(a0)
-		move.l	#Map_obj1F,4(a0)
-		move.w	#$400,2(a0)
+		move.l	#Map_obj1F,mappings(a0)
+		move.w	#$400,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,1(a0)
-		move.b	#3,$18(a0)
+		move.b	#3,priority(a0)
 		move.b	#$87,$20(a0)
-		move.b	#8,$19(a0)
-		move.w	#$FC00,$12(a0)
-		move.b	#7,$1C(a0)
+		move.b	#8,width_pixels(a0)
+		move.w	#$FC00,y_vel(a0)
+		move.b	#7,anim(a0)
 ; loc_A2DA:
 Obj1F_BallMove:
 		lea	(Ani_obj1F).l,a1
@@ -13879,7 +13888,7 @@ Obj1F_BallMove:
 		bsr.w	ObjectMoveAndFall
 		move.w	($FFFFEECE).w,d0
 		addi.w	#$E0,d0
-		cmp.w	$C(a0),d0
+		cmp.w	y_pos(a0),d0
 		bcs.w	DeleteObject
 		bra.w	DisplaySprite
 ; ===========================================================================
@@ -13929,17 +13938,17 @@ Obj22_Index:	dc.w Obj22_Init-Obj22_Index
 ; loc_A41C:
 Obj22_Init:
 		addq.b	#2,routine(a0)
-		move.l	#Map_obj22,4(a0)
-		move.w	#$444,2(a0)
+		move.l	#Map_obj22,mappings(a0)
+		move.w	#$444,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,1(a0)
-		move.b	#3,$18(a0)
+		move.b	#3,priority(a0)
 		move.b	#8,$20(a0)
-		move.b	#$18,$19(a0)
+		move.b	#$18,width_pixels(a0)
 ; loc_A44A:
 Obj22_Main:
 		moveq	#0,d0
-		move.b	$25(a0),d0
+		move.b	routine_secondary(a0),d0
 		move.w	Obj22_Main_Index(pc,d0.w),d1
 		jsr	Obj22_Main_Index(pc,d1.w)
 		lea	(Ani_obj22).l,a1
@@ -13955,13 +13964,13 @@ Obj22_Move:
 		bpl.s	locret_A49A
 		btst	#1,obj22_status(a0)
 		bne.s	Obj22_LoadMissile
-		addq.b	#2,$25(a0)
+		addq.b	#2,routine_secondary(a0)
 		move.w	#$7F,obj22_time(a0)
-		move.w	#$400,$10(a0)
-		move.b	#1,$1C(a0)
-		btst	#0,$22(a0)
+		move.w	#$400,x_vel(a0)
+		move.b	#1,anim(a0)
+		btst	#0,status(a0)
 		bne.s	locret_A49A
-		neg.w	$10(a0)
+		neg.w	x_vel(a0)
 
 locret_A49A:
 		rts
@@ -13971,25 +13980,25 @@ Obj22_LoadMissile:
 		bsr.w	SingleObjLoad
 		bne.s	locret_A4FE
 		move.b	#$23,0(a1)	; load Obj23 (Buzz Bomber/Newtron missile)
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
-		addi.w	#$1C,$C(a1)
-		move.w	#$200,$12(a1)
-		move.w	#$200,$10(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
+		addi.w	#$1C,y_pos(a1)
+		move.w	#$200,y_vel(a1)
+		move.w	#$200,x_vel(a1)
 		move.w	#$18,d0
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		bne.s	loc_A4D8
 		neg.w	d0
-		neg.w	$10(a1)
+		neg.w	x_vel(a1)
 
 loc_A4D8:
-		add.w	d0,8(a1)
-		move.b	$22(a0),$22(a1)
+		add.w	d0,x_pos(a1)
+		move.b	status(a0),status(a1)
 		move.w	#$E,obj22_time(a1)
 		move.l	a0,obj22_parent(a1)
 		move.b	#1,obj22_status(a0)
 		move.w	#$3B,obj22_time(a0)
-		move.b	#2,$1C(a0)
+		move.b	#2,anim(a0)
 
 locret_A4FE:
 		rts
@@ -14001,8 +14010,8 @@ Obj22_NearSonic:
 		bsr.w	ObjectMove
 		tst.b	obj22_status(a0)
 		bne.s	locret_A558
-		move.w	($FFFFB008).w,d0
-		sub.w	8(a0),d0
+		move.w	(MainCharacter+x_pos).w,d0
+		sub.w	x_pos(a0),d0
 		bpl.s	loc_A51C
 		neg.w	d0
 
@@ -14018,13 +14027,13 @@ loc_A51C:
 
 loc_A536:
 		move.b	#0,obj22_status(a0)
-		bchg	#0,$22(a0)
+		bchg	#0,status(a0)
 		move.w	#$3B,obj22_time(a0)
 
 loc_A548:
-		subq.b	#2,$25(a0)
-		move.w	#0,$10(a0)
-		move.b	#0,$1C(a0)
+		subq.b	#2,routine_secondary(a0)
+		move.w	#0,x_vel(a0)
+		move.b	#0,anim(a0)
 
 locret_A558:
 		rts
@@ -14057,19 +14066,19 @@ Obj23_Init:
 		subq.w	#1,$32(a0)
 		bpl.s	Obj23_ChkDel
 		addq.b	#2,routine(a0)
-		move.l	#Map_obj23,4(a0)
-		move.w	#$2444,2(a0)
+		move.l	#Map_obj23,mappings(a0)
+		move.w	#$2444,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,1(a0)
-		move.b	#3,$18(a0)
-		move.b	#8,$19(a0)
-		andi.b	#3,$22(a0)
+		move.b	#3,priority(a0)
+		move.b	#8,width_pixels(a0)
+		andi.b	#3,status(a0)
 		tst.b	$28(a0)		; was the object created by a Newtron?
 		beq.s	Obj23_Animate	; if not, branch
 
 		move.b	#8,routine(a0)
 		move.b	#$87,$20(a0)
-		move.b	#1,$1C(a0)
+		move.b	#1,anim(a0)
 		bra.s	Obj23_Animate2
 ; ===========================================================================
 ; loc_A5C4:
@@ -14099,16 +14108,16 @@ Obj23_ChkDel:
 ; ===========================================================================
 ; loc_A5EC:
 Obj23_Move:
-		btst	#7,$22(a0)	; has the missile collided with the level? (flag never set)
+		btst	#7,status(a0)	; has the missile collided with the level? (flag never set)
 		bne.s	Obj23_Explode	; if yes, branch
 		move.b	#$87,$20(a0)
-		move.b	#1,$1C(a0)
+		move.b	#1,anim(a0)
 		bsr.w	ObjectMove
 		lea	(Ani_obj23).l,a1
 		bsr.w	AnimateSprite
 		move.w	($FFFFEECE).w,d0
 		addi.w	#$E0,d0
-		cmp.w	$C(a0),d0
+		cmp.w	y_pos(a0),d0
 		bcs.s	Obj23_Delete
 		bra.w	DisplaySprite
 ; ===========================================================================
@@ -14188,8 +14197,8 @@ Obj25_Index:	dc.w loc_A81C-Obj25_Index ; DATA XREF: ROM:Obj25_Indexo
 loc_A81C:				; DATA XREF: ROM:Obj25_Indexo
 		movea.l	a0,a1
 		moveq	#0,d1
-		move.w	8(a0),d2
-		move.w	$C(a0),d3
+		move.w	x_pos(a0),d2
+		move.w	y_pos(a0),d3
 		bra.s	loc_A832
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -14201,16 +14210,16 @@ loc_A82A:				; CODE XREF: ROM:0000A886j
 loc_A832:				; CODE XREF: ROM:0000A828j
 		move.b	#$25,0(a1) ; '%'
 		addq.b	#2,routine(a1)
-		move.w	d2,8(a1)
-		move.w	8(a0),$32(a1)
-		move.w	d3,$C(a1)
-		move.l	#Map_Obj25,4(a1)
-		move.w	#$26BC,2(a1)
+		move.w	d2,x_pos(a1)
+		move.w	x_pos(a0),$32(a1)
+		move.w	d3,y_pos(a1)
+		move.l	#Map_Obj25,mappings(a1)
+		move.w	#$26BC,art_tile(a1)
 		bsr.w	Adjust2PArtPointer2
 		move.b	#4,1(a1)
-		move.b	#2,$18(a1)
+		move.b	#2,priority(a1)
 		move.b	#$47,$20(a1) ; 'G'
-		move.b	#8,$19(a1)
+		move.b	#8,width_pixels(a1)
 		move.b	$23(a0),$23(a1)
 		move.b	d1,$34(a1)
 		addq.w	#1,d1
@@ -14221,7 +14230,7 @@ loc_A832:				; CODE XREF: ROM:0000A828j
 
 loc_A88A:				; CODE XREF: ROM:0000A830j
 					; DATA XREF: ROM:0000A7F4o
-		move.b	($FFFFFEC3).w,$1A(a0)
+		move.b	($FFFFFEC3).w,mapping_frame(a0)
 		move.w	$32(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	($FFFFF7DA).w,d0
@@ -14233,7 +14242,7 @@ loc_A88A:				; CODE XREF: ROM:0000A830j
 loc_A8A6:				; DATA XREF: ROM:0000A7F6o
 		addq.b	#2,routine(a0)
 		move.b	#0,$20(a0)
-		move.b	#1,$18(a0)
+		move.b	#1,priority(a0)
 		bsr.w	sub_A8DE
 		lea	($FFFFFC00).w,a2
 		moveq	#0,d0
@@ -14318,17 +14327,17 @@ loc_A94E:				; CODE XREF: ROM:0000A9DAj
 loc_A956:				; CODE XREF: ROM:0000A94Cj
 		move.b	#$37,0(a1) ; '7'
 		addq.b	#2,routine(a1)
-		move.b	#8,$16(a1)
-		move.b	#8,$17(a1)
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
-		move.l	#Map_Obj25,4(a1)
-		move.w	#$26BC,2(a1)
+		move.b	#8,y_radius(a1)
+		move.b	#8,x_radius(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
+		move.l	#Map_Obj25,mappings(a1)
+		move.w	#$26BC,art_tile(a1)
 		bsr.w	Adjust2PArtPointer2
 		move.b	#4,1(a1)
-		move.b	#3,$18(a1)
+		move.b	#3,priority(a1)
 		move.b	#$47,$20(a1) ; 'G'
-		move.b	#8,$19(a1)
+		move.b	#8,width_pixels(a1)
 		move.b	#$FF,($FFFFFEC6).w
 		tst.w	d4
 		bmi.s	loc_A9CE
@@ -14348,8 +14357,8 @@ loc_A956:				; CODE XREF: ROM:0000A94Cj
 
 loc_A9CE:				; CODE XREF: ROM:0000A9AAj
 					; ROM:0000A9C2j ...
-		move.w	d2,$10(a1)
-		move.w	d3,$12(a1)
+		move.w	d2,x_vel(a1)
+		move.w	d3,y_vel(a1)
 		neg.w	d2
 		neg.w	d4
 		dbf	d5,loc_A94E
@@ -14362,9 +14371,9 @@ loc_A9DE:				; CODE XREF: ROM:0000A952j
 		jsr	(PlaySound_Special).l
 
 loc_A9FA:				; DATA XREF: ROM:0000A92Eo
-		move.b	($FFFFFEC7).w,$1A(a0)
+		move.b	($FFFFFEC7).w,mapping_frame(a0)
 		bsr.w	ObjectMove
-		addi.w	#$18,$12(a0)
+		addi.w	#$18,y_vel(a0)
 		bmi.s	loc_AA34
 		move.b	($FFFFFE0F).w,d0
 		add.b	d7,d0
@@ -14373,11 +14382,11 @@ loc_A9FA:				; DATA XREF: ROM:0000A92Eo
 		jsr	ObjHitFloor
 		tst.w	d1
 		bpl.s	loc_AA34
-		add.w	d1,$C(a0)
-		move.w	$12(a0),d0
+		add.w	d1,y_pos(a0)
+		move.w	y_vel(a0),d0
 		asr.w	#2,d0
-		sub.w	d0,$12(a0)
-		neg.w	$12(a0)
+		sub.w	d0,y_vel(a0)
+		neg.w	y_vel(a0)
 
 loc_AA34:				; CODE XREF: ROM:0000AA0Aj
 					; ROM:0000AA16j ...
@@ -14385,7 +14394,7 @@ loc_AA34:				; CODE XREF: ROM:0000AA0Aj
 		beq.s	loc_AA6E
 		move.w	($FFFFEECE).w,d0
 		addi.w	#$E0,d0	; 'à'
-		cmp.w	$C(a0),d0
+		cmp.w	y_pos(a0),d0
 		bcs.s	loc_AA6E
 		bra.w	DisplaySprite
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -14393,7 +14402,7 @@ loc_AA34:				; CODE XREF: ROM:0000AA0Aj
 loc_AA4C:				; DATA XREF: ROM:0000A930o
 		addq.b	#2,routine(a0)
 		move.b	#0,$20(a0)
-		move.b	#1,$18(a0)
+		move.b	#1,priority(a0)
 		bsr.w	sub_A8DE
 
 loc_AA60:				; DATA XREF: ROM:0000A932o
@@ -14425,11 +14434,11 @@ S1Obj4B_Index:	dc.w loc_AA88-S1Obj4B_Index ; DATA XREF: ROM:S1Obj4B_Indexo
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_AA88:				; DATA XREF: ROM:S1Obj4B_Indexo
-		move.l	#Map_S1Obj4B,4(a0)
-		move.w	#$2400,2(a0)
+		move.l	#Map_S1Obj4B,mappings(a0)
+		move.w	#$2400,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		ori.b	#4,1(a0)
-		move.b	#$40,$19(a0) ; '@'
+		move.b	#$40,width_pixels(a0) ; '@'
 		tst.b	1(a0)
 		bpl.s	loc_AAD6
 		cmpi.b	#6,($FFFFFE57).w
@@ -14441,15 +14450,15 @@ loc_AA88:				; DATA XREF: ROM:S1Obj4B_Indexo
 
 loc_AAC0:				; CODE XREF: ROM:0000AABCj
 		addq.b	#2,routine(a0)
-		move.b	#2,$18(a0)
+		move.b	#2,priority(a0)
 		move.b	#$52,$20(a0) ; 'R'
 		move.w	#$C40,($FFFFF7BE).w
 
 loc_AAD6:				; CODE XREF: ROM:0000AAAAj
 					; ROM:0000AB36j
 					; DATA XREF: ...
-		move.b	($FFFFFEC3).w,$1A(a0)
-		move.w	8(a0),d0
+		move.b	($FFFFFEC3).w,mapping_frame(a0)
+		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	($FFFFF7DA).w,d0
 		cmpi.w	#$280,d0
@@ -14463,11 +14472,11 @@ loc_AAF4:				; DATA XREF: ROM:0000AA84o
 		bsr.w	SingleObjLoad
 		bne.w	loc_AB2C
 		move.b	#$7C,0(a1) ; '|'
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
 		move.l	a0,$3C(a1)
-		move.w	($FFFFB008).w,d0
-		cmp.w	8(a0),d0
+		move.w	(MainCharacter+x_pos).w,d0
+		cmp.w	x_pos(a0),d0
 		bcs.s	loc_AB2C
 		bset	#0,1(a1)
 
@@ -14501,17 +14510,17 @@ Obj_S1Obj7C_Index:dc.w loc_AB50-Obj_S1Obj7C_Index ; DATA XREF: ROM:Obj_S1Obj7C_I
 
 loc_AB50:				; DATA XREF: ROM:Obj_S1Obj7C_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_S1Obj7C,4(a0)
-		move.w	#$2462,2(a0)
+		move.l	#Map_S1Obj7C,mappings(a0)
+		move.w	#$2462,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		ori.b	#4,1(a0)
-		move.b	#0,$18(a0)
-		move.b	#$20,$19(a0) ; ' '
-		move.b	#$FF,$1A(a0)
+		move.b	#0,priority(a0)
+		move.b	#$20,width_pixels(a0) ; ' '
+		move.b	#$FF,mapping_frame(a0)
 
 loc_AB7E:				; DATA XREF: ROM:0000AB4Co
 		bsr.s	sub_AB98
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	($FFFFF7DA).w,d0
 		cmpi.w	#$280,d0
@@ -14522,17 +14531,17 @@ loc_AB7E:				; DATA XREF: ROM:0000AB4Co
 
 
 sub_AB98:				; CODE XREF: ROM:loc_AB7Ep
-		subq.b	#1,$1E(a0)
+		subq.b	#1,anim_frame_duration(a0)
 		bpl.s	locret_ABD6
-		move.b	#1,$1E(a0)
-		addq.b	#1,$1A(a0)
-		cmpi.b	#8,$1A(a0)
+		move.b	#1,anim_frame_duration(a0)
+		addq.b	#1,mapping_frame(a0)
+		cmpi.b	#8,mapping_frame(a0)
 		bcc.s	loc_ABD8
-		cmpi.b	#3,$1A(a0)
+		cmpi.b	#3,mapping_frame(a0)
 		bne.s	locret_ABD6
 		movea.l	$3C(a0),a1
 		move.b	#6,routine(a1)
-		move.b	#$1C,($FFFFB01C).w
+		move.b	#$1C,(MainCharacter+anim).w
 		move.b	#1,($FFFFF7CD).w
 		clr.b	($FFFFFE2D).w
 		clr.b	($FFFFFE2C).w
@@ -14543,7 +14552,7 @@ locret_ABD6:				; CODE XREF: sub_AB98+4j sub_AB98+1Ej
 
 loc_ABD8:				; CODE XREF: sub_AB98+16j
 		addq.b	#2,routine(a0)
-		move.w	#0,($FFFFB000).w
+		move.w	#0,(MainCharacter).w
 		addq.l	#4,sp
 		rts
 ; End of function sub_AB98
@@ -14669,14 +14678,14 @@ Obj26_Index:	dc.w loc_AE70-Obj26_Index ; DATA XREF: ROM:Obj26_Indexo
 
 loc_AE70:				; DATA XREF: ROM:Obj26_Indexo
 		addq.b	#2,routine(a0)
-		move.b	#$E,$16(a0)
-		move.b	#$E,$17(a0)
-		move.l	#Map_Obj26,4(a0)
-		move.w	#$680,2(a0)
+		move.b	#$E,y_radius(a0)
+		move.b	#$E,x_radius(a0)
+		move.l	#Map_Obj26,mappings(a0)
+		move.w	#$680,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,1(a0)
-		move.b	#3,$18(a0)
-		move.b	#$F,$19(a0)
+		move.b	#3,priority(a0)
+		move.b	#$F,width_pixels(a0)
 		lea	($FFFFFC00).w,a2
 		moveq	#0,d0
 		move.b	$23(a0),d0
@@ -14684,32 +14693,32 @@ loc_AE70:				; DATA XREF: ROM:Obj26_Indexo
 		btst	#0,2(a2,d0.w)
 		beq.s	loc_AECA
 		move.b	#8,routine(a0)
-		move.b	#$B,$1A(a0)
+		move.b	#$B,mapping_frame(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_AECA:				; CODE XREF: ROM:0000AEBAj
 		move.b	#$46,$20(a0) ; 'F'
-		move.b	$28(a0),$1C(a0)
+		move.b	$28(a0),anim(a0)
 
 loc_AED6:				; DATA XREF: ROM:0000AE68o
-		move.b	$25(a0),d0
+		move.b	routine_secondary(a0),d0
 		beq.s	loc_AF30
 		subq.b	#2,d0
 		bne.s	loc_AF10
 		moveq	#0,d1
-		move.b	$19(a0),d1
+		move.b	width_pixels(a0),d1
 		addi.w	#$B,d1
 		bsr.w	sub_F9C8
-		btst	#3,$22(a1)
+		btst	#3,status(a1)
 		bne.w	loc_AF00
-		clr.b	$25(a0)
+		clr.b	routine_secondary(a0)
 		bra.w	loc_AFBA
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_AF00:				; CODE XREF: ROM:0000AEF4j
 		move.w	#$10,d3
-		move.w	8(a0),d2
+		move.w	x_pos(a0),d2
 		bsr.w	MvSonicOnPtfm
 		bra.w	loc_AFBA
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -14719,9 +14728,9 @@ loc_AF10:				; CODE XREF: ROM:0000AEDEj
 		jsr	ObjHitFloor
 		tst.w	d1
 		bpl.w	loc_AFBA
-		add.w	d1,$C(a0)
-		clr.w	$12(a0)
-		clr.b	$25(a0)
+		add.w	d1,y_pos(a0)
+		clr.w	y_vel(a0)
+		clr.b	routine_secondary(a0)
 		bra.w	loc_AFBA
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -14730,17 +14739,17 @@ loc_AF30:				; CODE XREF: ROM:0000AEDAj
 		move.w	#$F,d2
 		bsr.w	Obj26_SolidSides
 		beq.w	loc_AFA0
-		tst.w	$12(a1)
+		tst.w	y_vel(a1)
 		bmi.s	loc_AF4E
-		cmpi.b	#2,$1C(a1)
+		cmpi.b	#2,anim(a1)
 		beq.s	loc_AFA0
 
 loc_AF4E:				; CODE XREF: ROM:0000AF44j
 		tst.w	d1
 		bpl.s	loc_AF64
-		sub.w	d3,$C(a1)
+		sub.w	d3,y_pos(a1)
 		bsr.w	RideObject_SetRide
-		move.b	#2,$25(a0)
+		move.b	#2,routine_secondary(a0)
 		bra.w	loc_AFBA
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -14748,38 +14757,38 @@ loc_AF64:				; CODE XREF: ROM:0000AF50j
 		tst.w	d0
 		beq.w	loc_AF8A
 		bmi.s	loc_AF74
-		tst.w	$10(a1)
+		tst.w	x_vel(a1)
 		bmi.s	loc_AF8A
 		bra.s	loc_AF7A
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_AF74:				; CODE XREF: ROM:0000AF6Aj
-		tst.w	$10(a1)
+		tst.w	x_vel(a1)
 		bpl.s	loc_AF8A
 
 loc_AF7A:				; CODE XREF: ROM:0000AF72j
-		sub.w	d0,8(a1)
+		sub.w	d0,x_pos(a1)
 		move.w	#0,$14(a1)
-		move.w	#0,$10(a1)
+		move.w	#0,x_vel(a1)
 
 loc_AF8A:				; CODE XREF: ROM:0000AF66j
 					; ROM:0000AF70j ...
-		btst	#1,$22(a1)
+		btst	#1,status(a1)
 		bne.s	loc_AFAE
-		bset	#5,$22(a1)
-		bset	#5,$22(a0)
+		bset	#5,status(a1)
+		bset	#5,status(a0)
 		bra.s	loc_AFBA
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_AFA0:				; CODE XREF: ROM:0000AF3Cj
 					; ROM:0000AF4Cj
-		btst	#5,$22(a0)
+		btst	#5,status(a0)
 		beq.s	loc_AFBA
-		move.w	#1,$1C(a1)
+		move.w	#1,anim(a1)
 
 loc_AFAE:				; CODE XREF: ROM:0000AF90j
-		bclr	#5,$22(a0)
-		bclr	#5,$22(a1)
+		bclr	#5,status(a0)
+		bclr	#5,status(a1)
 
 loc_AFBA:				; CODE XREF: ROM:0000AEFCj
 					; ROM:0000AF0Cj ...
@@ -14787,7 +14796,7 @@ loc_AFBA:				; CODE XREF: ROM:0000AEFCj
 		bsr.w	AnimateSprite
 
 loc_AFC4:				; DATA XREF: ROM:0000AE6Eo
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	($FFFFF7DA).w,d0
 		cmpi.w	#$280,d0
@@ -14801,24 +14810,24 @@ loc_AFDC:				; DATA XREF: ROM:0000AE6Ao
 		bsr.w	SingleObjLoad
 		bne.s	loc_B004
 		move.b	#$2E,0(a1) ; '.'
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
-		move.b	$1C(a0),$1C(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
+		move.b	anim(a0),anim(a1)
 
 loc_B004:				; CODE XREF: ROM:0000AFEAj
 		bsr.w	SingleObjLoad
 		bne.s	loc_B020
 		move.b	#$27,0(a1) ; '''
 		addq.b	#2,routine(a1)
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
 
 loc_B020:				; CODE XREF: ROM:0000B008j
 		lea	($FFFFFC00).w,a2
 		moveq	#0,d0
 		move.b	$23(a0),d0
 		bset	#0,2(a2,d0.w)
-		move.b	#$A,$1C(a0)
+		move.b	#$A,anim(a0)
 		bra.w	DisplaySprite
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 ;----------------------------------------------------
@@ -14839,21 +14848,21 @@ Obj2E_Index:	dc.w loc_B04E-Obj2E_Index ; DATA XREF: ROM:Obj2E_Indexo
 
 loc_B04E:				; DATA XREF: ROM:Obj2E_Indexo
 		addq.b	#2,routine(a0)
-		move.w	#$680,2(a0)
+		move.w	#$680,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#$24,1(a0) ; '$'
-		move.b	#3,$18(a0)
-		move.b	#8,$19(a0)
-		move.w	#-$300,$12(a0)
+		move.b	#3,priority(a0)
+		move.b	#8,width_pixels(a0)
+		move.w	#-$300,y_vel(a0)
 		moveq	#0,d0
-		move.b	$1C(a0),d0
+		move.b	anim(a0),d0
 		addq.b	#1,d0
-		move.b	d0,$1A(a0)
+		move.b	d0,mapping_frame(a0)
 		movea.l	#Map_Obj26,a1
 		add.b	d0,d0
 		adda.w	(a1,d0.w),a1
 		addq.w	#2,a1
-		move.l	a1,4(a0)
+		move.l	a1,mappings(a0)
 
 loc_B092:				; DATA XREF: ROM:0000B04Ao
 		bsr.s	sub_B098
@@ -14863,18 +14872,18 @@ loc_B092:				; DATA XREF: ROM:0000B04Ao
 
 
 sub_B098:				; CODE XREF: ROM:loc_B092p
-		tst.w	$12(a0)
+		tst.w	y_vel(a0)
 		bpl.w	loc_B0AC
 		bsr.w	ObjectMove
-		addi.w	#$18,$12(a0)
+		addi.w	#$18,y_vel(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_B0AC:				; CODE XREF: sub_B098+4j
 		addq.b	#2,routine(a0)
-		move.w	#$1D,$1E(a0)
+		move.w	#$1D,anim_frame_duration(a0)
 		moveq	#0,d0
-		move.b	$1C(a0),d0
+		move.b	anim(a0),d0
 		add.w	d0,d0
 		move.w	Monitor_Subroutines(pc,d0.w),d0
 		jmp	Monitor_Subroutines(pc,d0.w)
@@ -14936,7 +14945,7 @@ loc_B130:				; CODE XREF: ROM:0000B112j
 
 Monitor_Shoes:				; DATA XREF: ROM:0000B0D0o
 		move.b	#1,($FFFFFE2E).w
-		move.w	#$4B0,($FFFFB034).w
+		move.w	#$4B0,(MainCharacter+$34).w
 		move.w	#$C00,(Sonic_top_speed).w
 		move.w	#$18,(Sonic_acceleration).w
 		move.w	#$80,(Sonic_deceleration).w ; '€'
@@ -14946,16 +14955,16 @@ Monitor_Shoes:				; DATA XREF: ROM:0000B0D0o
 
 Monitor_Shield:				; DATA XREF: ROM:0000B0D2o
 		move.b	#1,($FFFFFE2C).w
-		move.b	#$38,($FFFFB180).w ; '8'
+		move.b	#$38,(MainCharacter+$180).w ; '8'
 		move.w	#$AF,d0	; '¯'
 		jmp	(PlaySound).l
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 Monitor_Invincibility:			; DATA XREF: ROM:0000B0D4o
 		move.b	#1,($FFFFFE2D).w
-		move.w	#$4B0,($FFFFB032).w
-		move.b	#$38,($FFFFB200).w ; '8'
-		move.b	#1,($FFFFB21C).w
+		move.w	#$4B0,(MainCharacter+$32).w
+		move.b	#$38,(Object_RAM+$200).w ; '8'
+		move.b	#1,(Object_RAM+$200+anim).w
 		tst.b	($FFFFF7AA).w
 		bne.s	locret_B1A8
 		cmpi.w	#$C,($FFFFFE14).w
@@ -14970,7 +14979,7 @@ locret_B1A8:				; CODE XREF: ROM:0000B194j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_B1AA:				; DATA XREF: ROM:0000B04Co
-		subq.w	#1,$1E(a0)
+		subq.w	#1,anim_frame_duration(a0)
 		bmi.w	DeleteObject
 		bra.w	DisplaySprite
 
@@ -14978,20 +14987,20 @@ loc_B1AA:				; DATA XREF: ROM:0000B04Co
 
 
 Obj26_SolidSides:			; CODE XREF: ROM:0000AF38p
-		lea	($FFFFB000).w,a1
-		move.w	8(a1),d0
-		sub.w	8(a0),d0
+		lea	(MainCharacter).w,a1
+		move.w	x_pos(a1),d0
+		sub.w	x_pos(a0),d0
 		add.w	d1,d0
 		bmi.s	loc_B20E
 		move.w	d1,d3
 		add.w	d3,d3
 		cmp.w	d3,d0
 		bhi.s	loc_B20E
-		move.b	$16(a1),d3
+		move.b	y_radius(a1),d3
 		ext.w	d3
 		add.w	d3,d2
-		move.w	$C(a1),d3
-		sub.w	$C(a0),d3
+		move.w	y_pos(a1),d3
+		sub.w	y_pos(a0),d3
 		add.w	d2,d3
 		bmi.s	loc_B20E
 		add.w	d2,d2
@@ -14999,7 +15008,7 @@ Obj26_SolidSides:			; CODE XREF: ROM:0000AF38p
 		bcc.s	loc_B20E
 		tst.b	($FFFFF7C8).w
 		bmi.s	loc_B20E
-		cmpi.b	#6,($FFFFB000+routine).w
+		cmpi.b	#6,(MainCharacter+routine).w
 		bcc.s	loc_B20E
 		tst.w	(Debug_placement_mode).w
 		bne.s	loc_B20E
@@ -15026,12 +15035,12 @@ loc_B20E:				; CODE XREF: Obj26_SolidSides+Ej
 
 loc_B212:				; CODE XREF: Obj26_SolidSides+52j
 		moveq	#0,d1
-		move.b	$19(a0),d1
+		move.b	width_pixels(a0),d1
 		addq.w	#4,d1
 		move.w	d1,d2
 		add.w	d2,d2
-		add.w	8(a1),d1
-		sub.w	8(a0),d1
+		add.w	x_pos(a1),d1
+		sub.w	x_pos(a0),d1
 		bmi.s	loc_B20A
 		cmp.w	d2,d1
 		bcc.s	loc_B20A
@@ -15090,23 +15099,23 @@ Obj0E_Index:	dc.w loc_B38E-Obj0E_Index ; DATA XREF: ROM:Obj0E_Indexo
 
 loc_B38E:				; DATA XREF: ROM:Obj0E_Indexo
 		addq.b	#2,routine(a0)
-		move.w	#$148,8(a0)
-		move.w	#$C4,$A(a0) ; 'Ä'
-		move.l	#Map_Obj0E,4(a0)
-		move.w	#$4200,2(a0)
-		move.b	#1,$18(a0)
-		move.b	#$1D,$1F(a0)
-		tst.b	$1A(a0)
+		move.w	#$148,x_pixel(a0)
+		move.w	#$C4,y_pixel(a0) ; 'Ä'
+		move.l	#Map_Obj0E,mappings(a0)
+		move.w	#$4200,art_tile(a0)
+		move.b	#1,priority(a0)
+		move.b	#$1D,anim_frame_duration+1(a0)
+		tst.b	mapping_frame(a0)
 		beq.s	loc_B3D0
-		move.w	#$FC,8(a0) ; 'ü'
-		move.w	#$CC,$A(a0) ; 'Ì'
-		move.w	#$2200,2(a0)
+		move.w	#$FC,x_pixel(a0) ; 'ü'
+		move.w	#$CC,y_pixel(a0) ; 'Ì'
+		move.w	#$2200,art_tile(a0)
 
 loc_B3D0:				; CODE XREF: ROM:0000B3BCj
 					; DATA XREF: ROM:0000B388o
 		bra.w	DisplaySprite
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-		subq.b	#1,$1F(a0)
+		subq.b	#1,anim_frame_duration+1(a0)
 		bpl.s	locret_B3E2
 		addq.b	#2,routine(a0)
 		bra.w	DisplaySprite
@@ -15117,8 +15126,8 @@ locret_B3E2:				; CODE XREF: ROM:0000B3D8j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_B3E4:				; DATA XREF: ROM:0000B38Ao
-		subi.w	#8,$A(a0)
-		cmpi.w	#$96,$A(a0) ; '–'
+		subi.w	#8,y_pixel(a0)
+		cmpi.w	#$96,y_pixel(a0) ; '–'
 		bne.s	loc_B3F6
 		addq.b	#2,routine(a0)
 
@@ -15147,18 +15156,18 @@ Obj0F_Index:	dc.w loc_B416-Obj0F_Index
 
 loc_B416:
 		addq.b	#2,routine(a0)
-		move.w	#$90,8(a0)
-		move.w	#$90,$A(a0)
-		move.l	#Map_Obj0F,4(a0)
-		move.w	#$680,2(a0)
+		move.w	#$90,x_pixel(a0)
+		move.w	#$90,y_pixel(a0)
+		move.l	#Map_Obj0F,mappings(a0)
+		move.w	#$680,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 
 loc_B438:
 		move.b	($FFFFF605).w,d0
 		btst	#5,d0		; has C been pressed?
 		beq.s	loc_B44C	; if not, branch
-		addq.b	#1,$1A(a0)	; increment mappings
-		andi.b	#$F,$1A(a0)	; if above $F, reset
+		addq.b	#1,mapping_frame(a0)	; increment mappings
+		andi.b	#$F,mapping_frame(a0)	; if above $F, reset
 
 loc_B44C:
 		btst	#4,d0		; has B been pressed?
@@ -15317,36 +15326,36 @@ Obj2B_Index:	dc.w loc_B72E-Obj2B_Index ; DATA XREF: ROM:Obj2B_Indexo
 
 loc_B72E:				; DATA XREF: ROM:Obj2B_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj2B,4(a0)
-		move.w	#$470,2(a0)
+		move.l	#Map_Obj2B,mappings(a0)
+		move.w	#$470,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,1(a0)
-		move.b	#4,$18(a0)
+		move.b	#4,priority(a0)
 		move.b	#9,$20(a0)
-		move.b	#$10,$19(a0)
-		move.w	#$F900,$12(a0)
-		move.w	$C(a0),$30(a0)
+		move.b	#$10,width_pixels(a0)
+		move.w	#$F900,y_vel(a0)
+		move.w	y_pos(a0),$30(a0)
 
 loc_B768:				; DATA XREF: ROM:0000B72Co
 		lea	(Ani_Obj2B).l,a1
 		bsr.w	AnimateSprite
 		bsr.w	ObjectMove
-		addi.w	#$18,$12(a0)
+		addi.w	#$18,y_vel(a0)
 		move.w	$30(a0),d0
-		cmp.w	$C(a0),d0
+		cmp.w	y_pos(a0),d0
 		bcc.s	loc_B790
-		move.w	d0,$C(a0)
-		move.w	#$F900,$12(a0)
+		move.w	d0,y_pos(a0)
+		move.w	#$F900,y_vel(a0)
 
 loc_B790:				; CODE XREF: ROM:0000B784j
-		move.b	#1,$1C(a0)
+		move.b	#1,anim(a0)
 		subi.w	#$C0,d0	; 'À'
-		cmp.w	$C(a0),d0
+		cmp.w	y_pos(a0),d0
 		bcc.s	locret_B7B2
-		move.b	#0,$1C(a0)
-		tst.w	$12(a0)
+		move.b	#0,anim(a0)
+		tst.w	y_vel(a0)
 		bmi.s	locret_B7B2
-		move.b	#2,$1C(a0)
+		move.b	#2,anim(a0)
 
 locret_B7B2:				; CODE XREF: ROM:0000B79Ej
 					; ROM:0000B7AAj
@@ -15384,32 +15393,32 @@ Obj2C_Index:	dc.w loc_B7F0-Obj2C_Index ; DATA XREF: ROM:Obj2C_Indexo
 
 loc_B7F0:				; DATA XREF: ROM:Obj2C_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj2C,4(a0)
-		move.w	#$2486,2(a0)
+		move.l	#Map_Obj2C,mappings(a0)
+		move.w	#$2486,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		ori.b	#4,1(a0)
 		move.b	#$A,$20(a0)
-		move.b	#4,$18(a0)
-		move.b	#$10,$19(a0)
+		move.b	#4,priority(a0)
+		move.b	#$10,width_pixels(a0)
 		moveq	#0,d0
 		move.b	$28(a0),d0
 		lsl.w	#6,d0
 		subq.w	#1,d0
 		move.w	d0,$30(a0)
 		move.w	d0,$32(a0)
-		move.w	#$FFC0,$10(a0)
-		btst	#0,$22(a0)
+		move.w	#$FFC0,x_vel(a0)
+		btst	#0,status(a0)
 		beq.s	loc_B842
-		neg.w	$10(a0)
+		neg.w	x_vel(a0)
 
 loc_B842:				; CODE XREF: ROM:0000B83Cj
 					; DATA XREF: ROM:0000B7EEo
 		subq.w	#1,$30(a0)
 		bpl.s	loc_B85E
 		move.w	$32(a0),$30(a0)
-		neg.w	$10(a0)
-		bchg	#0,$22(a0)
-		move.b	#1,$1D(a0)
+		neg.w	x_vel(a0)
+		bchg	#0,status(a0)
+		move.b	#1,prev_anim(a0)
 
 loc_B85E:				; CODE XREF: ROM:0000B846j
 		lea	(Ani_Obj2C).l,a1
@@ -15477,10 +15486,10 @@ Obj34_CheckConfig:			; CODE XREF: ROM:0000B8F8j
 
 Obj34_Loop:				; CODE XREF: ROM:0000B976j
 		move.b	#$34,0(a1) ; '4'
-		move.w	(a3),8(a1)
+		move.w	(a3),x_pixel(a1)
 		move.w	(a3)+,$32(a1)
 		move.w	(a3)+,$30(a1)
-		move.w	(a2)+,$A(a1)
+		move.w	(a2)+,y_pixel(a1)
 		move.b	(a2)+,routine(a1)
 		move.b	(a2)+,d0
 		bne.s	Obj34_ActNumber
@@ -15496,30 +15505,30 @@ Obj34_ActNumber:			; CODE XREF: ROM:0000B92Cj
 
 Obj34_MakeSprite:			; CODE XREF: ROM:0000B934j
 					; ROM:0000B940j
-		move.b	d0,$1A(a1)
-		move.l	#Map_Obj34,4(a1)
-		move.w	#$8580,2(a1)
+		move.b	d0,mapping_frame(a1)
+		move.l	#Map_Obj34,mappings(a1)
+		move.w	#$8580,art_tile(a1)
 		bsr.w	Adjust2PArtPointer2
-		move.b	#$78,$19(a1) ; 'x'
+		move.b	#$78,width_pixels(a1) ; 'x'
 		move.b	#0,1(a1)
-		move.b	#0,$18(a1)
-		move.w	#$3C,$1E(a1) ; '<'
+		move.b	#0,priority(a1)
+		move.w	#$3C,anim_frame_duration(a1) ; '<'
 		lea	$40(a1),a1
 		dbf	d1,Obj34_Loop
 
 Obj34_CheckPos:				; DATA XREF: ROM:Obj34_Indexo
 		moveq	#$10,d1
 		move.w	$30(a0),d0
-		cmp.w	8(a0),d0
+		cmp.w	x_pixel(a0),d0
 		beq.s	loc_B98E
 		bge.s	Obj34_Move
 		neg.w	d1
 
 Obj34_Move:				; CODE XREF: ROM:0000B986j
-		add.w	d1,8(a0)
+		add.w	d1,x_pixel(a0)
 
 loc_B98E:				; CODE XREF: ROM:0000B984j
-		move.w	8(a0),d0
+		move.w	x_pixel(a0),d0
 		bmi.s	Obj34_NoDisplay
 		cmpi.w	#$200,d0
 		bcc.s	Obj34_NoDisplay
@@ -15534,9 +15543,9 @@ Obj34_NoDisplay:			; CODE XREF: ROM:0000B992j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 Obj34_Wait:				; DATA XREF: ROM:Obj34_Indexo
-		tst.w	$1E(a0)
+		tst.w	anim_frame_duration(a0)
 		beq.s	Obj34_CheckPos2
-		subq.w	#1,$1E(a0)
+		subq.w	#1,anim_frame_duration(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		bra.w	DisplaySprite
@@ -15547,14 +15556,14 @@ Obj34_CheckPos2:			; CODE XREF: ROM:0000B9A6j
 		bpl.s	Obj34_ChangeArt
 		moveq	#$20,d1	; ' '
 		move.w	$32(a0),d0
-		cmp.w	8(a0),d0
+		cmp.w	x_pixel(a0),d0
 		beq.s	Obj34_ChangeArt
 		bge.s	Obj34_Move2
 		neg.w	d1
 
 Obj34_Move2:				; CODE XREF: ROM:0000B9C4j
-		add.w	d1,8(a0)
-		move.w	8(a0),d0
+		add.w	d1,x_pixel(a0)
+		move.w	x_pixel(a0),d0
 		bmi.s	Obj34_NoDisplay2
 		cmpi.w	#$200,d0
 		bcc.s	Obj34_NoDisplay2
@@ -15623,33 +15632,33 @@ loc_BA98:				; DATA XREF: ROM:Obj39_Indexo
 
 loc_BAA0:				; CODE XREF: ROM:0000BA9Cj
 		addq.b	#2,routine(a0)
-		move.w	#$50,8(a0) ; 'P'
-		btst	#0,$1A(a0)
+		move.w	#$50,x_pixel(a0) ; 'P'
+		btst	#0,mapping_frame(a0)
 		beq.s	loc_BAB8
 		move.w	#$1F0,8(a0)
 
 loc_BAB8:				; CODE XREF: ROM:0000BAB0j
-		move.w	#$F0,$A(a0) ; 'ğ'
-		move.l	#Map_Obj39,4(a0)
-		move.w	#$855E,2(a0)
+		move.w	#$F0,y_pixel(a0) ; 'ğ'
+		move.l	#Map_Obj39,mappings(a0)
+		move.w	#$855E,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#0,1(a0)
-		move.b	#0,$18(a0)
+		move.b	#0,priority(a0)
 
 loc_BADC:				; DATA XREF: ROM:0000BA94o
 		moveq	#$10,d1
-		cmpi.w	#$120,8(a0)
+		cmpi.w	#$120,x_pixel(a0)
 		beq.s	loc_BAF2
 		bcs.s	loc_BAEA
 		neg.w	d1
 
 loc_BAEA:				; CODE XREF: ROM:0000BAE6j
-		add.w	d1,8(a0)
+		add.w	d1,x_pixel(a0)
 		bra.w	DisplaySprite
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_BAF2:				; CODE XREF: ROM:0000BAE4j
-		move.w	#$2D0,$1E(a0)
+		move.w	#$2D0,anim_frame_duration(a0)
 		addq.b	#2,routine(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -15658,11 +15667,11 @@ loc_BAFE:				; DATA XREF: ROM:0000BA96o
 		move.b	($FFFFF605).w,d0
 		andi.b	#$70,d0	; 'p'
 		bne.s	loc_BB1E
-		btst	#0,$1A(a0)
+		btst	#0,mapping_frame(a0)
 		bne.s	loc_BB42
-		tst.w	$1E(a0)
+		tst.w	anim_frame_duration(a0)
 		beq.s	loc_BB1E
-		subq.w	#1,$1E(a0)
+		subq.w	#1,anim_frame_duration(a0)
 		bra.w	DisplaySprite
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -15714,10 +15723,10 @@ Obj3A_Config:
 ; loc_BB6E:
 Obj3A_Init:
 		move.b	#$3A,0(a1)
-		move.w	(a2),8(a1)
+		move.w	(a2),x_pixel(a1)
 		move.w	(a2)+,$32(a1)
 		move.w	(a2)+,$30(a1)
-		move.w	(a2)+,$A(a1)
+		move.w	(a2)+,y_pixel(a1)
 		move.b	(a2)+,routine(a1)
 		move.b	(a2)+,d0
 		cmpi.b	#6,d0
@@ -15725,9 +15734,9 @@ Obj3A_Init:
 		add.b	(Current_Act).w,d0
 
 loc_BB94:
-		move.b	d0,$1A(a1)
-		move.l	#Map_Obj3A,4(a1)
-		move.w	#$8580,2(a1)
+		move.b	d0,mapping_frame(a1)
+		move.l	#Map_Obj3A,mappings(a1)
+		move.w	#$8580,art_tile(a1)
 		bsr.w	Adjust2PArtPointer2
 		move.b	#0,1(a1)
 		lea	$40(a1),a1
@@ -15736,16 +15745,16 @@ loc_BB94:
 Obj3A_ChkPos:
 		moveq	#$10,d1
 		move.w	$30(a0),d0
-		cmp.w	8(a0),d0
+		cmp.w	x_pixel(a0),d0
 		beq.s	loc_BBEA
 		bge.s	Obj3A_Move
 		neg.w	d1
 ; loc_BBC8:
 Obj3A_Move
-		add.w	d1,8(a0)
+		add.w	d1,x_pixel(a0)
 
 loc_BBCC:
-		move.w	8(a0),d0
+		move.w	x_pixel(a0),d0
 		bmi.s	locret_BBDE
 		cmpi.w	#$200,d0
 		bcc.s	locret_BBDE
@@ -15764,15 +15773,15 @@ loc_BBE0:
 ; ===========================================================================
 
 loc_BBEA:
-		cmpi.b	#$E,($FFFFB700+routine).w
+		cmpi.b	#$E,(Object_RAM+$700+routine).w
 		beq.s	loc_BBE0
-		cmpi.b	#4,$1A(a0)
+		cmpi.b	#4,mapping_frame(a0)
 		bne.s	loc_BBCC
 		addq.b	#2,routine(a0)
-		move.w	#$B4,$1E(a0)
+		move.w	#$B4,anim_frame_duration(a0)
 ; loc_BC04:
 Obj3A_Wait:
-		subq.w	#1,$1E(a0)
+		subq.w	#1,anim_frame_duration(a0)
 		bne.s	locret_BC0E
 		addq.b	#2,routine(a0)
 
@@ -15807,7 +15816,7 @@ Obj3A_ChkBonus:
 		addq.b	#4,routine(a0)
 ; loc_BC5E:
 Obj3A_SetDelay:
-		move.w	#$B4,$1E(a0)
+		move.w	#$B4,anim_frame_duration(a0)
 
 locret_BC64:
 		rts
@@ -15865,14 +15874,14 @@ LevelOrder:	dc.w	 1,    2, $200,	   0; 0
 loc_BCF8:				; CODE XREF: ROM:0000BBE6j
 		moveq	#$20,d1	; ' '
 		move.w	$32(a0),d0
-		cmp.w	8(a0),d0
+		cmp.w	x_pixel(a0),d0
 		beq.s	loc_BD1E
 		bge.s	loc_BD08
 		neg.w	d1
 
 loc_BD08:				; CODE XREF: ROM:0000BD04j
-		add.w	d1,8(a0)
-		move.w	8(a0),d0
+		add.w	d1,x_pixel(a0)
+		move.w	x_pixel(a0),d0
 		bmi.s	locret_BD1C
 		cmpi.w	#$200,d0
 		bcc.s	locret_BD1C
@@ -15885,7 +15894,7 @@ locret_BD1C:				; CODE XREF: ROM:0000BD10j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_BD1E:				; CODE XREF: ROM:0000BD02j
-		cmpi.b	#4,$1A(a0)
+		cmpi.b	#4,mapping_frame(a0)
 		bne.w	DeleteObject
 		addq.b	#2,routine(a0)
 		clr.b	($FFFFF7CC).w
@@ -15946,13 +15955,13 @@ loc_BDAE:				; CODE XREF: ROM:0000BDAAj
 loc_BDC2:				; CODE XREF: ROM:0000BDBEj
 					; ROM:0000BDF8j
 		move.b	#$7E,0(a1) ; '~'
-		move.w	(a2)+,8(a1)
+		move.w	(a2)+,x_pixel(a1)
 		move.w	(a2)+,$30(a1)
-		move.w	(a2)+,$A(a1)
+		move.w	(a2)+,y_pixel(a1)
 		move.b	(a2)+,routine(a1)
-		move.b	(a2)+,$1A(a1)
-		move.l	#Map_S1Obj7E,4(a1)
-		move.w	#$8580,2(a1)
+		move.b	(a2)+,mapping_frame(a1)
+		move.l	#Map_S1Obj7E,mappings(a1)
+		move.w	#$8580,art_tile(a1)
 		bsr.w	Adjust2PArtPointer2
 		move.b	#0,1(a1)
 		lea	$40(a1),a1
@@ -15964,26 +15973,26 @@ loc_BDC2:				; CODE XREF: ROM:0000BDBEj
 		cmpi.b	#6,d1
 		bne.s	loc_BE1A
 		moveq	#8,d0
-		move.w	#$18,8(a0)
+		move.w	#$18,x_pixel(a0)
 		move.w	#$118,$30(a0)
 
 loc_BE1A:				; CODE XREF: ROM:0000BE02j
 					; ROM:0000BE0Aj
-		move.b	d0,$1A(a0)
+		move.b	d0,mapping_frame(a0)
 
 loc_BE1E:				; DATA XREF: ROM:0000BD92o
 		moveq	#$10,d1
 		move.w	$30(a0),d0
-		cmp.w	8(a0),d0
+		cmp.w	x_pixel(a0),d0
 		beq.s	loc_BE44
 		bge.s	loc_BE2E
 		neg.w	d1
 
 loc_BE2E:				; CODE XREF: ROM:0000BE2Aj
-		add.w	d1,8(a0)
+		add.w	d1,x_pixel(a0)
 
 loc_BE32:				; CODE XREF: ROM:0000BE4Aj
-		move.w	8(a0),d0
+		move.w	x_pixel(a0),d0
 		bmi.s	locret_BE42
 		cmpi.w	#$200,d0
 		bcc.s	locret_BE42
@@ -15996,15 +16005,15 @@ locret_BE42:				; CODE XREF: ROM:0000BE36j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_BE44:				; CODE XREF: ROM:0000BE28j
-		cmpi.b	#2,$1A(a0)
+		cmpi.b	#2,mapping_frame(a0)
 		bne.s	loc_BE32
 		addq.b	#2,routine(a0)
-		move.w	#$B4,$1E(a0) ; '´'
-		move.b	#$7F,($FFFFB800).w ; ''
+		move.w	#$B4,anim_frame_duration(a0) ; '´'
+		move.b	#$7F,(Object_RAM+$800).w ; ''
 
 loc_BE5C:				; DATA XREF: ROM:0000BD94o
 					; ROM:0000BD98o ...
-		subq.w	#1,$1E(a0)
+		subq.w	#1,anim_frame_duration(a0)
 		bne.s	loc_BE66
 		addq.b	#2,routine(a0)
 
@@ -16031,10 +16040,10 @@ loc_BE9C:				; CODE XREF: ROM:0000BE78j
 		move.w	#$C5,d0	; 'Å'
 		jsr	(PlaySound_Special).l
 		addq.b	#2,routine(a0)
-		move.w	#$B4,$1E(a0) ; '´'
+		move.w	#$B4,anim_frame_duration(a0) ; '´'
 		cmpi.w	#$32,($FFFFFE20).w ; '2'
 		bcs.s	locret_BEC2
-		move.w	#$3C,$1E(a0) ; '<'
+		move.w	#$3C,anim_frame_duration(a0) ; '<'
 		addq.b	#4,routine(a0)
 
 locret_BEC2:				; CODE XREF: ROM:0000BE90j
@@ -16049,12 +16058,12 @@ loc_BEC4:				; DATA XREF: ROM:0000BD9Ao
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_BECE:				; DATA XREF: ROM:0000BD9Eo
-		move.b	#4,($FFFFB6DA).w
-		move.b	#$14,($FFFFB6C0+routine).w
+		move.b	#4,(Object_RAM+$6C0+mapping_frame).w
+		move.b	#$14,(Object_RAM+$6C0+routine).w
 		move.w	#$BF,d0	; '¿'
 		jsr	(PlaySound_Special).l
 		addq.b	#2,routine(a0)
-		move.w	#$168,$1E(a0)
+		move.w	#$168,anim_frame_duration(a0)
 		bra.w	DisplaySprite
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -16062,7 +16071,7 @@ loc_BEF2:				; DATA XREF: ROM:0000BDA4o
 		move.b	($FFFFFE0F).w,d0
 		andi.b	#$F,d0
 		bne.s	loc_BF02
-		bchg	#0,$1A(a0)
+		bchg	#0,mapping_frame(a0)
 
 loc_BF02:				; CODE XREF: ROM:0000BEFAj
 		bra.w	DisplaySprite
@@ -16105,27 +16114,27 @@ loc_BF4C:				; DATA XREF: ROM:S1Obj7F_Indexo
 
 loc_BF60:				; CODE XREF: ROM:0000BFA2j
 		move.b	#$7F,0(a1) ; ''
-		move.w	(a2)+,8(a1)
-		move.w	#$F0,$A(a1) ; 'ğ'
+		move.w	(a2)+,x_pixel(a1)
+		move.w	#$F0,y_pixel(a1) ; 'ğ'
 		lea	($FFFFFE58).w,a3
 		move.b	(a3,d2.w),d3
-		move.b	d3,$1A(a1)
-		move.b	d3,$1C(a1)
+		move.b	d3,mapping_frame(a1)
+		move.b	d3,anim(a1)
 		addq.b	#1,d2
 		addq.b	#2,routine(a1)
-		move.l	#Map_S1Obj7F,4(a1)
-		move.w	#$8541,2(a1)
+		move.l	#Map_S1Obj7F,mappings(a1)
+		move.w	#$8541,art_tile(a1)
 		bsr.w	Adjust2PArtPointer2
 		move.b	#0,1(a1)
 		lea	$40(a1),a1
 		dbf	d1,loc_BF60
 
 loc_BFA6:				; DATA XREF: ROM:0000BF3Eo
-		move.b	$1A(a0),d0
-		move.b	#6,$1A(a0)
+		move.b	mapping_frame(a0),d0
+		move.b	#6,mapping_frame(a0)
 		cmpi.b	#6,d0
 		bne.s	loc_BFBC
-		move.b	$1C(a0),$1A(a0)
+		move.b	anim(a0),mapping_frame(a0)
 
 loc_BFBC:				; CODE XREF: ROM:0000BFB4j
 		bra.w	DisplaySprite
@@ -16434,28 +16443,28 @@ Obj36_Conf:	dc.b   0,$10		; 0 ; DATA XREF: ROM:0000C6B2t
 
 loc_C682:				; DATA XREF: ROM:Obj36_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj36,4(a0)
-		move.w	#$2434,2(a0)
+		move.l	#Map_Obj36,mappings(a0)
+		move.w	#$2434,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		ori.b	#4,1(a0)
-		move.b	#4,$18(a0)
+		move.b	#4,priority(a0)
 		move.b	$28(a0),d0
 		andi.b	#$F,$28(a0)
 		andi.w	#$F0,d0	; 'ğ'
 		lea	Obj36_Conf(pc),a1
 		lsr.w	#3,d0
 		adda.w	d0,a1
-		move.b	(a1)+,$1A(a0)
-		move.b	(a1)+,$19(a0)
-		move.w	8(a0),$30(a0)
-		move.w	$C(a0),$32(a0)
+		move.b	(a1)+,mapping_frame(a0)
+		move.b	(a1)+,width_pixels(a0)
+		move.w	x_pos(a0),$30(a0)
+		move.w	y_pos(a0),$32(a0)
 
 loc_C6CE:				; DATA XREF: ROM:0000C674o
 		bsr.w	sub_C788
 		move.w	#4,d2
-		cmpi.b	#5,$1A(a0)
+		cmpi.b	#5,mapping_frame(a0)
 		beq.s	loc_C6EA
-		cmpi.b	#1,$1A(a0)
+		cmpi.b	#1,mapping_frame(a0)
 		bne.s	loc_C70C
 		move.w	#$14,d2
 
@@ -16463,9 +16472,9 @@ loc_C6EA:				; CODE XREF: ROM:0000C6DCj
 		move.w	#$1B,d1
 		move.w	d2,d3
 		addq.w	#1,d3
-		move.w	8(a0),d4
+		move.w	x_pos(a0),d4
 		bsr.w	SolidObject
-		btst	#3,$22(a0)
+		btst	#3,status(a0)
 		bne.s	loc_C766
 		swap	d6
 		andi.w	#3,d6
@@ -16475,13 +16484,13 @@ loc_C6EA:				; CODE XREF: ROM:0000C6DCj
 
 loc_C70C:				; CODE XREF: ROM:0000C6E4j
 		moveq	#0,d1
-		move.b	$19(a0),d1
+		move.b	width_pixels(a0),d1
 		addi.w	#$B,d1
 		move.w	#$10,d2
 		move.w	#$11,d3
-		move.w	8(a0),d4
+		move.w	x_pos(a0),d4
 		bsr.w	SolidObject
-		btst	#3,$22(a0)
+		btst	#3,status(a0)
 		bne.s	loc_C736
 		swap	d6
 		andi.w	#$C0,d6	; 'À'
@@ -16493,15 +16502,15 @@ loc_C736:				; CODE XREF: ROM:0000C708j
 		bne.s	loc_C766
 		move.l	a0,-(sp)
 		movea.l	a0,a2
-		lea	($FFFFB000).w,a0
+		lea	(MainCharacter).w,a0
 		cmpi.b	#4,routine(a0)
 		bcc.s	loc_C764
-		move.l	$C(a0),d3
-		move.w	$12(a0),d0
+		move.l	y_pos(a0),d3
+		move.w	y_vel(a0),d0
 		ext.l	d0
 		asl.l	#8,d0
 		sub.l	d0,d3
-		move.l	d3,$C(a0)
+		move.l	d3,y_pos(a0)
 		jsr	HurtSonic
 
 loc_C764:				; CODE XREF: ROM:0000C74Aj
@@ -16549,7 +16558,7 @@ loc_C7A0:				; DATA XREF: ROM:0000C79Ao
 		moveq	#0,d0
 		move.b	$34(a0),d0
 		add.w	$32(a0),d0
-		move.w	d0,$C(a0)
+		move.w	d0,y_pos(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -16558,7 +16567,7 @@ loc_C7B4:				; DATA XREF: ROM:0000C79Co
 		moveq	#0,d0
 		move.b	$34(a0),d0
 		add.w	$30(a0),d0
-		move.w	d0,8(a0)
+		move.w	d0,x_pos(a0)
 		rts
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
@@ -16623,20 +16632,20 @@ Obj3B_Index:	dc.w loc_C85A-Obj3B_Index ; DATA XREF: ROM:Obj3B_Indexo
 
 loc_C85A:				; DATA XREF: ROM:Obj3B_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj3B,4(a0)
-		move.w	#$66C0,2(a0)
+		move.l	#Map_Obj3B,mappings(a0)
+		move.w	#$66C0,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,1(a0)
-		move.b	#$13,$19(a0)
-		move.b	#4,$18(a0)
+		move.b	#$13,width_pixels(a0)
+		move.b	#4,priority(a0)
 
 loc_C882:				; DATA XREF: ROM:0000C858o
 		move.w	#$1B,d1
 		move.w	#$10,d2
 		move.w	#$10,d3
-		move.w	8(a0),d4
+		move.w	x_pos(a0),d4
 		bsr.w	SolidObject
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	($FFFFF7DA).w,d0
 		cmpi.w	#$280,d0
@@ -16669,22 +16678,22 @@ Obj3C_Index:	dc.w loc_C8DC-Obj3C_Index ; DATA XREF: ROM:Obj3C_Indexo
 
 loc_C8DC:				; DATA XREF: ROM:Obj3C_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj3C,4(a0)
-		move.w	#$4590,2(a0)
+		move.l	#Map_Obj3C,mappings(a0)
+		move.w	#$4590,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,1(a0)
-		move.b	#$10,$19(a0)
-		move.b	#4,$18(a0)
-		move.b	$28(a0),$1A(a0)
+		move.b	#$10,width_pixels(a0)
+		move.b	#4,priority(a0)
+		move.b	$28(a0),mapping_frame(a0)
 
 loc_C90A:				; DATA XREF: ROM:0000C8D8o
-		move.w	($FFFFB010).w,$30(a0)
+		move.w	(MainCharacter+x_vel).w,$30(a0)
 		move.w	#$1B,d1
 		move.w	#$20,d2	; ' '
 		move.w	#$20,d3	; ' '
-		move.w	8(a0),d4
+		move.w	x_pos(a0),d4
 		bsr.w	SolidObject
-		btst	#5,$22(a0)
+		btst	#5,status(a0)
 		bne.s	loc_C92E
 
 locret_C92C:				; CODE XREF: ROM:0000C938j
@@ -16693,8 +16702,8 @@ locret_C92C:				; CODE XREF: ROM:0000C938j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_C92E:				; CODE XREF: ROM:0000C92Aj
-		lea	($FFFFB000).w,a1
-		cmpi.b	#2,$1C(a1)
+		lea	(MainCharacter).w,a1
+		cmpi.b	#2,anim(a1)
 		bne.s	locret_C92C
 		move.w	$30(a0),d0
 		bpl.s	loc_C942
@@ -16703,26 +16712,26 @@ loc_C92E:				; CODE XREF: ROM:0000C92Aj
 loc_C942:				; CODE XREF: ROM:0000C93Ej
 		cmpi.w	#$480,d0
 		bcs.s	locret_C92C
-		move.w	$30(a0),$10(a1)
-		addq.w	#4,8(a1)
+		move.w	$30(a0),x_vel(a1)
+		addq.w	#4,x_pos(a1)
 		lea	(Obj3C_FragSpdRight).l,a4
-		move.w	8(a0),d0
-		cmp.w	8(a1),d0
+		move.w	x_pos(a0),d0
+		cmp.w	x_pos(a1),d0
 		bcs.s	loc_C96E
-		subi.w	#8,8(a1)
+		subi.w	#8,x_pos(a1)
 		lea	(Obj3C_FragSpdLeft).l,a4
 
 loc_C96E:				; CODE XREF: ROM:0000C960j
-		move.w	$10(a1),$14(a1)
-		bclr	#5,$22(a0)
-		bclr	#5,$22(a1)
+		move.w	x_vel(a1),$14(a1)
+		bclr	#5,status(a0)
+		bclr	#5,status(a1)
 		moveq	#7,d1
 		move.w	#$70,d2	; 'p'
 		bsr.s	sub_C99E
 
 loc_C988:				; DATA XREF: ROM:0000C8DAo
 		bsr.w	ObjectMove
-		addi.w	#$70,$12(a0) ; 'p'
+		addi.w	#$70,y_vel(a0) ; 'p'
 		tst.b	1(a0)
 		bpl.w	DeleteObject
 		bra.w	DisplaySprite
@@ -16732,9 +16741,9 @@ loc_C988:				; DATA XREF: ROM:0000C8DAo
 
 sub_C99E:				; CODE XREF: ROM:0000C986p
 		moveq	#0,d0
-		move.b	$1A(a0),d0
+		move.b	mapping_frame(a0),d0
 		add.w	d0,d0
-		movea.l	4(a0),a3
+		movea.l	mappings(a0),a3
 		adda.w	(a3,d0.w),a3
 		addq.w	#2,a3
 		bset	#5,1(a0)
@@ -16752,21 +16761,21 @@ loc_C9C2:				; CODE XREF: sub_C99E:loc_CA18j
 loc_C9CA:				; CODE XREF: sub_C99E+22j
 		move.b	#4,routine(a1)
 		move.b	d4,0(a1)
-		move.l	a3,4(a1)
+		move.l	a3,mappings(a1)
 		move.b	d5,1(a1)
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
-		move.w	2(a0),2(a1)
-		move.b	$18(a0),$18(a1)
-		move.b	$19(a0),$19(a1)
-		move.w	(a4)+,$10(a1)
-		move.w	(a4)+,$12(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
+		move.w	art_tile(a0),art_tile(a1)
+		move.b	priority(a0),priority(a1)
+		move.b	width_pixels(a0),width_pixels(a1)
+		move.w	(a4)+,x_vel(a1)
+		move.w	(a4)+,y_vel(a1)
 		cmpa.l	a0,a1
 		bcc.s	loc_CA18
 		move.l	a0,-(sp)
 		movea.l	a1,a0
 		bsr.w	ObjectMove
-		add.w	d2,$12(a0)
+		add.w	d2,y_vel(a0)
 		movea.l	(sp)+,a0
 		bsr.w	DisplaySprite2
 
@@ -16838,10 +16847,10 @@ word_CAF0:	dc.w 8			; DATA XREF: ROM:0000CA6Ao
 
 ; ObjectsLoad:
 RunObjects:
-		lea	($FFFFB000).w,a0
+		lea	(MainCharacter).w,a0
 		moveq	#$7F,d7			; run the first $80 objects out of levels
 		moveq	#0,d0
-		cmpi.b	#6,($FFFFB000+routine).w	; is Sonic dead?
+		cmpi.b	#6,(MainCharacter+routine).w	; is Sonic dead?
 		bcc.s	RunObjectsWhenPlayerIsDead	; if yes, branch
 
 ; ---------------------------------------------------------------------------
@@ -17052,19 +17061,19 @@ ObjNull:
 
 ; ObjectFall:
 ObjectMoveAndFall:
-		move.l	8(a0),d2	; load x position
-		move.l	$C(a0),d3	; load y position
-		move.w	$10(a0),d0	; load x speed
+		move.l	x_pos(a0),d2	; load x position
+		move.l	y_pos(a0),d3	; load y position
+		move.w	x_vel(a0),d0	; load x speed
 		ext.l	d0
 		asl.l	#8,d0		; shift velocity to line up with the middle 16 bits of the 32-bit position
 		add.l	d0,d2		; add x speed to x position
-		move.w	$12(a0),d0	; load y speed
-		addi.w	#$38,$12(a0)	; increase vertical speed (apply gravity)
+		move.w	y_vel(a0),d0	; load y speed
+		addi.w	#$38,y_vel(a0)	; increase vertical speed (apply gravity)
 		ext.l	d0
 		asl.l	#8,d0		; shift velocity to line up with the middle 16 bits of the 32-bit position
 		add.l	d0,d3		; add old y speed to y position
-		move.l	d2,8(a0)	; store new x position
-		move.l	d3,$C(a0)	; store new y position
+		move.l	d2,x_pos(a0)	; store new x position
+		move.l	d3,y_pos(a0)	; store new y position
 		rts
 ; End of function ObjectMoveAndFall
 
@@ -17078,18 +17087,18 @@ ObjectMoveAndFall:
 
 ; SpeedToPos:
 ObjectMove:
-		move.l	8(a0),d2	; load x position
-		move.l	$C(a0),d3	; load y position
-		move.w	$10(a0),d0	; load x speed
+		move.l	x_pos(a0),d2	; load x position
+		move.l	y_pos(a0),d3	; load y position
+		move.w	x_vel(a0),d0	; load x speed
 		ext.l	d0
 		asl.l	#8,d0		; shift velocity to line up with the middle 16 bits of the 32-bit position
 		add.l	d0,d2		; add x speed to x position
-		move.w	$12(a0),d0	; load y speed
+		move.w	y_vel(a0),d0	; load y speed
 		ext.l	d0
 		asl.l	#8,d0		; shift velocity to line up with the middle 16 bits of the 32-bit position
 		add.l	d0,d3		; add old y speed to y position
-		move.l	d2,8(a0)	; store new x position
-		move.l	d3,$C(a0)	; store new y position
+		move.l	d2,x_pos(a0)	; store new x position
+		move.l	d3,y_pos(a0)	; store new y position
 		rts
 ; End of function ObjectMove
 
@@ -17102,7 +17111,7 @@ ObjectMove:
 
 DisplaySprite:
 		lea	($FFFFAC00).w,a1
-		move.w	$18(a0),d0
+		move.w	priority(a0),d0
 		lsr.w	#1,d0
 		andi.w	#$380,d0
 		adda.w	d0,a1
@@ -17125,7 +17134,7 @@ locret_CE20:
 ; DisplayA1Sprite:
 DisplaySprite2:
 		lea	($FFFFAC00).w,a2
-		move.w	$18(a1),d0
+		move.w	priority(a1),d0
 		lsr.w	#1,d0
 		andi.w	#$380,d0
 		adda.w	d0,a2
@@ -17175,7 +17184,7 @@ MarkObjGone:
 ; ---------------------------------------------------------------------------
 
 loc_CE64:
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	($FFFFF7DA).w,d0
 		cmpi.w	#$280,d0
@@ -17202,7 +17211,7 @@ MarkObjGone2:
 ; ---------------------------------------------------------------------------
 
 loc_CE9A:
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	($FFFFF7DA).w,d0
 		cmpi.w	#$280,d0
@@ -17225,7 +17234,7 @@ loc_CEC2:
 MarkObjGone_P1:
 		tst.w	(Two_player_mode).w
 		bne.s	MarkObjGone_P2
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	($FFFFF7DA).w,d0
 		cmpi.w	#$280,d0
@@ -17246,7 +17255,7 @@ loc_CEF6:
 ; second player in two player mode
 ; loc_CEFA:
 MarkObjGone_P2:
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		move.w	d0,d1
 		sub.w	($FFFFF7DA).w,d0
@@ -17301,35 +17310,35 @@ loc_CF40:
 
 AnimateSprite:
 		moveq	#0,d0
-		move.b	$1C(a0),d0	; move animation number to d0
-		cmp.b	$1D(a0),d0	; is animation set to change?
+		move.b	anim(a0),d0	; move animation number to d0
+		cmp.b	prev_anim(a0),d0	; is animation set to change?
 		beq.s	Anim_Run	; if not, branch
-		move.b	d0,$1D(a0)	; set previous animation to current one
-		move.b	#0,$1B(a0)	; reset animation
-		move.b	#0,$1E(a0)	; reset frame duration
+		move.b	d0,prev_anim(a0)	; set previous animation to current one
+		move.b	#0,anim_frame(a0)	; reset animation
+		move.b	#0,anim_frame_duration(a0)	; reset frame duration
 ; loc_CF64:
 Anim_Run:
-		subq.b	#1,$1E(a0)	; subtract 1 from frame duration
+		subq.b	#1,anim_frame_duration(a0)	; subtract 1 from frame duration
 		bpl.s	Anim_Wait	; if time remains, branch
 		add.w	d0,d0
 		adda.w	(a1,d0.w),a1	; calculate address of appropriate animation script
-		move.b	(a1),$1E(a0)	; load frame duration
+		move.b	(a1),anim_frame_duration(a0)	; load frame duration
 		moveq	#0,d1
-		move.b	$1B(a0),d1	; load current frame number
+		move.b	anim_frame(a0),d1	; load current frame number
 		move.b	1(a1,d1.w),d0	; read sprite number from script
 		bmi.s	Anim_End_FF	; if animation is complete, branch
 ; loc_CF80:
 Anim_Next:
 		move.b	d0,d1		; move animation number to current frame number
 		andi.b	#$1F,d0
-		move.b	d0,$1A(a0)	; load sprite number
-		move.b	$22(a0),d0	; match the orientation dictated by the object
+		move.b	d0,mapping_frame(a0)	; load sprite number
+		move.b	status(a0),d0	; match the orientation dictated by the object
 		rol.b	#3,d1		; with the orientation used by the object engine
 		eor.b	d0,d1
 		andi.b	#3,d1
 		andi.b	#$FC,1(a0)
 		or.b	d1,1(a0)
-		addq.b	#1,$1B(a0)	; next frame number
+		addq.b	#1,anim_frame(a0)	; next frame number
 ; locret_CFA4:
 Anim_Wait:
 		rts
@@ -17338,7 +17347,7 @@ Anim_Wait:
 Anim_End_FF:
 		addq.b	#1,d0		; is the end flag = $FF ?
 		bne.s	Anim_End_FE	; if not, branch
-		move.b	#0,$1B(a0)	; restart the animation
+		move.b	#0,anim_frame(a0)	; restart the animation
 		move.b	1(a1),d0	; read sprite number
 		bra.s	Anim_Next
 ; ===========================================================================
@@ -17347,7 +17356,7 @@ Anim_End_FE:
 		addq.b	#1,d0		; is the end flag = $FE ?
 		bne.s	Anim_End_FD	; if not, branch
 		move.b	2(a1,d1.w),d0	; read the next byte in the script
-		sub.b	d0,$1B(a0)	; jump back d0 bytes in the script
+		sub.b	d0,anim_frame(a0)	; jump back d0 bytes in the script
 		sub.b	d0,d1
 		move.b	1(a1,d1.w),d0	; read sprite number
 		bra.s	Anim_Next
@@ -17356,7 +17365,7 @@ Anim_End_FE:
 Anim_End_FD:
 		addq.b	#1,d0		; is the end flag = $FD ?
 		bne.s	Anim_End_FC	; if not, branch
-		move.b	2(a1,d1.w),$1C(a0)	; read next byte, run that animation
+		move.b	2(a1,d1.w),anim(a0)	; read next byte, run that animation
 		rts
 ; ===========================================================================
 ; loc_CFD6:
@@ -17370,15 +17379,15 @@ Anim_End_FC:
 Anim_End_FB:
 		addq.b	#1,d0		; is the end flag = $FB ?
 		bne.s	Anim_End_FA	; if not, branch
-		move.b	#0,$1B(a0)	; reset animation
-		clr.b	$25(a0)		; reset 2nd routine counter
+		move.b	#0,anim_frame(a0)	; reset animation
+		clr.b	routine_secondary(a0)		; reset 2nd routine counter
 		rts
 ; ===========================================================================
 ; loc_CFF0:
 Anim_End_FA:
 		addq.b	#1,d0		; is the end flag = $FA ?
 		bne.s	Anim_End	; if not, branch
-		addq.b	#2,$25(a0)	; jump to next routine
+		addq.b	#2,routine_secondary(a0)	; jump to next routine
 		rts
 ; ===========================================================================
 ; locret_CFFA:
@@ -17418,7 +17427,7 @@ loc_D034:				; CODE XREF: BuildSprites+F2j
 		movea.w	(a4,d6.w),a0
 		tst.b	(a0)
 		beq.w	loc_D124
-		tst.l	4(a0)
+		tst.l	mappings(a0)
 		beq.w	loc_D124
 		andi.b	#$7F,1(a0) ; ''
 		move.b	1(a0),d0
@@ -17429,8 +17438,8 @@ loc_D034:				; CODE XREF: BuildSprites+F2j
 		beq.s	loc_D0B2
 		movea.l	BldSpr_ScrPos(pc,d0.w),a1
 		moveq	#0,d0
-		move.b	$19(a0),d0
-		move.w	8(a0),d3
+		move.b	width_pixels(a0),d0
+		move.w	x_pos(a0),d3
 		sub.w	(a1),d3
 		move.w	d3,d1
 		add.w	d0,d1
@@ -17443,8 +17452,8 @@ loc_D034:				; CODE XREF: BuildSprites+F2j
 		btst	#4,d4
 		beq.s	loc_D0BC
 		moveq	#0,d0
-		move.b	$16(a0),d0
-		move.w	$C(a0),d2
+		move.b	y_radius(a0),d0
+		move.w	y_pos(a0),d2
 		sub.w	4(a1),d2
 		move.w	d2,d1
 		add.w	d0,d1
@@ -17458,13 +17467,13 @@ loc_D034:				; CODE XREF: BuildSprites+F2j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_D0B2:				; CODE XREF: BuildSprites+52j
-		move.w	$A(a0),d2
-		move.w	8(a0),d3
+		move.w	y_pixel(a0),d2
+		move.w	x_pixel(a0),d3
 		bra.s	loc_D0D4
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_D0BC:				; CODE XREF: BuildSprites+80j
-		move.w	$C(a0),d2
+		move.w	y_pos(a0),d2
 		sub.w	4(a1),d2
 		addi.w	#$80,d2	; '€'
 		cmpi.w	#$60,d2	; '`'
@@ -17474,11 +17483,11 @@ loc_D0BC:				; CODE XREF: BuildSprites+80j
 
 loc_D0D4:				; CODE XREF: BuildSprites+A4j
 					; BuildSprites+AEj
-		movea.l	4(a0),a1
+		movea.l	mappings(a0),a1
 		moveq	#0,d1
 		btst	#5,d4
 		bne.s	loc_D0F0
-		move.b	$1A(a0),d1
+		move.b	mapping_frame(a0),d1
 		add.w	d1,d1
 		adda.w	(a1,d1.w),a1
 		move.w	(a1)+,d1
@@ -17520,11 +17529,11 @@ loc_D124:				; CODE XREF: BuildSprites+2Ej
 loc_D126:				; CODE XREF: BuildSprites+4Aj
 		move.l	a4,-(sp)
 		lea	($FFFFEE00).w,a4
-		movea.w	2(a0),a3
-		movea.l	4(a0),a5
+		movea.w	art_tile(a0),a3
+		movea.l	mappings(a0),a5
 		moveq	#0,d0
 		move.b	$E(a0),d0
-		move.w	8(a0),d3
+		move.w	x_pos(a0),d3
 		sub.w	(a4),d3
 		move.w	d3,d1
 		add.w	d0,d1
@@ -17533,7 +17542,7 @@ loc_D126:				; CODE XREF: BuildSprites+4Aj
 		sub.w	d0,d1
 		cmpi.w	#$140,d1
 		bge.s	loc_D1B0
-		move.w	$C(a0),d2
+		move.w	y_pos(a0),d2
 		sub.w	4(a4),d2
 		addi.w	#$80,d2	; '€'
 		cmpi.w	#$60,d2	; '`'
@@ -17581,7 +17590,7 @@ loc_D1B0:				; CODE XREF: BuildSprites+138j
 
 
 sub_D1B6:				; CODE XREF: BuildSprites:loc_D0F0p
-		movea.w	2(a0),a3
+		movea.w	art_tile(a0),a3
 ; End of function sub_D1B6
 
 
@@ -17783,8 +17792,8 @@ loc_D342:				; CODE XREF: BuildSprites+3FEj
 		beq.s	loc_D3B6
 		movea.l	BldSpr_ScrPos_2p(pc,d0.w),a1
 		moveq	#0,d0
-		move.b	$19(a0),d0
-		move.w	8(a0),d3
+		move.b	width_pixels(a0),d0
+		move.w	x_pos(a0),d3
 		sub.w	(a1),d3
 		move.w	d3,d1
 		add.w	d0,d1
@@ -17797,8 +17806,8 @@ loc_D342:				; CODE XREF: BuildSprites+3FEj
 		btst	#4,d4
 		beq.s	loc_D3C4
 		moveq	#0,d0
-		move.b	$16(a0),d0
-		move.w	$C(a0),d2
+		move.b	y_radius(a0),d0
+		move.w	y_pos(a0),d2
 		sub.w	4(a1),d2
 		move.w	d2,d1
 		add.w	d0,d1
@@ -17812,14 +17821,14 @@ loc_D342:				; CODE XREF: BuildSprites+3FEj
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_D3B6:				; CODE XREF: BuildSprites+358j
-		move.w	$A(a0),d2
-		move.w	8(a0),d3
+		move.w	y_pixel(a0),d2
+		move.w	x_pixel(a0),d3
 		addi.w	#$80,d2	; '€'
 		bra.s	loc_D3E0
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_D3C4:				; CODE XREF: BuildSprites+384j
-		move.w	$C(a0),d2
+		move.w	y_pos(a0),d2
 		sub.w	4(a1),d2
 		addi.w	#$80,d2	; '€'
 		cmpi.w	#$60,d2	; '`'
@@ -17830,11 +17839,11 @@ loc_D3C4:				; CODE XREF: BuildSprites+384j
 
 loc_D3E0:				; CODE XREF: BuildSprites+3A8j
 					; BuildSprites+3B6j
-		movea.l	4(a0),a1
+		movea.l	mappings(a0),a1
 		moveq	#0,d1
 		btst	#5,d4
 		bne.s	loc_D3FC
-		move.b	$1A(a0),d1
+		move.b	mapping_frame(a0),d1
 		add.w	d1,d1
 		adda.w	(a1,d1.w),a1
 		move.w	(a1)+,d1
@@ -17906,8 +17915,8 @@ loc_D462:				; CODE XREF: BuildSprites+518j
 		beq.s	loc_D4D0
 		movea.l	dword_D432(pc,d0.w),a1
 		moveq	#0,d0
-		move.b	$19(a0),d0
-		move.w	8(a0),d3
+		move.b	width_pixels(a0),d0
+		move.w	x_pos(a0),d3
 		sub.w	(a1),d3
 		move.w	d3,d1
 		add.w	d0,d1
@@ -17920,8 +17929,8 @@ loc_D462:				; CODE XREF: BuildSprites+518j
 		btst	#4,d4
 		beq.s	loc_D4DE
 		moveq	#0,d0
-		move.b	$16(a0),d0
-		move.w	$C(a0),d2
+		move.b	y_radius(a0),d0
+		move.w	y_pos(a0),d2
 		sub.w	4(a1),d2
 		move.w	d2,d1
 		add.w	d0,d1
@@ -17935,14 +17944,14 @@ loc_D462:				; CODE XREF: BuildSprites+518j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_D4D0:				; CODE XREF: BuildSprites+472j
-		move.w	$A(a0),d2
-		move.w	8(a0),d3
+		move.w	y_pixel(a0),d2
+		move.w	x_pixel(a0),d3
 		addi.w	#$160,d2
 		bra.s	loc_D4FA
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_D4DE:				; CODE XREF: BuildSprites+49Ej
-		move.w	$C(a0),d2
+		move.w	y_pos(a0),d2
 		sub.w	4(a1),d2
 		addi.w	#$80,d2	; '€'
 		cmpi.w	#$60,d2	; '`'
@@ -17953,11 +17962,11 @@ loc_D4DE:				; CODE XREF: BuildSprites+49Ej
 
 loc_D4FA:				; CODE XREF: BuildSprites+4C2j
 					; BuildSprites+4D0j
-		movea.l	4(a0),a1
+		movea.l	mappings(a0),a1
 		moveq	#0,d1
 		btst	#5,d4
 		bne.s	loc_D516
-		move.b	$1A(a0),d1
+		move.b	mapping_frame(a0),d1
 		add.w	d1,d1
 		adda.w	(a1,d1.w),a1
 		move.w	(a1)+,d1
@@ -17994,11 +18003,11 @@ loc_D542:				; CODE XREF: BuildSprites+52Cj
 loc_D54A:				; CODE XREF: BuildSprites+350j
 		move.l	a4,-(sp)
 		lea	($FFFFEE00).w,a4
-		movea.w	2(a0),a3
-		movea.l	4(a0),a5
+		movea.w	art_tile(a0),a3
+		movea.l	mappings(a0),a5
 		moveq	#0,d0
 		move.b	$E(a0),d0
-		move.w	8(a0),d3
+		move.w	x_pos(a0),d3
 		sub.w	(a4),d3
 		move.w	d3,d1
 		add.w	d0,d1
@@ -18007,7 +18016,7 @@ loc_D54A:				; CODE XREF: BuildSprites+350j
 		sub.w	d0,d1
 		cmpi.w	#$140,d1
 		bge.s	loc_D5D4
-		move.w	$C(a0),d2
+		move.w	y_pos(a0),d2
 		sub.w	4(a4),d2
 		addi.w	#$80,d2	; '€'
 		cmpi.w	#$60,d2	; '`'
@@ -18053,11 +18062,11 @@ loc_D5D4:				; CODE XREF: BuildSprites+55Cj
 loc_D5DA:				; CODE XREF: BuildSprites+46Aj
 		move.l	a4,-(sp)
 		lea	($FFFFEE20).w,a4
-		movea.w	2(a0),a3
-		movea.l	4(a0),a5
+		movea.w	art_tile(a0),a3
+		movea.l	mappings(a0),a5
 		moveq	#0,d0
 		move.b	$E(a0),d0
-		move.w	8(a0),d3
+		move.w	x_pos(a0),d3
 		sub.w	(a4),d3
 		move.w	d3,d1
 		add.w	d0,d1
@@ -18066,7 +18075,7 @@ loc_D5DA:				; CODE XREF: BuildSprites+46Aj
 		sub.w	d0,d1
 		cmpi.w	#$140,d1
 		bge.s	loc_D664
-		move.w	$C(a0),d2
+		move.w	y_pos(a0),d2
 		sub.w	4(a4),d2
 		addi.w	#$80,d2	; '€'
 		cmpi.w	#$60,d2	; '`'
@@ -18117,11 +18126,11 @@ loc_D664:				; CODE XREF: BuildSprites+5ECj
 Adjust2PArtPointer:
 		tst.w	(Two_player_mode).w
 		beq.s	locret_D684
-		move.w	2(a0),d0
+		move.w	art_tile(a0),d0
 		andi.w	#$7FF,d0
 		lsr.w	#1,d0
-		andi.w	#$F800,2(a0)
-		add.w	d0,2(a0)
+		andi.w	#$F800,art_tile(a0)
+		add.w	d0,art_tile(a0)
 
 locret_D684:
 		rts
@@ -18135,11 +18144,11 @@ locret_D684:
 Adjust2PArtPointer2:
 		tst.w	(Two_player_mode).w
 		beq.s	locret_D6BE
-		move.w	2(a1),d0
+		move.w	art_tile(a1),d0
 		andi.w	#$7FF,d0
 		lsr.w	#1,d0
-		andi.w	#$F800,2(a1)
-		add.w	d0,2(a1)
+		andi.w	#$F800,art_tile(a1)
+		add.w	d0,art_tile(a1)
 
 locret_D6BE
 		rts
@@ -18150,7 +18159,7 @@ locret_D6BE
 
 
 sub_D6A2:
-		movea.w	2(a0),a3
+		movea.w	art_tile(a0),a3
 ; End of function sub_D6A2
 
 
@@ -18332,7 +18341,7 @@ byte_D7FA:	dc.b   8,  8,  8,  8	; 0
 		bmi.s	loc_D82E
 		cmpi.w	#$140,d0
 		bge.s	loc_D82E
-		move.w	$C(a0),d1
+		move.w	y_pos(a0),d1
 		sub.w	($FFFFEE04).w,d1
 		bmi.s	loc_D82E
 		cmpi.w	#$E0,d1	; 'à'
@@ -18347,8 +18356,8 @@ loc_D82E:				; CODE XREF: ROM:0000D812j
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		moveq	#0,d1
-		move.b	$19(a0),d1
-		move.w	8(a0),d0
+		move.b	width_pixels(a0),d1
+		move.w	x_pos(a0),d0
 		sub.w	($FFFFEE00).w,d0
 		add.w	d1,d0
 		bmi.s	loc_D862
@@ -18356,7 +18365,7 @@ loc_D82E:				; CODE XREF: ROM:0000D812j
 		sub.w	d1,d0
 		cmpi.w	#$140,d0
 		bge.s	loc_D862
-		move.w	$C(a0),d1
+		move.w	y_pos(a0),d1
 		sub.w	($FFFFEE04).w,d1
 		bmi.s	loc_D862
 		cmpi.w	#$E0,d1	; 'à'
@@ -18572,14 +18581,14 @@ loc_D9AE:
 		beq.w	locret_DA36
 		cmpi.w	#$5A,$30(a0)
 		bcc.s	locret_DA36
-		move.w	8(a0),d2
-		move.w	$C(a0),d3
+		move.w	x_pos(a0),d2
+		move.w	y_pos(a0),d3
 		subi.w	#8,d2
 		moveq	#0,d5
-		move.b	$16(a0),d5
+		move.b	y_radius(a0),d5
 		subq.b	#3,d5
 		sub.w	d5,d3
-		cmpi.b	#$39,$1A(a0)
+		cmpi.b	#$39,mapping_frame(a0)
 		bne.s	loc_D9E0
 		addi.w	#$C,d3
 		moveq	#$A,d5
@@ -19361,7 +19370,7 @@ loc_E022:
 
 sub_E026:
 		lea	($FFFFF780).w,a1
-		lea	($FFFFBE00).w,a3
+		lea	(Object_RAM+$E00).w,a3
 		tst.b	(a1)+
 		bmi.s	loc_E05E
 		lea	($FFFFC100).w,a3
@@ -19393,7 +19402,7 @@ loc_E05E:
 
 sub_E062:				; CODE XREF: sub_DED2+30p sub_DF80+22p
 		lea	($FFFFF780).w,a1
-		lea	($FFFFBE00).w,a3
+		lea	(Object_RAM+$E00).w,a3
 		cmp.b	(a1)+,d2
 		beq.s	loc_E09A
 		lea	($FFFFC100).w,a3
@@ -19462,15 +19471,15 @@ sub_E0D2:				; CODE XREF: ROM:loc_DD60p
 loc_E0E6:				; CODE XREF: sub_E0D2+4j sub_E0D2+Cj
 		bsr.w	SingleObjLoad
 		bne.s	locret_E120
-		move.w	(a0)+,8(a1)
+		move.w	(a0)+,x_pos(a1)
 		move.w	(a0)+,d0
 		move.w	d0,d1
 		andi.w	#$FFF,d0
-		move.w	d0,$C(a1)
+		move.w	d0,y_pos(a1)
 		rol.w	#2,d1
 		andi.b	#3,d1
 		move.b	d1,1(a1)
-		move.b	d1,$22(a1)
+		move.b	d1,status(a1)
 		move.b	(a0)+,d0
 		bpl.s	loc_E116
 		andi.b	#$7F,d0	; ''
@@ -19513,15 +19522,15 @@ loc_E146:				; CODE XREF: sub_E122+1Aj
 		bne.s	locret_E180
 
 loc_E14C:				; CODE XREF: sub_E122+22j
-		move.w	(a0)+,8(a1)
+		move.w	(a0)+,x_pos(a1)
 		move.w	(a0)+,d0
 		move.w	d0,d1
 		andi.w	#$FFF,d0
-		move.w	d0,$C(a1)
+		move.w	d0,y_pos(a1)
 		rol.w	#2,d1
 		andi.b	#3,d1
 		move.b	d1,1(a1)
-		move.b	d1,$22(a1)
+		move.b	d1,status(a1)
 		move.b	(a0)+,d0
 		bpl.s	loc_E176
 		andi.b	#$7F,d0	; ''
@@ -19546,7 +19555,7 @@ locret_E180:				; CODE XREF: sub_E122+20j sub_E122+28j
 
 ; loc_E182: SingleObjectLoad:
 SingleObjLoad:
-		lea	($FFFFB800).w,a1	; a1=object
+		lea	(Object_RAM+$800).w,a1	; a1=object
 		move.w	#$5F,d0			; search to end of table
 
 loc_E18A:
@@ -19626,7 +19635,7 @@ Obj41:
 ; ---------------------------------------------------------------------------
 
 loc_E1E0:
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	($FFFFF7DA).w,d0
 		cmpi.w	#$280,d0
@@ -19643,17 +19652,17 @@ Obj41_Index:	dc.w Obj41_Init-Obj41_Index		; 0
 ; loc_E204:
 Obj41_Init:
 		addq.b	#2,routine(a0)
-		move.l	#Map_obj41_GHZ,4(a0)
-		move.w	#$4A8,2(a0)
+		move.l	#Map_obj41_GHZ,mappings(a0)
+		move.w	#$4A8,art_tile(a0)
 		tst.b	(Current_Zone).w
 		beq.s	loc_E22A
-		move.l	#Map_obj41,4(a0)
-		move.w	#$45C,2(a0)
+		move.l	#Map_obj41,mappings(a0)
+		move.w	#$45C,art_tile(a0)
 
 loc_E22A:
 		ori.b	#4,1(a0)
-		move.b	#$10,$19(a0)
-		move.b	#4,$18(a0)
+		move.b	#$10,width_pixels(a0)
+		move.b	#4,priority(a0)
 		move.b	$28(a0),d0
 		lsr.w	#3,d0
 		andi.w	#$E,d0
@@ -19670,39 +19679,39 @@ Obj41_Init_Subtypes:
 ; loc_E258:
 Obj41_Init_Horizontal:
 		move.b	#4,routine(a0)
-		move.b	#2,$1C(a0)
-		move.b	#3,$1A(a0)
-		move.w	#$4B8,2(a0)
+		move.b	#2,anim(a0)
+		move.b	#3,mapping_frame(a0)
+		move.w	#$4B8,art_tile(a0)
 		tst.b	(Current_Zone).w
 		beq.s	loc_E27C
-		move.w	#$470,2(a0)
+		move.w	#$470,art_tile(a0)
 
 loc_E27C:
-		move.b	#8,$19(a0)
+		move.b	#8,width_pixels(a0)
 		bra.s	Obj41_Init_Common
 ; ===========================================================================
 ; loc_E284:
 Obj41_Init_Down:
 		move.b	#6,routine(a0)
-		move.b	#6,$1A(a0)
-		bset	#1,$22(a0)
+		move.b	#6,mapping_frame(a0)
+		bset	#1,status(a0)
 		bra.s	Obj41_Init_Common
 ; ===========================================================================
 ; loc_E298:
 Obj41_Init_DiagonallyUp:
 		move.b	#8,routine(a0)
-		move.b	#4,$1C(a0)
-		move.b	#7,$1A(a0)
-		move.w	#$43C,2(a0)
+		move.b	#4,anim(a0)
+		move.b	#7,mapping_frame(a0)
+		move.w	#$43C,art_tile(a0)
 		bra.s	Obj41_Init_Common
 ; ===========================================================================
 ; loc_E2B2:
 Obj41_Init_DiagonallyDown:
 		move.b	#$A,routine(a0)
-		move.b	#4,$1C(a0)
-		move.b	#$A,$1A(a0)
-		move.w	#$43C,2(a0)
-		bset	#1,$22(a0)
+		move.b	#4,anim(a0)
+		move.b	#$A,mapping_frame(a0)
+		move.w	#$43C,art_tile(a0)
+		bset	#1,status(a0)
 ; loc_E2D0:
 Obj41_Init_Common:
 		move.b	$28(a0),d0
@@ -19710,10 +19719,10 @@ Obj41_Init_Common:
 		move.w	Obj41_Strengths(pc,d0.w),$30(a0)
 		btst	#1,d0
 		beq.s	loc_E2F8
-		bset	#5,2(a0)
+		bset	#5,art_tile(a0)
 		tst.b	(Current_Zone).w
 		beq.s	loc_E2F8
-		move.l	#Map_obj41a,4(a0)
+		move.l	#Map_obj41a,mappings(a0)
 
 loc_E2F8:
 		bsr.w	Adjust2PArtPointer
@@ -19728,21 +19737,21 @@ Obj41_Up:
 		move.w	#$1B,d1
 		move.w	#8,d2
 		move.w	#$10,d3
-		move.w	8(a0),d4
-		lea	($FFFFB000).w,a1
+		move.w	x_pos(a0),d4
+		lea	(MainCharacter).w,a1
 		moveq	#3,d6
 		movem.l	d1-d4,-(sp)
 		bsr.w	SolidObject_Always_SingleCharacter
-		btst	#3,$22(a0)
+		btst	#3,status(a0)
 		beq.s	loc_E32A
 		bsr.s	sub_E34E
 
 loc_E32A:
 		movem.l	(sp)+,d1-d4
-		lea	($FFFFB040).w,a1
+		lea	(Sidekick).w,a1
 		moveq	#4,d6
 		bsr.w	SolidObject_Always_SingleCharacter
-		btst	#4,$22(a0)
+		btst	#4,status(a0)
 		beq.s	loc_E342
 		bsr.s	sub_E34E
 
@@ -19756,23 +19765,23 @@ loc_E342:
 
 
 sub_E34E:
-		move.w	#$100,$1C(a0)
-		addq.w	#8,$C(a1)
-		move.w	$30(a0),$12(a1)
-		bset	#1,$22(a1)
-		bclr	#3,$22(a1)
-		move.b	#$10,$1C(a1)
+		move.w	#$100,anim(a0)
+		addq.w	#8,y_pos(a1)
+		move.w	$30(a0),y_vel(a1)
+		bset	#1,status(a1)
+		bclr	#3,status(a1)
+		move.b	#$10,anim(a1)
 		move.b	#2,routine(a1)
 		move.b	$28(a0),d0
 		bpl.s	loc_E382
-		move.w	#0,$10(a1)
+		move.w	#0,x_vel(a1)
 
 loc_E382:
 		btst	#0,d0
 		beq.s	loc_E3C2
 		move.w	#1,$14(a1)
 		move.b	#1,$27(a1)
-		move.b	#0,$1C(a1)
+		move.b	#0,anim(a1)
 		move.b	#0,$2C(a1)
 		move.b	#4,$2D(a1)
 		btst	#1,d0
@@ -19780,7 +19789,7 @@ loc_E382:
 		move.b	#1,$2C(a1)
 
 loc_E3B2:
-		btst	#0,$22(a1)
+		btst	#0,status(a1)
 		beq.s	loc_E3C2
 		neg.b	$27(a1)
 		neg.w	$14(a1)
@@ -19809,16 +19818,16 @@ Obj41_Horizontal:
 		move.w	#$13,d1
 		move.w	#$E,d2
 		move.w	#$F,d3
-		move.w	8(a0),d4
-		lea	($FFFFB000).w,a1
+		move.w	x_pos(a0),d4
+		lea	(MainCharacter).w,a1
 		moveq	#3,d6
 		movem.l	d1-d4,-(sp)
 		bsr.w	SolidObject_Always_SingleCharacter
-		btst	#5,$22(a0)
+		btst	#5,status(a0)
 		beq.s	loc_E434
-		move.b	$22(a0),d1
-		move.w	8(a0),d0
-		sub.w	8(a1),d0
+		move.b	status(a0),d1
+		move.w	x_pos(a0),d0
+		sub.w	x_pos(a1),d0
 		bcs.s	loc_E42C
 		eori.b	#1,d1
 
@@ -19829,14 +19838,14 @@ loc_E42C:
 
 loc_E434:
 		movem.l	(sp)+,d1-d4
-		lea	($FFFFB040).w,a1
+		lea	(Sidekick).w,a1
 		moveq	#4,d6
 		bsr.w	SolidObject_Always_SingleCharacter
-		btst	#6,$22(a0)
+		btst	#6,status(a0)
 		beq.s	loc_E464
-		move.b	$22(a0),d1
-		move.w	8(a0),d0
-		sub.w	8(a1),d0
+		move.b	status(a0),d1
+		move.w	x_pos(a0),d0
+		sub.w	x_pos(a1),d0
 		bcs.s	loc_E45C
 		eori.b	#1,d1
 
@@ -19856,34 +19865,34 @@ loc_E464:
 
 
 sub_E474:
-		move.w	#$300,$1C(a0)
-		move.w	$30(a0),$10(a1)
-		addq.w	#8,8(a1)
-		bset	#0,$22(a1)
-		btst	#0,$22(a0)
+		move.w	#$300,anim(a0)
+		move.w	$30(a0),x_vel(a1)
+		addq.w	#8,x_pos(a1)
+		bset	#0,status(a1)
+		btst	#0,status(a0)
 		bne.s	loc_E4A2
-		bclr	#0,$22(a1)
-		subi.w	#$10,8(a1)
-		neg.w	$10(a1)
+		bclr	#0,status(a1)
+		subi.w	#$10,x_pos(a1)
+		neg.w	x_vel(a1)
 
 loc_E4A2:
 		move.w	#$F,$2E(a1)
-		move.w	$10(a1),$14(a1)
-		btst	#2,$22(a1)
+		move.w	x_vel(a1),$14(a1)
+		btst	#2,status(a1)
 		bne.s	loc_E4BC
-		move.b	#0,$1C(a1)
+		move.b	#0,anim(a1)
 
 loc_E4BC:
 		move.b	$28(a0),d0
 		bpl.s	loc_E4C8
-		move.w	#0,$12(a1)
+		move.w	#0,y_vel(a1)
 
 loc_E4C8:
 		btst	#0,d0
 		beq.s	loc_E508
 		move.w	#1,$14(a1)
 		move.b	#1,$27(a1)
-		move.b	#0,$1C(a1)
+		move.b	#0,anim(a1)
 		move.b	#1,$2C(a1)
 		move.b	#8,$2D(a1)
 		btst	#1,d0
@@ -19891,7 +19900,7 @@ loc_E4C8:
 		move.b	#3,$2C(a1)
 
 loc_E4F8:
-		btst	#0,$22(a1)
+		btst	#0,status(a1)
 		beq.s	loc_E508
 		neg.b	$27(a1)
 		neg.w	$14(a1)
@@ -19910,9 +19919,9 @@ loc_E51E:
 		move.b	#$F,$3F(a1)
 
 loc_E530:
-		bclr	#5,$22(a0)
-		bclr	#6,$22(a0)
-		bclr	#5,$22(a1)
+		bclr	#5,status(a0)
+		bclr	#6,status(a0)
+		bclr	#5,status(a1)
 		move.w	#$CC,d0
 		jmp	(PlaySound_Special).l
 ; End of function sub_E474
@@ -19922,38 +19931,38 @@ loc_E530:
 
 
 sub_E54C:
-		cmpi.b	#3,$1C(a0)
+		cmpi.b	#3,anim(a0)
 		beq.w	locret_E604
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		move.w	d0,d1
 		addi.w	#$28,d1
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		beq.s	loc_E56E
 		move.w	d0,d1
 		subi.w	#$28,d0
 
 loc_E56E:
-		move.w	$C(a0),d2
+		move.w	y_pos(a0),d2
 		move.w	d2,d3
 		subi.w	#$18,d2
 		addi.w	#$18,d3
-		lea	($FFFFB000).w,a1
-		btst	#1,$22(a1)
+		lea	(MainCharacter).w,a1
+		btst	#1,status(a1)
 		bne.s	loc_E5C2
 		move.w	$14(a1),d4
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		beq.s	loc_E596
 		neg.w	d4
 
 loc_E596:
 		tst.w	d4
 		bmi.s	loc_E5C2
-		move.w	8(a1),d4
+		move.w	x_pos(a1),d4
 		cmp.w	d0,d4
 		bcs.w	loc_E5C2
 		cmp.w	d1,d4
 		bcc.w	loc_E5C2
-		move.w	$C(a1),d4
+		move.w	y_pos(a1),d4
 		cmp.w	d2,d4
 		bcs.w	loc_E5C2
 		cmp.w	d3,d4
@@ -19963,23 +19972,23 @@ loc_E596:
 		move.w	(sp)+,d0
 
 loc_E5C2:
-		lea	($FFFFB040).w,a1
-		btst	#1,$22(a1)
+		lea	(Sidekick).w,a1
+		btst	#1,status(a1)
 		bne.s	locret_E604
 		move.w	$14(a1),d4
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		beq.s	loc_E5DC
 		neg.w	d4
 
 loc_E5DC:
 		tst.w	d4
 		bmi.s	locret_E604
-		move.w	8(a1),d4
+		move.w	x_pos(a1),d4
 		cmp.w	d0,d4
 		bcs.w	locret_E604
 		cmp.w	d1,d4
 		bcc.w	locret_E604
-		move.w	$C(a1),d4
+		move.w	y_pos(a1),d4
 		cmp.w	d2,d4
 		bcs.w	locret_E604
 		cmp.w	d3,d4
@@ -19996,8 +20005,8 @@ Obj41_Down:
 		move.w	#$1B,d1
 		move.w	#8,d2
 		move.w	#$10,d3
-		move.w	8(a0),d4
-		lea	($FFFFB000).w,a1
+		move.w	x_pos(a0),d4
+		lea	(MainCharacter).w,a1
 		moveq	#3,d6
 		movem.l	d1-d4,-(sp)
 		bsr.w	SolidObject_Always_SingleCharacter
@@ -20007,7 +20016,7 @@ Obj41_Down:
 
 loc_E62C:
 		movem.l	(sp)+,d1-d4
-		lea	($FFFFB040).w,a1
+		lea	(Sidekick).w,a1
 		moveq	#4,d6
 		bsr.w	SolidObject_Always_SingleCharacter
 		cmpi.w	#-2,d4
@@ -20024,20 +20033,20 @@ loc_E642:
 
 
 sub_E64E:
-		move.w	#$100,$1C(a0)
-		subq.w	#8,$C(a1)
-		move.w	$30(a0),$12(a1)
-		neg.w	$12(a1)
+		move.w	#$100,anim(a0)
+		subq.w	#8,y_pos(a1)
+		move.w	$30(a0),y_vel(a1)
+		neg.w	y_vel(a1)
 		move.b	$28(a0),d0
 		bpl.s	loc_E66E
-		move.w	#0,$10(a1)
+		move.w	#0,x_vel(a1)
 
 loc_E66E:
 		btst	#0,d0
 		beq.s	loc_E6AE
 		move.w	#1,$14(a1)
 		move.b	#1,$27(a1)
-		move.b	#0,$1C(a1)
+		move.b	#0,anim(a1)
 		move.b	#0,$2C(a1)
 		move.b	#4,$2D(a1)
 		btst	#1,d0
@@ -20045,7 +20054,7 @@ loc_E66E:
 		move.b	#1,$2C(a1)
 
 loc_E69E:
-		btst	#0,$22(a1)
+		btst	#0,status(a1)
 		beq.s	loc_E6AE
 		neg.b	$27(a1)
 		neg.w	$14(a1)
@@ -20064,8 +20073,8 @@ loc_E6C4:
 		move.b	#$F,$3F(a1)
 
 loc_E6D6:
-		bset	#1,$22(a1)
-		bclr	#3,$22(a1)
+		bset	#1,status(a1)
+		bclr	#3,status(a1)
 		move.b	#2,routine(a1)
 		move.w	#$CC,d0
 		jmp	(PlaySound_Special).l
@@ -20076,22 +20085,22 @@ loc_E6D6:
 Obj41_DiagonallyUp:
 		move.w	#$1B,d1
 		move.w	#$10,d2
-		move.w	8(a0),d4
+		move.w	x_pos(a0),d4
 		lea	Obj41_SlopeData_DiagUp(pc),a2
-		lea	($FFFFB000).w,a1
+		lea	(MainCharacter).w,a1
 		moveq	#3,d6
 		movem.l	d1-d4,-(sp)
 		bsr.w	SlopedSolid_SingleCharacter
-		btst	#3,$22(a0)
+		btst	#3,status(a0)
 		beq.s	loc_E71A
 		bsr.s	sub_E73E
 
 loc_E71A:
 		movem.l	(sp)+,d1-d4
-		lea	($FFFFB040).w,a1
+		lea	(Sidekick).w,a1
 		moveq	#4,d6
 		bsr.w	SlopedSolid_SingleCharacter
-		btst	#4,$22(a0)
+		btst	#4,status(a0)
 		beq.s	loc_E732
 		bsr.s	sub_E73E
 
@@ -20105,47 +20114,47 @@ loc_E732:
 
 
 sub_E73E:
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		bne.s	loc_E754
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		subq.w	#4,d0
-		cmp.w	8(a1),d0
+		cmp.w	x_pos(a1),d0
 		bcs.s	loc_E762
 		rts
 ; ===========================================================================
 
 loc_E754:
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		addq.w	#4,d0
-		cmp.w	8(a1),d0
+		cmp.w	x_pos(a1),d0
 		bcc.s	loc_E762
 		rts
 ; ===========================================================================
 
 loc_E762:
-		move.w	#$500,$1C(a0)
-		move.w	$30(a0),$12(a1)
-		move.w	$30(a0),$10(a1)
-		addq.w	#6,$C(a1)
-		addq.w	#6,8(a1)
-		bset	#0,$22(a1)
-		btst	#0,$22(a0)
+		move.w	#$500,anim(a0)
+		move.w	$30(a0),y_vel(a1)
+		move.w	$30(a0),x_vel(a1)
+		addq.w	#6,y_pos(a1)
+		addq.w	#6,x_pos(a1)
+		bset	#0,status(a1)
+		btst	#0,status(a0)
 		bne.s	loc_E79A
-		bclr	#0,$22(a1)
-		subi.w	#$C,8(a1)
-		neg.w	$10(a1)
+		bclr	#0,status(a1)
+		subi.w	#$C,x_pos(a1)
+		neg.w	x_vel(a1)
 
 loc_E79A:
-		bset	#1,$22(a1)
-		bclr	#3,$22(a1)
-		move.b	#$10,$1C(a1)
+		bset	#1,status(a1)
+		bclr	#3,status(a1)
+		move.b	#$10,anim(a1)
 		move.b	#2,routine(a1)
 		move.b	$28(a0),d0
 		btst	#0,d0
 		beq.s	loc_E7F6
 		move.w	#1,$14(a1)
 		move.b	#1,$27(a1)
-		move.b	#0,$1C(a1)
+		move.b	#0,anim(a1)
 		move.b	#1,$2C(a1)
 		move.b	#8,$2D(a1)
 		btst	#1,d0
@@ -20153,7 +20162,7 @@ loc_E79A:
 		move.b	#3,$2C(a1)
 
 loc_E7E6:
-		btst	#0,$22(a1)
+		btst	#0,status(a1)
 		beq.s	loc_E7F6
 		neg.b	$27(a1)
 		neg.w	$14(a1)
@@ -20181,9 +20190,9 @@ loc_E81E:
 Obj41_DiagonallyDown:
 		move.w	#$1B,d1
 		move.w	#$10,d2
-		move.w	8(a0),d4
+		move.w	x_pos(a0),d4
 		lea	Obj41_SlopeData_DiagDown(pc),a2
-		lea	($FFFFB000).w,a1
+		lea	(MainCharacter).w,a1
 		moveq	#3,d6
 		movem.l	d1-d4,-(sp)
 		bsr.w	SlopedSolid_SingleCharacter
@@ -20193,7 +20202,7 @@ Obj41_DiagonallyDown:
 
 loc_E84E:
 		movem.l	(sp)+,d1-d4
-		lea	($FFFFB040).w,a1
+		lea	(Sidekick).w,a1
 		moveq	#4,d6
 		bsr.w	SlopedSolid_SingleCharacter
 		cmpi.w	#-2,d4
@@ -20210,29 +20219,29 @@ loc_E864:
 
 
 sub_E870:
-		move.w	#$500,$1C(a0)
-		move.w	$30(a0),$12(a1)
-		neg.w	$12(a1)
-		move.w	$30(a0),$10(a1)
-		subq.w	#6,$C(a1)
-		addq.w	#6,8(a1)
-		bset	#0,$22(a1)
-		btst	#0,$22(a0)
+		move.w	#$500,anim(a0)
+		move.w	$30(a0),y_vel(a1)
+		neg.w	y_vel(a1)
+		move.w	$30(a0),x_vel(a1)
+		subq.w	#6,y_pos(a1)
+		addq.w	#6,x_pos(a1)
+		bset	#0,status(a1)
+		btst	#0,status(a0)
 		bne.s	loc_E8AC
-		bclr	#0,$22(a1)
-		subi.w	#$C,8(a1)
-		neg.w	$10(a1)
+		bclr	#0,status(a1)
+		subi.w	#$C,x_pos(a1)
+		neg.w	x_vel(a1)
 
 loc_E8AC:
-		bset	#1,$22(a1)
-		bclr	#3,$22(a1)
+		bset	#1,status(a1)
+		bclr	#3,status(a1)
 		move.b	#2,routine(a1)
 		move.b	$28(a0),d0
 		btst	#0,d0
 		beq.s	loc_E902
 		move.w	#1,$14(a1)
 		move.b	#1,$27(a1)
-		move.b	#0,$1C(a1)
+		move.b	#0,anim(a1)
 		move.b	#1,$2C(a1)
 		move.b	#8,$2D(a1)
 		btst	#1,d0
@@ -20240,7 +20249,7 @@ loc_E8AC:
 		move.b	#3,$2C(a1)
 
 loc_E8F2:
-		btst	#0,$22(a1)
+		btst	#0,status(a1)
 		beq.s	loc_E902
 		neg.b	$27(a1)
 		neg.w	$14(a1)
@@ -20409,18 +20418,18 @@ Obj42_Index:	dc.w Obj42_Init-Obj42_Index
 ; loc_EBCC:
 Obj42_Init:
 		addq.b	#2,routine(a0)
-		move.l	#Map_obj42,4(a0)
-		move.w	#$49B,2(a0)
+		move.l	#Map_obj42,mappings(a0)
+		move.w	#$49B,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,1(a0)
-		move.b	#4,$18(a0)
-		move.b	#$14,$19(a0)
-		move.b	#$10,$16(a0)
-		move.b	#8,$17(a0)
+		move.b	#4,priority(a0)
+		move.b	#$14,width_pixels(a0)
+		move.b	#$10,y_radius(a0)
+		move.b	#8,x_radius(a0)
 ; loc_EC00:
 Obj42_Main
 		moveq	#0,d0
-		move.b	$25(a0),d0
+		move.b	routine_secondary(a0),d0
 		move.w	Obj42_Main_Index(pc,d0.w),d1
 		jsr	Obj42_Main_Index(pc,d1.w)
 		lea	(Ani_obj42).l,a1
@@ -20435,24 +20444,24 @@ Obj42_Main_Index:	dc.w Obj42_ChkDistance-Obj42_Main_Index
 ; ===========================================================================
 ; loc_EC26:
 Obj42_ChkDistance:
-		bset	#0,$22(a0)
-		move.w	($FFFFB008).w,d0
-		sub.w	8(a0),d0
+		bset	#0,status(a0)
+		move.w	(MainCharacter+x_pos).w,d0
+		sub.w	x_pos(a0),d0
 		bcc.s	loc_EC3E
 		neg.w	d0
-		bclr	#0,$22(a0)
+		bclr	#0,status(a0)
 
 loc_EC3E:
 		cmpi.w	#$80,d0
 		bcc.s	locret_EC6A
-		addq.b	#2,$25(a0)
-		move.b	#1,$1C(a0)
+		addq.b	#2,routine_secondary(a0)
+		move.b	#1,anim(a0)
 		tst.b	$28(a0)
 		beq.s	locret_EC6A
-		move.w	#$249B,2(a0)
+		move.w	#$249B,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#8,$25(a0)
-		move.b	#4,$1C(a0)
+		move.b	#8,routine_secondary(a0)
+		move.b	#4,anim(a0)
 
 locret_EC6A:
 		rts
@@ -20460,20 +20469,20 @@ locret_EC6A:
 ; Blue Newtron that appears before chasing Sonic/Tails
 ; loc_EC6C:
 Obj42_Type00:
-		cmpi.b	#4,$1A(a0)
+		cmpi.b	#4,mapping_frame(a0)
 		bcc.s	Obj42_Fall
-		bset	#0,$22(a0)
-		move.w	($FFFFB008).w,d0
-		sub.w	8(a0),d0
+		bset	#0,status(a0)
+		move.w	(MainCharacter+x_pos).w,d0
+		sub.w	x_pos(a0),d0
 		bcc.s	locret_EC8A
-		bclr	#0,$22(a0)
+		bclr	#0,status(a0)
 
 locret_EC8A:
 		rts
 ; ---------------------------------------------------------------------------
 ; loc_EC8C:
 Obj42_Fall:
-		cmpi.b	#1,$1A(a0)
+		cmpi.b	#1,mapping_frame(a0)
 		bne.s	loc_EC9A
 		move.b	#$C,$20(a0)
 
@@ -20482,20 +20491,20 @@ loc_EC9A:
 		bsr.w	ObjHitFloor
 		tst.w	d1
 		bpl.s	locret_ECDE
-		add.w	d1,$C(a0)
-		move.w	#0,$12(a0)
-		addq.b	#2,$25(a0)
-		move.b	#2,$1C(a0)
-		btst	#5,2(a0)
+		add.w	d1,y_pos(a0)
+		move.w	#0,y_vel(a0)
+		addq.b	#2,routine_secondary(a0)
+		move.b	#2,anim(a0)
+		btst	#5,art_tile(a0)
 		beq.s	loc_ECC6
-		addq.b	#1,$1C(a0)
+		addq.b	#1,anim(a0)
 
 loc_ECC6:
 		move.b	#$D,$20(a0)
-		move.w	#$200,$10(a0)
-		btst	#0,$22(a0)
+		move.w	#$200,x_vel(a0)
+		btst	#0,status(a0)
 		bne.s	locret_ECDE
-		neg.w	$10(a0)
+		neg.w	x_vel(a0)
 
 locret_ECDE:
 		rts
@@ -20508,12 +20517,12 @@ Obj42_ChkFloor:
 		blt.s	loc_ECFA
 		cmpi.w	#$C,d1
 		bge.s	loc_ECFA
-		add.w	d1,$C(a0)
+		add.w	d1,y_pos(a0)
 		rts
 ; ---------------------------------------------------------------------------
 
 loc_ECFA:
-		addq.b	#2,$25(a0)
+		addq.b	#2,routine_secondary(a0)
 		rts
 ; ===========================================================================
 ; loc_ED00:
@@ -20524,12 +20533,12 @@ Obj42_Move:
 ; Green Newtron that fires a missile
 ; loc_ED06:
 Obj42_Type02:
-		cmpi.b	#1,$1A(a0)
+		cmpi.b	#1,mapping_frame(a0)
 		bne.s	Obj42_FireMissile
 		move.b	#$C,$20(a0)
 ; loc_ED14:
 Obj42_FireMissile:
-		cmpi.b	#2,$1A(a0)
+		cmpi.b	#2,mapping_frame(a0)
 		bne.s	locret_ED6C
 		tst.b	$32(a0)
 		bne.s	locret_ED6C
@@ -20537,19 +20546,19 @@ Obj42_FireMissile:
 		bsr.w	SingleObjLoad
 		bne.s	locret_ED6C
 		move.b	#$23,0(a1)
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
-		subq.w	#8,$C(a1)
-		move.w	#$200,$10(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
+		subq.w	#8,y_pos(a1)
+		move.w	#$200,x_vel(a1)
 		move.w	#$14,d0
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		bne.s	loc_ED5C
 		neg.w	d0
-		neg.w	$10(a1)
+		neg.w	x_vel(a1)
 
 loc_ED5C:
-		add.w	d0,8(a1)
-		move.b	$22(a0),$22(a1)
+		add.w	d0,x_pos(a1)
+		move.b	status(a0),status(a1)
 		move.b	#1,$28(a1)
 
 locret_ED6C:
@@ -20594,14 +20603,14 @@ Obj44_Index:	dc.w Obj44_Init-Obj44_Index
 ; loc_EEC8:
 Obj44_Init:
 		addq.b	#2,routine(a0)
-		move.l	#Map_obj44,4(a0)
-		move.w	#$434C,2(a0)
+		move.l	#Map_obj44,mappings(a0)
+		move.w	#$434C,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		ori.b	#4,1(a0)
-		move.b	#8,$19(a0)
-		move.b	#6,$18(a0)
-		move.b	$28(a0),$1A(a0)
-		bclr	#4,$1A(a0)
+		move.b	#8,width_pixels(a0)
+		move.b	#6,priority(a0)
+		move.b	$28(a0),mapping_frame(a0)
+		bclr	#4,mapping_frame(a0)
 		beq.s	Obj44_Main
 		addq.b	#2,routine(a0)
 		bra.s	Obj44_Display
@@ -20612,11 +20621,11 @@ Obj44_Main:
 		move.w	#$28,d2
 		move.w	d2,d3
 		addq.w	#1,d3
-		move.w	8(a0),d4
+		move.w	x_pos(a0),d4
 		bsr.w	SolidObject
 ; loc_EF18:
 Obj44_Display:
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	($FFFFF7DA).w,d0
 		cmpi.w	#$280,d0
@@ -20640,7 +20649,7 @@ Obj0D:
 		jsr	Obj0D_Index(pc,d1.w)
 		lea	(Ani_obj0D).l,a1
 		bsr.w	AnimateSprite
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	($FFFFF7DA).w,d0
 		cmpi.w	#$280,d0
@@ -20656,16 +20665,16 @@ Obj0D_Index:	dc.w Obj0D_Init-Obj0D_Index
 ; loc_EFD6:
 Obj0D_Init:
 		addq.b	#2,routine(a0)
-		move.l	#Map_obj0D,4(a0)
-		move.w	#$680,2(a0)
+		move.l	#Map_obj0D,mappings(a0)
+		move.w	#$680,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,1(a0)
-		move.b	#$18,$19(a0)
-		move.b	#4,$18(a0)
+		move.b	#$18,width_pixels(a0)
+		move.b	#4,priority(a0)
 ; loc_EFFE:
 Obj0D_Main:
-		move.w	($FFFFB008).w,d0
-		sub.w	8(a0),d0
+		move.w	(MainCharacter+x_pos).w,d0
+		sub.w	x_pos(a0),d0
 		bcs.s	locret_F026
 		cmpi.w	#$20,d0
 		bcc.s	locret_F026
@@ -20683,8 +20692,8 @@ Obj0D_Spin:
 		subq.w	#1,$30(a0)
 		bpl.s	Obj0D_Sparkle
 		move.w	#$3C,$30(a0)
-		addq.b	#1,$1C(a0)
-		cmpi.b	#3,$1C(a0)
+		addq.b	#1,anim(a0)
+		cmpi.b	#3,anim(a0)
 		bne.s	Obj0D_Sparkle
 		addq.b	#2,routine(a0)
 ; loc_F044:
@@ -20703,18 +20712,18 @@ Obj0D_Sparkle:
 		move.b	#6,routine(a1)
 		move.b	(a2)+,d0
 		ext.w	d0
-		add.w	8(a0),d0
-		move.w	d0,8(a1)
+		add.w	x_pos(a0),d0
+		move.w	d0,x_pos(a1)
 		move.b	(a2)+,d0
 		ext.w	d0
-		add.w	$C(a0),d0
-		move.w	d0,$C(a1)
-		move.l	#Map_Obj25,4(a1)
-		move.w	#$27B2,2(a1)
+		add.w	y_pos(a0),d0
+		move.w	d0,y_pos(a1)
+		move.l	#Map_Obj25,mappings(a1)
+		move.w	#$27B2,art_tile(a1)
 		bsr.w	Adjust2PArtPointer2
 		move.b	#4,1(a1)
-		move.b	#2,$18(a1)
-		move.b	#8,$19(a1)
+		move.b	#2,priority(a1)
+		move.b	#8,width_pixels(a1)
 
 locret_F0B2:
 		rts
@@ -20730,16 +20739,16 @@ Obj0D_RingSparklePositions:
 Obj0D_EndLevel:
 		tst.w	(Debug_placement_mode).w
 		bne.w	locret_F15E
-		btst	#1,($FFFFB022).w
+		btst	#1,(MainCharacter+status).w
 		bne.s	loc_F0E0
 		move.b	#1,($FFFFF7CC).w
 		move.w	#$800,($FFFFF602).w
 
 loc_F0E0:
 		; This check here is for S1's Big Ring, which would set Sonic's Object ID to 0
-		tst.b	($FFFFB000).w
+		tst.b	(MainCharacter).w
 		beq.s	loc_F0F6
-		move.w	($FFFFB008).w,d0
+		move.w	(MainCharacter+x_pos).w,d0
 		move.w	($FFFFEECA).w,d1
 		addi.w	#$128,d1
 		cmp.w	d1,d0
@@ -20756,12 +20765,12 @@ loc_F0F6:
 
 ; GotThroughAct:
 Load_EndOfAct:
-		tst.b	($FFFFB5C0).w
+		tst.b	(Object_RAM+$5C0).w
 		bne.s	locret_F15E
 		move.w	($FFFFEECA).w,($FFFFEEC8).w
 		clr.b	($FFFFFE2D).w
 		clr.b	($FFFFFE1E).w
-		move.b	#$3A,($FFFFB5C0).w
+		move.b	#$3A,(Object_RAM+$5C0).w
 		moveq	#$10,d0
 		jsr	(LoadPLC2).l
 		move.b	#1,($FFFFF7D6).w
@@ -20842,25 +20851,25 @@ Obj40_Index:	dc.w Obj40_Init-Obj40_Index
 ; ===========================================================================
 ; loc_F25E:
 Obj40_Init:
-		move.l	#Map_obj40,4(a0)
-		move.w	#$4E0,2(a0)
+		move.l	#Map_obj40,mappings(a0)
+		move.w	#$4E0,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,1(a0)
-		move.b	#4,$18(a0)
-		move.b	#$14,$19(a0)
-		tst.b	$1C(a0)
+		move.b	#4,priority(a0)
+		move.b	#$14,width_pixels(a0)
+		tst.b	anim(a0)
 		bne.s	Obj40_Smoke
-		move.b	#$E,$16(a0)
-		move.b	#8,$17(a0)
+		move.b	#$E,y_radius(a0)
+		move.b	#8,x_radius(a0)
 		move.b	#$C,$20(a0)
 		bsr.w	ObjectMoveAndFall
 		jsr	(ObjHitFloor).l
 		tst.w	d1
 		bpl.s	locret_F2BC
-		add.w	d1,$C(a0)
-		move.w	#0,$12(a0)
+		add.w	d1,y_pos(a0)
+		move.w	#0,y_vel(a0)
 		addq.b	#2,routine(a0)
-		bchg	#0,$22(a0)
+		bchg	#0,status(a0)
 
 locret_F2BC:
 		rts
@@ -20873,7 +20882,7 @@ Obj40_Smoke:
 ; loc_F2C6:
 Obj40_Main:
 		moveq	#0,d0
-		move.b	$25(a0),d0
+		move.b	routine_secondary(a0),d0
 		move.w	Obj40_Main_Index(pc,d0.w),d1
 		jsr	Obj40_Main_Index(pc,d1.w)
 		lea	(Ani_obj40).l,a1
@@ -20888,12 +20897,12 @@ Obj40_Main_Index:	dc.w Obj40_Move-Obj40_Main_Index
 Obj40_Move:
 		subq.w	#1,$30(a0)
 		bpl.s	locret_F308
-		addq.b	#2,$25(a0)
-		move.w	#-$100,$10(a0)
-		move.b	#1,$1C(a0)
-		bchg	#0,$22(a0)
+		addq.b	#2,routine_secondary(a0)
+		move.w	#-$100,x_vel(a0)
+		move.b	#1,anim(a0)
+		bchg	#0,status(a0)
 		bne.s	locret_F308
-		neg.w	$10(a0)
+		neg.w	x_vel(a0)
 
 locret_F308:
 		rts
@@ -20906,27 +20915,27 @@ Obj40_Floor:
 		blt.s	Obj40_StopMoving
 		cmpi.w	#$C,d1
 		bge.s	Obj40_StopMoving
-		add.w	d1,$C(a0)
+		add.w	d1,y_pos(a0)
 		subq.b	#1,$33(a0)
 		bpl.s	locret_F354
 		move.b	#$F,$33(a0)
 		bsr.w	SingleObjLoad
 		bne.s	locret_F354
 		move.b	#$40,0(a1)
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
-		move.b	$22(a0),$22(a1)
-		move.b	#2,$1C(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
+		move.b	status(a0),status(a1)
+		move.b	#2,anim(a1)
 
 locret_F354:
 		rts
 ; ---------------------------------------------------------------------------
 ; loc_F356:
 Obj40_StopMoving:
-		subq.b	#2,$25(a0)
+		subq.b	#2,routine_secondary(a0)
 		move.w	#$3B,$30(a0)
-		move.w	#0,$10(a0)
-		move.b	#0,$1C(a0)
+		move.w	#0,x_vel(a0)
+		move.b	#0,anim(a0)
 		rts
 ; ===========================================================================
 ; loc_F36E:
@@ -20977,33 +20986,33 @@ Map_obj40:	incbin	"mappings/sprite/obj40.bin"
 
 
 SolidObject:
-		lea	($FFFFB000).w,a1	; a1=character
+		lea	(MainCharacter).w,a1	; a1=character
 		moveq	#3,d6
 		movem.l	d1-d4,-(sp)	; store input registers
 		bsr.s	sub_F456	; first collision check with Sonic
 		movem.l	(sp)+,d1-d4	; restore input registers
-		lea	($FFFFB040).w,a1	; a1=character ; now check collision with Tails
+		lea	(Sidekick).w,a1	; a1=character ; now check collision with Tails
 		tst.b	1(a1)
 		bpl.w	locret_F490	; return if not Tails
 		addq.b	#1,d6
 
 sub_F456:
-		btst	d6,$22(a0)
+		btst	d6,status(a0)
 		beq.w	SolidObject_OnScreenTest
 		move.w	d1,d2
 		add.w	d2,d2
-		btst	#1,$22(a1)
+		btst	#1,status(a1)
 		bne.s	loc_F47A
-		move.w	8(a1),d0
-		sub.w	8(a0),d0
+		move.w	x_pos(a1),d0
+		sub.w	x_pos(a0),d0
 		add.w	d1,d0
 		bmi.s	loc_F47A
 		cmp.w	d2,d0
 		bcs.s	loc_F488
 
 loc_F47A:
-		bclr	#3,$22(a1)
-		bclr	d6,$22(a0)
+		bclr	#3,status(a1)
+		bclr	d6,status(a0)
 		moveq	#0,d4
 		rts
 ; ---------------------------------------------------------------------------
@@ -21020,31 +21029,31 @@ locret_F490:
 ; alternate function to check for collision even if off-screen, unused
 ; in this build...
 ; SolidObject_Always:
-		lea	($FFFFB000).w,a1	; a1=character
+		lea	(MainCharacter).w,a1	; a1=character
 		moveq	#3,d6
 		movem.l	d1-d4,-(sp)
 		bsr.s	SolidObject_Always_SingleCharacter
 		movem.l	(sp)+,d1-d4
-		lea	($FFFFB040).w,a1	; a1=character
+		lea	(Sidekick).w,a1	; a1=character
 		addq.b	#1,d6
 ; loc_F4A8:
 SolidObject_Always_SingleCharacter:
-		btst	d6,$22(a0)
+		btst	d6,status(a0)
 		beq.w	SolidObject_cont
 		move.w	d1,d2
 		add.w	d2,d2
-		btst	#1,$22(a1)
+		btst	#1,status(a1)
 		bne.s	loc_F4CC
-		move.w	8(a1),d0
-		sub.w	8(a0),d0
+		move.w	x_pos(a1),d0
+		sub.w	x_pos(a0),d0
 		add.w	d1,d0
 		bmi.s	loc_F4CC
 		cmp.w	d2,d0
 		bcs.s	loc_F4DA
 
 loc_F4CC:
-		bclr	#3,$22(a1)
-		bclr	d6,$22(a0)
+		bclr	#3,status(a1)
+		bclr	d6,status(a0)
 		moveq	#0,d4
 		rts
 ; ---------------------------------------------------------------------------
@@ -21072,31 +21081,31 @@ loc_F4DA:
 ; a1 = sonic or tails (set inside these subroutines)
 ; a2 = height data for slope
 ; ---------------------------------------------------------------------------
-		lea	($FFFFB000).w,a1	; a1=character
+		lea	(MainCharacter).w,a1	; a1=character
 		moveq	#3,d6
 		movem.l	d1-d4,-(sp)
 		bsr.s	SlopedSolid_SingleCharacter
 		movem.l	(sp)+,d1-d4
-		lea	($FFFFB040).w,a1	; a1=character
+		lea	(Sidekick).w,a1	; a1=character
 		addq.b	#1,d6
 ; loc_F4FA:
 SlopedSolid_SingleCharacter:
-		btst	d6,$22(a0)
+		btst	d6,status(a0)
 		beq.w	SlopedSolid_cont
 		move.w	d1,d2
 		add.w	d2,d2
-		btst	#1,$22(a1)
+		btst	#1,status(a1)
 		bne.s	loc_F51E
-		move.w	8(a1),d0
-		sub.w	8(a0),d0
+		move.w	x_pos(a1),d0
+		sub.w	x_pos(a0),d0
 		add.w	d1,d0
 		bmi.s	loc_F51E
 		cmp.w	d2,d0
 		bcs.s	loc_F52C
 
 loc_F51E:
-		bclr	#3,$22(a1)
-		bclr	d6,$22(a0)
+		bclr	#3,status(a1)
+		bclr	d6,status(a0)
 		moveq	#0,d4
 		rts
 ; ---------------------------------------------------------------------------
@@ -21109,8 +21118,8 @@ loc_F52C:
 ; ---------------------------------------------------------------------------
 ; loc_F536:
 SlopedSolid_cont:
-		move.w	8(a1),d0
-		sub.w	8(a0),d0
+		move.w	x_pos(a1),d0
+		sub.w	x_pos(a0),d0
 		add.w	d1,d0
 		bmi.w	SolidObject_TestClearPush
 		move.w	d1,d3
@@ -21128,12 +21137,12 @@ loc_F55C:
 		move.b	(a2,d5.w),d3
 		sub.b	(a2),d3
 		ext.w	d3
-		move.w	$C(a0),d5
+		move.w	y_pos(a0),d5
 		sub.w	d3,d5
-		move.b	$16(a1),d3
+		move.b	y_radius(a1),d3
 		ext.w	d3
 		add.w	d3,d2
-		move.w	$C(a1),d3
+		move.w	y_pos(a1),d3
 		sub.w	d5,d3
 		addq.w	#4,d3
 		add.w	d2,d3
@@ -21152,8 +21161,8 @@ SolidObject_OnScreenTest:
 SolidObject_cont:
 		; We now perform the x portion of a bounding box check.  To do this, we assume a
 		; coordinate system where the x origin is at the object's left edge.
-		move.w	8(a1),d0	; load Sonic's x position...
-		sub.w	8(a0),d0	; ... and calculate his x position relative to the object
+		move.w	x_pos(a1),d0	; load Sonic's x position...
+		sub.w	x_pos(a0),d0	; ... and calculate his x position relative to the object
 		add.w	d1,d0		; assume object's left edge is at (0,0).  This is also Sonic's distance to the object's left edge.
 		bmi.w	SolidObject_TestClearPush	; branch, if Sonic is outside the object's left edge
 		move.w	d1,d3
@@ -21166,11 +21175,11 @@ SolidObject_cont:
 		;   y_pos(object) - width(object)/2 - y_radius(Sonic) - 4,
 		; where object is stored in (a0), Sonic in (a1), and height(object)/2 in d2.  This way
 		; of doing it causes the object's hitbox to be vertically off-center by -4 pixels.
-		move.b	$16(a1),d3	; load Sonic's y radius
+		move.b	y_radius(a1),d3	; load Sonic's y radius
 		ext.w	d3
 		add.w	d3,d2		; calculate maximum distance for a top collision
-		move.w	$C(a1),d3	; load Sonic's y position
-		sub.w	$C(a0),d3	; ... and calculate his y position relative to the object
+		move.w	y_pos(a1),d3	; load Sonic's y position
+		sub.w	y_pos(a0),d3	; ... and calculate his y position relative to the object
 		addq.w	#4,d3		; assume a slightly lower position for Sonic
 		add.w	d2,d3		; assume the highest position where Sonic would still be colliding with the object to be (0,0)
 		bmi.w	SolidObject_TestClearPush	; branch, if Sonic is above this point
@@ -21213,27 +21222,27 @@ loc_F608:
 		tst.w	d0
 		beq.s	loc_F634
 		bmi.s	loc_F622
-		tst.w	$10(a1)
+		tst.w	x_vel(a1)
 		bmi.s	loc_F634
 		bra.s	loc_F628
 ; ===========================================================================
 
 loc_F622:
-		tst.w	$10(a1)
+		tst.w	x_vel(a1)
 		bpl.s	loc_F634
 
 loc_F628:
 		move.w	#0,$14(a1)
-		move.w	#0,$10(a1)
+		move.w	#0,x_vel(a1)
 
 loc_F634:
-		sub.w	d0,8(a1)
-		btst	#1,$22(a1)
+		sub.w	d0,x_pos(a1)
+		btst	#1,status(a1)
 		bne.s	loc_F65A
 		move.l	d6,d4
 		addq.b	#2,d4	; Character is pushing, not standing
-		bset	d4,$22(a0)
-		bset	#5,$22(a1)
+		bset	d4,status(a0)
+		bset	#5,status(a1)
 		move.w	d6,d4
 		addi.b	#$D,d4
 		bset	d4,d6	; This sets bits 0 (Sonic) or 1 (Tails) of high word of d6
@@ -21253,14 +21262,14 @@ loc_F65A:
 SolidObject_TestClearPush:
 		move.l	d6,d4
 		addq.b	#2,d4
-		btst	d4,$22(a0)
+		btst	d4,status(a0)
 		beq.s	loc_F680
-		move.w	#1,$1C(a1)
+		move.w	#1,anim(a1)
 
 sub_F678:
 		move.l	d6,d4
 		addq.b	#2,d4
-		bclr	d4,$22(a0)
+		bclr	d4,status(a0)
 
 loc_F680:
 		moveq	#0,d4
@@ -21276,13 +21285,13 @@ loc_F684:
 ; ===========================================================================
 
 loc_F690:
-		tst.w	$12(a1)
+		tst.w	y_vel(a1)
 		beq.s	loc_F6B2
 		bpl.s	loc_F6A6
 		tst.w	d3
 		bpl.s	loc_F6A6
-		sub.w	d3,$C(a1)
-		move.w	#0,$12(a1)
+		sub.w	d3,y_pos(a1)
+		move.w	#0,y_vel(a1)
 
 loc_F6A6:
 		move.w	d6,d4
@@ -21293,7 +21302,7 @@ loc_F6A6:
 ; ===========================================================================
 
 loc_F6B2:
-		btst	#1,$22(a1)
+		btst	#1,status(a1)
 		bne.s	loc_F6A6
 		move.l	a0,-(sp)
 		movea.l	a1,a0
@@ -21309,18 +21318,18 @@ loc_F6B2:
 loc_F6D2:
 		subq.w	#4,d3
 		moveq	#0,d1
-		move.b	$19(a0),d1
+		move.b	width_pixels(a0),d1
 		move.w	d1,d2
 		add.w	d2,d2
-		add.w	8(a1),d1
-		sub.w	8(a0),d1
+		add.w	x_pos(a1),d1
+		sub.w	x_pos(a0),d1
 		bmi.s	loc_F70A
 		cmp.w	d2,d1
 		bcc.s	loc_F70A
-		tst.w	$12(a1)
+		tst.w	y_vel(a1)
 		bmi.s	loc_F70A
-		sub.w	d3,$C(a1)
-		subq.w	#1,$C(a1)
+		sub.w	d3,y_pos(a1)
+		subq.w	#1,y_pos(a1)
 		bsr.w	RideObject_SetRide
 		move.w	d6,d4
 		addi.b	#$11,d4
@@ -21341,12 +21350,12 @@ loc_F70A:
 
 ; sub_F70E:
 MvSonicOnPtfm:
-		move.w	$C(a0),d0
+		move.w	y_pos(a0),d0
 		sub.w	d3,d0
 		bra.s	loc_F71E
 ; ===========================================================================
 		; a couple lines of unused/leftover/dead code from Sonic 1 ; a0=object
-		move.w	$C(a0),d0
+		move.w	y_pos(a0),d0
 		subi.w	#9,d0
 
 loc_F71E:
@@ -21357,11 +21366,11 @@ loc_F71E:
 		tst.w	(Debug_placement_mode).w
 		bne.s	locret_F746
 		moveq	#0,d1
-		move.b	$16(a1),d1
+		move.b	y_radius(a1),d1
 		sub.w	d1,d0
-		move.w	d0,$C(a1)
-		sub.w	8(a0),d2
-		sub.w	d2,8(a1)
+		move.w	d0,y_pos(a1)
+		sub.w	x_pos(a0),d2
+		sub.w	d2,x_pos(a1)
 
 locret_F746:
 		rts
@@ -21372,10 +21381,10 @@ locret_F746:
 
 
 sub_F748:				; CODE XREF: sub_F456+D8p sub_F7F2+34p
-		btst	#3,$22(a1)
+		btst	#3,status(a1)
 		beq.s	locret_F788
-		move.w	8(a1),d0
-		sub.w	8(a0),d0
+		move.w	x_pos(a1),d0
+		sub.w	x_pos(a0),d0
 		add.w	d1,d0
 		lsr.w	#1,d0
 		btst	#0,1(a0)
@@ -21386,14 +21395,14 @@ sub_F748:				; CODE XREF: sub_F456+D8p sub_F7F2+34p
 loc_F768:				; CODE XREF: sub_F748+1Aj
 		move.b	(a2,d0.w),d1
 		ext.w	d1
-		move.w	$C(a0),d0
+		move.w	y_pos(a0),d0
 		sub.w	d1,d0
 		moveq	#0,d1
-		move.b	$16(a1),d1
+		move.b	y_radius(a1),d1
 		sub.w	d1,d0
-		move.w	d0,$C(a1)
-		sub.w	8(a0),d2
-		sub.w	d2,8(a1)
+		move.w	d0,y_pos(a1)
+		sub.w	x_pos(a0),d2
+		sub.w	d2,x_pos(a1)
 
 locret_F788:				; CODE XREF: sub_F748+6j
 		rts
@@ -21404,12 +21413,12 @@ locret_F788:				; CODE XREF: sub_F748+6j
 
 
 sub_F78A:				; CODE XREF: ROM:000088DAp sub_8DD6+Cp ...
-		lea	($FFFFB000).w,a1
+		lea	(MainCharacter).w,a1
 		moveq	#3,d6
 		movem.l	d1-d4,-(sp)
 		bsr.s	sub_F7A0
 		movem.l	(sp)+,d1-d4
-		lea	($FFFFB040).w,a1
+		lea	(Sidekick).w,a1
 		addq.b	#1,d6
 ; End of function sub_F78A
 
@@ -21418,22 +21427,22 @@ sub_F78A:				; CODE XREF: ROM:000088DAp sub_8DD6+Cp ...
 
 
 sub_F7A0:				; CODE XREF: sub_F78A+Ap
-		btst	d6,$22(a0)
+		btst	d6,status(a0)
 		beq.w	loc_F89E
 		move.w	d1,d2
 		add.w	d2,d2
-		btst	#1,$22(a1)
+		btst	#1,status(a1)
 		bne.s	loc_F7C4
-		move.w	8(a1),d0
-		sub.w	8(a0),d0
+		move.w	x_pos(a1),d0
+		sub.w	x_pos(a0),d0
 		add.w	d1,d0
 		bmi.s	loc_F7C4
 		cmp.w	d2,d0
 		bcs.s	loc_F7D2
 
 loc_F7C4:				; CODE XREF: sub_F7A0+12j sub_F7A0+1Ej
-		bclr	#3,$22(a1)
-		bclr	d6,$22(a0)
+		bclr	#3,status(a1)
+		bclr	d6,status(a0)
 		moveq	#0,d4
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -21450,12 +21459,12 @@ loc_F7D2:				; CODE XREF: sub_F7A0+22j
 
 
 sub_F7DC:				; CODE XREF: sub_8CEC+Ep ROM:00014DEEj
-		lea	($FFFFB000).w,a1
+		lea	(MainCharacter).w,a1
 		moveq	#3,d6
 		movem.l	d1-d4,-(sp)
 		bsr.s	sub_F7F2
 		movem.l	(sp)+,d1-d4
-		lea	($FFFFB040).w,a1
+		lea	(Sidekick).w,a1
 		addq.b	#1,d6
 ; End of function sub_F7DC
 
@@ -21467,22 +21476,22 @@ sub_F7F2:				; CODE XREF: sub_F7DC+Ap
 
 ; FUNCTION CHUNK AT 0000F968 SIZE 00000038 BYTES
 
-		btst	d6,$22(a0)
+		btst	d6,status(a0)
 		beq.w	SlopedPlatform_cont
 		move.w	d1,d2
 		add.w	d2,d2
-		btst	#1,$22(a1)
+		btst	#1,status(a1)
 		bne.s	loc_F816
-		move.w	8(a1),d0
-		sub.w	8(a0),d0
+		move.w	x_pos(a1),d0
+		sub.w	x_pos(a0),d0
 		add.w	d1,d0
 		bmi.s	loc_F816
 		cmp.w	d2,d0
 		bcs.s	loc_F824
 
 loc_F816:				; CODE XREF: sub_F7F2+12j sub_F7F2+1Ej
-		bclr	#3,$22(a1)
-		bclr	d6,$22(a0)
+		bclr	#3,status(a1)
+		bclr	d6,status(a0)
 		moveq	#0,d4
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -21499,12 +21508,12 @@ loc_F824:				; CODE XREF: sub_F7F2+22j
 
 
 sub_F82E:				; CODE XREF: ROM:000083C2p
-		lea	($FFFFB000).w,a1
+		lea	(MainCharacter).w,a1
 		moveq	#3,d6
 		movem.l	d1-d4,-(sp)
 		bsr.s	sub_F844
 		movem.l	(sp)+,d1-d4
-		lea	($FFFFB040).w,a1
+		lea	(Sidekick).w,a1
 		addq.b	#1,d6
 ; End of function sub_F82E
 
@@ -21516,22 +21525,22 @@ sub_F844:				; CODE XREF: sub_F82E+Ap
 
 ; FUNCTION CHUNK AT 0000F9A0 SIZE 00000028 BYTES
 
-		btst	d6,$22(a0)
+		btst	d6,status(a0)
 		beq.w	loc_F9A0
 		move.w	d1,d2
 		add.w	d2,d2
-		btst	#1,$22(a1)
+		btst	#1,status(a1)
 		bne.s	loc_F868
-		move.w	8(a1),d0
-		sub.w	8(a0),d0
+		move.w	x_pos(a1),d0
+		sub.w	x_pos(a0),d0
 		add.w	d1,d0
 		bmi.s	loc_F868
 		cmp.w	d2,d0
 		bcs.s	loc_F876
 
 loc_F868:				; CODE XREF: sub_F844+12j sub_F844+1Ej
-		bclr	#3,$22(a1)
-		bclr	d6,$22(a0)
+		bclr	#3,status(a1)
+		bclr	d6,status(a0)
 		moveq	#0,d4
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -21548,10 +21557,10 @@ loc_F876:				; CODE XREF: sub_F844+22j
 
 
 sub_F880:				; CODE XREF: sub_7DDA+66p
-		tst.w	$12(a1)
+		tst.w	y_vel(a1)
 		bmi.w	locret_F966
-		move.w	8(a1),d0
-		sub.w	8(a0),d0
+		move.w	x_pos(a1),d0
+		sub.w	x_pos(a0),d0
 		add.w	d1,d0
 		bmi.w	locret_F966
 		cmp.w	d2,d0
@@ -21560,10 +21569,10 @@ sub_F880:				; CODE XREF: sub_7DDA+66p
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_F89E:				; CODE XREF: sub_F7A0+4j
-		tst.w	$12(a1)
+		tst.w	y_vel(a1)
 		bmi.w	locret_F966
-		move.w	8(a1),d0
-		sub.w	8(a0),d0
+		move.w	x_pos(a1),d0
+		sub.w	x_pos(a0),d0
 		add.w	d1,d0
 		bmi.w	locret_F966
 		add.w	d1,d1
@@ -21571,13 +21580,13 @@ loc_F89E:				; CODE XREF: sub_F7A0+4j
 		bcc.w	locret_F966
 
 loc_F8BC:				; CODE XREF: sub_F880+1Cj
-		move.w	$C(a0),d0
+		move.w	y_pos(a0),d0
 		sub.w	d3,d0
 
 loc_F8C2:				; CODE XREF: sub_F7F2+1AAj
 					; sub_F844+180j
-		move.w	$C(a1),d2
-		move.b	$16(a1),d1
+		move.w	y_pos(a1),d2
+		move.b	y_radius(a1),d1
 		ext.w	d1
 		add.w	d2,d1
 		addq.w	#4,d1
@@ -21591,17 +21600,17 @@ loc_F8C2:				; CODE XREF: sub_F7F2+1AAj
 		bcc.w	locret_F966
 		add.w	d0,d2
 		addq.w	#3,d2
-		move.w	d2,$C(a1)
+		move.w	d2,y_pos(a1)
 ; sub_F8F8:
 RideObject_SetRide:
-		btst	#3,$22(a1)
+		btst	#3,status(a1)
 		beq.s	loc_F916
 		moveq	#0,d0
 		move.b	$3D(a1),d0
 		lsl.w	#6,d0
-		addi.l	#$FFFFB000,d0
+		addi.l	#Object_RAM,d0
 		movea.l	d0,a3
-		bclr	#3,$22(a3)
+		bclr	#3,status(a3)
 
 loc_F916:
 		move.w	a0,d0
@@ -21609,10 +21618,10 @@ loc_F916:
 		lsr.w	#6,d0
 		andi.w	#$7F,d0
 		move.b	d0,$3D(a1)
-		move.b	#0,$26(a1)
-		move.w	#0,$12(a1)
-		move.w	$10(a1),$14(a1)
-		btst	#1,$22(a1)
+		move.b	#0,angle(a1)
+		move.w	#0,y_vel(a1)
+		move.w	x_vel(a1),$14(a1)
+		btst	#1,status(a1)
 		beq.s	loc_F95C
 		move.l	a0,-(sp)
 		movea.l	a1,a0
@@ -21630,18 +21639,18 @@ loc_F95A:
 		movea.l	(sp)+,a0
 
 loc_F95C:
-		bset	#3,$22(a1)
-		bset	d6,$22(a0)
+		bset	#3,status(a1)
+		bset	d6,status(a0)
 
 locret_F966:
 		rts
 ; ===========================================================================
 ; loc_F968:
 SlopedPlatform_cont:
-		tst.w	$12(a1)
+		tst.w	y_vel(a1)
 		bmi.w	locret_F966
-		move.w	8(a1),d0
-		sub.w	8(a0),d0
+		move.w	x_pos(a1),d0
+		sub.w	x_pos(a0),d0
 		add.w	d1,d0
 		bmi.s	locret_F966
 		add.w	d1,d1
@@ -21656,7 +21665,7 @@ loc_F98E:
 		lsr.w	#1,d0
 		move.b	(a2,d0.w),d3
 		ext.w	d3
-		move.w	$C(a0),d0
+		move.w	y_pos(a0),d0
 		sub.w	d3,d0
 		bra.w	loc_F8C2
 ; END OF FUNCTION CHUNK	FOR sub_F7F2
@@ -21664,16 +21673,16 @@ loc_F98E:
 ; START	OF FUNCTION CHUNK FOR sub_F844
 
 loc_F9A0:				; CODE XREF: sub_F844+4j
-		tst.w	$12(a1)
+		tst.w	y_vel(a1)
 		bmi.w	locret_F966
-		move.w	8(a1),d0
-		sub.w	8(a0),d0
+		move.w	x_pos(a1),d0
+		sub.w	x_pos(a0),d0
 		add.w	d1,d0
 		bmi.w	locret_F966
 		add.w	d1,d1
 		cmp.w	d1,d0
 		bcc.w	locret_F966
-		move.w	$C(a0),d0
+		move.w	y_pos(a0),d0
 		sub.w	d3,d0
 		bra.w	loc_F8C2
 ; END OF FUNCTION CHUNK	FOR sub_F844
@@ -21684,20 +21693,20 @@ loc_F9A0:				; CODE XREF: sub_F844+4j
 sub_F9C8:				; CODE XREF: ROM:0000AEEAp
 		move.w	d1,d2
 		add.w	d2,d2
-		lea	($FFFFB000).w,a1
-		btst	#1,$22(a1)
+		lea	(MainCharacter).w,a1
+		btst	#1,status(a1)
 		bne.s	loc_F9E8
-		move.w	8(a1),d0
-		sub.w	8(a0),d0
+		move.w	x_pos(a1),d0
+		sub.w	x_pos(a0),d0
 		add.w	d1,d0
 		bmi.s	loc_F9E8
 		cmp.w	d2,d0
 		bcs.s	locret_F9FA
 
 loc_F9E8:				; CODE XREF: sub_F9C8+Ej sub_F9C8+1Aj
-		bclr	#3,$22(a1)
+		bclr	#3,status(a1)
 		move.b	#2,routine(a0)
-		bclr	#3,$22(a0)
+		bclr	#3,status(a0)
 
 locret_F9FA:				; CODE XREF: sub_F9C8+1Ej
 		rts
@@ -21729,13 +21738,13 @@ Obj01_Index:	dc.w Obj01_Init-Obj01_Index		; 0
 ; Obj01_Main:
 Obj01_Init:
 		addq.b	#2,routine(a0)	; => Obj01_Control
-		move.b	#$13,$16(a0)	; this sets Sonic's collision height (2*pixels)
-		move.b	#9,$17(a0)
-		move.l	#Map_Sonic,4(a0)
-		move.w	#$780,2(a0)
+		move.b	#$13,y_radius(a0)	; this sets Sonic's collision height (2*pixels)
+		move.b	#9,x_radius(a0)
+		move.l	#Map_Sonic,mappings(a0)
+		move.w	#$780,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#2,$18(a0)
-		move.b	#$18,$19(a0)
+		move.b	#2,priority(a0)
+		move.b	#$18,width_pixels(a0)
 		move.b	#4,1(a0)
 		move.w	#$600,(Sonic_top_speed).w	; set Sonic's top speed
 		move.w	#$C,(Sonic_acceleration).w	; set Sonic's acceleration
@@ -21774,7 +21783,7 @@ loc_FABC:
 		btst	#0,($FFFFF7C8).w	; is Sonic interacting with another object that holds him in place or controls his movement somehow?
 		bne.s	Obj01_ControlsLock	; if yes, branch to skip Sonic's control
 		moveq	#0,d0
-		move.b	$22(a0),d0
+		move.b	status(a0),d0
 		andi.w	#6,d0
 		move.w	Obj01_Modes(pc,d0.w),d1
 		jsr	Obj01_Modes(pc,d1.w)	; run Sonic's movement control code
@@ -21787,9 +21796,9 @@ Obj01_ControlsLock:
 		move.b	($FFFFF76A).w,$37(a0)
 		tst.b	($FFFFF7C7).w
 		beq.s	loc_FAFE
-		tst.b	$1C(a0)
+		tst.b	anim(a0)
 		bne.s	loc_FAFE
-		move.b	$1D(a0),$1C(a0)
+		move.b	prev_anim(a0),anim(a0)
 
 loc_FAFE:
 		bsr.w	Sonic_Animate
@@ -21890,8 +21899,8 @@ Sonic_RecordPos:
 		move.w	(Sonic_Pos_Record_Index).w,d0
 		lea	(Sonic_Pos_Record_Buf).w,a1
 		lea	(a1,d0.w),a1
-		move.w	8(a0),(a1)+
-		move.w	$C(a0),(a1)+
+		move.w	x_pos(a0),(a1)+
+		move.w	y_pos(a0),(a1)+
 		addq.b	#4,(Sonic_Pos_Record_Index+1).w
 
 		lea	(Sonic_Stat_Record_Buf).w,a1
@@ -21912,15 +21921,15 @@ Unused_RecordPos:
 		subq.b	#4,d0
 		lea	(Tails_Pos_Record_Buf).w,a1
 		lea	(a1,d0.w),a2
-		move.w	8(a0),d1
+		move.w	x_pos(a0),d1
 		swap	d1
-		move.w	$C(a0),d1
+		move.w	y_pos(a0),d1
 		cmp.l	(a2),d1
 		beq.s	locret_FC02
 		addq.b	#4,d0
 		lea	(a1,d0.w),a2
-		move.w	8(a0),(a2)+
-		move.w	$C(a0),(a2)
+		move.w	x_pos(a0),(a2)+
+		move.w	y_pos(a0),(a2)
 		addq.b	#4,($FFFFEEE1).w
 
 locret_FC02:
@@ -21945,42 +21954,42 @@ locret_FC0A:
 ; loc_FC0E: Obj01_InLevelWithWater:
 Obj01_InWater:
 		move.w	($FFFFF646).w,d0
-		cmp.w	$C(a0),d0	; is Sonic above water?
+		cmp.w	y_pos(a0),d0	; is Sonic above water?
 		bge.s	Obj01_OutWater	; if yes, branch
 
-		bset	#6,$22(a0)	; set underwater flag
+		bset	#6,status(a0)	; set underwater flag
 		bne.s	locret_FC0A	; if already underwater, branch
 
 		bsr.w	ResumeMusic
-		move.b	#$A,($FFFFB340).w	; load Obj0A (sonic's breathing bubbles) at $FFFFB340
-		move.b	#$81,($FFFFB368).w
+		move.b	#$A,(Object_RAM+$340).w	; load Obj0A (sonic's breathing bubbles) at $FFFFB340
+		move.b	#$81,(Object_RAM+$368).w
 		move.w	#$300,(Sonic_top_speed).w
 		move.w	#6,(Sonic_acceleration).w
 		move.w	#$40,(Sonic_deceleration).w
-		asr	$10(a0)
-		asr	$12(a0)	; memory oprands can only be shifted one at a time
-		asr	$12(a0)
+		asr	x_vel(a0)
+		asr	y_vel(a0)	; memory oprands can only be shifted one at a time
+		asr	y_vel(a0)
 		beq.s	locret_FC0A
-		move.b	#8,($FFFFB300).w	; splash animation
+		move.b	#8,(Object_RAM+$300).w	; splash animation
 		move.w	#$AA,d0			; splash sound
 		jmp	(PlaySound_Special).l
 
 ; ---------------------------------------------------------------------------
 ; Obj01_NotInWater:
 Obj01_OutWater:
-		bclr	#6,$22(a0)	; unset underwater flag
+		bclr	#6,status(a0)	; unset underwater flag
 		beq.s	locret_FC0A	; if already unset, branch
 
 		bsr.w	ResumeMusic
 		move.w	#$600,(Sonic_top_speed).w
 		move.w	#$C,(Sonic_acceleration).w
 		move.w	#$80,(Sonic_deceleration).w
-		asl	$12(a0)
+		asl	y_vel(a0)
 		beq.w	locret_FC0A
-		move.b	#8,($FFFFB300).w	; splash animation
-		cmpi.w	#$F000,$12(a0)
+		move.b	#8,(Object_RAM+$300).w	; splash animation
+		cmpi.w	#$F000,y_vel(a0)
 		bgt.s	loc_FC98
-		move.w	#$F000,$12(a0)	; limit upward y velocity exiting the water
+		move.w	#$F000,y_vel(a0)	; limit upward y velocity exiting the water
 
 loc_FC98:
 		move.w	#$AA,d0		; splash sound
@@ -22015,9 +22024,9 @@ Obj01_MdAir:
 		bsr.w	Sonic_ChgJumpDir
 		bsr.w	Sonic_LevelBound
 		jsr	(ObjectMoveAndFall).l
-		btst	#6,$22(a0)	; is Sonic underwater?
+		btst	#6,status(a0)	; is Sonic underwater?
 		beq.s	loc_FCEA	; if not, branch
-		subi.w	#$28,$12(a0)	; reduce gravity by $28 ($38-$28=$10)
+		subi.w	#$28,y_vel(a0)	; reduce gravity by $28 ($38-$28=$10)
 
 loc_FCEA:
 		bsr.w	Sonic_JumpAngle
@@ -22051,9 +22060,9 @@ Obj01_MdJump:
 		bsr.w	Sonic_ChgJumpDir
 		bsr.w	Sonic_LevelBound
 		jsr	(ObjectMoveAndFall).l
-		btst	#6,$22(a0)	; is Sonic underwater?
+		btst	#6,status(a0)	; is Sonic underwater?
 		beq.s	loc_FD34	; if not, branch
-		subi.w	#$28,$12(a0)	; reduce gravity by $28 ($38-$28=$10)
+		subi.w	#$28,y_vel(a0)	; reduce gravity by $28 ($38-$28=$10)
 
 loc_FD34:
 		bsr.w	Sonic_JumpAngle
@@ -22087,34 +22096,34 @@ loc_FD66:
 		bsr.w	Sonic_MoveRight
 
 loc_FD72:
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		addi.b	#$20,d0
 		andi.b	#$C0,d0				; is Sonic on a slope?
 		bne.w	Obj01_UpdateSpeedOnGround	; if yes, branch
 		tst.w	$14(a0)				; is Sonic moving?
 		bne.w	Obj01_UpdateSpeedOnGround	; if yes, branch
-		bclr	#5,$22(a0)
-		cmpi.b	#$B,$1C(a0)	; use "standing" animation
+		bclr	#5,status(a0)
+		cmpi.b	#$B,anim(a0)	; use "standing" animation
 		beq.s	loc_FD9E
-		move.b	#5,$1C(a0)
+		move.b	#5,anim(a0)
 
 loc_FD9E:
-		btst	#3,$22(a0)
+		btst	#3,status(a0)
 		beq.s	Sonic_Balance
 		moveq	#0,d0
 		move.b	$3D(a0),d0
 		lsl.w	#6,d0
-		lea	($FFFFB000).w,a1	; a1=character
+		lea	(MainCharacter).w,a1	; a1=character
 		lea	(a1,d0.w),a1		; a1=object
-		tst.b	$22(a1)
+		tst.b	status(a1)
 		bmi.s	Sonic_LookUp
 		moveq	#0,d1
-		move.b	$19(a1),d1
+		move.b	width_pixels(a1),d1
 		move.w	d1,d2
 		add.w	d2,d2
 		subq.w	#4,d2
-		add.w	8(a0),d1
-		sub.w	8(a1),d1
+		add.w	x_pos(a0),d1
+		sub.w	x_pos(a1),d1
 		cmpi.w	#4,d1
 		blt.s	loc_FE00
 		cmp.w	d2,d1
@@ -22130,7 +22139,7 @@ Sonic_Balance:
 		bne.s	loc_FDF8
 
 loc_FDF0:
-		bclr	#0,$22(a0)
+		bclr	#0,status(a0)
 		bra.s	loc_FE06
 ; ---------------------------------------------------------------------------
 
@@ -22139,24 +22148,24 @@ loc_FDF8:
 		bne.s	Sonic_LookUp
 
 loc_FE00:
-		bset	#0,$22(a0)
+		bset	#0,status(a0)
 
 loc_FE06:
-		move.b	#6,$1C(a0)
+		move.b	#6,anim(a0)
 		bra.s	Obj01_UpdateSpeedOnGround
 ; ---------------------------------------------------------------------------
 
 Sonic_LookUp:
 		btst	#0,($FFFFF602).w	; is up being pressed?
 		beq.s	Sonic_Duck		; if not, branch
-		move.b	#7,$1C(a0)		; use "looking up" animation
+		move.b	#7,anim(a0)		; use "looking up" animation
 		bra.s	Obj01_UpdateSpeedOnGround
 ; ---------------------------------------------------------------------------
 
 Sonic_Duck:
 		btst	#1,($FFFFF602).w		; is down being pressed?
 		beq.s	Obj01_UpdateSpeedOnGround	; if not, branch
-		move.b	#8,$1C(a0)			; use "ducking" animation
+		move.b	#8,anim(a0)			; use "ducking" animation
 
 ; ---------------------------------------------------------------------------
 ; updates Sonic's speed on the ground
@@ -22193,19 +22202,19 @@ loc_FE54:
 ; increase or decrease speed on the ground
 ; loc_FE58:
 Obj01_Traction:
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		jsr	(CalcSine).l
 		muls.w	$14(a0),d1
 		asr.l	#8,d1
-		move.w	d1,$10(a0)
+		move.w	d1,x_vel(a0)
 		muls.w	$14(a0),d0
 		asr.l	#8,d0
-		move.w	d0,$12(a0)
+		move.w	d0,y_vel(a0)
 
 ; stops Sonic from running through walls that meet the ground
 ; loc_FE76:
 Obj01_CheckWallsOnGround:
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		addi.b	#$40,d0
 		bmi.s	locret_FEF6
 		move.b	#$40,d1		; rotate 90 degress clockwise
@@ -22215,7 +22224,7 @@ Obj01_CheckWallsOnGround:
 		neg.w	d1		; rotate counterclockwise
 
 loc_FE8E:
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		add.b	d1,d0
 		move.w	d0,-(sp)
 		bsr.w	CalcRoomInFront
@@ -22230,30 +22239,30 @@ loc_FE8E:
 		beq.s	loc_FED8
 		cmpi.b	#$80,d0
 		beq.s	loc_FED2
-		cmpi.w	#$600,$10(a0)		; is Sonic at max speed?
+		cmpi.w	#$600,x_vel(a0)		; is Sonic at max speed?
 		bge.s	Sonic_WallRecoil	; if yes, branch
-		add.w	d1,$10(a0)
-		bset	#5,$22(a0)
+		add.w	d1,x_vel(a0)
+		bset	#5,status(a0)
 		move.w	#0,$14(a0)
 		rts
 ; ---------------------------------------------------------------------------
 
 loc_FED2:
-		sub.w	d1,$12(a0)
+		sub.w	d1,y_vel(a0)
 		rts
 ; ---------------------------------------------------------------------------
 
 loc_FED8:
-		cmpi.w	#$FA00,$10(a0)		; is Sonic at max speed?
+		cmpi.w	#$FA00,x_vel(a0)		; is Sonic at max speed?
 		ble.s	Sonic_WallRecoil	; if yes, branch
-		sub.w	d1,$10(a0)
-		bset	#5,$22(a0)
+		sub.w	d1,x_vel(a0)
+		bset	#5,status(a0)
 		move.w	#0,$14(a0)
 		rts
 ; ---------------------------------------------------------------------------
 
 loc_FEF2:
-		add.w	d1,$12(a0)
+		add.w	d1,y_vel(a0)
 
 locret_FEF6:
 		rts
@@ -22268,18 +22277,18 @@ locret_FEF6:
 Sonic_WallRecoil:
 		move.b	#4,routine(a0)
 		bsr.w	Sonic_ResetOnFloor
-		bset	#1,$22(a0)
+		bset	#1,status(a0)
 		move.w	#-$200,d0
-		tst.w	$10(a0)
+		tst.w	x_vel(a0)
 		bpl.s	Sonic_WallRecoil_Right
 		neg.w	d0
 
 Sonic_WallRecoil_Right:
-		move.w	d0,$10(a0)
-		move.w	#-$400,$12(a0)
+		move.w	d0,x_vel(a0)
+		move.w	#-$400,y_vel(a0)
 		move.w	#0,$14(a0)
-		move.b	#$A,$1C(a0)
-		move.b	#1,$25(a0)
+		move.b	#$A,anim(a0)
+		move.b	#1,routine_secondary(a0)
 		move.w	#$A3,d0
 		jsr	(PlaySound_Special).l
 		rts
@@ -22295,10 +22304,10 @@ Sonic_MoveLeft:
 		bpl.s	Sonic_TurnLeft
 
 loc_FF44:
-		bset	#0,$22(a0)
+		bset	#0,status(a0)
 		bne.s	loc_FF58
-		bclr	#5,$22(a0)
-		move.b	#1,$1D(a0)
+		bclr	#5,status(a0)
+		move.b	#1,prev_anim(a0)
 
 loc_FF58:
 		sub.w	d5,d0
@@ -22310,7 +22319,7 @@ loc_FF58:
 
 loc_FF64:
 		move.w	d0,$14(a0)
-		move.b	#0,$1C(a0)
+		move.b	#0,anim(a0)
 		rts
 ; ---------------------------------------------------------------------------
 ; loc_FF70:
@@ -22321,14 +22330,14 @@ Sonic_TurnLeft:
 
 loc_FF78:
 		move.w	d0,$14(a0)
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		addi.b	#$20,d0
 		andi.b	#$C0,d0
 		bne.s	locret_FFA6
 		cmpi.w	#$400,d0
 		blt.s	locret_FFA6
-		move.b	#$D,$1C(a0)
-		bclr	#0,$22(a0)
+		move.b	#$D,anim(a0)
+		bclr	#0,status(a0)
 		move.w	#$A4,d0
 		jsr	(PlaySound_Special).l
 
@@ -22343,10 +22352,10 @@ locret_FFA6:
 Sonic_MoveRight:
 		move.w	$14(a0),d0
 		bmi.s	Sonic_TurnRight
-		bclr	#0,$22(a0)
+		bclr	#0,status(a0)
 		beq.s	loc_FFC2
-		bclr	#5,$22(a0)
-		move.b	#1,$1D(a0)
+		bclr	#5,status(a0)
+		move.b	#1,prev_anim(a0)
 
 loc_FFC2:
 		add.w	d5,d0
@@ -22356,7 +22365,7 @@ loc_FFC2:
 
 loc_FFCA:
 		move.w	d0,$14(a0)
-		move.b	#0,$1C(a0)
+		move.b	#0,anim(a0)
 		rts
 ; ---------------------------------------------------------------------------
 ; loc_FFD6:
@@ -22367,16 +22376,16 @@ Sonic_TurnRight:
 
 loc_FFDE:
 		move.w	d0,$14(a0)
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		addi.b	#$20,d0
 		andi.b	#$C0,d0
 		bne.s	locret_1000C
 		cmpi.w	#$FC00,d0
 		bgt.s	locret_1000C
-		move.b	#$D,$1C(a0)
+		move.b	#$D,anim(a0)
 
 loc_FFFC:
-		bset	#0,$22(a0)
+		bset	#0,status(a0)
 		move.w	#$A4,d0
 		jsr	(PlaySound_Special).l
 
@@ -22434,19 +22443,19 @@ loc_10068:				; CODE XREF: Sonic_RollSpeed+3Cj
 					; Sonic_RollSpeed+4Cj
 		tst.w	$14(a0)
 		bne.s	loc_1008A
-		bclr	#2,$22(a0)
-		move.b	#$13,$16(a0)
-		move.b	#9,$17(a0)
-		move.b	#5,$1C(a0)
-		subq.w	#5,$C(a0)
+		bclr	#2,status(a0)
+		move.b	#$13,y_radius(a0)
+		move.b	#9,x_radius(a0)
+		move.b	#5,anim(a0)
+		subq.w	#5,y_pos(a0)
 
 loc_1008A:				; CODE XREF: Sonic_RollSpeed+16j
 					; Sonic_RollSpeed+5Ej
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		jsr	(CalcSine).l
 		muls.w	$14(a0),d0
 		asr.l	#8,d0
-		move.w	d0,$12(a0)
+		move.w	d0,y_vel(a0)
 		muls.w	$14(a0),d1
 		asr.l	#8,d1
 		cmpi.w	#$1000,d1
@@ -22459,7 +22468,7 @@ loc_100AE:				; CODE XREF: Sonic_RollSpeed+9Aj
 		move.w	#$F000,d1
 
 loc_100B8:				; CODE XREF: Sonic_RollSpeed+A4j
-		move.w	d1,$10(a0)
+		move.w	d1,x_vel(a0)
 		bra.w	Obj01_CheckWallsOnGround
 ; End of function Sonic_RollSpeed
 
@@ -22473,8 +22482,8 @@ Sonic_RollLeft:				; CODE XREF: Sonic_RollSpeed+28p
 		bpl.s	loc_100D6
 
 loc_100C8:				; CODE XREF: Sonic_RollLeft+4j
-		bset	#0,$22(a0)
-		move.b	#2,$1C(a0)
+		bset	#0,status(a0)
+		move.b	#2,anim(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -22495,8 +22504,8 @@ loc_100DE:				; CODE XREF: Sonic_RollLeft+18j
 Sonic_RollRight:			; CODE XREF: Sonic_RollSpeed+34p
 		move.w	$14(a0),d0
 		bmi.s	loc_100F8
-		bclr	#0,$22(a0)
-		move.b	#2,$1C(a0)
+		bclr	#0,status(a0)
+		move.b	#2,anim(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -22519,12 +22528,12 @@ Sonic_ChgJumpDir:			; CODE XREF: ROM:0000FCCEp
 		move.w	(Sonic_top_speed).w,d6
 		move.w	(Sonic_acceleration).w,d5
 		asl.w	#1,d5
-		btst	#4,$22(a0)
+		btst	#4,status(a0)
 		bne.s	loc_10150
-		move.w	$10(a0),d0
+		move.w	x_vel(a0),d0
 		btst	#2,($FFFFF602).w
 		beq.s	loc_10136
-		bset	#0,$22(a0)
+		bset	#0,status(a0)
 		sub.w	d5,d0
 		move.w	d6,d1
 		neg.w	d1
@@ -22536,7 +22545,7 @@ loc_10136:				; CODE XREF: Sonic_ChgJumpDir+1Cj
 					; Sonic_ChgJumpDir+2Cj
 		btst	#3,($FFFFF602).w
 		beq.s	loc_1014C
-		bclr	#0,$22(a0)
+		bclr	#0,status(a0)
 		add.w	d5,d0
 		cmp.w	d6,d0
 		blt.s	loc_1014C
@@ -22544,7 +22553,7 @@ loc_10136:				; CODE XREF: Sonic_ChgJumpDir+1Cj
 
 loc_1014C:				; CODE XREF: Sonic_ChgJumpDir+36j
 					; Sonic_ChgJumpDir+42j
-		move.w	d0,$10(a0)
+		move.w	d0,x_vel(a0)
 
 loc_10150:				; CODE XREF: Sonic_ChgJumpDir+10j
 		cmpi.w	#$60,($FFFFEED8).w ; '`'
@@ -22556,9 +22565,9 @@ loc_1015E:				; CODE XREF: Sonic_ChgJumpDir+52j
 		subq.w	#2,($FFFFEED8).w
 
 loc_10162:				; CODE XREF: Sonic_ChgJumpDir+50j
-		cmpi.w	#$FC00,$12(a0)
+		cmpi.w	#$FC00,y_vel(a0)
 		bcs.s	locret_10190
-		move.w	$10(a0),d0
+		move.w	x_vel(a0),d0
 		move.w	d0,d1
 		asr.w	#5,d1
 		beq.s	locret_10190
@@ -22568,7 +22577,7 @@ loc_10162:				; CODE XREF: Sonic_ChgJumpDir+50j
 		move.w	#0,d0
 
 loc_1017E:				; CODE XREF: Sonic_ChgJumpDir+72j
-		move.w	d0,$10(a0)
+		move.w	d0,x_vel(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -22578,7 +22587,7 @@ loc_10184:				; CODE XREF: Sonic_ChgJumpDir+6Ej
 		move.w	#0,d0
 
 loc_1018C:				; CODE XREF: Sonic_ChgJumpDir+80j
-		move.w	d0,$10(a0)
+		move.w	d0,x_vel(a0)
 
 locret_10190:				; CODE XREF: Sonic_ChgJumpDir+62j
 					; Sonic_ChgJumpDir+6Cj
@@ -22590,8 +22599,8 @@ locret_10190:				; CODE XREF: Sonic_ChgJumpDir+62j
 
 ; Sonic_LevelBoundaries:
 Sonic_LevelBound:
-		move.l	8(a0),d1
-		move.w	$10(a0),d0
+		move.l	x_pos(a0),d1
+		move.w	x_vel(a0),d0
 		ext.l	d0
 		asl.l	#8,d0
 		add.l	d0,d1
@@ -22613,7 +22622,7 @@ loc_101C0:				; CODE XREF: Sonic_LevelBound+28j
 loc_101C4:				; CODE XREF: Sonic_LevelBound+7Ej
 		move.w	($FFFFEECE).w,d0
 		addi.w	#$E0,d0	; 'à'
-		cmp.w	$C(a0),d0
+		cmp.w	y_pos(a0),d0
 		blt.s	loc_101D4
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -22621,7 +22630,7 @@ loc_101C4:				; CODE XREF: Sonic_LevelBound+7Ej
 loc_101D4:				; CODE XREF: Sonic_LevelBound+3Ej
 		cmpi.w	#$501,(Current_ZoneAndAct).w
 		bne.w	JmpTo_KillSonic
-		cmpi.w	#$2000,($FFFFB008).w
+		cmpi.w	#$2000,(MainCharacter+x_pos).w
 		bcs.w	JmpTo_KillSonic
 		clr.b	($FFFFFE30).w
 		move.w	#1,($FFFFFE02).w
@@ -22631,9 +22640,9 @@ loc_101D4:				; CODE XREF: Sonic_LevelBound+3Ej
 
 loc_101FA:				; CODE XREF: Sonic_LevelBound+1Aj
 					; Sonic_LevelBound+30j
-		move.w	d0,8(a0)
-		move.w	#0,$A(a0)
-		move.w	#0,$10(a0)
+		move.w	d0,x_pos(a0)
+		move.w	#0,x_sub(a0)
+		move.w	#0,x_vel(a0)
 		move.w	#0,$14(a0)
 		bra.s	loc_101C4
 ; End of function Sonic_LevelBound
@@ -22664,17 +22673,17 @@ Obj01_NoRoll:				; CODE XREF: Sonic_Roll+4j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_1023A:				; CODE XREF: Sonic_Roll+24j
-		btst	#2,$22(a0)
+		btst	#2,status(a0)
 		beq.s	Obj01_DoRoll
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 Obj01_DoRoll:				; CODE XREF: Sonic_Roll+2Ej
-		bset	#2,$22(a0)
-		move.b	#$E,$16(a0)
-		move.b	#7,$17(a0)
-		move.b	#2,$1C(a0)
-		addq.w	#5,$C(a0)
+		bset	#2,status(a0)
+		move.b	#$E,y_radius(a0)
+		move.b	#7,x_radius(a0)
+		move.b	#2,anim(a0)
+		addq.w	#5,y_pos(a0)
 		move.w	#$BE,d0	; '¾'
 		jsr	(PlaySound_Special).l
 		tst.w	$14(a0)
@@ -22695,43 +22704,43 @@ Sonic_Jump:				; CODE XREF: ROM:0000FCA6p
 		andi.b	#$70,d0	; 'p'
 		beq.w	locret_1031C
 		moveq	#0,d0
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		addi.b	#$80,d0
 		bsr.w	sub_13102
 		cmpi.w	#6,d1
 		blt.w	locret_1031C
 		move.w	#$680,d2
-		btst	#6,$22(a0)
+		btst	#6,status(a0)
 		beq.s	loc_102AA
 		move.w	#$380,d2
 
 loc_102AA:				; CODE XREF: Sonic_Jump+2Cj
 		moveq	#0,d0
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		subi.b	#$40,d0	; '@'
 		jsr	(CalcSine).l
 		muls.w	d2,d1
 		asr.l	#8,d1
-		add.w	d1,$10(a0)
+		add.w	d1,x_vel(a0)
 		muls.w	d2,d0
 		asr.l	#8,d0
-		add.w	d0,$12(a0)
-		bset	#1,$22(a0)
-		bclr	#5,$22(a0)
+		add.w	d0,y_vel(a0)
+		bset	#1,status(a0)
+		bclr	#5,status(a0)
 		addq.l	#4,sp
 		move.b	#1,$3C(a0)
 		clr.b	$38(a0)
 		move.w	#$A0,d0	; ' '
 		jsr	(PlaySound_Special).l
-		move.b	#$13,$16(a0)
-		move.b	#9,$17(a0)
-		btst	#2,$22(a0)
+		move.b	#$13,y_radius(a0)
+		move.b	#9,x_radius(a0)
+		btst	#2,status(a0)
 		bne.s	loc_1031E
-		move.b	#$E,$16(a0)
-		move.b	#7,$17(a0)
-		move.b	#2,$1C(a0)
-		bset	#2,$22(a0)
-		addq.w	#5,$C(a0)
+		move.b	#$E,y_radius(a0)
+		move.b	#7,x_radius(a0)
+		move.b	#2,anim(a0)
+		bset	#2,status(a0)
+		addq.w	#5,y_pos(a0)
 
 locret_1031C:				; CODE XREF: Sonic_Jump+8j
 					; Sonic_Jump+1Ej
@@ -22739,7 +22748,7 @@ locret_1031C:				; CODE XREF: Sonic_Jump+8j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_1031E:				; CODE XREF: Sonic_Jump+86j
-		bset	#4,$22(a0)
+		bset	#4,status(a0)
 		rts
 ; End of function Sonic_Jump
 
@@ -22752,17 +22761,17 @@ Sonic_JumpHeight:			; CODE XREF: ROM:Obj01_MdJumpp
 		tst.b	$3C(a0)
 		beq.s	loc_10352
 		move.w	#$FC00,d1
-		btst	#6,$22(a0)
+		btst	#6,status(a0)
 		beq.s	loc_1033C
 		move.w	#$FE00,d1
 
 loc_1033C:				; CODE XREF: Sonic_JumpHeight+10j
-		cmp.w	$12(a0),d1
+		cmp.w	y_vel(a0),d1
 		ble.s	locret_10350
 		move.b	($FFFFF602).w,d0
 		andi.b	#$70,d0	; 'p'
 		bne.s	locret_10350
-		move.w	d1,$12(a0)
+		move.w	d1,y_vel(a0)
 
 locret_10350:				; CODE XREF: Sonic_JumpHeight+1Aj
 					; Sonic_JumpHeight+24j
@@ -22770,9 +22779,9 @@ locret_10350:				; CODE XREF: Sonic_JumpHeight+1Aj
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_10352:				; CODE XREF: Sonic_JumpHeight+4j
-		cmpi.w	#$F040,$12(a0)
+		cmpi.w	#$F040,y_vel(a0)
 		bge.s	locret_10360
-		move.w	#$F040,$12(a0)
+		move.w	#$F040,y_vel(a0)
 
 locret_10360:				; CODE XREF: Sonic_JumpHeight+32j
 		rts
@@ -22788,12 +22797,12 @@ locret_10360:				; CODE XREF: Sonic_JumpHeight+32j
 Sonic_CheckSpindash:
 		tst.b	$39(a0)
 		bne.s	Sonic_UpdateSpindash
-		cmpi.b	#8,$1C(a0)
+		cmpi.b	#8,anim(a0)
 		bne.s	locret_10394
 		move.b	($FFFFF603).w,d0
 		andi.b	#$70,d0
 		beq.w	locret_10394
-		move.b	#9,$1C(a0)
+		move.b	#9,anim(a0)
 		move.w	#$BE,d0
 		jsr	(PlaySound_Special).l
 		addq.l	#4,sp
@@ -22809,19 +22818,19 @@ Sonic_UpdateSpindash:
 		bne.s	Sonic_ChargingSpindash
 
 		; unleash the charged spindash and start rolling quickly:
-		move.b	#$E,$16(a0)
-		move.b	#7,$17(a0)
-		move.b	#2,$1C(a0)
-		addq.w	#5,$C(a0)	; add the difference between Sonic's rolling and standing heights
+		move.b	#$E,y_radius(a0)
+		move.b	#7,x_radius(a0)
+		move.b	#2,anim(a0)
+		addq.w	#5,y_pos(a0)	; add the difference between Sonic's rolling and standing heights
 		move.b	#0,$39(a0)
 		move.w	#$2000,($FFFFEED0).w
 		move.w	#$800,$14(a0)
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		beq.s	loc_103D4
 		neg.w	$14(a0)
 
 loc_103D4:
-		bset	#2,$22(a0)
+		bset	#2,status(a0)
 		rts
 ; ===========================================================================
 ; loc_103DC:
@@ -22841,11 +22850,11 @@ loc_103EA:
 
 
 Sonic_SlopeResist:			; CODE XREF: ROM:0000FCAAp
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		addi.b	#$60,d0	; '`'
 		cmpi.b	#$C0,d0
 		bcc.s	locret_10422
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 
 loc_10400:
 		jsr	(CalcSine).l
@@ -22875,11 +22884,11 @@ locret_10422:				; CODE XREF: Sonic_SlopeResist+Cj
 
 
 Sonic_RollRepel:			; CODE XREF: ROM:0000FCF8p
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		addi.b	#$60,d0	; '`'
 		cmpi.b	#$C0,d0
 		bcc.s	locret_1045E
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		jsr	(CalcSine).l
 		muls.w	#$50,d0	; 'P'
 		asr.l	#8,d0
@@ -22917,7 +22926,7 @@ Sonic_SlopeRepel:			; CODE XREF: ROM:0000FCC4p
 		bne.s	locret_1049A
 		tst.w	$2E(a0)
 		bne.s	loc_1049C
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		addi.b	#$20,d0	; ' '
 		andi.b	#$C0,d0
 		beq.s	locret_1049A
@@ -22929,7 +22938,7 @@ loc_10484:				; CODE XREF: Sonic_SlopeRepel+20j
 		cmpi.w	#$280,d0
 		bcc.s	locret_1049A
 		clr.w	$14(a0)
-		bset	#1,$22(a0)
+		bset	#1,status(a0)
 		move.w	#$1E,$2E(a0)
 
 locret_1049A:				; CODE XREF: Sonic_SlopeRepel+6j
@@ -22948,7 +22957,7 @@ loc_1049C:				; CODE XREF: Sonic_SlopeRepel+Cj
 
 Sonic_JumpAngle:			; CODE XREF: ROM:loc_FCEAp
 					; ROM:loc_FD34p
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		beq.s	loc_104BC
 		bpl.s	loc_104B2
 		addq.b	#2,d0
@@ -22966,7 +22975,7 @@ loc_104B2:				; CODE XREF: Sonic_JumpAngle+6j
 
 loc_104B8:				; CODE XREF: Sonic_JumpAngle:loc_104B0j
 					; Sonic_JumpAngle+12j
-		move.b	d0,$26(a0)
+		move.b	d0,angle(a0)
 
 loc_104BC:				; CODE XREF: Sonic_JumpAngle+4j
 		move.b	$27(a0),d0
@@ -23015,8 +23024,8 @@ Sonic_DoLevelCollision:
 
 loc_10514:				; CODE XREF: Sonic_DoLevelCollision+Ej
 		move.b	$3F(a0),d5
-		move.w	$10(a0),d1
-		move.w	$12(a0),d2
+		move.w	x_vel(a0),d1
+		move.w	y_vel(a0),d2
 		jsr	(CalcAngle).l
 		subi.b	#$20,d0	; ' '
 		andi.b	#$C0,d0
@@ -23029,21 +23038,21 @@ loc_10514:				; CODE XREF: Sonic_DoLevelCollision+Ej
 		bsr.w	Sonic_HitWall
 		tst.w	d1
 		bpl.s	loc_10558
-		sub.w	d1,8(a0)
-		move.w	#0,$10(a0)
+		sub.w	d1,x_pos(a0)
+		move.w	#0,x_vel(a0)
 
 loc_10558:				; CODE XREF: Sonic_DoLevelCollision+50j
 		bsr.w	sub_132EE
 		tst.w	d1
 		bpl.s	loc_1056A
-		add.w	d1,8(a0)
-		move.w	#0,$10(a0)
+		add.w	d1,x_pos(a0)
+		move.w	#0,x_vel(a0)
 
 loc_1056A:				; CODE XREF: Sonic_DoLevelCollision+62j
 		bsr.w	loc_13146
 		tst.w	d1
 		bpl.s	locret_105E2
-		move.b	$12(a0),d2
+		move.b	y_vel(a0),d2
 		addq.b	#8,d2
 		neg.b	d2
 		cmp.b	d2,d1
@@ -23052,10 +23061,10 @@ loc_1056A:				; CODE XREF: Sonic_DoLevelCollision+62j
 		blt.s	locret_105E2
 
 loc_10582:				; CODE XREF: Sonic_DoLevelCollision+80j
-		add.w	d1,$C(a0)
-		move.b	d3,$26(a0)
+		add.w	d1,y_pos(a0)
+		move.b	d3,angle(a0)
 		bsr.w	Sonic_ResetOnFloor
-		move.b	#0,$1C(a0)
+		move.b	#0,anim(a0)
 		move.b	d3,d0
 		addi.b	#$20,d0	; ' '
 		andi.b	#$40,d0	; '@'
@@ -23064,25 +23073,25 @@ loc_10582:				; CODE XREF: Sonic_DoLevelCollision+80j
 		addi.b	#$10,d0
 		andi.b	#$20,d0	; ' '
 		beq.s	loc_105B2
-		asr	$12(a0)
+		asr	y_vel(a0)
 		bra.s	loc_105D4
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_105B2:				; CODE XREF: Sonic_DoLevelCollision+AEj
-		move.w	#0,$12(a0)
-		move.w	$10(a0),$14(a0)
+		move.w	#0,y_vel(a0)
+		move.w	x_vel(a0),$14(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_105C0:				; CODE XREF: Sonic_DoLevelCollision+A2j
-		move.w	#0,$10(a0)
-		cmpi.w	#$FC0,$12(a0)
+		move.w	#0,x_vel(a0)
+		cmpi.w	#$FC0,y_vel(a0)
 		ble.s	loc_105D4
-		move.w	#$FC0,$12(a0)
+		move.w	#$FC0,y_vel(a0)
 
 loc_105D4:				; CODE XREF: Sonic_DoLevelCollision+B4j
 					; Sonic_DoLevelCollision+D0j
-		move.w	$12(a0),$14(a0)
+		move.w	y_vel(a0),$14(a0)
 		tst.b	d3
 		bpl.s	locret_105E2
 		neg.w	$14(a0)
@@ -23096,9 +23105,9 @@ loc_105E4:				; CODE XREF: Sonic_DoLevelCollision+36j
 		bsr.w	Sonic_HitWall
 		tst.w	d1
 		bpl.s	loc_105FE
-		sub.w	d1,8(a0)
-		move.w	#0,$10(a0)
-		move.w	$12(a0),$14(a0)
+		sub.w	d1,x_pos(a0)
+		move.w	#0,x_vel(a0)
+		move.w	y_vel(a0),$14(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -23106,27 +23115,27 @@ loc_105FE:				; CODE XREF: Sonic_DoLevelCollision+EEj
 		bsr.w	Sonic_DontRunOnWalls
 		tst.w	d1
 		bpl.s	loc_10618
-		sub.w	d1,$C(a0)
-		tst.w	$12(a0)
+		sub.w	d1,y_pos(a0)
+		tst.w	y_vel(a0)
 		bpl.s	locret_10616
-		move.w	#0,$12(a0)
+		move.w	#0,y_vel(a0)
 
 locret_10616:				; CODE XREF: Sonic_DoLevelCollision+112j
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_10618:				; CODE XREF: Sonic_DoLevelCollision+108j
-		tst.w	$12(a0)
+		tst.w	y_vel(a0)
 		bmi.s	locret_10644
 		bsr.w	loc_13146
 		tst.w	d1
 		bpl.s	locret_10644
-		add.w	d1,$C(a0)
-		move.b	d3,$26(a0)
+		add.w	d1,y_pos(a0)
+		move.b	d3,angle(a0)
 		bsr.w	Sonic_ResetOnFloor
-		move.b	#0,$1C(a0)
-		move.w	#0,$12(a0)
-		move.w	$10(a0),$14(a0)
+		move.b	#0,anim(a0)
+		move.w	#0,y_vel(a0)
+		move.w	x_vel(a0),$14(a0)
 
 locret_10644:				; CODE XREF: Sonic_DoLevelCollision+120j
 					; Sonic_DoLevelCollision+128j
@@ -23137,33 +23146,33 @@ loc_10646:				; CODE XREF: Sonic_DoLevelCollision+3Ej
 		bsr.w	Sonic_HitWall
 		tst.w	d1
 		bpl.s	loc_10658
-		sub.w	d1,8(a0)
-		move.w	#0,$10(a0)
+		sub.w	d1,x_pos(a0)
+		move.w	#0,x_vel(a0)
 
 loc_10658:				; CODE XREF: Sonic_DoLevelCollision+150j
 		bsr.w	sub_132EE
 		tst.w	d1
 		bpl.s	loc_1066A
-		add.w	d1,8(a0)
-		move.w	#0,$10(a0)
+		add.w	d1,x_pos(a0)
+		move.w	#0,x_vel(a0)
 
 loc_1066A:				; CODE XREF: Sonic_DoLevelCollision+162j
 		bsr.w	Sonic_DontRunOnWalls
 		tst.w	d1
 		bpl.s	locret_106A0
-		sub.w	d1,$C(a0)
+		sub.w	d1,y_pos(a0)
 		move.b	d3,d0
 		addi.b	#$20,d0	; ' '
 		andi.b	#$40,d0	; '@'
 		bne.s	loc_1068A
-		move.w	#0,$12(a0)
+		move.w	#0,y_vel(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_1068A:				; CODE XREF: Sonic_DoLevelCollision+184j
-		move.b	d3,$26(a0)
+		move.b	d3,angle(a0)
 		bsr.w	Sonic_ResetOnFloor
-		move.w	$12(a0),$14(a0)
+		move.w	y_vel(a0),$14(a0)
 		tst.b	d3
 		bpl.s	locret_106A0
 		neg.w	$14(a0)
@@ -23177,9 +23186,9 @@ loc_106A2:				; CODE XREF: Sonic_DoLevelCollision+46j
 		bsr.w	sub_132EE
 		tst.w	d1
 		bpl.s	loc_106BC
-		add.w	d1,8(a0)
-		move.w	#0,$10(a0)
-		move.w	$12(a0),$14(a0)
+		add.w	d1,x_pos(a0)
+		move.w	#0,x_vel(a0)
+		move.w	y_vel(a0),$14(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -23187,27 +23196,27 @@ loc_106BC:				; CODE XREF: Sonic_DoLevelCollision+1ACj
 		bsr.w	Sonic_DontRunOnWalls
 		tst.w	d1
 		bpl.s	loc_106D6
-		sub.w	d1,$C(a0)
-		tst.w	$12(a0)
+		sub.w	d1,y_pos(a0)
+		tst.w	y_vel(a0)
 		bpl.s	locret_106D4
-		move.w	#0,$12(a0)
+		move.w	#0,y_vel(a0)
 
 locret_106D4:				; CODE XREF: Sonic_DoLevelCollision+1D0j
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_106D6:				; CODE XREF: Sonic_DoLevelCollision+1C6j
-		tst.w	$12(a0)
+		tst.w	y_vel(a0)
 		bmi.s	locret_10702
 		bsr.w	loc_13146
 		tst.w	d1
 		bpl.s	locret_10702
-		add.w	d1,$C(a0)
-		move.b	d3,$26(a0)
+		add.w	d1,y_pos(a0)
+		move.b	d3,angle(a0)
 		bsr.w	Sonic_ResetOnFloor
-		move.b	#0,$1C(a0)
-		move.w	#0,$12(a0)
-		move.w	$10(a0),$14(a0)
+		move.b	#0,anim(a0)
+		move.w	#0,y_vel(a0)
+		move.w	x_vel(a0),$14(a0)
 
 locret_10702:				; CODE XREF: Sonic_DoLevelCollision+1DEj
 					; Sonic_DoLevelCollision+1E6j
@@ -23220,23 +23229,23 @@ locret_10702:				; CODE XREF: Sonic_DoLevelCollision+1DEj
 
 Sonic_ResetOnFloor:			; CODE XREF: RideObject_SetRide+54p
 					; Sonic_Move+1C0p ...
-		btst	#4,$22(a0)
+		btst	#4,status(a0)
 		beq.s	loc_10712
 		nop
 		nop
 		nop
 
 loc_10712:				; CODE XREF: Sonic_ResetOnFloor+6j
-		bclr	#5,$22(a0)
-		bclr	#1,$22(a0)
-		bclr	#4,$22(a0)
-		btst	#2,$22(a0)
+		bclr	#5,status(a0)
+		bclr	#1,status(a0)
+		bclr	#4,status(a0)
+		btst	#2,status(a0)
 		beq.s	loc_10748
-		bclr	#2,$22(a0)
-		move.b	#$13,$16(a0)
-		move.b	#9,$17(a0)
-		move.b	#0,$1C(a0)
-		subq.w	#5,$C(a0)
+		bclr	#2,status(a0)
+		move.b	#$13,y_radius(a0)
+		move.b	#9,x_radius(a0)
+		move.b	#0,anim(a0)
+		subq.w	#5,y_pos(a0)
 
 loc_10748:				; CODE XREF: Sonic_ResetOnFloor+26j
 		move.b	#0,$3C(a0)
@@ -23248,13 +23257,13 @@ loc_10748:				; CODE XREF: Sonic_ResetOnFloor+26j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 Obj01_Hurt:				; DATA XREF: ROM:0000FA1Ao
-		tst.b	$25(a0)
+		tst.b	routine_secondary(a0)
 		bmi.w	loc_107E8
 		jsr	ObjectMove
-		addi.w	#$30,$12(a0) ; '0'
-		btst	#6,$22(a0)
+		addi.w	#$30,y_vel(a0) ; '0'
+		btst	#6,status(a0)
 		beq.s	loc_1077E
-		subi.w	#$20,$12(a0) ; ' '
+		subi.w	#$20,y_vel(a0) ; ' '
 
 loc_1077E:				; CODE XREF: ROM:00010776j
 		bsr.w	Sonic_HurtStop
@@ -23270,24 +23279,24 @@ loc_1077E:				; CODE XREF: ROM:00010776j
 Sonic_HurtStop:				; CODE XREF: ROM:loc_1077Ep
 		move.w	($FFFFEECE).w,d0
 		addi.w	#$E0,d0	; 'à'
-		cmp.w	$C(a0),d0
+		cmp.w	y_pos(a0),d0
 		bcs.w	JmpTo_KillSonic
 		bsr.w	Sonic_DoLevelCollision
-		btst	#1,$22(a0)
+		btst	#1,status(a0)
 		bne.s	locret_107E6
 		moveq	#0,d0
-		move.w	d0,$12(a0)
-		move.w	d0,$10(a0)
+		move.w	d0,y_vel(a0)
+		move.w	d0,x_vel(a0)
 		move.w	d0,$14(a0)
-		tst.b	$25(a0)
+		tst.b	routine_secondary(a0)
 		beq.s	loc_107D6
-		move.b	#$FF,$25(a0)
-		move.b	#$B,$1C(a0)
+		move.b	#$FF,routine_secondary(a0)
+		move.b	#$B,anim(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_107D6:				; CODE XREF: Sonic_HurtStop+2Ej
-		move.b	#0,$1C(a0)
+		move.b	#0,anim(a0)
 		subq.b	#2,routine(a0)
 		move.w	#$78,$30(a0) ; 'x'
 
@@ -23298,7 +23307,7 @@ locret_107E6:				; CODE XREF: Sonic_HurtStop+1Aj
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_107E8:				; CODE XREF: ROM:00010760j
-		cmpi.b	#$B,$1C(a0)
+		cmpi.b	#$B,anim(a0)
 		bne.s	loc_107FA
 		move.b	($FFFFF605).w,d0
 		andi.b	#$7F,d0	; ''
@@ -23306,7 +23315,7 @@ loc_107E8:				; CODE XREF: ROM:00010760j
 
 loc_107FA:				; CODE XREF: ROM:000107EEj
 		subq.b	#2,routine(a0)
-		move.b	#0,$25(a0)
+		move.b	#0,routine_secondary(a0)
 
 loc_10804:				; CODE XREF: ROM:000107F8j
 		bsr.w	Sonic_RecordPos
@@ -23329,18 +23338,18 @@ Obj01_Dead:				; DATA XREF: ROM:0000FA1Co
 Sonic_GameOver:				; CODE XREF: ROM:Obj01_Deadp
 		move.w	($FFFFEECE).w,d0
 		addi.w	#$100,d0
-		cmp.w	$C(a0),d0
+		cmp.w	y_pos(a0),d0
 		bcc.w	locret_108B4
-		move.w	#$FFC8,$12(a0)
+		move.w	#$FFC8,y_vel(a0)
 		addq.b	#2,routine(a0)
 		clr.b	($FFFFFE1E).w
 		addq.b	#1,($FFFFFE1C).w
 		subq.b	#1,($FFFFFE12).w
 		bne.s	loc_10888
 		move.w	#0,$3A(a0)
-		move.b	#$39,($FFFFB080).w ; '9'
-		move.b	#$39,($FFFFB0C0).w ; '9'
-		move.b	#1,($FFFFB0DA).w
+		move.b	#$39,(Object_RAM+$80).w ; '9'
+		move.b	#$39,(Object_RAM+$C0).w ; '9'
+		move.b	#1,(Object_RAM+$C0+mapping_frame).w
 		clr.b	($FFFFFE1A).w
 
 loc_10876:				; CODE XREF: Sonic_GameOver+80j
@@ -23355,10 +23364,10 @@ loc_10888:				; CODE XREF: Sonic_GameOver+26j
 		tst.b	($FFFFFE1A).w
 		beq.s	locret_108B4
 		move.w	#0,$3A(a0)
-		move.b	#$39,($FFFFB080).w ; '9'
-		move.b	#$39,($FFFFB0C0).w ; '9'
-		move.b	#2,($FFFFB09A).w
-		move.b	#3,($FFFFB0DA).w
+		move.b	#$39,(Object_RAM+$80).w ; '9'
+		move.b	#$39,(Object_RAM+$C0).w ; '9'
+		move.b	#2,(Object_RAM+$80+mapping_frame).w
+		move.b	#3,(Object_RAM+$C0+mapping_frame).w
 		bra.s	loc_10876
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -23390,25 +23399,25 @@ Sonic_Animate:				; CODE XREF: ROM:loc_FAFEp
 
 		lea	(SonicAniData).l,a1
 		moveq	#0,d0
-		move.b	$1C(a0),d0
-		cmp.b	$1D(a0),d0
+		move.b	anim(a0),d0
+		cmp.b	prev_anim(a0),d0
 		beq.s	loc_108EC
-		move.b	d0,$1D(a0)
-		move.b	#0,$1B(a0)
-		move.b	#0,$1E(a0)
+		move.b	d0,prev_anim(a0)
+		move.b	#0,anim_frame(a0)
+		move.b	#0,anim_frame_duration(a0)
 
 loc_108EC:				; CODE XREF: Sonic_Animate+10j
 		add.w	d0,d0
 		adda.w	(a1,d0.w),a1
 		move.b	(a1),d0
 		bmi.s	loc_1095C
-		move.b	$22(a0),d1
+		move.b	status(a0),d1
 		andi.b	#1,d1
 		andi.b	#$FC,1(a0)
 		or.b	d1,1(a0)
-		subq.b	#1,$1E(a0)
+		subq.b	#1,anim_frame_duration(a0)
 		bpl.s	locret_1092A
-		move.b	d0,$1E(a0)
+		move.b	d0,anim_frame_duration(a0)
 ; End of function Sonic_Animate
 
 
@@ -23418,15 +23427,15 @@ loc_108EC:				; CODE XREF: Sonic_Animate+10j
 sub_10912:				; CODE XREF: Sonic_Animate+116p
 					; Sonic_Animate+1BAj ...
 		moveq	#0,d1
-		move.b	$1B(a0),d1
+		move.b	anim_frame(a0),d1
 		move.b	1(a1,d1.w),d0
 		cmpi.b	#$F0,d0
 		bcc.s	loc_1092C
 
 loc_10922:				; CODE XREF: sub_10912+28j
 					; sub_10912+3Cj
-		move.b	d0,$1A(a0)
-		addq.b	#1,$1B(a0)
+		move.b	d0,mapping_frame(a0)
+		addq.b	#1,anim_frame(a0)
 
 locret_1092A:				; CODE XREF: Sonic_Animate+42j
 					; Sonic_Animate+96j
@@ -23436,7 +23445,7 @@ locret_1092A:				; CODE XREF: Sonic_Animate+42j
 loc_1092C:				; CODE XREF: sub_10912+Ej
 		addq.b	#1,d0
 		bne.s	loc_1093C
-		move.b	#0,$1B(a0)
+		move.b	#0,anim_frame(a0)
 		move.b	1(a1),d0
 		bra.s	loc_10922
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -23445,7 +23454,7 @@ loc_1093C:				; CODE XREF: sub_10912+1Cj
 		addq.b	#1,d0
 		bne.s	loc_10950
 		move.b	2(a1,d1.w),d0
-		sub.b	d0,$1B(a0)
+		sub.b	d0,anim_frame(a0)
 		sub.b	d0,d1
 		move.b	1(a1,d1.w),d0
 		bra.s	loc_10922
@@ -23454,7 +23463,7 @@ loc_1093C:				; CODE XREF: sub_10912+1Cj
 loc_10950:				; CODE XREF: sub_10912+2Cj
 		addq.b	#1,d0
 		bne.s	locret_1095A
-		move.b	2(a1,d1.w),$1C(a0)
+		move.b	2(a1,d1.w),anim(a0)
 
 locret_1095A:				; CODE XREF: sub_10912+40j
 		rts
@@ -23464,7 +23473,7 @@ locret_1095A:				; CODE XREF: sub_10912+40j
 ; START	OF FUNCTION CHUNK FOR Sonic_Animate
 
 loc_1095C:				; CODE XREF: Sonic_Animate+2Aj
-		subq.b	#1,$1E(a0)
+		subq.b	#1,anim_frame_duration(a0)
 		bpl.s	locret_1092A
 		addq.b	#1,d0
 		bne.w	loc_10A44
@@ -23472,8 +23481,8 @@ loc_1095C:				; CODE XREF: Sonic_Animate+2Aj
 		move.b	$27(a0),d0
 		bne.w	loc_109EA
 		moveq	#0,d1
-		move.b	$26(a0),d0
-		move.b	$22(a0),d2
+		move.b	angle(a0),d0
+		move.b	status(a0),d2
 		andi.b	#1,d2
 		bne.s	loc_10984
 		not.b	d0
@@ -23487,7 +23496,7 @@ loc_1098C:				; CODE XREF: Sonic_Animate+BEj
 		andi.b	#$FC,1(a0)
 		eor.b	d1,d2
 		or.b	d2,1(a0)
-		btst	#5,$22(a0)
+		btst	#5,status(a0)
 		bne.w	loc_10A88
 		lsr.b	#4,d0
 		andi.b	#6,d0
@@ -23516,16 +23525,16 @@ loc_109C2:				; CODE XREF: Sonic_Animate+F0j
 loc_109D8:				; CODE XREF: Sonic_Animate+10Aj
 		lsr.w	#8,d2
 		lsr.w	#1,d2
-		move.b	d2,$1E(a0)
+		move.b	d2,anim_frame_duration(a0)
 		bsr.w	sub_10912
-		add.b	d3,$1A(a0)
+		add.b	d3,mapping_frame(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_109EA:				; CODE XREF: Sonic_Animate+A4j
 		move.b	$27(a0),d0
 		moveq	#0,d1
-		move.b	$22(a0),d2
+		move.b	status(a0),d2
 		andi.b	#1,d2
 		bne.s	loc_10A1E
 		andi.b	#$FC,1(a0)
@@ -23534,8 +23543,8 @@ loc_109EA:				; CODE XREF: Sonic_Animate+A4j
 		addi.b	#$B,d0
 		divu.w	#$16,d0
 		addi.b	#$9B,d0
-		move.b	d0,$1A(a0)
-		move.b	#0,$1E(a0)
+		move.b	d0,mapping_frame(a0)
+		move.b	#0,anim_frame_duration(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -23547,8 +23556,8 @@ loc_10A1E:				; CODE XREF: Sonic_Animate+12Ej
 		addi.b	#$8F,d0
 		divu.w	#$16,d0
 		addi.b	#$9B,d0
-		move.b	d0,$1A(a0)
-		move.b	#0,$1E(a0)
+		move.b	d0,mapping_frame(a0)
+		move.b	#0,anim_frame_duration(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -23573,8 +23582,8 @@ loc_10A62:				; CODE XREF: Sonic_Animate+190j
 
 loc_10A6C:				; CODE XREF: Sonic_Animate+19Ej
 		lsr.w	#8,d2
-		move.b	d2,$1E(a0)
-		move.b	$22(a0),d1
+		move.b	d2,anim_frame_duration(a0)
+		move.b	status(a0),d1
 		andi.b	#1,d1
 		andi.b	#$FC,1(a0)
 		or.b	d1,1(a0)
@@ -23594,9 +23603,9 @@ loc_10A90:				; CODE XREF: Sonic_Animate+1C2j
 
 loc_10A98:				; CODE XREF: Sonic_Animate+1CAj
 		lsr.w	#6,d2
-		move.b	d2,$1E(a0)
+		move.b	d2,anim_frame_duration(a0)
 		lea	(SonicAni_Push).l,a1
-		move.b	$22(a0),d1
+		move.b	status(a0),d1
 		andi.b	#1,d1
 		andi.b	#$FC,1(a0)
 		or.b	d1,1(a0)
@@ -23681,7 +23690,7 @@ SonicAni_1E:		dc.b   3,$3C,$FD,  0
 
 LoadSonicDynPLC:
 		moveq	#0,d0
-		move.b	$1A(a0),d0
+		move.b	mapping_frame(a0),d0
 		cmp.b	(Sonic_LastLoadedDPLC).w,d0
 		beq.s	locret_10C34
 		move.b	d0,(Sonic_LastLoadedDPLC).w
@@ -23741,13 +23750,13 @@ Obj02_Index:	dc.w Obj02_Init-Obj02_Index		; 0
 ; Obj02_Main:
 Obj02_Init:
 		addq.b	#2,routine(a0)
-		move.b	#$F,$16(a0)
-		move.b	#9,$17(a0)
-		move.l	#Map_Tails,4(a0)
-		move.w	#$7A0,2(a0)
+		move.b	#$F,y_radius(a0)
+		move.b	#9,x_radius(a0)
+		move.l	#Map_Tails,mappings(a0)
+		move.w	#$7A0,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#2,$18(a0)
-		move.b	#$18,$19(a0)
+		move.b	#2,priority(a0)
+		move.b	#$18,width_pixels(a0)
 		move.b	#$84,1(a0)
 		move.w	#$600,(Sonic_top_speed).w
 		move.w	#$C,(Sonic_acceleration).w
@@ -23756,7 +23765,7 @@ Obj02_Init:
 		move.b	#$D,$3F(a0)
 		move.b	#0,$2C(a0)
 		move.b	#4,$2D(a0)
-		move.b	#5,($FFFFB1C0).w	; load Tails' tails at $B1C0
+		move.b	#5,(Object_RAM+$1C0).w	; load Tails' tails at $B1C0
 
 ; ---------------------------------------------------------------------------
 ; Normal state for Tails
@@ -23766,7 +23775,7 @@ Obj02_Control:
 		btst	#0,($FFFFF7C8).w	; is Tails interacting with another object that holds him in place or controls his movement somehow?
 		bne.s	Obj02_ControlsLock	; if yes, branch to skip Tails' control
 		moveq	#0,d0
-		move.b	$22(a0),d0
+		move.b	status(a0),d0
 		andi.w	#6,d0
 		move.w	Obj02_Modes(pc,d0.w),d1
 		jsr	Obj02_Modes(pc,d1.w)	; run Tails' movement code
@@ -23923,14 +23932,14 @@ loc_10E0C:
 		addq.b	#4,d1
 		move.w	($FFFFEEE0).w,d0
 		sub.b	d1,d0
-		move.w	(a1,d0.w),8(a0)
-		move.w	2(a1,d0.w),$C(a0)
+		move.w	(a1,d0.w),x_pos(a0)
+		move.w	2(a1,d0.w),y_pos(a0)
 		rts
 ; ===========================================================================
 
 TailsC_CopySonicMoves:			; DATA XREF: ROM:00010DD4o
-		move.w	($FFFFB008).w,d0
-		sub.w	8(a0),d0
+		move.w	(MainCharacter+x_pos).w,d0
+		sub.w	x_pos(a0),d0
 		bpl.s	loc_10E38
 		neg.w	d0
 
@@ -23957,8 +23966,8 @@ RecordTailsMoves:			; CODE XREF: ROM:00010CDCp
 		move.w	($FFFFEED6).w,d0
 		lea	($FFFFE700).w,a1
 		lea	(a1,d0.w),a1
-		move.w	8(a0),(a1)+
-		move.w	$C(a0),(a1)+
+		move.w	x_pos(a0),(a1)+
+		move.w	y_pos(a0),(a1)+
 		addq.b	#4,($FFFFEED7).w
 		rts
 ; End of function RecordTailsMoves
@@ -23983,9 +23992,9 @@ Obj02_MdJump:				; DATA XREF: ROM:00010D04o
 		bsr.w	Tails_ChgJumpDir
 		bsr.w	Tails_LevelBoundaries
 		jsr	ObjectMoveAndFall
-		btst	#6,$22(a0)
+		btst	#6,status(a0)
 		beq.s	loc_10EC0
-		subi.w	#$28,$12(a0) ; '('
+		subi.w	#$28,y_vel(a0) ; '('
 
 loc_10EC0:				; CODE XREF: ROM:00010EB8j
 		bsr.w	Tails_JumpAngle
@@ -24009,9 +24018,9 @@ Obj02_MdJump2:				; DATA XREF: ROM:00010D08o
 		bsr.w	Tails_ChgJumpDir
 		bsr.w	Tails_LevelBoundaries
 		jsr	ObjectMoveAndFall
-		btst	#6,$22(a0)
+		btst	#6,status(a0)
 		beq.s	loc_10F0A
-		subi.w	#$28,$12(a0) ; '('
+		subi.w	#$28,y_vel(a0) ; '('
 
 loc_10F0A:				; CODE XREF: ROM:00010F02j
 		bsr.w	Tails_JumpAngle
@@ -24039,30 +24048,30 @@ loc_10F3C:				; CODE XREF: Tails_Move+22j
 		bsr.w	Tails_MoveRight
 
 loc_10F48:				; CODE XREF: Tails_Move+2Ej
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		addi.b	#$20,d0	; ' '
 		andi.b	#$C0,d0
 		bne.w	loc_10FFA
 		tst.w	$14(a0)
 		bne.w	loc_10FFA
-		bclr	#5,$22(a0)
-		move.b	#5,$1C(a0)
-		btst	#3,$22(a0)
+		bclr	#5,status(a0)
+		move.b	#5,anim(a0)
+		btst	#3,status(a0)
 		beq.s	Tails_Balance
 		moveq	#0,d0
 		move.b	$3D(a0),d0
 		lsl.w	#6,d0
-		lea	($FFFFB000).w,a1
+		lea	(MainCharacter).w,a1
 		lea	(a1,d0.w),a1
-		tst.b	$22(a1)
+		tst.b	status(a1)
 		bmi.s	Tails_LookUp
 		moveq	#0,d1
-		move.b	$19(a1),d1
+		move.b	width_pixels(a1),d1
 		move.w	d1,d2
 		add.w	d2,d2
 		subq.w	#4,d2
-		add.w	8(a0),d1
-		sub.w	8(a1),d1
+		add.w	x_pos(a0),d1
+		sub.w	x_pos(a1),d1
 		cmpi.w	#4,d1
 		blt.s	loc_10FCE
 		cmp.w	d2,d1
@@ -24078,7 +24087,7 @@ Tails_Balance:				; CODE XREF: Tails_Move+5Ej
 		bne.s	loc_10FC6
 
 loc_10FBE:				; CODE XREF: Tails_Move+92j
-		bclr	#0,$22(a0)
+		bclr	#0,status(a0)
 		bra.s	loc_10FD4
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -24087,10 +24096,10 @@ loc_10FC6:				; CODE XREF: Tails_Move+A8j
 		bne.s	Tails_LookUp
 
 loc_10FCE:				; CODE XREF: Tails_Move+8Ej
-		bset	#0,$22(a0)
+		bset	#0,status(a0)
 
 loc_10FD4:				; CODE XREF: Tails_Move+B0j
-		move.b	#6,$1C(a0)
+		move.b	#6,anim(a0)
 		bra.s	loc_10FFA
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -24098,14 +24107,14 @@ Tails_LookUp:				; CODE XREF: Tails_Move+74j
 					; Tails_Move+94j ...
 		btst	#0,($FFFFF606).w
 		beq.s	Tails_Duck
-		move.b	#7,$1C(a0)
+		move.b	#7,anim(a0)
 		bra.s	loc_10FFA
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 Tails_Duck:				; CODE XREF: Tails_Move+CEj
 		btst	#1,($FFFFF606).w
 		beq.s	loc_10FFA
-		move.b	#8,$1C(a0)
+		move.b	#8,anim(a0)
 
 loc_10FFA:				; CODE XREF: Tails_Move+18j
 					; Tails_Move+40j ...
@@ -24136,17 +24145,17 @@ loc_11022:				; CODE XREF: Tails_Move+108j
 
 loc_11026:				; CODE XREF: Tails_Move+10j
 					; Tails_Move+EEj ...
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		jsr	(CalcSine).l
 		muls.w	$14(a0),d1
 		asr.l	#8,d1
-		move.w	d1,$10(a0)
+		move.w	d1,x_vel(a0)
 		muls.w	$14(a0),d0
 		asr.l	#8,d0
-		move.w	d0,$12(a0)
+		move.w	d0,y_vel(a0)
 
 loc_11044:				; CODE XREF: Tails_RollSpeed+AEj
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		addi.b	#$40,d0	; '@'
 		bmi.s	locret_110B4
 		move.b	#$40,d1	; '@'
@@ -24156,7 +24165,7 @@ loc_11044:				; CODE XREF: Tails_RollSpeed+AEj
 		neg.w	d1
 
 loc_1105C:				; CODE XREF: Tails_Move+144j
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		add.b	d1,d0
 		move.w	d0,-(sp)
 		bsr.w	CalcRoomInFront
@@ -24171,26 +24180,26 @@ loc_1105C:				; CODE XREF: Tails_Move+144j
 		beq.s	loc_1109E
 		cmpi.b	#$80,d0
 		beq.s	loc_11098
-		add.w	d1,$10(a0)
-		bset	#5,$22(a0)
+		add.w	d1,x_vel(a0)
+		bset	#5,status(a0)
 		move.w	#0,$14(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_11098:				; CODE XREF: Tails_Move+170j
-		sub.w	d1,$12(a0)
+		sub.w	d1,y_vel(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_1109E:				; CODE XREF: Tails_Move+16Aj
-		sub.w	d1,$10(a0)
-		bset	#5,$22(a0)
+		sub.w	d1,x_vel(a0)
+		bset	#5,status(a0)
 		move.w	#0,$14(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_110B0:				; CODE XREF: Tails_Move+164j
-		add.w	d1,$12(a0)
+		add.w	d1,y_vel(a0)
 
 locret_110B4:				; CODE XREF: Tails_Move+138j
 					; Tails_Move+142j ...
@@ -24207,10 +24216,10 @@ Tails_MoveLeft:				; CODE XREF: Tails_Move+24p
 		bpl.s	loc_110EA
 
 loc_110BE:				; CODE XREF: Tails_MoveLeft+4j
-		bset	#0,$22(a0)
+		bset	#0,status(a0)
 		bne.s	loc_110D2
-		bclr	#5,$22(a0)
-		move.b	#1,$1D(a0)
+		bclr	#5,status(a0)
+		move.b	#1,prev_anim(a0)
 
 loc_110D2:				; CODE XREF: Tails_MoveLeft+Ej
 		sub.w	d5,d0
@@ -24222,7 +24231,7 @@ loc_110D2:				; CODE XREF: Tails_MoveLeft+Ej
 
 loc_110DE:				; CODE XREF: Tails_MoveLeft+24j
 		move.w	d0,$14(a0)
-		move.b	#0,$1C(a0)
+		move.b	#0,anim(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -24233,14 +24242,14 @@ loc_110EA:				; CODE XREF: Tails_MoveLeft+6j
 
 loc_110F2:				; CODE XREF: Tails_MoveLeft+36j
 		move.w	d0,$14(a0)
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		addi.b	#$20,d0	; ' '
 		andi.b	#$C0,d0
 		bne.s	locret_11120
 		cmpi.w	#$400,d0
 		blt.s	locret_11120
-		move.b	#$D,$1C(a0)
-		bclr	#0,$22(a0)
+		move.b	#$D,anim(a0)
+		bclr	#0,status(a0)
 		move.w	#$A4,d0	; '¤'
 		jsr	(PlaySound_Special).l
 
@@ -24256,10 +24265,10 @@ locret_11120:				; CODE XREF: Tails_MoveLeft+4Cj
 Tails_MoveRight:			; CODE XREF: Tails_Move+30p
 		move.w	$14(a0),d0
 		bmi.s	loc_11150
-		bclr	#0,$22(a0)
+		bclr	#0,status(a0)
 		beq.s	loc_1113C
-		bclr	#5,$22(a0)
-		move.b	#1,$1D(a0)
+		bclr	#5,status(a0)
+		move.b	#1,prev_anim(a0)
 
 loc_1113C:				; CODE XREF: Tails_MoveRight+Cj
 		add.w	d5,d0
@@ -24269,7 +24278,7 @@ loc_1113C:				; CODE XREF: Tails_MoveRight+Cj
 
 loc_11144:				; CODE XREF: Tails_MoveRight+1Ej
 		move.w	d0,$14(a0)
-		move.b	#0,$1C(a0)
+		move.b	#0,anim(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -24280,14 +24289,14 @@ loc_11150:				; CODE XREF: Tails_MoveRight+4j
 
 loc_11158:				; CODE XREF: Tails_MoveRight+30j
 		move.w	d0,$14(a0)
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		addi.b	#$20,d0	; ' '
 		andi.b	#$C0,d0
 		bne.s	locret_11186
 		cmpi.w	#$FC00,d0
 		bgt.s	locret_11186
-		move.b	#$D,$1C(a0)
-		bset	#0,$22(a0)
+		move.b	#$D,anim(a0)
+		bset	#0,status(a0)
 		move.w	#$A4,d0	; '¤'
 		jsr	(PlaySound_Special).l
 
@@ -24346,19 +24355,19 @@ loc_111E2:				; CODE XREF: Tails_RollSpeed+3Cj
 					; Tails_RollSpeed+4Cj
 		tst.w	$14(a0)
 		bne.s	loc_11204
-		bclr	#2,$22(a0)
-		move.b	#$F,$16(a0)
-		move.b	#9,$17(a0)
-		move.b	#5,$1C(a0)
-		subq.w	#5,$C(a0)
+		bclr	#2,status(a0)
+		move.b	#$F,y_radius(a0)
+		move.b	#9,x_radius(a0)
+		move.b	#5,anim(a0)
+		subq.w	#5,y_pos(a0)
 
 loc_11204:				; CODE XREF: Tails_RollSpeed+16j
 					; Tails_RollSpeed+5Ej
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		jsr	(CalcSine).l
 		muls.w	$14(a0),d0
 		asr.l	#8,d0
-		move.w	d0,$12(a0)
+		move.w	d0,y_vel(a0)
 		muls.w	$14(a0),d1
 		asr.l	#8,d1
 		cmpi.w	#$1000,d1
@@ -24371,7 +24380,7 @@ loc_11228:				; CODE XREF: Tails_RollSpeed+9Aj
 		move.w	#$F000,d1
 
 loc_11232:				; CODE XREF: Tails_RollSpeed+A4j
-		move.w	d1,$10(a0)
+		move.w	d1,x_vel(a0)
 		bra.w	loc_11044
 ; End of function Tails_RollSpeed
 
@@ -24385,8 +24394,8 @@ Tails_RollLeft:				; CODE XREF: Tails_RollSpeed+28p
 		bpl.s	loc_11250
 
 loc_11242:				; CODE XREF: Tails_RollLeft+4j
-		bset	#0,$22(a0)
-		move.b	#2,$1C(a0)
+		bset	#0,status(a0)
+		move.b	#2,anim(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -24407,8 +24416,8 @@ loc_11258:				; CODE XREF: Tails_RollLeft+18j
 Tails_RollRight:			; CODE XREF: Tails_RollSpeed+34p
 		move.w	$14(a0),d0
 		bmi.s	loc_11272
-		bclr	#0,$22(a0)
-		move.b	#2,$1C(a0)
+		bclr	#0,status(a0)
+		move.b	#2,anim(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -24431,12 +24440,12 @@ Tails_ChgJumpDir:			; CODE XREF: ROM:00010EA4p
 		move.w	(Sonic_top_speed).w,d6
 		move.w	(Sonic_acceleration).w,d5
 		asl.w	#1,d5
-		btst	#4,$22(a0)
+		btst	#4,status(a0)
 		bne.s	loc_112CA
-		move.w	$10(a0),d0
+		move.w	x_vel(a0),d0
 		btst	#2,($FFFFF606).w
 		beq.s	loc_112B0
-		bset	#0,$22(a0)
+		bset	#0,status(a0)
 		sub.w	d5,d0
 		move.w	d6,d1
 		neg.w	d1
@@ -24448,7 +24457,7 @@ loc_112B0:				; CODE XREF: Tails_ChgJumpDir+1Cj
 					; Tails_ChgJumpDir+2Cj
 		btst	#3,($FFFFF606).w
 		beq.s	loc_112C6
-		bclr	#0,$22(a0)
+		bclr	#0,status(a0)
 		add.w	d5,d0
 		cmp.w	d6,d0
 		blt.s	loc_112C6
@@ -24456,7 +24465,7 @@ loc_112B0:				; CODE XREF: Tails_ChgJumpDir+1Cj
 
 loc_112C6:				; CODE XREF: Tails_ChgJumpDir+36j
 					; Tails_ChgJumpDir+42j
-		move.w	d0,$10(a0)
+		move.w	d0,x_vel(a0)
 
 loc_112CA:				; CODE XREF: Tails_ChgJumpDir+10j
 		cmpi.w	#$60,($FFFFEED8).w ; '`'
@@ -24468,9 +24477,9 @@ loc_112D8:				; CODE XREF: Tails_ChgJumpDir+52j
 		subq.w	#2,($FFFFEED8).w
 
 loc_112DC:				; CODE XREF: Tails_ChgJumpDir+50j
-		cmpi.w	#$FC00,$12(a0)
+		cmpi.w	#$FC00,y_vel(a0)
 		bcs.s	locret_1130A
-		move.w	$10(a0),d0
+		move.w	x_vel(a0),d0
 		move.w	d0,d1
 		asr.w	#5,d1
 		beq.s	locret_1130A
@@ -24480,7 +24489,7 @@ loc_112DC:				; CODE XREF: Tails_ChgJumpDir+50j
 		move.w	#0,d0
 
 loc_112F8:				; CODE XREF: Tails_ChgJumpDir+72j
-		move.w	d0,$10(a0)
+		move.w	d0,x_vel(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -24490,7 +24499,7 @@ loc_112FE:				; CODE XREF: Tails_ChgJumpDir+6Ej
 		move.w	#0,d0
 
 loc_11306:				; CODE XREF: Tails_ChgJumpDir+80j
-		move.w	d0,$10(a0)
+		move.w	d0,x_vel(a0)
 
 locret_1130A:				; CODE XREF: Tails_ChgJumpDir+62j
 					; Tails_ChgJumpDir+6Cj
@@ -24506,8 +24515,8 @@ Tails_LevelBoundaries:			; CODE XREF: ROM:00010E8Cp
 
 ; FUNCTION CHUNK AT 00011E5C SIZE 00000006 BYTES
 
-		move.l	8(a0),d1
-		move.w	$10(a0),d0
+		move.l	x_pos(a0),d1
+		move.w	x_vel(a0),d0
 		ext.l	d0
 		asl.l	#8,d0
 		add.l	d0,d1
@@ -24529,7 +24538,7 @@ loc_1133A:				; CODE XREF: Tails_LevelBoundaries+28j
 loc_1133E:				; CODE XREF: Tails_LevelBoundaries+7Ej
 		move.w	($FFFFEECE).w,d0
 		addi.w	#$E0,d0	; 'à'
-		cmp.w	$C(a0),d0
+		cmp.w	y_pos(a0),d0
 		blt.s	loc_1134E
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -24537,7 +24546,7 @@ loc_1133E:				; CODE XREF: Tails_LevelBoundaries+7Ej
 loc_1134E:				; CODE XREF: Tails_LevelBoundaries+3Ej
 		cmpi.w	#$501,(Current_ZoneAndAct).w
 		bne.w	KillTails
-		cmpi.w	#$2000,8(a0)
+		cmpi.w	#$2000,x_pos(a0)
 		bcs.w	KillTails
 		clr.b	($FFFFFE30).w
 		move.w	#1,($FFFFFE02).w
@@ -24547,9 +24556,9 @@ loc_1134E:				; CODE XREF: Tails_LevelBoundaries+3Ej
 
 loc_11374:				; CODE XREF: Tails_LevelBoundaries+1Aj
 					; Tails_LevelBoundaries+30j
-		move.w	d0,8(a0)
-		move.w	#0,$A(a0)
-		move.w	#0,$10(a0)
+		move.w	d0,x_pos(a0)
+		move.w	#0,x_sub(a0)
+		move.w	#0,x_vel(a0)
 		move.w	#0,$14(a0)
 		bra.s	loc_1133E
 ; End of function Tails_LevelBoundaries
@@ -24580,17 +24589,17 @@ locret_113B2:				; CODE XREF: Tails_Roll+4j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_113B4:				; CODE XREF: Tails_Roll+24j
-		btst	#2,$22(a0)
+		btst	#2,status(a0)
 		beq.s	loc_113BE
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_113BE:				; CODE XREF: Tails_Roll+2Ej
-		bset	#2,$22(a0)
-		move.b	#$E,$16(a0)
-		move.b	#7,$17(a0)
-		move.b	#2,$1C(a0)
-		addq.w	#5,$C(a0)
+		bset	#2,status(a0)
+		move.b	#$E,y_radius(a0)
+		move.b	#7,x_radius(a0)
+		move.b	#2,anim(a0)
+		addq.w	#5,y_pos(a0)
 		move.w	#$BE,d0	; '¾'
 		jsr	(PlaySound_Special).l
 		tst.w	$14(a0)
@@ -24611,7 +24620,7 @@ Tails_Jump:				; CODE XREF: ROM:00010E7Cp
 		andi.b	#$70,d0	; 'p'
 		beq.w	locret_11496
 		moveq	#0,d0
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 
 loc_11404:
 		addi.b	#$80,d0
@@ -24621,37 +24630,37 @@ loc_11408:
 		cmpi.w	#6,d1
 		blt.w	locret_11496
 		move.w	#$680,d2
-		btst	#6,$22(a0)
+		btst	#6,status(a0)
 		beq.s	loc_11424
 		move.w	#$380,d2
 
 loc_11424:				; CODE XREF: Tails_Jump+2Cj
 		moveq	#0,d0
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		subi.b	#$40,d0	; '@'
 		jsr	(CalcSine).l
 		muls.w	d2,d1
 		asr.l	#8,d1
-		add.w	d1,$10(a0)
+		add.w	d1,x_vel(a0)
 		muls.w	d2,d0
 		asr.l	#8,d0
-		add.w	d0,$12(a0)
-		bset	#1,$22(a0)
-		bclr	#5,$22(a0)
+		add.w	d0,y_vel(a0)
+		bset	#1,status(a0)
+		bclr	#5,status(a0)
 		addq.l	#4,sp
 		move.b	#1,$3C(a0)
 		clr.b	$38(a0)
 		move.w	#$A0,d0	; ' '
 		jsr	(PlaySound_Special).l
-		move.b	#$F,$16(a0)
-		move.b	#9,$17(a0)
-		btst	#2,$22(a0)
+		move.b	#$F,y_radius(a0)
+		move.b	#9,x_radius(a0)
+		btst	#2,status(a0)
 		bne.s	loc_11498
-		move.b	#$E,$16(a0)
-		move.b	#7,$17(a0)
-		move.b	#2,$1C(a0)
-		bset	#2,$22(a0)
-		addq.w	#5,$C(a0)
+		move.b	#$E,y_radius(a0)
+		move.b	#7,x_radius(a0)
+		move.b	#2,anim(a0)
+		bset	#2,status(a0)
+		addq.w	#5,y_pos(a0)
 
 locret_11496:				; CODE XREF: Tails_Jump+8j
 					; Tails_Jump+1Ej
@@ -24659,7 +24668,7 @@ locret_11496:				; CODE XREF: Tails_Jump+8j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_11498:				; CODE XREF: Tails_Jump+86j
-		bset	#4,$22(a0)
+		bset	#4,status(a0)
 		rts
 ; End of function Tails_Jump
 
@@ -24672,17 +24681,17 @@ Tails_JumpHeight:			; CODE XREF: ROM:Obj02_MdJumpp
 		tst.b	$3C(a0)
 		beq.s	loc_114CC
 		move.w	#$FC00,d1
-		btst	#6,$22(a0)
+		btst	#6,status(a0)
 		beq.s	loc_114B6
 		move.w	#$FE00,d1
 
 loc_114B6:				; CODE XREF: Tails_JumpHeight+10j
-		cmp.w	$12(a0),d1
+		cmp.w	y_vel(a0),d1
 		ble.s	locret_114CA
 		move.b	($FFFFF606).w,d0
 		andi.b	#$70,d0	; 'p'
 		bne.s	locret_114CA
-		move.w	d1,$12(a0)
+		move.w	d1,y_vel(a0)
 
 locret_114CA:				; CODE XREF: Tails_JumpHeight+1Aj
 					; Tails_JumpHeight+24j
@@ -24690,9 +24699,9 @@ locret_114CA:				; CODE XREF: Tails_JumpHeight+1Aj
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_114CC:				; CODE XREF: Tails_JumpHeight+4j
-		cmpi.w	#$F040,$12(a0)
+		cmpi.w	#$F040,y_vel(a0)
 		bge.s	locret_114DA
-		move.w	#$F040,$12(a0)
+		move.w	#$F040,y_vel(a0)
 
 locret_114DA:				; CODE XREF: Tails_JumpHeight+32j
 		rts
@@ -24705,12 +24714,12 @@ locret_114DA:				; CODE XREF: Tails_JumpHeight+32j
 Tails_Spindash:				; CODE XREF: ROM:Obj02_MdNormalp
 		tst.b	$39(a0)
 		bne.s	loc_11510
-		cmpi.b	#8,$1C(a0)
+		cmpi.b	#8,anim(a0)
 		bne.s	locret_1150E
 		move.b	($FFFFF607).w,d0
 		andi.b	#$70,d0	; 'p'
 		beq.w	locret_1150E
-		move.b	#9,$1C(a0)
+		move.b	#9,anim(a0)
 		move.w	#$BE,d0	; '¾'
 		jsr	(PlaySound_Special).l
 		addq.l	#4,sp
@@ -24725,19 +24734,19 @@ loc_11510:				; CODE XREF: Tails_Spindash+4j
 		move.b	($FFFFF606).w,d0
 		btst	#1,d0
 		bne.s	loc_11556
-		move.b	#$E,$16(a0)
-		move.b	#7,$17(a0)
-		move.b	#2,$1C(a0)
-		addq.w	#5,$C(a0)
+		move.b	#$E,y_radius(a0)
+		move.b	#7,x_radius(a0)
+		move.b	#2,anim(a0)
+		addq.w	#5,y_pos(a0)
 		move.b	#0,$39(a0)
 		move.w	#$2000,($FFFFEED0).w
 		move.w	#$800,$14(a0)
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		beq.s	loc_1154E
 		neg.w	$14(a0)
 
 loc_1154E:				; CODE XREF: Tails_Spindash+6Cj
-		bset	#2,$22(a0)
+		bset	#2,status(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -24757,11 +24766,11 @@ loc_11564:				; CODE XREF: Tails_Spindash+82j
 
 
 Tails_SlopeResist:			; CODE XREF: ROM:00010E80p
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		addi.b	#$60,d0	; '`'
 		cmpi.b	#$C0,d0
 		bcc.s	locret_1159C
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		jsr	(CalcSine).l
 		muls.w	#$20,d0	; ' '
 		asr.l	#8,d0
@@ -24789,11 +24798,11 @@ locret_1159C:				; CODE XREF: Tails_SlopeResist+Cj
 
 
 Tails_RollRepel:			; CODE XREF: ROM:00010ECEp
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		addi.b	#$60,d0	; '`'
 		cmpi.b	#$C0,d0
 		bcc.s	locret_115D8
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		jsr	(CalcSine).l
 		muls.w	#$50,d0	; 'P'
 		asr.l	#8,d0
@@ -24831,7 +24840,7 @@ Tails_SlopeRepel:			; CODE XREF: ROM:00010E9Ap
 		bne.s	locret_11614
 		tst.w	$2E(a0)
 		bne.s	loc_11616
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		addi.b	#$20,d0	; ' '
 		andi.b	#$C0,d0
 		beq.s	locret_11614
@@ -24843,7 +24852,7 @@ loc_115FE:				; CODE XREF: Tails_SlopeRepel+20j
 		cmpi.w	#$280,d0
 		bcc.s	locret_11614
 		clr.w	$14(a0)
-		bset	#1,$22(a0)
+		bset	#1,status(a0)
 		move.w	#$1E,$2E(a0)
 
 locret_11614:				; CODE XREF: Tails_SlopeRepel+6j
@@ -24862,7 +24871,7 @@ loc_11616:				; CODE XREF: Tails_SlopeRepel+Cj
 
 Tails_JumpAngle:			; CODE XREF: ROM:loc_10EC0p
 					; ROM:loc_10F0Ap
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		beq.s	loc_11636
 		bpl.s	loc_1162C
 		addq.b	#2,d0
@@ -24880,7 +24889,7 @@ loc_1162C:				; CODE XREF: Tails_JumpAngle+6j
 
 loc_11632:				; CODE XREF: Tails_JumpAngle:loc_1162Aj
 					; Tails_JumpAngle+12j
-		move.b	d0,$26(a0)
+		move.b	d0,angle(a0)
 
 loc_11636:				; CODE XREF: Tails_JumpAngle+4j
 		move.b	$27(a0),d0
@@ -24924,8 +24933,8 @@ locret_11674:				; CODE XREF: Tails_JumpAngle+1Ej
 Tails_Floor:				; CODE XREF: ROM:00010EC4p
 					; ROM:00010F0Ep ...
 		move.b	$3F(a0),d5
-		move.w	$10(a0),d1
-		move.w	$12(a0),d2
+		move.w	x_vel(a0),d1
+		move.w	y_vel(a0),d2
 		jsr	(CalcAngle).l
 		subi.b	#$20,d0	; ' '
 		andi.b	#$C0,d0
@@ -24938,21 +24947,21 @@ Tails_Floor:				; CODE XREF: ROM:00010EC4p
 		bsr.w	Sonic_HitWall
 		tst.w	d1
 		bpl.s	loc_116BA
-		sub.w	d1,8(a0)
-		move.w	#0,$10(a0)
+		sub.w	d1,x_pos(a0)
+		move.w	#0,x_vel(a0)
 
 loc_116BA:				; CODE XREF: Tails_Floor+38j
 		bsr.w	sub_132EE
 		tst.w	d1
 		bpl.s	loc_116CC
-		add.w	d1,8(a0)
-		move.w	#0,$10(a0)
+		add.w	d1,x_pos(a0)
+		move.w	#0,x_vel(a0)
 
 loc_116CC:				; CODE XREF: Tails_Floor+4Aj
 		bsr.w	loc_13146
 		tst.w	d1
 		bpl.s	locret_11744
-		move.b	$12(a0),d2
+		move.b	y_vel(a0),d2
 		addq.b	#8,d2
 		neg.b	d2
 		cmp.b	d2,d1
@@ -24961,10 +24970,10 @@ loc_116CC:				; CODE XREF: Tails_Floor+4Aj
 		blt.s	locret_11744
 
 loc_116E4:				; CODE XREF: Tails_Floor+68j
-		add.w	d1,$C(a0)
-		move.b	d3,$26(a0)
+		add.w	d1,y_pos(a0)
+		move.b	d3,angle(a0)
 		bsr.w	Tails_ResetTailsOnFloor
-		move.b	#0,$1C(a0)
+		move.b	#0,anim(a0)
 		move.b	d3,d0
 		addi.b	#$20,d0	; ' '
 		andi.b	#$40,d0	; '@'
@@ -24973,25 +24982,25 @@ loc_116E4:				; CODE XREF: Tails_Floor+68j
 		addi.b	#$10,d0
 		andi.b	#$20,d0	; ' '
 		beq.s	loc_11714
-		asr	$12(a0)
+		asr	y_vel(a0)
 		bra.s	loc_11736
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_11714:				; CODE XREF: Tails_Floor+96j
-		move.w	#0,$12(a0)
-		move.w	$10(a0),$14(a0)
+		move.w	#0,y_vel(a0)
+		move.w	x_vel(a0),$14(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_11722:				; CODE XREF: Tails_Floor+8Aj
-		move.w	#0,$10(a0)
-		cmpi.w	#$FC0,$12(a0)
+		move.w	#0,x_vel(a0)
+		cmpi.w	#$FC0,y_vel(a0)
 		ble.s	loc_11736
-		move.w	#$FC0,$12(a0)
+		move.w	#$FC0,y_vel(a0)
 
 loc_11736:				; CODE XREF: Tails_Floor+9Cj
 					; Tails_Floor+B8j
-		move.w	$12(a0),$14(a0)
+		move.w	y_vel(a0),$14(a0)
 		tst.b	d3
 		bpl.s	locret_11744
 		neg.w	$14(a0)
@@ -25005,9 +25014,9 @@ loc_11746:				; CODE XREF: Tails_Floor+1Ej
 		bsr.w	Sonic_HitWall
 		tst.w	d1
 		bpl.s	loc_11760
-		sub.w	d1,8(a0)
-		move.w	#0,$10(a0)
-		move.w	$12(a0),$14(a0)
+		sub.w	d1,x_pos(a0)
+		move.w	#0,x_vel(a0)
+		move.w	y_vel(a0),$14(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -25015,27 +25024,27 @@ loc_11760:				; CODE XREF: Tails_Floor+D6j
 		bsr.w	Sonic_DontRunOnWalls
 		tst.w	d1
 		bpl.s	loc_1177A
-		sub.w	d1,$C(a0)
-		tst.w	$12(a0)
+		sub.w	d1,y_pos(a0)
+		tst.w	y_vel(a0)
 		bpl.s	locret_11778
-		move.w	#0,$12(a0)
+		move.w	#0,y_vel(a0)
 
 locret_11778:				; CODE XREF: Tails_Floor+FAj
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_1177A:				; CODE XREF: Tails_Floor+F0j
-		tst.w	$12(a0)
+		tst.w	y_vel(a0)
 		bmi.s	locret_117A6
 		bsr.w	loc_13146
 		tst.w	d1
 		bpl.s	locret_117A6
-		add.w	d1,$C(a0)
-		move.b	d3,$26(a0)
+		add.w	d1,y_pos(a0)
+		move.b	d3,angle(a0)
 		bsr.w	Tails_ResetTailsOnFloor
-		move.b	#0,$1C(a0)
-		move.w	#0,$12(a0)
-		move.w	$10(a0),$14(a0)
+		move.b	#0,anim(a0)
+		move.w	#0,y_vel(a0)
+		move.w	x_vel(a0),$14(a0)
 
 locret_117A6:				; CODE XREF: Tails_Floor+108j
 					; Tails_Floor+110j
@@ -25046,33 +25055,33 @@ loc_117A8:				; CODE XREF: Tails_Floor+26j
 		bsr.w	Sonic_HitWall
 		tst.w	d1
 		bpl.s	loc_117BA
-		sub.w	d1,8(a0)
-		move.w	#0,$10(a0)
+		sub.w	d1,x_pos(a0)
+		move.w	#0,x_vel(a0)
 
 loc_117BA:				; CODE XREF: Tails_Floor+138j
 		bsr.w	sub_132EE
 		tst.w	d1
 		bpl.s	loc_117CC
-		add.w	d1,8(a0)
-		move.w	#0,$10(a0)
+		add.w	d1,x_pos(a0)
+		move.w	#0,x_vel(a0)
 
 loc_117CC:				; CODE XREF: Tails_Floor+14Aj
 		bsr.w	Sonic_DontRunOnWalls
 		tst.w	d1
 		bpl.s	locret_11802
-		sub.w	d1,$C(a0)
+		sub.w	d1,y_pos(a0)
 		move.b	d3,d0
 		addi.b	#$20,d0	; ' '
 		andi.b	#$40,d0	; '@'
 		bne.s	loc_117EC
-		move.w	#0,$12(a0)
+		move.w	#0,y_vel(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_117EC:				; CODE XREF: Tails_Floor+16Cj
-		move.b	d3,$26(a0)
+		move.b	d3,angle(a0)
 		bsr.w	Tails_ResetTailsOnFloor
-		move.w	$12(a0),$14(a0)
+		move.w	y_vel(a0),$14(a0)
 		tst.b	d3
 		bpl.s	locret_11802
 		neg.w	$14(a0)
@@ -25086,9 +25095,9 @@ loc_11804:				; CODE XREF: Tails_Floor+2Ej
 		bsr.w	sub_132EE
 		tst.w	d1
 		bpl.s	loc_1181E
-		add.w	d1,8(a0)
-		move.w	#0,$10(a0)
-		move.w	$12(a0),$14(a0)
+		add.w	d1,x_pos(a0)
+		move.w	#0,x_vel(a0)
+		move.w	y_vel(a0),$14(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -25096,27 +25105,27 @@ loc_1181E:				; CODE XREF: Tails_Floor+194j
 		bsr.w	Sonic_DontRunOnWalls
 		tst.w	d1
 		bpl.s	loc_11838
-		sub.w	d1,$C(a0)
-		tst.w	$12(a0)
+		sub.w	d1,y_pos(a0)
+		tst.w	y_vel(a0)
 		bpl.s	locret_11836
-		move.w	#0,$12(a0)
+		move.w	#0,y_vel(a0)
 
 locret_11836:				; CODE XREF: Tails_Floor+1B8j
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_11838:				; CODE XREF: Tails_Floor+1AEj
-		tst.w	$12(a0)
+		tst.w	y_vel(a0)
 		bmi.s	locret_11864
 		bsr.w	loc_13146
 		tst.w	d1
 		bpl.s	locret_11864
-		add.w	d1,$C(a0)
-		move.b	d3,$26(a0)
+		add.w	d1,y_pos(a0)
+		move.b	d3,angle(a0)
 		bsr.w	Tails_ResetTailsOnFloor
-		move.b	#0,$1C(a0)
-		move.w	#0,$12(a0)
-		move.w	$10(a0),$14(a0)
+		move.b	#0,anim(a0)
+		move.w	#0,y_vel(a0)
+		move.w	x_vel(a0),$14(a0)
 
 locret_11864:				; CODE XREF: Tails_Floor+1C6j
 					; Tails_Floor+1CEj
@@ -25129,23 +25138,23 @@ locret_11864:				; CODE XREF: Tails_Floor+1C6j
 
 Tails_ResetTailsOnFloor:		; CODE XREF: RideObject_SetRide:loc_F954p
 					; Tails_Floor+76p ...
-		btst	#4,$22(a0)
+		btst	#4,status(a0)
 		beq.s	loc_11874
 		nop
 		nop
 		nop
 
 loc_11874:				; CODE XREF: Tails_ResetTailsOnFloor+6j
-		bclr	#5,$22(a0)
-		bclr	#1,$22(a0)
-		bclr	#4,$22(a0)
-		btst	#2,$22(a0)
+		bclr	#5,status(a0)
+		bclr	#1,status(a0)
+		bclr	#4,status(a0)
+		btst	#2,status(a0)
 		beq.s	loc_118AA
-		bclr	#2,$22(a0)
-		move.b	#$F,$16(a0)
-		move.b	#9,$17(a0)
-		move.b	#0,$1C(a0)
-		subq.w	#1,$C(a0)
+		bclr	#2,status(a0)
+		move.b	#$F,y_radius(a0)
+		move.b	#9,x_radius(a0)
+		move.b	#0,anim(a0)
+		subq.w	#1,y_pos(a0)
 
 loc_118AA:				; CODE XREF: Tails_ResetTailsOnFloor+26j
 		move.b	#0,$3C(a0)
@@ -25158,10 +25167,10 @@ loc_118AA:				; CODE XREF: Tails_ResetTailsOnFloor+26j
 
 Obj02_Hurt:				; DATA XREF: ROM:Obj02_Indexo
 		jsr	ObjectMove
-		addi.w	#$30,$12(a0) ; '0'
-		btst	#6,$22(a0)
+		addi.w	#$30,y_vel(a0) ; '0'
+		btst	#6,status(a0)
 		beq.s	loc_118D8
-		subi.w	#$20,$12(a0) ; ' '
+		subi.w	#$20,y_vel(a0) ; ' '
 
 loc_118D8:				; CODE XREF: ROM:000118D0j
 		bsr.w	Tails_HurtStop
@@ -25176,16 +25185,16 @@ loc_118D8:				; CODE XREF: ROM:000118D0j
 Tails_HurtStop:				; CODE XREF: ROM:loc_118D8p
 		move.w	($FFFFEECE).w,d0
 		addi.w	#$E0,d0	; 'à'
-		cmp.w	$C(a0),d0
+		cmp.w	y_pos(a0),d0
 		bcs.w	KillTails
 		bsr.w	Tails_Floor
-		btst	#1,$22(a0)
+		btst	#1,status(a0)
 		bne.s	locret_1192A
 		moveq	#0,d0
-		move.w	d0,$12(a0)
-		move.w	d0,$10(a0)
+		move.w	d0,y_vel(a0)
+		move.w	d0,x_vel(a0)
 		move.w	d0,$14(a0)
-		move.b	#0,$1C(a0)
+		move.b	#0,anim(a0)
 		move.b	#2,routine(a0)
 		move.w	#$78,$30(a0) ; 'x'
 
@@ -25208,16 +25217,16 @@ Obj02_Dead:				; DATA XREF: ROM:Obj02_Indexo
 Tails_GameOver:				; CODE XREF: ROM:Obj02_Deadp
 		move.w	($FFFFEECE).w,d0
 		addi.w	#$100,d0
-		cmp.w	$C(a0),d0
+		cmp.w	y_pos(a0),d0
 		bcc.w	locret_11986
-		move.w	($FFFFB008).w,d0
+		move.w	(MainCharacter+x_pos).w,d0
 		subi.w	#$40,d0	; '@'
-		move.w	d0,8(a0)
-		move.w	($FFFFB00C).w,d0
+		move.w	d0,x_pos(a0)
+		move.w	(MainCharacter+y_pos).w,d0
 		subi.w	#$80,d0	; '€'
-		move.w	d0,$C(a0)
+		move.w	d0,y_pos(a0)
 		move.b	#2,routine(a0)
-		andi.w	#$7FFF,2(a0)
+		andi.w	#$7FFF,art_tile(a0)
 		move.b	#$C,$3E(a0)
 		move.b	#$D,$3F(a0)
 		nop
@@ -25251,25 +25260,25 @@ Tails_Animate:				; CODE XREF: ROM:00010CECp
 
 Tails_Animate2:				; CODE XREF: ROM:00011DECp
 		moveq	#0,d0
-		move.b	$1C(a0),d0
-		cmp.b	$1D(a0),d0
+		move.b	anim(a0),d0
+		cmp.b	prev_anim(a0),d0
 		beq.s	loc_119BE
-		move.b	d0,$1D(a0)
-		move.b	#0,$1B(a0)
-		move.b	#0,$1E(a0)
+		move.b	d0,prev_anim(a0)
+		move.b	#0,anim_frame(a0)
+		move.b	#0,anim_frame_duration(a0)
 
 loc_119BE:				; CODE XREF: Tails_Animate+10j
 		add.w	d0,d0
 		adda.w	(a1,d0.w),a1
 		move.b	(a1),d0
 		bmi.s	loc_11A2E
-		move.b	$22(a0),d1
+		move.b	status(a0),d1
 		andi.b	#1,d1
 		andi.b	#$FC,1(a0)
 		or.b	d1,1(a0)
-		subq.b	#1,$1E(a0)
+		subq.b	#1,anim_frame_duration(a0)
 		bpl.s	locret_119FC
-		move.b	d0,$1E(a0)
+		move.b	d0,anim_frame_duration(a0)
 ; End of function Tails_Animate
 
 
@@ -25279,15 +25288,15 @@ loc_119BE:				; CODE XREF: Tails_Animate+10j
 sub_119E4:				; CODE XREF: Tails_Animate+10Ep
 					; Tails_Animate+1B2j ...
 		moveq	#0,d1
-		move.b	$1B(a0),d1
+		move.b	anim_frame(a0),d1
 		move.b	1(a1,d1.w),d0
 		cmpi.b	#$F0,d0
 		bcc.s	loc_119FE
 
 loc_119F4:				; CODE XREF: sub_119E4+28j
 					; sub_119E4+3Cj
-		move.b	d0,$1A(a0)
-		addq.b	#1,$1B(a0)
+		move.b	d0,mapping_frame(a0)
+		addq.b	#1,anim_frame(a0)
 
 locret_119FC:				; CODE XREF: Tails_Animate+42j
 					; Tails_Animate+96j
@@ -25297,7 +25306,7 @@ locret_119FC:				; CODE XREF: Tails_Animate+42j
 loc_119FE:				; CODE XREF: sub_119E4+Ej
 		addq.b	#1,d0
 		bne.s	loc_11A0E
-		move.b	#0,$1B(a0)
+		move.b	#0,anim_frame(a0)
 		move.b	1(a1),d0
 		bra.s	loc_119F4
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -25306,7 +25315,7 @@ loc_11A0E:				; CODE XREF: sub_119E4+1Cj
 		addq.b	#1,d0
 		bne.s	loc_11A22
 		move.b	2(a1,d1.w),d0
-		sub.b	d0,$1B(a0)
+		sub.b	d0,anim_frame(a0)
 		sub.b	d0,d1
 		move.b	1(a1,d1.w),d0
 		bra.s	loc_119F4
@@ -25315,7 +25324,7 @@ loc_11A0E:				; CODE XREF: sub_119E4+1Cj
 loc_11A22:				; CODE XREF: sub_119E4+2Cj
 		addq.b	#1,d0
 		bne.s	locret_11A2C
-		move.b	2(a1,d1.w),$1C(a0)
+		move.b	2(a1,d1.w),anim(a0)
 
 locret_11A2C:				; CODE XREF: sub_119E4+40j
 		rts
@@ -25325,7 +25334,7 @@ locret_11A2C:				; CODE XREF: sub_119E4+40j
 ; START	OF FUNCTION CHUNK FOR Tails_Animate
 
 loc_11A2E:				; CODE XREF: Tails_Animate+2Aj
-		subq.b	#1,$1E(a0)
+		subq.b	#1,anim_frame_duration(a0)
 		bpl.s	locret_119FC
 		addq.b	#1,d0
 		bne.w	loc_11B0E
@@ -25333,8 +25342,8 @@ loc_11A2E:				; CODE XREF: Tails_Animate+2Aj
 		move.b	$27(a0),d0
 		bne.w	loc_11AB4
 		moveq	#0,d1
-		move.b	$26(a0),d0
-		move.b	$22(a0),d2
+		move.b	angle(a0),d0
+		move.b	status(a0),d2
 		andi.b	#1,d2
 		bne.s	loc_11A56
 		not.b	d0
@@ -25376,16 +25385,16 @@ loc_11A9A:				; CODE XREF: Tails_Animate+ECj
 
 loc_11AA4:				; CODE XREF: Tails_Animate+104j
 		lsr.w	#8,d2
-		move.b	d2,$1E(a0)
+		move.b	d2,anim_frame_duration(a0)
 		bsr.w	sub_119E4
-		add.b	d3,$1A(a0)
+		add.b	d3,mapping_frame(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_11AB4:				; CODE XREF: Tails_Animate+A4j
 		move.b	$27(a0),d0
 		moveq	#0,d1
-		move.b	$22(a0),d2
+		move.b	status(a0),d2
 		andi.b	#1,d2
 		bne.s	loc_11AE8
 		andi.b	#$FC,1(a0)
@@ -25394,8 +25403,8 @@ loc_11AB4:				; CODE XREF: Tails_Animate+A4j
 		addi.b	#$B,d0
 		divu.w	#$16,d0
 		addi.b	#$75,d0	; 'u'
-		move.b	d0,$1A(a0)
-		move.b	#0,$1E(a0)
+		move.b	d0,mapping_frame(a0)
+		move.b	#0,anim_frame_duration(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -25407,8 +25416,8 @@ loc_11AE8:				; CODE XREF: Tails_Animate+126j
 		addi.b	#$8F,d0
 		divu.w	#$16,d0
 		addi.b	#$75,d0	; 'u'
-		move.b	d0,$1A(a0)
-		move.b	#0,$1E(a0)
+		move.b	d0,mapping_frame(a0)
+		move.b	#0,anim_frame_duration(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -25433,8 +25442,8 @@ loc_11B2C:				; CODE XREF: Tails_Animate+188j
 
 loc_11B36:				; CODE XREF: Tails_Animate+196j
 		lsr.w	#8,d2
-		move.b	d2,$1E(a0)
-		move.b	$22(a0),d1
+		move.b	d2,anim_frame_duration(a0)
+		move.b	status(a0),d1
 		andi.b	#1,d1
 		andi.b	#$FC,1(a0)
 		or.b	d1,1(a0)
@@ -25455,9 +25464,9 @@ loc_11B5E:				; CODE XREF: Tails_Animate+1BEj
 
 loc_11B66:				; CODE XREF: Tails_Animate+1C6j
 		lsr.w	#6,d2
-		move.b	d2,$1E(a0)
+		move.b	d2,anim_frame_duration(a0)
 		lea	(TailsAni_Push_NoArt).l,a1
-		move.b	$22(a0),d1
+		move.b	status(a0),d1
 		andi.b	#1,d1
 		andi.b	#$FC,1(a0)
 		or.b	d1,1(a0)
@@ -25465,11 +25474,11 @@ loc_11B66:				; CODE XREF: Tails_Animate+1C6j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_11B88:				; CODE XREF: Tails_Animate+1B8j
-		move.w	($FFFFB050).w,d1
-		move.w	($FFFFB052).w,d2
+		move.w	(Sidekick+x_vel).w,d1
+		move.w	(Sidekick+y_vel).w,d2
 		jsr	(CalcAngle).l
 		moveq	#0,d1
-		move.b	$22(a0),d2
+		move.b	status(a0),d2
 		andi.b	#1,d2
 		bne.s	loc_11BA6
 		not.b	d0
@@ -25492,9 +25501,9 @@ loc_11BB2:				; CODE XREF: Tails_Animate+212j
 		andi.b	#$C,d0
 		move.b	d0,d3
 		lea	(byte_11E3C).l,a1
-		move.b	#3,$1E(a0)
+		move.b	#3,anim_frame_duration(a0)
 		bsr.w	sub_119E4
-		add.b	d3,$1A(a0)
+		add.b	d3,mapping_frame(a0)
 		rts
 ; END OF FUNCTION CHUNK	FOR Tails_Animate
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -25572,7 +25581,7 @@ TailsAni_1E:	dc.b   3,  1,  2,  3,  4,  5,  6,  7,  8,$FF
 ; LoadTailsDynPLC_F600:
 LoadTailsTailsDynPLC:
 		moveq	#0,d0
-		move.b	$1A(a0),d0
+		move.b	mapping_frame(a0),d0
 		cmp.b	(TailsTails_LastLoadedDPLC).w,d0
 		beq.s	locret_11D7C
 		move.b	d0,(TailsTails_LastLoadedDPLC).w
@@ -25595,7 +25604,7 @@ LoadTailsTailsDynPLC:
 
 LoadTailsDynPLC:
 		moveq	#0,d0
-		move.b	$1A(a0),d0
+		move.b	mapping_frame(a0),d0
 		cmp.b	(Tails_LastLoadedDPLC).w,d0
 		beq.s	locret_11D7C
 		move.b	d0,(Tails_LastLoadedDPLC).w
@@ -25644,24 +25653,24 @@ Obj05_Index:	dc.w Obj05_Init-Obj05_Index
 
 Obj05_Init:
 		addq.b	#2,routine(a0)
-		move.l	#Map_Tails,4(a0)
-		move.w	#$7B0,2(a0)
+		move.l	#Map_Tails,mappings(a0)
+		move.w	#$7B0,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#2,$18(a0)
-		move.b	#$18,$19(a0)
+		move.b	#2,priority(a0)
+		move.b	#$18,width_pixels(a0)
 		move.b	#4,1(a0)
 
 Obj05_Main:
-		move.b	($FFFFB066).w,$26(a0)
-		move.b	($FFFFB062).w,$22(a0)
-		move.w	($FFFFB048).w,8(a0)
-		move.w	($FFFFB04C).w,$C(a0)
+		move.b	(Sidekick+$26).w,angle(a0)
+		move.b	(Sidekick+status).w,status(a0)
+		move.w	(Sidekick+x_pos).w,x_pos(a0)
+		move.w	(Sidekick+y_pos).w,y_pos(a0)
 		moveq	#0,d0
-		move.b	($FFFFB05C).w,d0
+		move.b	(Sidekick+anim).w,d0
 		cmp.b	$30(a0),d0
 		beq.s	loc_11DE6
 		move.b	d0,$30(a0)
-		move.b	Obj05_Animations(pc,d0.w),$1C(a0)
+		move.b	Obj05_Animations(pc,d0.w),anim(a0)
 
 loc_11DE6:
 		lea	(Obj05_AniData).l,a1
@@ -25737,26 +25746,26 @@ Obj0A_Index:	dc.w Obj0A_Init-Obj0A_Index ; DATA XREF: ROM:Obj0A_Indexo
 
 Obj0A_Init:				; DATA XREF: ROM:Obj0A_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj0A_Bubbles,4(a0)
-		move.w	#$8348,2(a0)
+		move.l	#Map_Obj0A_Bubbles,mappings(a0)
+		move.w	#$8348,art_tile(a0)
 		move.b	#$84,1(a0)
-		move.b	#$10,$19(a0)
-		move.b	#1,$18(a0)
+		move.b	#$10,width_pixels(a0)
+		move.b	#1,priority(a0)
 		move.b	$28(a0),d0
 		bpl.s	loc_11ECC
 		addq.b	#8,routine(a0)
-		move.l	#Map_Obj0A_Countdown,4(a0)
-		move.w	#$440,2(a0)
+		move.l	#Map_Obj0A_Countdown,mappings(a0)
+		move.w	#$440,art_tile(a0)
 		andi.w	#$7F,d0	; ''
 		move.b	d0,$33(a0)
 		bra.w	Obj0A_Countdown
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_11ECC:				; CODE XREF: ROM:00011EACj
-		move.b	d0,$1C(a0)
+		move.b	d0,anim(a0)
 		bsr.w	Adjust2PArtPointer
-		move.w	8(a0),$30(a0)
-		move.w	#$FF78,$12(a0)
+		move.w	x_pos(a0),$30(a0)
+		move.w	#$FF78,y_vel(a0)
 
 Obj0A_Animate:				; DATA XREF: ROM:00011E74o
 		lea	(Ani_Obj0A).l,a1
@@ -25764,11 +25773,11 @@ Obj0A_Animate:				; DATA XREF: ROM:00011E74o
 
 Obj0A_ChkWater:				; DATA XREF: ROM:00011E76o
 		move.w	($FFFFF646).w,d0
-		cmp.w	$C(a0),d0
+		cmp.w	y_pos(a0),d0
 		bcs.s	loc_11F0A
 		move.b	#6,routine(a0)
-		addq.b	#7,$1C(a0)
-		cmpi.b	#$D,$1C(a0)
+		addq.b	#7,anim(a0)
+		cmpi.b	#$D,anim(a0)
 		beq.s	Obj0A_Display
 		bra.s	Obj0A_Display
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -25779,14 +25788,14 @@ loc_11F0A:				; CODE XREF: ROM:00011EF4j
 		addq.w	#4,$30(a0)
 
 loc_11F14:				; CODE XREF: ROM:00011F0Ej
-		move.b	$26(a0),d0
-		addq.b	#1,$26(a0)
+		move.b	angle(a0),d0
+		addq.b	#1,angle(a0)
 		andi.w	#$7F,d0	; ''
 		lea	(Obj0A_WobbleData).l,a1
 		move.b	(a1,d0.w),d0
 		ext.w	d0
 		add.w	$30(a0),d0
-		move.w	d0,8(a0)
+		move.w	d0,x_pos(a0)
 		bsr.s	Obj0A_ShowNumber
 		jsr	ObjectMove
 		tst.b	1(a0)
@@ -25817,7 +25826,7 @@ Obj0A_AirLeft:				; DATA XREF: ROM:00011E7Eo
 		subq.w	#1,$38(a0)
 		bne.s	loc_11F82
 		move.b	#$E,routine(a0)
-		addq.b	#7,$1C(a0)
+		addq.b	#7,anim(a0)
 		bra.s	Obj0A_Display
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -25842,19 +25851,19 @@ Obj0A_ShowNumber:			; CODE XREF: ROM:00011F34p
 		beq.s	locret_11FEA
 		subq.w	#1,$38(a0)
 		bne.s	locret_11FEA
-		cmpi.b	#7,$1C(a0)
+		cmpi.b	#7,anim(a0)
 		bcc.s	locret_11FEA
 		move.w	#$F,$38(a0)
-		clr.w	$12(a0)
+		clr.w	y_vel(a0)
 		move.b	#$80,1(a0)
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		sub.w	($FFFFEE00).w,d0
 		addi.w	#$80,d0	; '€'
-		move.w	d0,8(a0)
-		move.w	$C(a0),d0
+		move.w	d0,x_pos(a0)
+		move.w	y_pos(a0),d0
 		sub.w	($FFFFEE04).w,d0
 		addi.w	#$80,d0	; '€'
-		move.w	d0,$A(a0)
+		move.w	d0,x_sub(a0)
 		move.b	#$C,routine(a0)
 
 locret_11FEA:				; CODE XREF: Obj0A_ShowNumber+4j
@@ -25887,9 +25896,9 @@ Obj0A_Countdown:			; CODE XREF: ROM:00011EC8j
 					; DATA XREF: ROM:00011E7Co
 		tst.w	$2C(a0)
 		bne.w	loc_121D6
-		cmpi.b	#6,($FFFFB000+routine).w
+		cmpi.b	#6,(MainCharacter+routine).w
 		bcc.w	locret_122DC
-		btst	#6,($FFFFB022).w
+		btst	#6,(MainCharacter+status).w
 		beq.w	locret_122DC
 		subq.w	#1,$38(a0)
 		bpl.w	loc_121FC
@@ -25936,13 +25945,13 @@ loc_12170:				; CODE XREF: ROM:00012144j
 		move.w	#1,$36(a0)
 		move.w	#$78,$2C(a0) ; 'x'
 		move.l	a0,-(sp)
-		lea	($FFFFB000).w,a0
+		lea	(MainCharacter).w,a0
 		bsr.w	Sonic_ResetOnFloor
-		move.b	#$17,$1C(a0)
-		bset	#1,$22(a0)
-		bset	#7,2(a0)
-		move.w	#0,$12(a0)
-		move.w	#0,$10(a0)
+		move.b	#$17,anim(a0)
+		bset	#1,status(a0)
+		bset	#7,art_tile(a0)
+		move.w	#0,y_vel(a0)
+		move.w	#0,x_vel(a0)
 		move.w	#0,$14(a0)
 		move.b	#1,($FFFFEEDC).w
 		movea.l	(sp)+,a0
@@ -25952,15 +25961,15 @@ loc_12170:				; CODE XREF: ROM:00012144j
 loc_121D6:				; CODE XREF: ROM:000120F0j
 		subq.w	#1,$2C(a0)
 		bne.s	loc_121E4
-		move.b	#6,($FFFFB000+routine).w
+		move.b	#6,(MainCharacter+routine).w
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_121E4:				; CODE XREF: ROM:000121DAj
 		move.l	a0,-(sp)
-		lea	($FFFFB000).w,a0
+		lea	(MainCharacter).w,a0
 		jsr	ObjectMove
-		addi.w	#$10,$12(a0)
+		addi.w	#$10,y_vel(a0)
 		movea.l	(sp)+,a0
 		bra.s	loc_121FC
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -25983,26 +25992,26 @@ loc_1220C:				; CODE XREF: ROM:loc_121FAj
 		jsr	SingleObjLoad
 		bne.w	locret_122DC
 		move.b	#$A,0(a1)
-		move.w	($FFFFB008).w,8(a1)
+		move.w	(MainCharacter+x_pos).w,x_pos(a1)
 		moveq	#6,d0
-		btst	#0,($FFFFB022).w
+		btst	#0,(MainCharacter+status).w
 		beq.s	loc_12242
 		neg.w	d0
-		move.b	#$40,$26(a1) ; '@'
+		move.b	#$40,angle(a1) ; '@'
 
 loc_12242:				; CODE XREF: ROM:00012238j
-		add.w	d0,8(a1)
-		move.w	($FFFFB00C).w,$C(a1)
+		add.w	d0,x_pos(a1)
+		move.w	(MainCharacter+y_pos).w,y_pos(a1)
 		move.b	#6,$28(a1)
 		tst.w	$2C(a0)
 		beq.w	loc_1228E
 		andi.w	#7,$3A(a0)
 		addi.w	#0,$3A(a0)
-		move.w	($FFFFB00C).w,d0
+		move.w	(MainCharacter+y_pos).w,d0
 		subi.w	#$C,d0
-		move.w	d0,$C(a1)
+		move.w	d0,y_pos(a1)
 		jsr	(RandomNumber).l
-		move.b	d0,$26(a1)
+		move.b	d0,angle(a1)
 		move.w	($FFFFFE04).w,d0
 		andi.b	#3,d0
 		bne.s	loc_122D2
@@ -26068,7 +26077,7 @@ loc_1230A:				; CODE XREF: ResumeMusic+26j
 
 loc_12310:				; CODE XREF: ResumeMusic+6j
 		move.w	#$1E,($FFFFFE14).w
-		clr.b	($FFFFB372).w
+		clr.b	(Object_RAM+$340+$32).w
 		rts
 ; End of function ResumeMusic
 
@@ -26121,16 +26130,16 @@ Obj38_Index:	dc.w Obj38_Init-Obj38_Index
 
 Obj38_Init:
 		addq.b	#2,routine(a0)
-		move.l	#Map_obj38,4(a0)
+		move.l	#Map_obj38,mappings(a0)
 		move.b	#4,1(a0)
-		move.b	#1,$18(a0)
-		move.b	#$18,$19(a0)
-		tst.b	$1C(a0)		; is this the shield?
+		move.b	#1,priority(a0)
+		move.b	#$18,width_pixels(a0)
+		tst.b	anim(a0)	; is this the shield?
 		bne.s	loc_1240C	; if not, branch
-		move.w	#$4BE,2(a0)
+		move.w	#$4BE,art_tile(a0)
 		cmpi.b	#3,(Current_Zone).w	; is this Emerald Hill Zone?
 		bne.s	loc_12406		; if not, branch
-		move.w	#$560,2(a0)
+		move.w	#$560,art_tile(a0)
 
 loc_12406:
 		bsr.w	Adjust2PArtPointer
@@ -26139,10 +26148,10 @@ loc_12406:
 
 loc_1240C:
 		addq.b	#2,routine(a0)
-		move.l	#Map_Sonic,4(a0)
-		move.w	#$4DE,2(a0)
+		move.l	#Map_Sonic,mappings(a0)
+		move.w	#$4DE,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#2,$18(a0)
+		move.b	#2,priority(a0)
 		rts
 ; ===========================================================================
 
@@ -26151,9 +26160,9 @@ Obj38_Shield:
 		bne.s	locret_1245A	; if yes, branch
 		tst.b	($FFFFFE2C).w	; does Sonic have a shield?
 		beq.s	Obj38_Delete	; if not, branch
-		move.w	($FFFFB008).w,8(a0)
-		move.w	($FFFFB00C).w,$C(a0)
-		move.b	($FFFFB022).w,$22(a0)
+		move.w	(MainCharacter+x_pos).w,x_pos(a0)
+		move.w	(MainCharacter+y_pos).w,y_pos(a0)
+		move.b	(MainCharacter+status).w,status(a0)
 		lea	(Ani_obj38).l,a1
 		jsr	(AnimateSprite).l
 		jmp	(DisplaySprite).l
@@ -26171,7 +26180,7 @@ Obj38_Stars:
 		tst.b	($FFFFFE2D).w	; is Sonic invincible?
 		beq.s	Obj38_Delete2	; if not, branch
 		move.w	($FFFFEEE0).w,d0
-		move.b	$1C(a0),d1
+		move.b	anim(a0),d1
 		subq.b	#1,d1
 		move.b	#$3F,d1
 		lsl.b	#2,d1
@@ -26181,13 +26190,13 @@ Obj38_Stars:
 		lea	(a1,d0.w),a1
 		move.w	(a1)+,d0
 		andi.w	#$3FFF,d0
-		move.w	d0,8(a0)
+		move.w	d0,x_pos(a0)
 		move.w	(a1)+,d0
 		andi.w	#$7FF,d0
-		move.w	d0,$C(a0)
-		move.b	($FFFFB022).w,$22(a0)
-		move.b	($FFFFB01A).w,$1A(a0)
-		move.b	($FFFFB001).w,1(a0)
+		move.w	d0,y_pos(a0)
+		move.b	(MainCharacter+status).w,status(a0)
+		move.b	(MainCharacter+mapping_frame).w,mapping_frame(a0)
+		move.b	(MainCharacter+1).w,1(a0)
 		jmp	(DisplaySprite).l
 ; ===========================================================================
 ; loc_124B2:
@@ -26220,25 +26229,25 @@ S1Obj4A_Init:
 
 loc_124D4:
 		addq.b	#2,routine(a0)
-		move.l	#Map_S1obj4A,4(a0)
+		move.l	#Map_S1obj4A,mappings(a0)
 		move.b	#4,1(a0)
-		move.b	#1,$18(a0)
-		move.b	#$38,$19(a0)
-		move.w	#$541,2(a0)
+		move.b	#1,priority(a0)
+		move.b	#$38,width_pixels(a0)
+		move.w	#$541,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.w	#60*2,obj4A_vanishtime(a0)	; set vanishing time to 2 seconds
 
 S1Obj4A_RmvSonic:
-		move.w	($FFFFB008).w,8(a0)
-		move.w	($FFFFB00C).w,$C(a0)
-		move.b	($FFFFB022).w,$22(a0)
+		move.w	(MainCharacter+x_pos).w,x_pos(a0)
+		move.w	(MainCharacter+y_pos).w,y_pos(a0)
+		move.b	(MainCharacter+status).w,status(a0)
 		lea	(Ani_S1obj4A).l,a1
 		jsr	(AnimateSprite).l
-		cmpi.b	#2,$1A(a0)
+		cmpi.b	#2,mapping_frame(a0)
 		bne.s	loc_1253E
-		tst.b	($FFFFB000).w		; is this Sonic?
+		tst.b	(MainCharacter).w		; is this Sonic?
 		beq.s	loc_1253E		; if not, branch
-		move.b	#0,($FFFFB000).w	; set Sonic's object ID to 0
+		move.b	#0,(MainCharacter).w	; set Sonic's object ID to 0
 		move.w	#$A8,d0
 		jsr	(PlaySound_Special).l	; play Special Stage entry sound effect
 
@@ -26249,7 +26258,7 @@ loc_1253E:
 S1Obj4A_LoadSonic:
 		subq.w	#1,obj4A_vanishtime(a0)	; subtract 1 from vanishing time
 		bne.s	locret_12556		; if there's any time left, branch
-		move.b	#1,($FFFFB000).w	; set Sonic's object ID to 1
+		move.b	#1,(MainCharacter).w	; set Sonic's object ID to 1
 		jmp	(DeleteObject).l
 ; ---------------------------------------------------------------------------
 
@@ -26273,16 +26282,16 @@ Obj08_Index:	dc.w Obj08_Init-Obj08_Index
 
 Obj08_Init:
 		addq.b	#2,routine(a0)
-		move.l	#Map_obj08,4(a0)
+		move.l	#Map_obj08,mappings(a0)
 		ori.b	#4,1(a0)
-		move.b	#1,$18(a0)
-		move.b	#$10,$19(a0)
-		move.w	#$4259,2(a0)
+		move.b	#1,priority(a0)
+		move.b	#$10,width_pixels(a0)
+		move.w	#$4259,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.w	($FFFFB008).w,8(a0)
+		move.w	(MainCharacter+x_pos).w,x_pos(a0)
 
 Obj08_Display:
-		move.w	($FFFFF646).w,$C(a0)
+		move.w	($FFFFF646).w,y_pos(a0)
 		lea	(Ani_obj08).l,a1
 		jsr	(AnimateSprite).l
 		jmp	(DisplaySprite).l
@@ -26341,7 +26350,7 @@ AnglePos:
 
 loc_12A14:				; CODE XREF: AnglePos+Ej
 		move.b	$3E(a0),d5
-		btst	#3,$22(a0)
+		btst	#3,status(a0)
 		beq.s	loc_12A2C
 		moveq	#0,d0
 		move.b	d0,($FFFFF768).w
@@ -26353,10 +26362,10 @@ loc_12A2C:				; CODE XREF: AnglePos+22j
 		moveq	#3,d0
 		move.b	d0,($FFFFF768).w
 		move.b	d0,($FFFFF76A).w
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		addi.b	#$20,d0	; ' '
 		bpl.s	loc_12A4E
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		bpl.s	loc_12A48
 		subq.b	#1,d0
 
@@ -26366,7 +26375,7 @@ loc_12A48:				; CODE XREF: AnglePos+48j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_12A4E:				; CODE XREF: AnglePos+42j
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		bpl.s	loc_12A56
 		addq.b	#1,d0
 
@@ -26381,13 +26390,13 @@ loc_12A5A:				; CODE XREF: AnglePos+50j
 		beq.w	Sonic_WalkCeiling
 		cmpi.b	#$C0,d0
 		beq.w	Sonic_WalkVertR
-		move.w	$C(a0),d2
-		move.w	8(a0),d3
+		move.w	y_pos(a0),d2
+		move.w	x_pos(a0),d3
 		moveq	#0,d0
-		move.b	$16(a0),d0
+		move.b	y_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d2
-		move.b	$17(a0),d0
+		move.b	x_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d3
 		lea	($FFFFF768).w,a4
@@ -26395,13 +26404,13 @@ loc_12A5A:				; CODE XREF: AnglePos+50j
 		move.w	#0,d6
 		bsr.w	FindFloor
 		move.w	d1,-(sp)
-		move.w	$C(a0),d2
-		move.w	8(a0),d3
+		move.w	y_pos(a0),d2
+		move.w	x_pos(a0),d3
 		moveq	#0,d0
-		move.b	$16(a0),d0
+		move.b	y_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d2
-		move.b	$17(a0),d0
+		move.b	x_radius(a0),d0
 		ext.w	d0
 		neg.w	d0
 		add.w	d0,d3
@@ -26416,7 +26425,7 @@ loc_12A5A:				; CODE XREF: AnglePos+50j
 		bpl.s	loc_12AE6
 		cmpi.w	#$FFF2,d1
 		blt.s	locret_12B0C
-		add.w	d1,$C(a0)
+		add.w	d1,y_pos(a0)
 
 locret_12AE4:				; CODE XREF: AnglePos+DAj
 		rts
@@ -26427,16 +26436,16 @@ loc_12AE6:				; CODE XREF: AnglePos+DCj
 		bgt.s	loc_12AF2
 
 loc_12AEC:				; CODE XREF: AnglePos+FAj
-		add.w	d1,$C(a0)
+		add.w	d1,y_pos(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_12AF2:				; CODE XREF: AnglePos+EEj
 		tst.b	$38(a0)
 		bne.s	loc_12AEC
-		bset	#1,$22(a0)
-		bclr	#5,$22(a0)
-		move.b	#1,$1D(a0)
+		bset	#1,status(a0)
+		bclr	#5,status(a0)
+		move.b	#1,prev_anim(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -26446,17 +26455,17 @@ locret_12B0C:				; CODE XREF: AnglePos+E2j
 ; End of function AnglePos
 
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-		move.l	8(a0),d2
-		move.w	$10(a0),d0
+		move.l	x_pos(a0),d2
+		move.w	x_vel(a0),d0
 		ext.l	d0
 		asl.l	#8,d0
 		sub.l	d0,d2
-		move.l	d2,8(a0)
+		move.l	d2,x_pos(a0)
 		move.w	#$38,d0	; '8'
 		ext.l	d0
 		asl.l	#8,d0
 		sub.l	d0,d3
-		move.l	d3,$C(a0)
+		move.l	d3,y_pos(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 ; START	OF FUNCTION CHUNK FOR AnglePos
@@ -26466,30 +26475,30 @@ locret_12B30:				; CODE XREF: AnglePos+20Ej
 		rts
 ; END OF FUNCTION CHUNK	FOR AnglePos
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-		move.l	$C(a0),d3
-		move.w	$12(a0),d0
+		move.l	y_pos(a0),d3
+		move.w	y_vel(a0),d0
 		subi.w	#$38,d0	; '8'
-		move.w	d0,$12(a0)
+		move.w	d0,y_vel(a0)
 		ext.l	d0
 		asl.l	#8,d0
 		sub.l	d0,d3
-		move.l	d3,$C(a0)
+		move.l	d3,y_pos(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-		move.l	8(a0),d2
-		move.l	$C(a0),d3
-		move.w	$10(a0),d0
+		move.l	x_pos(a0),d2
+		move.l	y_pos(a0),d3
+		move.w	x_vel(a0),d0
 		ext.l	d0
 		asl.l	#8,d0
 		sub.l	d0,d2
-		move.w	$12(a0),d0
+		move.w	y_vel(a0),d0
 		ext.l	d0
 		asl.l	#8,d0
 		sub.l	d0,d3
-		move.l	d2,8(a0)
-		move.l	d3,$C(a0)
+		move.l	d2,x_pos(a0)
+		move.l	d3,y_pos(a0)
 		rts
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
@@ -26506,15 +26515,15 @@ Sonic_Angle:				; CODE XREF: AnglePos+D4p
 loc_12B84:				; CODE XREF: Sonic_Angle+6j
 		btst	#0,d2
 		bne.s	loc_12B90
-		move.b	d2,$26(a0)
+		move.b	d2,angle(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_12B90:				; CODE XREF: Sonic_Angle+12j
-		move.b	$26(a0),d2
+		move.b	angle(a0),d2
 		addi.b	#$20,d2	; ' '
 		andi.b	#$C0,d2
-		move.b	d2,$26(a0)
+		move.b	d2,angle(a0)
 		rts
 ; End of function Sonic_Angle
 
@@ -26522,14 +26531,14 @@ loc_12B90:				; CODE XREF: Sonic_Angle+12j
 ; START	OF FUNCTION CHUNK FOR AnglePos
 
 Sonic_WalkVertR:			; CODE XREF: AnglePos+76j
-		move.w	$C(a0),d2
-		move.w	8(a0),d3
+		move.w	y_pos(a0),d2
+		move.w	x_pos(a0),d3
 		moveq	#0,d0
-		move.b	$17(a0),d0
+		move.b	x_radius(a0),d0
 		ext.w	d0
 		neg.w	d0
 		add.w	d0,d2
-		move.b	$16(a0),d0
+		move.b	y_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d3
 		lea	($FFFFF768).w,a4
@@ -26537,13 +26546,13 @@ Sonic_WalkVertR:			; CODE XREF: AnglePos+76j
 		move.w	#0,d6
 		bsr.w	FindWall
 		move.w	d1,-(sp)
-		move.w	$C(a0),d2
-		move.w	8(a0),d3
+		move.w	y_pos(a0),d2
+		move.w	x_pos(a0),d3
 		moveq	#0,d0
-		move.b	$17(a0),d0
+		move.b	x_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d2
-		move.b	$16(a0),d0
+		move.b	y_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d3
 		lea	($FFFFF76A).w,a4
@@ -26557,7 +26566,7 @@ Sonic_WalkVertR:			; CODE XREF: AnglePos+76j
 		bpl.s	loc_12C14
 		cmpi.w	#$FFF2,d1
 		blt.w	locret_12B30
-		add.w	d1,8(a0)
+		add.w	d1,x_pos(a0)
 
 locret_12C12:				; CODE XREF: AnglePos+206j
 		rts
@@ -26568,28 +26577,28 @@ loc_12C14:				; CODE XREF: AnglePos+208j
 		bgt.s	loc_12C20
 
 loc_12C1A:				; CODE XREF: AnglePos+228j
-		add.w	d1,8(a0)
+		add.w	d1,x_pos(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_12C20:				; CODE XREF: AnglePos+21Cj
 		tst.b	$38(a0)
 		bne.s	loc_12C1A
-		bset	#1,$22(a0)
-		bclr	#5,$22(a0)
-		move.b	#1,$1D(a0)
+		bset	#1,status(a0)
+		bclr	#5,status(a0)
+		move.b	#1,prev_anim(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 Sonic_WalkCeiling:			; CODE XREF: AnglePos+6Ej
-		move.w	$C(a0),d2
-		move.w	8(a0),d3
+		move.w	y_pos(a0),d2
+		move.w	x_pos(a0),d3
 		moveq	#0,d0
-		move.b	$16(a0),d0
+		move.b	y_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d2
 		eori.w	#$F,d2
-		move.b	$17(a0),d0
+		move.b	x_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d3
 		lea	($FFFFF768).w,a4
@@ -26597,14 +26606,14 @@ Sonic_WalkCeiling:			; CODE XREF: AnglePos+6Ej
 		move.w	#$800,d6
 		bsr.w	FindFloor
 		move.w	d1,-(sp)
-		move.w	$C(a0),d2
-		move.w	8(a0),d3
+		move.w	y_pos(a0),d2
+		move.w	x_pos(a0),d3
 		moveq	#0,d0
-		move.b	$16(a0),d0
+		move.b	y_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d2
 		eori.w	#$F,d2
-		move.b	$17(a0),d0
+		move.b	x_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d3
 		lea	($FFFFF76A).w,a4
@@ -26618,7 +26627,7 @@ Sonic_WalkCeiling:			; CODE XREF: AnglePos+6Ej
 		bpl.s	loc_12CB2
 		cmpi.w	#$FFF2,d1
 		blt.w	locret_12B0C
-		sub.w	d1,$C(a0)
+		sub.w	d1,y_pos(a0)
 
 locret_12CB0:				; CODE XREF: AnglePos+2A4j
 		rts
@@ -26629,27 +26638,27 @@ loc_12CB2:				; CODE XREF: AnglePos+2A6j
 		bgt.s	loc_12CBE
 
 loc_12CB8:				; CODE XREF: AnglePos+2C6j
-		sub.w	d1,$C(a0)
+		sub.w	d1,y_pos(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_12CBE:				; CODE XREF: AnglePos+2BAj
 		tst.b	$38(a0)
 		bne.s	loc_12CB8
-		bset	#1,$22(a0)
-		bclr	#5,$22(a0)
-		move.b	#1,$1D(a0)
+		bset	#1,status(a0)
+		bclr	#5,status(a0)
+		move.b	#1,prev_anim(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 Sonic_WalkVertL:			; CODE XREF: AnglePos+66j
-		move.w	$C(a0),d2
-		move.w	8(a0),d3
+		move.w	y_pos(a0),d2
+		move.w	x_pos(a0),d3
 		moveq	#0,d0
-		move.b	$17(a0),d0
+		move.b	x_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d2
-		move.b	$16(a0),d0
+		move.b	y_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d3
 		eori.w	#$F,d3
@@ -26658,13 +26667,13 @@ Sonic_WalkVertL:			; CODE XREF: AnglePos+66j
 		move.w	#$400,d6
 		bsr.w	FindWall
 		move.w	d1,-(sp)
-		move.w	$C(a0),d2
-		move.w	8(a0),d3
+		move.w	y_pos(a0),d2
+		move.w	x_pos(a0),d3
 		moveq	#0,d0
-		move.b	$17(a0),d0
+		move.b	x_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d2
-		move.b	$16(a0),d0
+		move.b	y_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d3
 		eori.w	#$F,d3
@@ -26679,7 +26688,7 @@ Sonic_WalkVertL:			; CODE XREF: AnglePos+66j
 		bpl.s	loc_12D50
 		cmpi.w	#$FFF2,d1
 		blt.w	locret_12B30
-		sub.w	d1,8(a0)
+		sub.w	d1,x_pos(a0)
 
 locret_12D4E:				; CODE XREF: AnglePos+342j
 		rts
@@ -26690,16 +26699,16 @@ loc_12D50:				; CODE XREF: AnglePos+344j
 		bgt.s	loc_12D5C
 
 loc_12D56:				; CODE XREF: AnglePos+364j
-		sub.w	d1,8(a0)
+		sub.w	d1,x_pos(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_12D5C:				; CODE XREF: AnglePos+358j
 		tst.b	$38(a0)
 		bne.s	loc_12D56
-		bset	#1,$22(a0)
-		bclr	#5,$22(a0)
-		move.b	#1,$1D(a0)
+		bset	#1,status(a0)
+		bclr	#5,status(a0)
+		move.b	#1,prev_anim(a0)
 		rts
 ; END OF FUNCTION CHUNK	FOR AnglePos
 
@@ -27105,13 +27114,13 @@ CalcRoomInFront:
 
 loc_13094:				; CODE XREF: CalcRoomInFront+Ej
 		move.b	$3F(a0),d5
-		move.l	8(a0),d3
-		move.l	$C(a0),d2
-		move.w	$10(a0),d1
+		move.l	x_pos(a0),d3
+		move.l	y_pos(a0),d2
+		move.w	x_vel(a0),d1
 		ext.l	d1
 		asl.l	#8,d1
 		add.l	d1,d3
-		move.w	$12(a0),d1
+		move.w	y_vel(a0),d1
 		ext.l	d1
 		asl.l	#8,d1
 		add.l	d1,d2
@@ -27191,13 +27200,13 @@ loc_13146:				; CODE XREF: Sonic_DoLevelCollision:loc_1056Ap
 
 loc_1315E:				; CODE XREF: sub_13102+52j
 		move.b	$3E(a0),d5
-		move.w	$C(a0),d2
-		move.w	8(a0),d3
+		move.w	y_pos(a0),d2
+		move.w	x_pos(a0),d3
 		moveq	#0,d0
-		move.b	$16(a0),d0
+		move.b	y_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d2
-		move.b	$17(a0),d0
+		move.b	x_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d3
 		lea	($FFFFF768).w,a4
@@ -27205,13 +27214,13 @@ loc_1315E:				; CODE XREF: sub_13102+52j
 		move.w	#0,d6
 		bsr.w	FindFloor
 		move.w	d1,-(sp)
-		move.w	$C(a0),d2
-		move.w	8(a0),d3
+		move.w	y_pos(a0),d2
+		move.w	x_pos(a0),d3
 		moveq	#0,d0
-		move.b	$16(a0),d0
+		move.b	y_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d2
-		move.b	$17(a0),d0
+		move.b	x_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d3
 		lea	($FFFFF76A).w,a4
@@ -27239,8 +27248,8 @@ locret_131D4:				; CODE XREF: sub_13102+CEj
 ; End of function sub_13102
 
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-		move.w	$C(a0),d2
-		move.w	8(a0),d3
+		move.w	y_pos(a0),d2
+		move.w	x_pos(a0),d3
 ; START	OF FUNCTION CHUNK FOR CalcRoomInFront
 
 loc_131DE:				; CODE XREF: CalcRoomInFront+66j
@@ -27266,10 +27275,10 @@ locret_13202:				; CODE XREF: CalcRoomInFront+182j
 
 ; Sonic_HitFloor:
 ChkFloorEdge:
-		move.w	8(a0),d3
-		move.w	$C(a0),d2
+		move.w	x_pos(a0),d3
+		move.w	y_pos(a0),d2
 		moveq	#0,d0
-		move.b	$16(a0),d0
+		move.b	y_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d2
 		move.l	#$FFFFD000,($FFFFF796).w
@@ -27299,12 +27308,12 @@ locret_13254:				; CODE XREF: ChkFloorEdge+4Aj
 
 ObjHitFloor:				; CODE XREF: ROM:000096A8p
 					; ROM:00009796p ...
-		move.w	8(a0),d3
+		move.w	x_pos(a0),d3
 
 ObjHitFloor2:				; CODE XREF: ROM:loc_A224p
-		move.w	$C(a0),d2
+		move.w	y_pos(a0),d2
 		moveq	#0,d0
-		move.b	$16(a0),d0
+		move.b	y_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d2
 		lea	($FFFFF768).w,a4
@@ -27326,13 +27335,13 @@ locret_1328C:				; CODE XREF: ObjHitFloor+30j
 ; START	OF FUNCTION CHUNK FOR sub_13102
 
 loc_1328E:				; CODE XREF: sub_13102+40j
-		move.w	$C(a0),d2
-		move.w	8(a0),d3
+		move.w	y_pos(a0),d2
+		move.w	x_pos(a0),d3
 		moveq	#0,d0
-		move.b	$17(a0),d0
+		move.b	x_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d2
-		move.b	$16(a0),d0
+		move.b	y_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d3
 		lea	($FFFFF768).w,a4
@@ -27340,13 +27349,13 @@ loc_1328E:				; CODE XREF: sub_13102+40j
 		move.w	#0,d6
 		bsr.w	FindWall
 		move.w	d1,-(sp)
-		move.w	$C(a0),d2
-		move.w	8(a0),d3
+		move.w	y_pos(a0),d2
+		move.w	x_pos(a0),d3
 		moveq	#0,d0
-		move.b	$17(a0),d0
+		move.b	x_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d2
-		move.b	$16(a0),d0
+		move.b	y_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d3
 		lea	($FFFFF76A).w,a4
@@ -27363,8 +27372,8 @@ loc_1328E:				; CODE XREF: sub_13102+40j
 
 sub_132EE:				; CODE XREF: Sonic_DoLevelCollision:loc_10558p
 					; Sonic_DoLevelCollision:loc_10658p ...
-		move.w	$C(a0),d2
-		move.w	8(a0),d3
+		move.w	y_pos(a0),d2
+		move.w	x_pos(a0),d3
 ; End of function sub_132EE
 
 ; START	OF FUNCTION CHUNK FOR CalcRoomInFront
@@ -27384,8 +27393,8 @@ loc_132F6:				; CODE XREF: CalcRoomInFront+82j
 
 ObjHitWallRight:			; CODE XREF: ROM:000153B2p
 					; ROM:000153D2p
-		add.w	8(a0),d3
-		move.w	$C(a0),d2
+		add.w	x_pos(a0),d3
+		move.w	y_pos(a0),d2
 		lea	($FFFFF768).w,a4
 		move.b	#0,(a4)
 		movea.w	#$10,a3
@@ -27407,14 +27416,14 @@ locret_1333E:				; CODE XREF: ObjHitWallRight+26j
 
 Sonic_DontRunOnWalls:			; CODE XREF: Sonic_DoLevelCollision:loc_105FEp
 					; Sonic_DoLevelCollision:loc_1066Ap ...
-		move.w	$C(a0),d2
-		move.w	8(a0),d3
+		move.w	y_pos(a0),d2
+		move.w	x_pos(a0),d3
 		moveq	#0,d0
-		move.b	$16(a0),d0
+		move.b	y_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d2
 		eori.w	#$F,d2
-		move.b	$17(a0),d0
+		move.b	x_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d3
 		lea	($FFFFF768).w,a4
@@ -27422,14 +27431,14 @@ Sonic_DontRunOnWalls:			; CODE XREF: Sonic_DoLevelCollision:loc_105FEp
 		move.w	#$800,d6
 		bsr.w	FindFloor
 		move.w	d1,-(sp)
-		move.w	$C(a0),d2
-		move.w	8(a0),d3
+		move.w	y_pos(a0),d2
+		move.w	x_pos(a0),d3
 		moveq	#0,d0
-		move.b	$16(a0),d0
+		move.b	y_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d2
 		eori.w	#$F,d2
-		move.b	$17(a0),d0
+		move.b	x_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d3
 		lea	($FFFFF76A).w,a4
@@ -27442,8 +27451,8 @@ Sonic_DontRunOnWalls:			; CODE XREF: Sonic_DoLevelCollision:loc_105FEp
 ; End of function Sonic_DontRunOnWalls
 
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-		move.w	$C(a0),d2
-		move.w	8(a0),d3
+		move.w	y_pos(a0),d2
+		move.w	x_pos(a0),d3
 ; START	OF FUNCTION CHUNK FOR CalcRoomInFront
 
 loc_133B0:				; CODE XREF: CalcRoomInFront+6Ej
@@ -27459,10 +27468,10 @@ loc_133B0:				; CODE XREF: CalcRoomInFront+6Ej
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 ObjHitCeiling:
-		move.w	$C(a0),d2
-		move.w	8(a0),d3
+		move.w	y_pos(a0),d2
+		move.w	x_pos(a0),d3
 		moveq	#0,d0
-		move.b	$16(a0),d0
+		move.b	y_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d2
 		eori.w	#$F,d2
@@ -27482,13 +27491,13 @@ locret_13406:				; CODE XREF: ROM:00013400j
 ; START	OF FUNCTION CHUNK FOR sub_13102
 
 loc_13408:				; CODE XREF: sub_13102+30j
-		move.w	$C(a0),d2
-		move.w	8(a0),d3
+		move.w	y_pos(a0),d2
+		move.w	x_pos(a0),d3
 		moveq	#0,d0
-		move.b	$17(a0),d0
+		move.b	x_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d2
-		move.b	$16(a0),d0
+		move.b	y_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d3
 		eori.w	#$F,d3
@@ -27497,13 +27506,13 @@ loc_13408:				; CODE XREF: sub_13102+30j
 		move.w	#$400,d6
 		bsr.w	FindWall
 		move.w	d1,-(sp)
-		move.w	$C(a0),d2
-		move.w	8(a0),d3
+		move.w	y_pos(a0),d2
+		move.w	x_pos(a0),d3
 		moveq	#0,d0
-		move.b	$17(a0),d0
+		move.b	x_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d2
-		move.b	$16(a0),d0
+		move.b	y_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d3
 		eori.w	#$F,d3
@@ -27521,8 +27530,8 @@ loc_13408:				; CODE XREF: sub_13102+30j
 
 Sonic_HitWall:				; CODE XREF: Sonic_DoLevelCollision+4Ap
 					; Sonic_DoLevelCollision:loc_105E4p ...
-		move.w	$C(a0),d2
-		move.w	8(a0),d3
+		move.w	y_pos(a0),d2
+		move.w	x_pos(a0),d3
 ; End of function Sonic_HitWall
 
 ; START	OF FUNCTION CHUNK FOR CalcRoomInFront
@@ -27540,8 +27549,8 @@ loc_13478:				; CODE XREF: CalcRoomInFront+7Ej
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 ObjHitWallLeft:
-		add.w	8(a0),d3
-		move.w	$C(a0),d2
+		add.w	x_pos(a0),d3
+		move.w	y_pos(a0),d2
 		lea	($FFFFF768).w,a4
 		move.b	#0,(a4)
 		movea.w	#$FFF0,a3
@@ -27576,12 +27585,12 @@ Obj79_Index:	dc.w Obj79_Init-Obj79_Index ; DATA XREF: ROM:Obj79_Indexo
 
 Obj79_Init:				; DATA XREF: ROM:Obj79_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj79,4(a0)
-		move.w	#$47C,2(a0)
+		move.l	#Map_Obj79,mappings(a0)
+		move.w	#$47C,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,1(a0)
-		move.b	#8,$19(a0)
-		move.b	#5,$18(a0)
+		move.b	#8,width_pixels(a0)
+		move.b	#5,priority(a0)
 		lea	($FFFFFC00).w,a2
 		moveq	#0,d0
 		move.b	$23(a0),d0
@@ -27622,13 +27631,13 @@ Obj79_Main:				; CODE XREF: ROM:00013534j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 Obj79_HitLamp:				; CODE XREF: ROM:00013566j
-		move.w	($FFFFB008).w,d0
-		sub.w	8(a0),d0
+		move.w	(MainCharacter+x_pos).w,d0
+		sub.w	x_pos(a0),d0
 		addi.w	#8,d0
 		cmpi.w	#$10,d0
 		bcc.w	locret_135CA
-		move.w	($FFFFB00C).w,d0
-		sub.w	$C(a0),d0
+		move.w	(MainCharacter+y_pos).w,d0
+		sub.w	y_pos(a0),d0
 		addi.w	#$40,d0	; '@'
 		cmpi.w	#$68,d0	; 'h'
 		bcc.s	locret_135CA
@@ -27651,7 +27660,7 @@ Obj79_AfterHit:				; DATA XREF: ROM:000134E0o
 		andi.b	#2,d0
 		lsr.b	#1,d0
 		addq.b	#1,d0
-		move.b	d0,$1A(a0)
+		move.b	d0,mapping_frame(a0)
 		rts
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
@@ -27660,8 +27669,8 @@ Obj79_AfterHit:				; DATA XREF: ROM:000134E0o
 Lamppost_StoreInfo:			; CODE XREF: ROM:000135B6p
 		move.b	$28(a0),($FFFFFE30).w
 		move.b	($FFFFFE30).w,($FFFFFE31).w
-		move.w	8(a0),($FFFFFE32).w
-		move.w	$C(a0),($FFFFFE34).w
+		move.w	x_pos(a0),($FFFFFE32).w
+		move.w	y_pos(a0),($FFFFFE34).w
 		move.w	($FFFFFE20).w,($FFFFFE36).w
 		move.b	($FFFFFE1B).w,($FFFFFE54).w
 		move.l	($FFFFFE22).w,($FFFFFE38).w
@@ -27687,8 +27696,8 @@ Lamppost_StoreInfo:			; CODE XREF: ROM:000135B6p
 
 Lamppost_LoadInfo:			; CODE XREF: LevelSizeLoad+180p
 		move.b	($FFFFFE31).w,($FFFFFE30).w
-		move.w	($FFFFFE32).w,($FFFFB008).w
-		move.w	($FFFFFE34).w,($FFFFB00C).w
+		move.w	($FFFFFE32).w,(MainCharacter+x_pos).w
+		move.w	($FFFFFE34).w,(MainCharacter+y_pos).w
 		move.w	($FFFFFE36).w,($FFFFFE20).w
 		move.b	($FFFFFE54).w,($FFFFFE1B).w
 		clr.w	($FFFFFE20).w
@@ -27765,14 +27774,14 @@ Obj7D_Main:				; DATA XREF: ROM:Obj7D_Indexo
 		moveq	#$10,d2
 		move.w	d2,d3
 		add.w	d3,d3
-		lea	($FFFFB000).w,a1
-		move.w	8(a1),d0
-		sub.w	8(a0),d0
+		lea	(MainCharacter).w,a1
+		move.w	x_pos(a1),d0
+		sub.w	x_pos(a0),d0
 		add.w	d2,d0
 		cmp.w	d3,d0
 		bcc.s	loc_13804
-		move.w	$C(a1),d1
-		sub.w	$C(a0),d1
+		move.w	y_pos(a1),d1
+		sub.w	y_pos(a0),d1
 		add.w	d2,d1
 		cmp.w	d3,d1
 		bcc.s	loc_13804
@@ -27781,13 +27790,13 @@ Obj7D_Main:				; DATA XREF: ROM:Obj7D_Indexo
 		tst.b	($FFFFF7CD).w
 		bne.s	loc_13804
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj7D,4(a0)
-		move.w	#$84B6,2(a0)
+		move.l	#Map_Obj7D,mappings(a0)
+		move.w	#$84B6,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		ori.b	#4,1(a0)
-		move.b	#0,$18(a0)
-		move.b	#$10,$19(a0)
-		move.b	$28(a0),$1A(a0)
+		move.b	#0,priority(a0)
+		move.b	#$10,width_pixels(a0)
+		move.b	$28(a0),mapping_frame(a0)
 		move.w	#$77,$30(a0) ; 'w'
 		move.w	#$C9,d0	; 'É'
 		jsr	(PlaySound_Special).l
@@ -27799,7 +27808,7 @@ Obj7D_Main:				; DATA XREF: ROM:Obj7D_Indexo
 
 loc_13804:				; CODE XREF: ROM:00013798j
 					; ROM:000137A6j ...
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	($FFFFF7DA).w,d0
 		cmpi.w	#$280,d0
@@ -27816,7 +27825,7 @@ Obj7D_Points:	dc.w	 0, 1000,  100,	   1; 0
 Obj7D_DelayDelete:			; DATA XREF: ROM:00013780o
 		subq.w	#1,$30(a0)
 		bmi.s	loc_13844
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	($FFFFF7DA).w,d0
 		cmpi.w	#$280,d0
@@ -27856,24 +27865,24 @@ S1Obj47_Index:	dc.w S1Obj47_Init-S1Obj47_Index	; DATA XREF: ROM:S1Obj47_Indexo
 
 S1Obj47_Init:				; DATA XREF: ROM:S1Obj47_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_S1Obj47,4(a0)
-		move.w	#$380,2(a0)
+		move.l	#Map_S1Obj47,mappings(a0)
+		move.w	#$380,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,1(a0)
-		move.b	#$10,$19(a0)
-		move.b	#1,$18(a0)
+		move.b	#$10,width_pixels(a0)
+		move.b	#1,priority(a0)
 		move.b	#$D7,$20(a0)
 
 S1Obj47_Main:				; DATA XREF: ROM:00013884o
 		move.b	$21(a0),d0
 		beq.w	loc_13976
-		lea	($FFFFB000).w,a1
+		lea	(MainCharacter).w,a1
 		bclr	#0,$21(a0)
 		beq.s	loc_138CA
 		bsr.s	S1Obj47_Bump
 
 loc_138CA:				; CODE XREF: ROM:000138C6j
-		lea	($FFFFB040).w,a1
+		lea	(Sidekick).w,a1
 		bclr	#1,$21(a0)
 		beq.s	loc_138D8
 		bsr.s	S1Obj47_Bump
@@ -27887,23 +27896,23 @@ loc_138D8:				; CODE XREF: ROM:000138D4j
 
 S1Obj47_Bump:				; CODE XREF: ROM:000138C8p
 					; ROM:000138D6p
-		move.w	8(a0),d1
-		move.w	$C(a0),d2
-		sub.w	8(a1),d1
-		sub.w	$C(a1),d2
+		move.w	x_pos(a0),d1
+		move.w	y_pos(a0),d2
+		sub.w	x_pos(a1),d1
+		sub.w	y_pos(a1),d2
 		jsr	(CalcAngle).l
 		jsr	(CalcSine).l
 		muls.w	#$F900,d1
 		asr.l	#8,d1
-		move.w	d1,$10(a1)
+		move.w	d1,x_vel(a1)
 		muls.w	#$F900,d0
 		asr.l	#8,d0
-		move.w	d0,$12(a1)
-		bset	#1,$22(a1)
-		bclr	#4,$22(a1)
-		bclr	#5,$22(a1)
+		move.w	d0,y_vel(a1)
+		bset	#1,status(a1)
+		bclr	#4,status(a1)
+		bclr	#5,status(a1)
 		clr.b	$3C(a1)
-		move.b	#1,$1C(a0)
+		move.b	#1,anim(a0)
 		move.w	#$B4,d0	; '´'
 		jsr	(PlaySound_Special).l
 		lea	($FFFFFC00).w,a2
@@ -27920,9 +27929,9 @@ loc_1394E:				; CODE XREF: S1Obj47_Bump+60j
 		bsr.w	SingleObjLoad
 		bne.s	locret_13974
 		move.b	#$29,0(a1) ; ')'
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
-		move.b	#4,$1A(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
+		move.b	#4,mapping_frame(a1)
 
 locret_13974:				; CODE XREF: S1Obj47_Bump+68j
 					; S1Obj47_Bump+7Aj
@@ -27975,58 +27984,58 @@ S1Obj64_Index:	dc.w S1Obj64_Init-S1Obj64_Index	; DATA XREF: ROM:S1Obj64_Indexo
 
 S1Obj64_Init:				; DATA XREF: ROM:S1Obj64_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj0A_Bubbles,4(a0)
-		move.w	#$8348,2(a0)
+		move.l	#Map_Obj0A_Bubbles,mappings(a0)
+		move.w	#$8348,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#$84,1(a0)
-		move.b	#$10,$19(a0)
-		move.b	#1,$18(a0)
+		move.b	#$10,width_pixels(a0)
+		move.b	#1,priority(a0)
 		move.b	$28(a0),d0
 		bpl.s	loc_13A32
 		addq.b	#8,routine(a0)
 		andi.w	#$7F,d0	; ''
 		move.b	d0,$32(a0)
 		move.b	d0,$33(a0)
-		move.b	#6,$1C(a0)
+		move.b	#6,anim(a0)
 		bra.w	S1Obj64_BblMaker
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_13A32:				; CODE XREF: ROM:00013A16j
-		move.b	d0,$1C(a0)
-		move.w	8(a0),$30(a0)
-		move.w	#$FF78,$12(a0)
+		move.b	d0,anim(a0)
+		move.w	x_pos(a0),$30(a0)
+		move.w	#$FF78,y_vel(a0)
 		jsr	(RandomNumber).l
-		move.b	d0,$26(a0)
+		move.b	d0,angle(a0)
 
 S1Obj64_Animate:			; DATA XREF: ROM:000139E0o
 		lea	(Ani_S1Obj64).l,a1
 		jsr	AnimateSprite
-		cmpi.b	#6,$1A(a0)
+		cmpi.b	#6,mapping_frame(a0)
 		bne.s	S1Obj64_ChkWater
 		move.b	#1,$2E(a0)
 
 S1Obj64_ChkWater:			; CODE XREF: ROM:00013A5Ej
 					; DATA XREF: ROM:000139E2o
 		move.w	($FFFFF646).w,d0
-		cmp.w	$C(a0),d0
+		cmp.w	y_pos(a0),d0
 		bcs.s	loc_13A7E
 
 loc_13A70:				; CODE XREF: ROM:00013AECj
 					; ROM:00013B06j
 		move.b	#6,routine(a0)
-		addq.b	#3,$1C(a0)
+		addq.b	#3,anim(a0)
 		bra.w	S1Obj64_Display
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_13A7E:				; CODE XREF: ROM:00013A6Ej
-		move.b	$26(a0),d0
-		addq.b	#1,$26(a0)
+		move.b	angle(a0),d0
+		addq.b	#1,angle(a0)
 		andi.w	#$7F,d0	; ''
 		lea	(Obj0A_WobbleData).l,a1
 		move.b	(a1,d0.w),d0
 		ext.w	d0
 		add.w	$30(a0),d0
-		move.w	d0,8(a0)
+		move.w	d0,x_pos(a0)
 		tst.b	$2E(a0)
 		beq.s	loc_13B0A
 		bsr.w	S1Obj64_ChkSonic
@@ -28034,21 +28043,21 @@ loc_13A7E:				; CODE XREF: ROM:00013A6Ej
 		bsr.w	ResumeMusic
 		move.w	#$AD,d0	; '­'
 		jsr	(PlaySound_Special).l
-		lea	($FFFFB000).w,a1
-		clr.w	$10(a1)
-		clr.w	$12(a1)
+		lea	(MainCharacter).w,a1
+		clr.w	x_vel(a1)
+		clr.w	y_vel(a1)
 		clr.w	$14(a1)
-		move.b	#$15,$1C(a1)
+		move.b	#$15,anim(a1)
 		move.w	#$23,$2E(a1) ; '#'
 		move.b	#0,$3C(a1)
-		bclr	#5,$22(a1)
-		bclr	#4,$22(a1)
-		btst	#2,$22(a1)
+		bclr	#5,status(a1)
+		bclr	#4,status(a1)
+		btst	#2,status(a1)
 		beq.w	loc_13A70
-		bclr	#2,$22(a1)
-		move.b	#$13,$16(a1)
-		move.b	#9,$17(a1)
-		subq.w	#5,$C(a1)
+		bclr	#2,status(a1)
+		move.b	#$13,y_radius(a1)
+		move.b	#9,x_radius(a1)
+		subq.w	#5,y_pos(a1)
 		bra.w	loc_13A70
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -28086,7 +28095,7 @@ S1Obj64_BblMaker:			; CODE XREF: ROM:00013A2Ej
 		tst.w	$36(a0)
 		bne.s	loc_13BA4
 		move.w	($FFFFF646).w,d0
-		cmp.w	$C(a0),d0
+		cmp.w	y_pos(a0),d0
 		bcc.w	loc_13C50
 		tst.b	1(a0)
 		bpl.w	loc_13C50
@@ -28125,12 +28134,12 @@ loc_13BAC:				; CODE XREF: ROM:loc_13BA2j
 		bsr.w	SingleObjLoad
 		bne.s	loc_13C28
 		move.b	#$64,0(a1) ; 'd'
-		move.w	8(a0),8(a1)
+		move.w	x_pos(a0),x_pos(a1)
 		jsr	(RandomNumber).l
 		andi.w	#$F,d0
 		subq.w	#8,d0
-		add.w	d0,8(a1)
-		move.w	$C(a0),$C(a1)
+		add.w	d0,x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
 		moveq	#0,d0
 		move.b	$34(a0),d0
 		movea.l	$3C(a0),a2
@@ -28168,13 +28177,13 @@ loc_13C44:				; CODE XREF: ROM:00013B60j
 
 loc_13C50:				; CODE XREF: ROM:00013B50j
 					; ROM:00013B58j
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	($FFFFF7DA).w,d0
 		cmpi.w	#$280,d0
 		bhi.w	DeleteObject
 		move.w	($FFFFF646).w,d0
-		cmp.w	$C(a0),d0
+		cmp.w	y_pos(a0),d0
 		bcs.w	DisplaySprite
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -28187,17 +28196,17 @@ S1Obj64_BblTypes:dc.b	0,  1,	0,  0,	0,  0,	1,  0,	0; 0 ; DATA XREF: ROM:00013B84
 S1Obj64_ChkSonic:			; CODE XREF: ROM:00013AA4p
 		tst.b	($FFFFF7C8).w
 		bmi.s	loc_13CBE
-		lea	($FFFFB000).w,a1
-		move.w	8(a1),d0
-		move.w	8(a0),d1
+		lea	(MainCharacter).w,a1
+		move.w	x_pos(a1),d0
+		move.w	x_pos(a0),d1
 		subi.w	#$10,d1
 		cmp.w	d0,d1
 		bcc.s	loc_13CBE
 		addi.w	#$20,d1	; ' '
 		cmp.w	d0,d1
 		bcs.s	loc_13CBE
-		move.w	$C(a1),d0
-		move.w	$C(a0),d1
+		move.w	y_pos(a1),d0
+		move.w	y_pos(a0),d1
 		cmp.w	d0,d1
 		bcc.s	loc_13CBE
 		addi.w	#$10,d1
@@ -28327,18 +28336,18 @@ Obj03_Index:	dc.w Obj03_Init-Obj03_Index ; DATA XREF: ROM:Obj03_Indexo
 
 Obj03_Init:				; DATA XREF: ROM:Obj03_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj03,4(a0)
-		move.w	#$26BC,2(a0)
+		move.l	#Map_Obj03,mappings(a0)
+		move.w	#$26BC,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,1(a0)
-		move.b	#$10,$19(a0)
-		move.b	#5,$18(a0)
+		move.b	#$10,width_pixels(a0)
+		move.b	#5,priority(a0)
 		move.b	$28(a0),d0
 		btst	#2,d0
 		beq.s	loc_13EA4
 		addq.b	#2,routine(a0)
 		andi.w	#7,d0
-		move.b	d0,$1A(a0)
+		move.b	d0,mapping_frame(a0)
 		andi.w	#3,d0
 		add.w	d0,d0
 		move.w	Obj03_Data(pc,d0.w),$32(a0)
@@ -28349,7 +28358,7 @@ Obj03_Data:	dc.w   $20,  $40,  $80,	$100; 0
 
 loc_13EA4:				; CODE XREF: ROM:00013E7Ej
 		andi.w	#3,d0
-		move.b	d0,$1A(a0)
+		move.b	d0,mapping_frame(a0)
 		add.w	d0,d0
 		move.w	Obj03_Data(pc,d0.w),$32(a0)
 
@@ -28357,11 +28366,11 @@ loc_13EB4:				; DATA XREF: ROM:00013E4Ao
 		tst.w	(Debug_placement_mode).w
 		bne.w	locret_13FB4
 		move.w	$30(a0),d5
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		move.w	d0,d1
 		subq.w	#8,d0
 		addq.w	#8,d1
-		move.w	$C(a0),d2
+		move.w	y_pos(a0),d2
 		move.w	d2,d3
 		move.w	$32(a0),d4
 		sub.w	d4,d2
@@ -28373,12 +28382,12 @@ loc_13EE0:				; CODE XREF: ROM:00013FAAj
 		move.l	(a2)+,d4
 		beq.w	loc_13FA8
 		movea.l	d4,a1
-		move.w	8(a1),d4
+		move.w	x_pos(a1),d4
 		cmp.w	d0,d4
 		bcs.w	loc_13F10
 		cmp.w	d1,d4
 		bcc.w	loc_13F10
-		move.w	$C(a1),d4
+		move.w	y_pos(a1),d4
 		cmp.w	d2,d4
 		bcs.w	loc_13F10
 		cmp.w	d3,d4
@@ -28394,12 +28403,12 @@ loc_13F10:				; CODE XREF: ROM:00013EEEj
 		swap	d0
 		move.b	$28(a0),d0
 		bpl.s	loc_13F26
-		btst	#1,$22(a1)
+		btst	#1,status(a1)
 		bne.s	loc_13FA2
 
 loc_13F26:				; CODE XREF: ROM:00013F1Cj
-		move.w	8(a1),d4
-		cmp.w	8(a0),d4
+		move.w	x_pos(a1),d4
+		cmp.w	x_pos(a0),d4
 		bcs.s	loc_13F62
 		move.b	#$C,$3E(a1)
 		move.b	#$D,$3F(a1)
@@ -28409,10 +28418,10 @@ loc_13F26:				; CODE XREF: ROM:00013F1Cj
 		move.b	#$F,$3F(a1)
 
 loc_13F4E:				; CODE XREF: ROM:00013F40j
-		bclr	#7,2(a1)
+		bclr	#7,art_tile(a1)
 		btst	#5,d0
 		beq.s	loc_13F92
-		bset	#7,2(a1)
+		bset	#7,art_tile(a1)
 		bra.s	loc_13F92
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -28425,10 +28434,10 @@ loc_13F62:				; CODE XREF: ROM:00013F2Ej
 		move.b	#$F,$3F(a1)
 
 loc_13F80:				; CODE XREF: ROM:00013F72j
-		bclr	#7,2(a1)
+		bclr	#7,art_tile(a1)
 		btst	#6,d0
 		beq.s	loc_13F92
-		bset	#7,2(a1)
+		bset	#7,art_tile(a1)
 
 loc_13F92:				; CODE XREF: ROM:00013F58j
 					; ROM:00013F60j ...
@@ -28458,12 +28467,12 @@ loc_13FB6:				; CODE XREF: ROM:00013E98j
 		tst.w	(Debug_placement_mode).w
 		bne.w	locret_140B6
 		move.w	$30(a0),d5
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		move.w	d0,d1
 		move.w	$32(a0),d4
 		sub.w	d4,d0
 		add.w	d4,d1
-		move.w	$C(a0),d2
+		move.w	y_pos(a0),d2
 		move.w	d2,d3
 		subq.w	#8,d2
 		addq.w	#8,d3
@@ -28474,12 +28483,12 @@ loc_13FE2:				; CODE XREF: ROM:000140ACj
 		move.l	(a2)+,d4
 		beq.w	loc_140AA
 		movea.l	d4,a1
-		move.w	8(a1),d4
+		move.w	x_pos(a1),d4
 		cmp.w	d0,d4
 		bcs.w	loc_14012
 		cmp.w	d1,d4
 		bcc.w	loc_14012
-		move.w	$C(a1),d4
+		move.w	y_pos(a1),d4
 		cmp.w	d2,d4
 		bcs.w	loc_14012
 		cmp.w	d3,d4
@@ -28495,12 +28504,12 @@ loc_14012:				; CODE XREF: ROM:00013FF0j
 		swap	d0
 		move.b	$28(a0),d0
 		bpl.s	loc_14028
-		btst	#1,$22(a1)
+		btst	#1,status(a1)
 		bne.s	loc_140A4
 
 loc_14028:				; CODE XREF: ROM:0001401Ej
-		move.w	$C(a1),d4
-		cmp.w	$C(a0),d4
+		move.w	y_pos(a1),d4
+		cmp.w	y_pos(a0),d4
 		bcs.s	loc_14064
 		move.b	#$C,$3E(a1)
 		move.b	#$D,$3F(a1)
@@ -28510,10 +28519,10 @@ loc_14028:				; CODE XREF: ROM:0001401Ej
 		move.b	#$F,$3F(a1)
 
 loc_14050:				; CODE XREF: ROM:00014042j
-		bclr	#7,2(a1)
+		bclr	#7,art_tile(a1)
 		btst	#5,d0
 		beq.s	loc_14094
-		bset	#7,2(a1)
+		bset	#7,art_tile(a1)
 		bra.s	loc_14094
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -28526,10 +28535,10 @@ loc_14064:				; CODE XREF: ROM:00014030j
 		move.b	#$F,$3F(a1)
 
 loc_14082:				; CODE XREF: ROM:00014074j
-		bclr	#7,2(a1)
+		bclr	#7,art_tile(a1)
 		btst	#6,d0
 		beq.s	loc_14094
-		bset	#7,2(a1)
+		bset	#7,art_tile(a1)
 
 loc_14094:				; CODE XREF: ROM:0001405Aj
 					; ROM:00014062j ...
@@ -28553,9 +28562,9 @@ loc_140AA:				; CODE XREF: ROM:00013FE4j
 locret_140B6:				; CODE XREF: ROM:00013FBAj
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-dword_140B8:	dc.l $FFFFB000		; DATA XREF: ROM:00013ED8o
+dword_140B8:	dc.l MainCharacter		; DATA XREF: ROM:00013ED8o
 					; ROM:00013FDAo
-		dc.l $FFFFB040
+		dc.l Sidekick
 		dc.l 0
 		dc.l 0
 		dc.l 0
@@ -28584,12 +28593,12 @@ Obj0B_Index:	dc.w loc_141C8-Obj0B_Index ; DATA XREF:	ROM:Obj0B_Indexo
 
 loc_141C8:				; DATA XREF: ROM:Obj0B_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj0B,4(a0)
-		move.w	#$E000,2(a0)
+		move.l	#Map_Obj0B,mappings(a0)
+		move.w	#$E000,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		ori.b	#4,1(a0)
-		move.b	#$10,$19(a0)
-		move.b	#4,$18(a0)
+		move.b	#$10,width_pixels(a0)
+		move.b	#4,priority(a0)
 		moveq	#0,d0
 		move.b	$28(a0),d0
 		andi.w	#$F0,d0	; 'ğ'
@@ -28615,34 +28624,34 @@ loc_1422A:				; DATA XREF: ROM:000141C6o
 		subq.w	#1,$30(a0)
 		bpl.s	loc_14248
 		move.w	#$7F,$30(a0) ; ''
-		tst.b	$1C(a0)
+		tst.b	anim(a0)
 		beq.s	loc_14242
 		move.w	$32(a0),$30(a0)
 
 loc_14242:				; CODE XREF: ROM:0001423Aj
-		bchg	#0,$1C(a0)
+		bchg	#0,anim(a0)
 
 loc_14248:				; CODE XREF: ROM:0001422Ej
 		lea	(off_1428A).l,a1
 		jsr	AnimateSprite
 
 loc_14254:				; CODE XREF: ROM:00014224j
-		tst.b	$1A(a0)
+		tst.b	mapping_frame(a0)
 		bne.s	loc_1426E
 		moveq	#0,d1
-		move.b	$19(a0),d1
+		move.b	width_pixels(a0),d1
 		moveq	#$11,d3
-		move.w	8(a0),d4
+		move.w	x_pos(a0),d4
 		bsr.w	sub_F78A
 		bra.w	MarkObjGone
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_1426E:				; CODE XREF: ROM:00014258j
-		btst	#3,$22(a0)
+		btst	#3,status(a0)
 		beq.s	loc_14286
-		lea	($FFFFB000).w,a1
-		bclr	#3,$22(a1)
-		bclr	#3,$22(a0)
+		lea	(MainCharacter).w,a1
+		bclr	#3,status(a1)
+		bclr	#3,status(a0)
 
 loc_14286:				; CODE XREF: ROM:00014274j
 		bra.w	MarkObjGone
@@ -28684,13 +28693,13 @@ Obj0C_Index:	dc.w Obj0C_Init-Obj0C_Index ; DATA XREF: ROM:Obj0C_Indexo
 
 Obj0C_Init:				; DATA XREF: ROM:Obj0C_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj0C,4(a0)
-		move.w	#$E418,2(a0)
+		move.l	#Map_Obj0C,mappings(a0)
+		move.w	#$E418,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		ori.b	#4,1(a0)
-		move.b	#$10,$19(a0)
-		move.b	#4,$18(a0)
-		move.w	$C(a0),d0
+		move.b	#$10,width_pixels(a0)
+		move.b	#4,priority(a0)
+		move.w	y_pos(a0),d0
 		subi.w	#$10,d0
 		move.w	d0,$3A(a0)
 		moveq	#0,d0
@@ -28729,7 +28738,7 @@ loc_1436E:				; CODE XREF: ROM:0001435Ej
 		asr.w	#6,d0
 		subi.w	#$10,d0
 		add.w	$3A(a0),d0
-		move.w	d0,$C(a0)
+		move.w	d0,y_pos(a0)
 		bra.s	loc_143B2
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -28748,13 +28757,13 @@ loc_143A0:				; CODE XREF: ROM:00014394j
 		addi.w	#8,d1
 		asr.w	#4,d1
 		add.w	$3A(a0),d1
-		move.w	d1,$C(a0)
+		move.w	d1,y_pos(a0)
 
 loc_143B2:				; CODE XREF: ROM:0001438Aj
 		moveq	#0,d1
-		move.b	$19(a0),d1
+		move.b	width_pixels(a0),d1
 		moveq	#9,d3
-		move.w	8(a0),d4
+		move.w	x_pos(a0),d4
 		bsr.w	sub_F78A
 		bra.w	MarkObjGone
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -28787,20 +28796,20 @@ Obj12_Index:	dc.w Obj12_Init-Obj12_Index ; DATA XREF: ROM:Obj12_Indexo
 
 Obj12_Init:				; DATA XREF: ROM:Obj12_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj12,4(a0)
-		move.w	#$6392,2(a0)
+		move.l	#Map_Obj12,mappings(a0)
+		move.w	#$6392,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,1(a0)
-		move.b	#$20,$19(a0) ; ' '
-		move.b	#4,$18(a0)
+		move.b	#$20,width_pixels(a0) ; ' '
+		move.b	#4,priority(a0)
 
 Obj12_Display:				; DATA XREF: ROM:000143ECo
 		move.w	#$20,d1	; ' '
 		move.w	#$10,d2
 		move.w	#$10,d3
-		move.w	8(a0),d4
+		move.w	x_pos(a0),d4
 		bsr.w	SolidObject
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	($FFFFF7DA).w,d0
 		cmpi.w	#$280,d0
@@ -28832,25 +28841,25 @@ Obj13_Index:	dc.w loc_1446C-Obj13_Index ; DATA XREF:	ROM:Obj13_Indexo
 
 loc_1446C:				; DATA XREF: ROM:Obj13_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj13,4(a0)
-		move.w	#$E315,2(a0)
+		move.l	#Map_Obj13,mappings(a0)
+		move.w	#$E315,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,1(a0)
-		move.b	#$10,$19(a0)
-		move.b	#1,$18(a0)
-		move.b	#$12,$1A(a0)
+		move.b	#$10,width_pixels(a0)
+		move.b	#1,priority(a0)
+		move.b	#$12,mapping_frame(a0)
 		bsr.s	sub_144D4
-		move.b	#$A0,$16(a1)
+		move.b	#$A0,y_radius(a1)
 		bset	#4,1(a1)
 		move.l	a1,$38(a0)
-		move.w	$C(a0),$34(a0)
-		move.w	$C(a0),$36(a0)
+		move.w	y_pos(a0),$34(a0)
+		move.w	y_pos(a0),$36(a0)
 		cmpi.b	#$10,$28(a0)
 		bcs.s	loc_14518
 		bsr.s	sub_144D4
 		move.l	a1,$3C(a0)
-		move.w	$C(a0),$C(a1)
-		addi.w	#$98,$C(a1) ; '˜'
+		move.w	y_pos(a0),y_pos(a1)
+		addi.w	#$98,y_pos(a1) ; '˜'
 		bra.s	loc_14518
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
@@ -28862,14 +28871,14 @@ sub_144D4:				; CODE XREF: ROM:0001449Ap
 		bne.s	locret_14516
 		move.b	#$13,0(a1)
 		addq.b	#4,routine(a1)
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
-		move.l	#Map_Obj13,4(a1)
-		move.w	#$E315,2(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
+		move.l	#Map_Obj13,mappings(a1)
+		move.w	#$E315,art_tile(a1)
 		bsr.w	Adjust2PArtPointer2
 		move.b	#4,1(a1)
-		move.b	#$10,$19(a1)
-		move.b	#1,$18(a1)
+		move.b	#$10,width_pixels(a1)
+		move.b	#1,priority(a1)
 
 locret_14516:				; CODE XREF: sub_144D4+6j
 		rts
@@ -28885,12 +28894,12 @@ loc_14518:				; CODE XREF: ROM:000144BEj
 		subi.w	#$78,d0	; 'x'
 		lsl.w	#4,d1
 		add.w	d1,d0
-		move.w	d0,$C(a0)
+		move.w	d0,y_pos(a0)
 		move.w	d0,$34(a0)
 
 loc_14532:				; DATA XREF: ROM:00014468o
 		movea.l	$38(a0),a1
-		move.b	#$12,$1A(a0)
+		move.b	#$12,mapping_frame(a0)
 		move.w	$34(a0),d0
 		move.w	($FFFFF646).w,d1
 		cmp.w	d0,d1
@@ -28898,7 +28907,7 @@ loc_14532:				; DATA XREF: ROM:00014468o
 		move.w	d1,d0
 
 loc_1454A:				; CODE XREF: ROM:00014546j
-		move.w	d0,$C(a0)
+		move.w	d0,y_pos(a0)
 		sub.w	$36(a0),d0
 		addi.w	#$80,d0	; '€'
 		bmi.s	loc_1459C
@@ -28909,7 +28918,7 @@ loc_1454A:				; CODE XREF: ROM:00014546j
 		moveq	#$F,d0
 
 loc_14564:				; CODE XREF: ROM:00014560j
-		move.b	d0,$1A(a1)
+		move.b	d0,mapping_frame(a1)
 		cmpi.b	#$10,$28(a0)
 		bcs.s	loc_14584
 		movea.l	$3C(a0),a1
@@ -28919,10 +28928,10 @@ loc_14564:				; CODE XREF: ROM:00014560j
 
 loc_1457C:				; CODE XREF: ROM:00014578j
 		addi.w	#$13,d1
-		move.b	d1,$1A(a1)
+		move.b	d1,mapping_frame(a1)
 
 loc_14584:				; CODE XREF: ROM:0001456Ej
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	($FFFFF7DA).w,d0
 		cmpi.w	#$280,d0
@@ -28932,9 +28941,9 @@ loc_14584:				; CODE XREF: ROM:0001456Ej
 
 loc_1459C:				; CODE XREF: ROM:00014556j
 		moveq	#$13,d0
-		move.b	d0,$1A(a0)
-		move.b	d0,$1A(a1)
-		move.w	8(a0),d0
+		move.b	d0,mapping_frame(a0)
+		move.b	d0,mapping_frame(a1)
+		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	($FFFFF7DA).w,d0
 		cmpi.w	#$280,d0
@@ -28943,7 +28952,7 @@ loc_1459C:				; CODE XREF: ROM:00014556j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_145BC:				; DATA XREF: ROM:0001446Ao
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	($FFFFF7DA).w,d0
 		cmpi.w	#$280,d0
@@ -29124,7 +29133,7 @@ Obj06:					; DATA XREF: ROM:Obj_Indexo
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_14986:				; CODE XREF: ROM:00014982j
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	($FFFFF7DA).w,d0
 		cmpi.w	#$280,d0
@@ -29142,28 +29151,28 @@ Obj06_Index:	dc.w Obj06_Init-Obj06_Index ; DATA XREF: ROM:Obj06_Indexo
 
 Obj06_Init:				; DATA XREF: ROM:Obj06_Indexo
 		addq.b	#2,routine(a0)
-		move.b	#$D0,$19(a0)
+		move.b	#$D0,width_pixels(a0)
 
 Obj06_Main:				; DATA XREF: ROM:000149A2o
-		lea	($FFFFB000).w,a1
+		lea	(MainCharacter).w,a1
 		moveq	#3,d6
 		bsr.s	sub_149BC
-		lea	($FFFFB040).w,a1
+		lea	(Sidekick).w,a1
 		addq.b	#1,d6
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
 
 
 sub_149BC:				; CODE XREF: ROM:000149B4p
-		btst	d6,$22(a0)
+		btst	d6,status(a0)
 		bne.w	loc_14A56
-		btst	#1,$22(a1)
+		btst	#1,status(a1)
 		bne.w	locret_14A54
-		btst	#3,$22(a1)
+		btst	#3,status(a1)
 		bne.s	loc_14A16
-		move.w	8(a1),d0
-		sub.w	8(a0),d0
-		tst.w	$10(a1)
+		move.w	x_pos(a1),d0
+		sub.w	x_pos(a0),d0
+		tst.w	x_vel(a1)
 		bmi.s	loc_149F2
 		cmpi.w	#$FF40,d0
 		bgt.s	locret_14A54
@@ -29179,8 +29188,8 @@ loc_149F2:				; CODE XREF: sub_149BC+26j
 		bgt.s	locret_14A54
 
 loc_149FE:				; CODE XREF: sub_149BC+34j
-		move.w	$C(a1),d1
-		sub.w	$C(a0),d1
+		move.w	y_pos(a1),d1
+		sub.w	y_pos(a0),d1
 		subi.w	#$10,d1
 		cmpi.w	#$30,d1	; '0'
 		bcc.s	locret_14A54
@@ -29189,9 +29198,9 @@ loc_149FE:				; CODE XREF: sub_149BC+34j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_14A16:				; CODE XREF: sub_149BC+18j
-		move.w	8(a1),d0
-		sub.w	8(a0),d0
-		tst.w	$10(a1)
+		move.w	x_pos(a1),d0
+		sub.w	x_pos(a0),d0
+		tst.w	x_vel(a1)
 		bmi.s	loc_14A32
 		cmpi.w	#$FF50,d0
 		bgt.s	locret_14A54
@@ -29207,8 +29216,8 @@ loc_14A32:				; CODE XREF: sub_149BC+66j
 		bgt.s	locret_14A54
 
 loc_14A3E:				; CODE XREF: sub_149BC+74j
-		move.w	$C(a1),d1
-		sub.w	$C(a0),d1
+		move.w	y_pos(a1),d1
+		sub.w	y_pos(a0),d1
 		subi.w	#$10,d1
 		cmpi.w	#$30,d1	; '0'
 		bcc.s	locret_14A54
@@ -29227,10 +29236,10 @@ loc_14A56:				; CODE XREF: sub_149BC+4j
 loc_14A5E:				; CODE XREF: sub_149BC+9Ej
 		cmpi.w	#$600,d0
 		bcs.s	loc_14A80
-		btst	#1,$22(a1)
+		btst	#1,status(a1)
 		bne.s	loc_14A80
-		move.w	8(a1),d0
-		sub.w	8(a0),d0
+		move.w	x_pos(a1),d0
+		sub.w	x_pos(a0),d0
 		addi.w	#$D0,d0	; 'Ğ'
 		bmi.s	loc_14A80
 		cmpi.w	#$1A0,d0
@@ -29238,25 +29247,25 @@ loc_14A5E:				; CODE XREF: sub_149BC+9Ej
 
 loc_14A80:				; CODE XREF: sub_149BC+A6j
 					; sub_149BC+AEj ...
-		bclr	#3,$22(a1)
-		bclr	d6,$22(a0)
+		bclr	#3,status(a1)
+		bclr	d6,status(a0)
 		move.b	#0,$2C(a1)
 		move.b	#4,$2D(a1)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_14A98:				; CODE XREF: sub_149BC+C2j
-		btst	#3,$22(a1)
+		btst	#3,status(a1)
 		beq.s	locret_14A54
 		move.b	Obj06_PlayerDeltaYArray(pc,d0.w),d1
 		ext.w	d1
-		move.w	$C(a0),d2
+		move.w	y_pos(a0),d2
 		add.w	d1,d2
 		moveq	#0,d1
-		move.b	$16(a1),d1
+		move.b	y_radius(a1),d1
 		subi.w	#$13,d1
 		sub.w	d1,d2
-		move.w	d2,$C(a1)
+		move.w	d2,y_pos(a1)
 		lsr.w	#3,d0
 		andi.w	#$3F,d0	; '?'
 		move.b	Obj06_PlayerAngleArray(pc,d0.w),$27(a1)
@@ -29332,41 +29341,41 @@ Obj14_Index:	dc.w loc_14CD2-Obj14_Index ; DATA XREF:	ROM:Obj14_Indexo
 
 loc_14CD2:				; DATA XREF: ROM:Obj14_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_obj14,4(a0)
-		move.w	#$3CE,2(a0)
+		move.l	#Map_obj14,mappings(a0)
+		move.w	#$3CE,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		ori.b	#4,1(a0)
-		move.b	#4,$18(a0)
-		move.b	#$30,$19(a0) ; '0'
-		move.w	8(a0),$30(a0)
+		move.b	#4,priority(a0)
+		move.b	#$30,width_pixels(a0) ; '0'
+		move.w	x_pos(a0),$30(a0)
 		tst.b	$28(a0)
 		bne.s	loc_14D2C
 		bsr.w	SingleObjLoad2
 		bne.s	loc_14D2C
 		move.b	#$14,0(a1)
 		addq.b	#6,routine(a1)
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
-		move.b	$22(a0),$22(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
+		move.b	status(a0),status(a1)
 		move.l	a0,$3C(a1)
 
 loc_14D2C:				; CODE XREF: ROM:00014D04j
 					; ROM:00014D0Aj
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		beq.s	loc_14D3A
-		move.b	#2,$1A(a0)
+		move.b	#2,mapping_frame(a0)
 
 loc_14D3A:				; CODE XREF: ROM:00014D32j
-		move.b	$1A(a0),$3A(a0)
+		move.b	mapping_frame(a0),$3A(a0)
 
 loc_14D40:				; DATA XREF: ROM:00014CC8o
 		move.b	$3A(a0),d1
-		btst	#3,$22(a0)
+		btst	#3,status(a0)
 		beq.s	loc_14D9A
 		moveq	#2,d1
-		lea	($FFFFB000).w,a1
-		move.w	8(a0),d0
-		sub.w	8(a1),d0
+		lea	(MainCharacter).w,a1
+		move.w	x_pos(a0),d0
+		sub.w	x_pos(a1),d0
 		bcc.s	loc_14D60
 		neg.w	d0
 		moveq	#0,d1
@@ -29377,12 +29386,12 @@ loc_14D60:				; CODE XREF: ROM:00014D5Aj
 		moveq	#1,d1
 
 loc_14D68:				; CODE XREF: ROM:00014D64j
-		btst	#4,$22(a0)
+		btst	#4,status(a0)
 		beq.s	loc_14DBE
 		moveq	#2,d2
-		lea	($FFFFB040).w,a1
-		move.w	8(a0),d0
-		sub.w	8(a1),d0
+		lea	(Sidekick).w,a1
+		move.w	x_pos(a0),d0
+		sub.w	x_pos(a1),d0
 		bcc.s	loc_14D84
 		neg.w	d0
 		moveq	#0,d2
@@ -29404,12 +29413,12 @@ loc_14D96:				; CODE XREF: ROM:00014D92j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_14D9A:				; CODE XREF: ROM:00014D4Aj
-		btst	#4,$22(a0)
+		btst	#4,status(a0)
 		beq.s	loc_14DBE
 		moveq	#2,d1
-		lea	($FFFFB040).w,a1
-		move.w	8(a0),d0
-		sub.w	8(a1),d0
+		lea	(Sidekick).w,a1
+		move.w	x_pos(a0),d0
+		sub.w	x_pos(a1),d0
 		bcc.s	loc_14DB6
 		neg.w	d0
 		moveq	#0,d1
@@ -29423,16 +29432,16 @@ loc_14DBE:				; CODE XREF: ROM:00014D6Ej
 					; ROM:00014D98j ...
 		bsr.w	sub_14E10
 		lea	(byte_14FFE).l,a2
-		btst	#0,$1A(a0)
+		btst	#0,mapping_frame(a0)
 		beq.s	loc_14DD6
 		lea	(byte_1502F).l,a2
 
 loc_14DD6:				; CODE XREF: ROM:00014DCEj
-		lea	($FFFFB000).w,a1
-		move.w	$12(a1),$38(a0)
-		move.w	8(a0),-(sp)
+		lea	(MainCharacter).w,a1
+		move.w	y_vel(a1),$38(a0)
+		move.w	x_pos(a0),-(sp)
 		moveq	#0,d1
-		move.b	$19(a0),d1
+		move.b	width_pixels(a0),d1
 		moveq	#8,d3
 		move.w	(sp)+,d4
 		bra.w	sub_F7DC
@@ -29442,9 +29451,9 @@ locret_14DF2:				; DATA XREF: ROM:00014CCAo
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		moveq	#2,d1
-		lea	($FFFFB000).w,a1
-		move.w	8(a0),d0
-		sub.w	8(a1),d0
+		lea	(MainCharacter).w,a1
+		move.w	x_pos(a0),d0
+		sub.w	x_pos(a1),d0
 		bcc.s	loc_14E08
 		neg.w	d0
 		moveq	#0,d1
@@ -29459,7 +29468,7 @@ loc_14E08:				; CODE XREF: ROM:00014E02j
 
 sub_14E10:				; CODE XREF: ROM:loc_14DBEp
 					; ROM:00014E0Cj
-		move.b	$1A(a0),d0
+		move.b	mapping_frame(a0),d0
 		cmp.b	d1,d0
 		beq.s	locret_14E3A
 		bcc.s	loc_14E1C
@@ -29467,10 +29476,10 @@ sub_14E10:				; CODE XREF: ROM:loc_14DBEp
 
 loc_14E1C:				; CODE XREF: sub_14E10+8j
 		subq.b	#1,d0
-		move.b	d0,$1A(a0)
+		move.b	d0,mapping_frame(a0)
 		move.b	d1,$3A(a0)
 		bclr	#0,1(a0)
-		btst	#1,$1A(a0)
+		btst	#1,mapping_frame(a0)
 		beq.s	locret_14E3A
 		bset	#0,1(a0)
 
@@ -29483,21 +29492,21 @@ locret_14E3A:				; CODE XREF: sub_14E10+6j
 
 loc_14E3C:				; DATA XREF: ROM:00014CCCo
 		addq.b	#2,routine(a0)
-		move.l	#Map_obj14b,4(a0)
-		move.w	#$3CE,2(a0)
+		move.l	#Map_obj14b,mappings(a0)
+		move.w	#$3CE,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		ori.b	#4,1(a0)
-		move.b	#4,$18(a0)
+		move.b	#4,priority(a0)
 		move.b	#$8B,$20(a0)
-		move.b	#$C,$19(a0)
-		move.w	8(a0),$30(a0)
-		addi.w	#$28,8(a0) ; '('
-		addi.w	#$10,$C(a0)
-		move.w	$C(a0),$34(a0)
-		move.b	#1,$1A(a0)
-		btst	#0,$22(a0)
+		move.b	#$C,width_pixels(a0)
+		move.w	x_pos(a0),$30(a0)
+		addi.w	#$28,x_pos(a0) ; '('
+		addi.w	#$10,y_pos(a0)
+		move.w	y_pos(a0),$34(a0)
+		move.b	#1,mapping_frame(a0)
+		btst	#0,status(a0)
 		beq.s	loc_14E9C
-		subi.w	#$50,8(a0) ; 'P'
+		subi.w	#$50,x_pos(a0) ; 'P'
 		move.b	#2,$3A(a0)
 
 loc_14E9C:				; CODE XREF: ROM:00014E8Ej
@@ -29524,12 +29533,12 @@ loc_14EB0:				; CODE XREF: ROM:00014EACj
 
 loc_14ED6:				; CODE XREF: ROM:00014EBCj
 					; ROM:00014ECCj
-		move.w	d1,$12(a0)
-		move.w	d2,$10(a0)
-		move.w	8(a0),d0
+		move.w	d1,y_vel(a0)
+		move.w	d2,x_vel(a0)
+		move.w	x_pos(a0),d0
 		sub.w	$30(a0),d0
 		bcc.s	loc_14EEC
-		neg.w	$10(a0)
+		neg.w	x_vel(a0)
 
 loc_14EEC:				; CODE XREF: ROM:00014EE6j
 		addq.b	#2,routine(a0)
@@ -29539,9 +29548,9 @@ loc_14EEC:				; CODE XREF: ROM:00014EE6j
 loc_14EF2:				; CODE XREF: ROM:00014EAAj
 		lea	(word_14FF4).l,a2
 		moveq	#0,d0
-		move.b	$1A(a1),d0
+		move.b	mapping_frame(a1),d0
 		move.w	#$28,d2	; '('
-		move.w	8(a0),d1
+		move.w	x_pos(a0),d1
 		sub.w	$30(a0),d1
 		bcc.s	loc_14F10
 		neg.w	d2
@@ -29551,22 +29560,22 @@ loc_14F10:				; CODE XREF: ROM:00014F0Aj
 		add.w	d0,d0
 		move.w	$34(a0),d1
 		add.w	(a2,d0.w),d1
-		move.w	d1,$C(a0)
+		move.w	d1,y_pos(a0)
 		add.w	$30(a0),d2
-		move.w	d2,8(a0)
-		clr.w	$E(a0)
-		clr.w	$A(a0)
+		move.w	d2,x_pos(a0)
+		clr.w	y_sub(a0)
+		clr.w	x_sub(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_14F30:				; CODE XREF: ROM:00014EF0j
 					; DATA XREF: ROM:00014CD0o
-		tst.w	$12(a0)
+		tst.w	y_vel(a0)
 		bpl.s	loc_14F4E
 		bsr.w	j_ObjectMoveAndFall
 		move.w	$34(a0),d0
 		subi.w	#$2F,d0	; '/'
-		cmp.w	$C(a0),d0
+		cmp.w	y_pos(a0),d0
 		bgt.s	locret_14F4C
 		bsr.w	j_ObjectMoveAndFall
 
@@ -29579,8 +29588,8 @@ loc_14F4E:				; CODE XREF: ROM:00014F34j
 		movea.l	$3C(a0),a1
 		lea	(word_14FF4).l,a2
 		moveq	#0,d0
-		move.b	$1A(a1),d0
-		move.w	8(a0),d1
+		move.b	mapping_frame(a1),d0
+		move.w	x_pos(a0),d1
 		sub.w	$30(a0),d1
 		bcc.s	loc_14F6E
 		addq.w	#2,d0
@@ -29589,34 +29598,34 @@ loc_14F6E:				; CODE XREF: ROM:00014F6Aj
 		add.w	d0,d0
 		move.w	$34(a0),d1
 		add.w	(a2,d0.w),d1
-		cmp.w	$C(a0),d1
+		cmp.w	y_pos(a0),d1
 		bgt.s	locret_14FC2
 		movea.l	$3C(a0),a1
 		moveq	#2,d1
-		tst.w	$10(a0)
+		tst.w	x_vel(a0)
 		bmi.s	loc_14F8C
 		moveq	#0,d1
 
 loc_14F8C:				; CODE XREF: ROM:00014F88j
 		move.b	d1,$3A(a1)
 		move.b	d1,$3A(a0)
-		cmp.b	$1A(a1),d1
+		cmp.b	mapping_frame(a1),d1
 		beq.s	loc_14FB6
-		lea	($FFFFB000).w,a2
-		bclr	#3,$22(a1)
+		lea	(MainCharacter).w,a2
+		bclr	#3,status(a1)
 		beq.s	loc_14FA8
 		bsr.s	sub_14FC4
 
 loc_14FA8:				; CODE XREF: ROM:00014FA4j
-		lea	($FFFFB040).w,a2
-		bclr	#4,$22(a1)
+		lea	(Sidekick).w,a2
+		bclr	#4,status(a1)
 		beq.s	loc_14FB6
 		bsr.s	sub_14FC4
 
 loc_14FB6:				; CODE XREF: ROM:00014F98j
 					; ROM:00014FB2j
-		clr.w	$10(a0)
-		clr.w	$12(a0)
+		clr.w	x_vel(a0)
+		clr.w	y_vel(a0)
 		subq.b	#2,routine(a0)
 
 locret_14FC2:				; CODE XREF: ROM:00014F7Cj
@@ -29627,12 +29636,12 @@ locret_14FC2:				; CODE XREF: ROM:00014F7Cj
 
 sub_14FC4:				; CODE XREF: ROM:00014FA6p
 					; ROM:00014FB4p
-		move.w	$12(a0),$12(a2)
-		neg.w	$12(a2)
-		bset	#1,$22(a2)
-		bclr	#3,$22(a2)
+		move.w	y_vel(a0),y_vel(a2)
+		neg.w	y_vel(a2)
+		bset	#1,status(a2)
+		bclr	#3,status(a2)
 		clr.b	$3C(a2)
-		move.b	#$10,$1C(a2)
+		move.b	#$10,anim(a2)
 		move.b	#2,routine(a2)
 		move.w	#$CC,d0	; 'Ì'
 		jmp	(PlaySound_Special).l
@@ -29692,26 +29701,26 @@ Obj16_Index:	dc.w Obj16_Init-Obj16_Index ; DATA XREF: ROM:Obj16_Indexo
 
 Obj16_Init:				; DATA XREF: ROM:Obj16_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj16,4(a0)
-		move.w	#$43E6,2(a0)
+		move.l	#Map_Obj16,mappings(a0)
+		move.w	#$43E6,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,1(a0)
-		move.b	#$20,$19(a0) ; ' '
-		move.b	#0,$1A(a0)
-		move.b	#1,$18(a0)
-		move.w	8(a0),$30(a0)
-		move.w	$C(a0),$32(a0)
+		move.b	#$20,width_pixels(a0) ; ' '
+		move.b	#0,mapping_frame(a0)
+		move.b	#1,priority(a0)
+		move.w	x_pos(a0),$30(a0)
+		move.w	y_pos(a0),$32(a0)
 
 Obj16_Main:				; DATA XREF: ROM:00015114o
-		move.w	8(a0),-(sp)
+		move.w	x_pos(a0),-(sp)
 		bsr.w	sub_15184
 		moveq	#0,d1
-		move.b	$19(a0),d1
+		move.b	width_pixels(a0),d1
 		move.w	#$FFD8,d3
 		move.w	(sp)+,d4
 		bsr.w	sub_F78A
 		move.w	$30(a0),d0
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	($FFFFF7DA).w,d0
 		cmpi.w	#$280,d0
@@ -29738,12 +29747,12 @@ Obj16_SubIndex:	dc.w Obj16_InitMove-Obj16_SubIndex ; DATA XREF:	ROM:Obj16_SubInd
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 Obj16_InitMove:				; DATA XREF: ROM:Obj16_SubIndexo
-		move.b	$22(a0),d0
+		move.b	status(a0),d0
 		andi.b	#$18,d0
 		beq.s	locret_151BE
 		addq.b	#1,$28(a0)
-		move.w	#$200,$10(a0)
-		move.w	#$100,$12(a0)
+		move.w	#$200,x_vel(a0)
+		move.w	#$100,y_vel(a0)
 		move.w	#$A0,$34(a0) ; ' '
 
 locret_151BE:				; CODE XREF: ROM:000151A6j
@@ -29833,8 +29842,8 @@ Obj19_WidthArray:dc.w $2000		 ; 0
 
 Obj19_Init:				; DATA XREF: ROM:Obj19_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj19,4(a0)
-		move.w	#$6400,2(a0)
+		move.l	#Map_Obj19,mappings(a0)
+		move.w	#$6400,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,1(a0)
 		moveq	#0,d0
@@ -29842,18 +29851,18 @@ Obj19_Init:				; DATA XREF: ROM:Obj19_Indexo
 		lsr.w	#3,d0
 		andi.w	#$1E,d0
 		lea	Obj19_WidthArray(pc,d0.w),a2
-		move.b	(a2)+,$19(a0)
-		move.b	(a2)+,$1A(a0)
-		move.b	#4,$18(a0)
-		move.w	8(a0),$30(a0)
-		move.w	$C(a0),$32(a0)
+		move.b	(a2)+,width_pixels(a0)
+		move.b	(a2)+,mapping_frame(a0)
+		move.b	#4,priority(a0)
+		move.w	x_pos(a0),$30(a0)
+		move.w	y_pos(a0),$32(a0)
 		andi.b	#$F,$28(a0)
 
 Obj19_Main:				; DATA XREF: ROM:000152C8o
-		move.w	8(a0),-(sp)
+		move.w	x_pos(a0),-(sp)
 		bsr.w	Obj19_Modes
 		moveq	#0,d1
-		move.b	$19(a0),d1
+		move.b	width_pixels(a0),d1
 		move.w	#$10,d3
 		move.w	(sp)+,d4
 		bsr.w	sub_F78A
@@ -29898,7 +29907,7 @@ locret_1537A:				; DATA XREF: ROM:Obj19_SubIndexo
 loc_1537C:				; DATA XREF: ROM:00015366o
 		move.b	($FFFFFE6C).w,d0
 		move.w	#$60,d1	; '`'
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		beq.s	loc_15390
 		neg.w	d0
 		add.w	d1,d0
@@ -29906,13 +29915,13 @@ loc_1537C:				; DATA XREF: ROM:00015366o
 loc_15390:				; CODE XREF: ROM:0001538Aj
 		move.w	$30(a0),d1
 		sub.w	d0,d1
-		move.w	d1,8(a0)
+		move.w	d1,x_pos(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_1539C:				; DATA XREF: ROM:00015368o
 					; ROM:0001536Co ...
-		move.b	$22(a0),d0
+		move.b	status(a0),d0
 		andi.b	#$18,d0
 		beq.s	locret_153AA
 		addq.b	#1,$28(a0)
@@ -29923,12 +29932,12 @@ locret_153AA:				; CODE XREF: ROM:000153A4j
 
 loc_153AC:				; DATA XREF: ROM:0001536Ao
 		moveq	#0,d3
-		move.b	$19(a0),d3
+		move.b	width_pixels(a0),d3
 		bsr.w	ObjHitWallRight
 		tst.w	d1
 		bmi.s	loc_153C6
-		addq.w	#1,8(a0)
-		move.w	8(a0),$30(a0)
+		addq.w	#1,x_pos(a0)
+		move.w	x_pos(a0),$30(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -29939,12 +29948,12 @@ loc_153C6:				; CODE XREF: ROM:000153B8j
 
 loc_153CC:				; DATA XREF: ROM:0001536Eo
 		moveq	#0,d3
-		move.b	$19(a0),d3
+		move.b	width_pixels(a0),d3
 		bsr.w	ObjHitWallRight
 		tst.w	d1
 		bmi.s	loc_153E6
-		addq.w	#1,8(a0)
-		move.w	8(a0),$30(a0)
+		addq.w	#1,x_pos(a0)
+		move.w	x_pos(a0),$30(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -29955,12 +29964,12 @@ loc_153E6:				; CODE XREF: ROM:000153D8j
 
 loc_153EC:				; DATA XREF: ROM:00015370o
 		bsr.w	j_ObjectMove_1
-		addi.w	#$18,$12(a0)
+		addi.w	#$18,y_vel(a0)
 		bsr.w	ObjHitFloor
 		tst.w	d1
 		bpl.w	locret_1540C
-		add.w	d1,$C(a0)
-		clr.w	$12(a0)
+		add.w	d1,y_pos(a0)
+		clr.w	y_vel(a0)
 		clr.b	$28(a0)
 
 locret_1540C:				; CODE XREF: ROM:000153FCj
@@ -29985,7 +29994,7 @@ loc_15418:				; CODE XREF: ROM:00015412j
 loc_15430:				; DATA XREF: ROM:00015374o
 		move.b	($FFFFFE7C).w,d0
 		move.w	#$80,d1	; '€'
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		beq.s	loc_15444
 		neg.w	d0
 		add.w	d1,d0
@@ -29993,16 +30002,16 @@ loc_15430:				; DATA XREF: ROM:00015374o
 loc_15444:				; CODE XREF: ROM:0001543Ej
 		move.w	$32(a0),d1
 		sub.w	d0,d1
-		move.w	d1,$C(a0)
+		move.w	d1,y_pos(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_15450:				; DATA XREF: ROM:00015378o
 		moveq	#0,d3
-		move.b	$19(a0),d3
+		move.b	width_pixels(a0),d3
 		add.w	d3,d3
 		moveq	#8,d1
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		beq.s	loc_15466
 		neg.w	d1
 		neg.w	d3
@@ -30010,11 +30019,11 @@ loc_15450:				; DATA XREF: ROM:00015378o
 loc_15466:				; CODE XREF: ROM:00015460j
 		tst.w	$36(a0)
 		bne.s	loc_15492
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		sub.w	$30(a0),d0
 		cmp.w	d3,d0
 		beq.s	loc_15484
-		add.w	d1,8(a0)
+		add.w	d1,x_pos(a0)
 		move.w	#$12C,$34(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -30029,10 +30038,10 @@ locret_15490:				; CODE XREF: ROM:00015488j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_15492:				; CODE XREF: ROM:0001546Aj
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		sub.w	$30(a0),d0
 		beq.s	loc_154A2
-		sub.w	d1,8(a0)
+		sub.w	d1,x_pos(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -30078,21 +30087,21 @@ Obj04_Index:	dc.w Obj04_Init-Obj04_Index ; DATA XREF: ROM:Obj04_Indexo
 
 Obj04_Init:				; DATA XREF: ROM:Obj04_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj04,4(a0)
-		move.w	#$8400,2(a0)
+		move.l	#Map_Obj04,mappings(a0)
+		move.w	#$8400,art_tile(a0)
 		bsr.w	j_Adjust2PArtPointer_0
 		move.b	#4,1(a0)
-		move.b	#$80,$19(a0)
-		move.w	8(a0),$30(a0)
+		move.b	#$80,width_pixels(a0)
+		move.w	x_pos(a0),$30(a0)
 
 Obj04_Main:				; DATA XREF: ROM:000154E4o
 		move.w	($FFFFF646).w,d1
-		move.w	d1,$C(a0)
+		move.w	d1,y_pos(a0)
 		tst.b	$32(a0)
 		bne.s	loc_15530
 		btst	#7,($FFFFF605).w
 		beq.s	loc_15540
-		addq.b	#3,$1A(a0)
+		addq.b	#3,mapping_frame(a0)
 		move.b	#1,$32(a0)
 		bra.s	loc_15540
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -30101,16 +30110,16 @@ loc_15530:				; CODE XREF: ROM:0001551Aj
 		tst.w	($FFFFF63A).w
 		bne.s	loc_15540
 		move.b	#0,$32(a0)
-		subq.b	#3,$1A(a0)
+		subq.b	#3,mapping_frame(a0)
 
 loc_15540:				; CODE XREF: ROM:00015522j
 					; ROM:0001552Ej ...
 		lea	(Obj04_FrameData).l,a1
 		moveq	#0,d1
-		move.b	$1B(a0),d1
-		move.b	(a1,d1.w),$1A(a0)
-		addq.b	#1,$1B(a0)
-		andi.b	#$3F,$1B(a0) ; '?'
+		move.b	anim_frame(a0),d1
+		move.b	(a1,d1.w),mapping_frame(a0)
+		addq.b	#1,anim_frame(a0)
+		andi.b	#$3F,anim_frame(a0) ; '?'
 		bra.w	loc_15868
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 Obj04_FrameData:dc.b   0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1; 0
@@ -30176,54 +30185,54 @@ Obj49_Index:	dc.w Obj49_Init-Obj49_Index ; DATA XREF: ROM:Obj49_Indexo
 
 Obj49_Init:				; DATA XREF: ROM:Obj49_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj49,4(a0)
-		move.w	#$23AE,2(a0)
+		move.l	#Map_Obj49,mappings(a0)
+		move.w	#$23AE,art_tile(a0)
 		bsr.w	j_Adjust2PArtPointer_0
 		move.b	#4,1(a0)
-		move.b	#$20,$19(a0) ; ' '
-		move.w	8(a0),$30(a0)
-		move.b	#0,$18(a0)
-		move.b	#$80,$16(a0)
+		move.b	#$20,width_pixels(a0) ; ' '
+		move.w	x_pos(a0),$30(a0)
+		move.b	#0,priority(a0)
+		move.b	#$80,y_radius(a0)
 		bset	#4,1(a0)
 
 Obj49_Main:				; DATA XREF: ROM:000156A0o
 		tst.w	(Two_player_mode).w
 		bne.s	loc_156F6
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	($FFFFF7DA).w,d0
 		cmpi.w	#$280,d0
 		bhi.w	loc_1586E
 
 loc_156F6:				; CODE XREF: ROM:000156E0j
-		move.w	8(a0),d1
+		move.w	x_pos(a0),d1
 		move.w	d1,d2
 		subi.w	#$40,d1	; '@'
 		addi.w	#$40,d2	; '@'
 		move.b	$28(a0),d3
-		move.b	#0,$1A(a0)
-		move.w	($FFFFB008).w,d0
+		move.b	#0,mapping_frame(a0)
+		move.w	(MainCharacter+x_pos).w,d0
 		cmp.w	d1,d0
 		bcs.s	loc_15728
 		cmp.w	d2,d0
 		bcc.s	loc_15728
-		move.b	#1,$1A(a0)
-		add.b	d3,$1A(a0)
+		move.b	#1,mapping_frame(a0)
+		add.b	d3,mapping_frame(a0)
 		bra.w	loc_15868
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_15728:				; CODE XREF: ROM:00015714j
 					; ROM:00015718j
-		move.w	($FFFFB048).w,d0
+		move.w	(Sidekick+x_pos).w,d0
 		cmp.w	d1,d0
 		bcs.s	loc_1573A
 		cmp.w	d2,d0
 		bcc.s	loc_1573A
-		move.b	#1,$1A(a0)
+		move.b	#1,mapping_frame(a0)
 
 loc_1573A:				; CODE XREF: ROM:0001572Ej
 					; ROM:00015732j
-		add.b	d3,$1A(a0)
+		add.b	d3,mapping_frame(a0)
 		bra.w	loc_15868
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 Map_Obj49:	dc.w word_1574E-Map_Obj49 ; DATA XREF: ROM:000156A6o
@@ -30305,20 +30314,20 @@ Obj4D_Index:	dc.w Obj4D_Init-Obj4D_Index ; DATA XREF: ROM:Obj4D_Indexo
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 Obj4D_Init:				; DATA XREF: ROM:Obj4D_Indexo
-		move.l	#Map_Obj4D,4(a0)
-		move.w	#$23C4,2(a0)
+		move.l	#Map_Obj4D,mappings(a0)
+		move.w	#$23C4,art_tile(a0)
 		ori.b	#4,1(a0)
 		move.b	#$A,$20(a0)
-		move.b	#4,$18(a0)
-		move.b	#$18,$19(a0)
-		move.b	#$10,$16(a0)
-		move.b	#$18,$17(a0)
+		move.b	#4,priority(a0)
+		move.b	#$18,width_pixels(a0)
+		move.b	#$10,y_radius(a0)
+		move.b	#$18,x_radius(a0)
 		bsr.w	j_ObjectMoveAndFall_0
 		jsr	ObjHitFloor
 		tst.w	d1
 		bpl.s	locret_158DC
-		add.w	d1,$C(a0)
-		move.w	#0,$12(a0)
+		add.w	d1,y_pos(a0)
+		move.w	#0,y_vel(a0)
 		addq.b	#2,routine(a0)
 
 locret_158DC:				; CODE XREF: ROM:000158CCj
@@ -30327,7 +30336,7 @@ locret_158DC:				; CODE XREF: ROM:000158CCj
 
 Obj4D_Main:				; DATA XREF: ROM:0001588Co
 		moveq	#0,d0
-		move.b	$25(a0),d0
+		move.b	routine_secondary(a0),d0
 		move.w	Obj4D_SubIndex(pc,d0.w),d1
 		jsr	Obj4D_SubIndex(pc,d1.w)
 		lea	(Ani_Obj4D).l,a1
@@ -30342,12 +30351,12 @@ Obj4D_SubIndex:	dc.w loc_158FE-Obj4D_SubIndex ;	DATA XREF: ROM:Obj4D_SubIndexo
 loc_158FE:				; DATA XREF: ROM:Obj4D_SubIndexo
 		subq.w	#1,$30(a0)
 		bpl.s	locret_15920
-		addq.b	#2,$25(a0)
-		move.w	#$FF80,$10(a0)
-		move.b	#0,$1C(a0)
-		bchg	#0,$22(a0)
+		addq.b	#2,routine_secondary(a0)
+		move.w	#$FF80,x_vel(a0)
+		move.b	#0,anim(a0)
+		bchg	#0,status(a0)
 		bne.s	locret_15920
-		neg.w	$10(a0)
+		neg.w	x_vel(a0)
 
 locret_15920:				; CODE XREF: ROM:00015902j
 					; ROM:0001591Aj
@@ -30362,37 +30371,37 @@ loc_15922:				; DATA XREF: ROM:000158FCo
 		blt.s	loc_15948
 		cmpi.w	#$C,d1
 		bge.s	locret_15946
-		move.w	#0,$12(a0)
-		add.w	d1,$C(a0)
+		move.w	#0,y_vel(a0)
+		add.w	d1,y_pos(a0)
 
 locret_15946:				; CODE XREF: ROM:0001593Aj
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_15948:				; CODE XREF: ROM:00015934j
-		subq.b	#2,$25(a0)
+		subq.b	#2,routine_secondary(a0)
 		move.w	#$3B,$30(a0) ; ';'
-		move.w	$10(a0),d0
+		move.w	x_vel(a0),d0
 		ext.l	d0
 		asl.l	#8,d0
-		sub.l	d0,8(a0)
-		move.w	#0,$10(a0)
-		move.b	#1,$1C(a0)
+		sub.l	d0,x_pos(a0)
+		move.w	#0,x_vel(a0)
+		move.b	#1,anim(a0)
 		rts
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
 
 
 sub_1596C:				; CODE XREF: ROM:loc_15922p
-		move.w	8(a0),d0
-		sub.w	($FFFFB008).w,d0
+		move.w	x_pos(a0),d0
+		sub.w	(MainCharacter+x_pos).w,d0
 		bmi.s	loc_159A0
 		cmpi.w	#$60,d0	; '`'
 		bgt.s	locret_15990
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		bne.s	loc_15992
-		move.b	#2,$1C(a0)
-		move.w	#$FE00,$10(a0)
+		move.b	#2,anim(a0)
+		move.w	#$FE00,x_vel(a0)
 
 locret_15990:				; CODE XREF: sub_1596C+Ej
 					; sub_1596C+38j
@@ -30400,24 +30409,24 @@ locret_15990:				; CODE XREF: sub_1596C+Ej
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_15992:				; CODE XREF: sub_1596C+16j
-		move.b	#0,$1C(a0)
-		move.w	#$80,$10(a0) ; '€'
+		move.b	#0,anim(a0)
+		move.w	#$80,x_vel(a0) ; '€'
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_159A0:				; CODE XREF: sub_1596C+8j
 		cmpi.w	#$FFA0,d0
 		blt.s	locret_15990
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		beq.s	loc_159BC
-		move.b	#2,$1C(a0)
-		move.w	#$200,$10(a0)
+		move.b	#2,anim(a0)
+		move.w	#$200,x_vel(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_159BC:				; CODE XREF: sub_1596C+40j
-		move.b	#0,$1C(a0)
-		move.w	#$FF80,$10(a0)
+		move.b	#0,anim(a0)
+		move.w	#$FF80,x_vel(a0)
 		rts
 ; End of function sub_1596C
 
@@ -30518,12 +30527,12 @@ Obj52_Index:	dc.w Obj52_Init-Obj52_Index ; DATA XREF: ROM:Obj52_Indexo
 
 Obj52_Init:				; DATA XREF: ROM:Obj52_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj52,4(a0)
-		move.w	#$2530,2(a0)
+		move.l	#Map_Obj52,mappings(a0)
+		move.w	#$2530,art_tile(a0)
 		ori.b	#4,1(a0)
 		move.b	#$A,$20(a0)
-		move.b	#4,$18(a0)
-		move.b	#$10,$19(a0)
+		move.b	#4,priority(a0)
+		move.b	#$10,width_pixels(a0)
 		moveq	#0,d0
 		move.b	$28(a0),d0
 		move.b	d0,d1
@@ -30537,13 +30546,13 @@ Obj52_Init:				; DATA XREF: ROM:Obj52_Indexo
 		subq.w	#1,d0
 		move.w	d0,$30(a0)
 		move.w	d0,$32(a0)
-		move.w	#$FF80,$10(a0)
+		move.w	#$FF80,x_vel(a0)
 		move.l	#$FFFB8000,$36(a0)
-		move.w	$C(a0),$34(a0)
-		bset	#6,$22(a0)
-		btst	#0,$22(a0)
+		move.w	y_pos(a0),$34(a0)
+		bset	#6,status(a0)
+		btst	#0,status(a0)
 		beq.s	Obj52_Main
-		neg.w	$10(a0)
+		neg.w	x_vel(a0)
 
 Obj52_Main:				; CODE XREF: ROM:00015BD2j
 					; DATA XREF: ROM:00015B5Co
@@ -30553,14 +30562,14 @@ Obj52_Main:				; CODE XREF: ROM:00015BD2j
 
 loc_15BE4:				; CODE XREF: ROM:00015BDEj
 		subq.w	#1,$30(a0)
-		bpl.s	NemDec_WriteIter_Part26
+		bpl.s	loc_15C06
 		move.w	$32(a0),$30(a0)
-		neg.w	$10(a0)
-		bchg	#0,$22(a0)
-		move.b	#1,$1D(a0)
+		neg.w	x_vel(a0)
+		bchg	#0,status(a0)
+		move.b	#1,prev_anim(a0)
 		move.w	$3C(a0),$3A(a0)
 
-NemDec_WriteIter_Part26:				; CODE XREF: ROM:00015BE8j
+loc_15C06:				; CODE XREF: ROM:00015BE8j
 		lea	(Ani_Obj52).l,a1
 		bsr.w	j_AnimateSprite_1
 		bsr.w	j_ObjectMove_2
@@ -30571,7 +30580,7 @@ NemDec_WriteIter_Part26:				; CODE XREF: ROM:00015BE8j
 		move.l	#$FFFB8000,$36(a0)
 		addq.b	#2,routine(a0)
 		move.w	#$FFFF,$3A(a0)
-		move.b	#2,$1C(a0)
+		move.b	#2,anim(a0)
 		move.w	#1,$3E(a0)
 		bra.w	loc_15D90
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -30585,32 +30594,32 @@ loc_15C48:				; DATA XREF: ROM:00015B5Eo
 		bsr.w	sub_15CF8
 		tst.l	$36(a0)
 		bpl.s	loc_15CA0
-		move.w	$C(a0),d0
+		move.w	y_pos(a0),d0
 		cmp.w	($FFFFF646).w,d0
 		bgt.w	loc_15D90
-		move.b	#3,$1C(a0)
-		bclr	#6,$22(a0)
+		move.b	#3,anim(a0)
+		bclr	#6,status(a0)
 		tst.b	$2A(a0)
 		bne.w	loc_15D90
-		move.w	$10(a0),d0
+		move.w	x_vel(a0),d0
 		asl.w	#1,d0
-		move.w	d0,$10(a0)
+		move.w	d0,x_vel(a0)
 		addq.w	#1,$3E(a0)
 		st	$2A(a0)
 		bra.w	loc_15D90
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_15CA0:				; CODE XREF: ROM:00015C68j
-		move.w	$C(a0),d0
+		move.w	y_pos(a0),d0
 		cmp.w	($FFFFF646).w,d0
 		bgt.s	loc_15CB4
-		move.b	#1,$1C(a0)
+		move.b	#1,anim(a0)
 		bra.w	loc_15D90
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_15CB4:				; CODE XREF: ROM:00015CA8j
-		move.b	#0,$1C(a0)
-		bset	#6,$22(a0)
+		move.b	#0,anim(a0)
+		bset	#6,status(a0)
 		bne.s	loc_15CCE
 		move.l	$36(a0),d0
 		asr.l	#1,d0
@@ -30619,14 +30628,14 @@ loc_15CB4:				; CODE XREF: ROM:00015CA8j
 
 loc_15CCE:				; CODE XREF: ROM:00015CC0j
 		move.w	$34(a0),d0
-		cmp.w	$C(a0),d0
+		cmp.w	y_pos(a0),d0
 		bgt.w	loc_15D90
 		subq.b	#2,routine(a0)
 		tst.b	$2A(a0)
 		beq.w	loc_15D90
-		move.w	$10(a0),d0
+		move.w	x_vel(a0),d0
 		asr.w	#1,d0
-		move.w	d0,$10(a0)
+		move.w	d0,x_vel(a0)
 		sf	$2A(a0)
 		bra.w	loc_15D90
 
@@ -30634,14 +30643,14 @@ loc_15CCE:				; CODE XREF: ROM:00015CC0j
 
 
 sub_15CF8:				; CODE XREF: ROM:00015C60p
-		move.l	8(a0),d2
-		move.l	$C(a0),d3
-		move.w	$10(a0),d0
+		move.l	x_pos(a0),d2
+		move.l	y_pos(a0),d3
+		move.w	x_vel(a0),d0
 		ext.l	d0
 		asl.l	#8,d0
 		add.l	d0,d2
 		add.l	$36(a0),d3
-		btst	#6,$22(a0)
+		btst	#6,status(a0)
 		beq.s	loc_15D34
 		tst.l	$36(a0)
 		bpl.s	loc_15D2C
@@ -30653,8 +30662,8 @@ loc_15D2C:				; CODE XREF: sub_15CF8+22j
 
 loc_15D34:				; CODE XREF: sub_15CF8+1Cj
 		addi.l	#$1800,$36(a0)
-		move.l	d2,8(a0)
-		move.l	d3,$C(a0)
+		move.l	d2,x_pos(a0)
+		move.l	d3,y_pos(a0)
 		rts
 ; End of function sub_15CF8
 
@@ -30714,24 +30723,24 @@ Obj4F_Index:	dc.w Obj4F_Init-Obj4F_Index
 ; ===========================================================================
 
 Obj4F_Init:
-		move.l	#Map_obj4F,4(a0)
-		move.w	#$500,2(a0)
+		move.l	#Map_obj4F,mappings(a0)
+		move.w	#$500,art_tile(a0)
 		move.b	#4,1(a0)
-		move.b	#4,$18(a0)
-		move.b	#$10,$19(a0)
-		move.b	#$10,$16(a0)
-		move.b	#6,$17(a0)
+		move.b	#4,priority(a0)
+		move.b	#$10,width_pixels(a0)
+		move.b	#$10,y_radius(a0)
+		move.b	#6,x_radius(a0)
 		move.b	#$C,$20(a0)
 		bsr.w	j_ObjectMoveAndFall_1
 		jsr	(ObjHitFloor).l
 		tst.w	d1
 		bpl.s	locret_15E0C
-		add.w	d1,$C(a0)
+		add.w	d1,y_pos(a0)
 
 loc_15DFC:
-		move.w	#0,$12(a0)
+		move.w	#0,y_vel(a0)
 		addq.b	#2,routine(a0)
-		bchg	#0,$22(a0)
+		bchg	#0,status(a0)
 
 locret_15E0C:
 		rts
@@ -30739,12 +30748,12 @@ locret_15E0C:
 
 Obj4F_Main:
 		moveq	#0,d0
-		move.b	$25(a0),d0
+		move.b	routine_secondary(a0),d0
 		move.w	Obj4F_SubIndex(pc,d0.w),d1
 		jsr	Obj4F_SubIndex(pc,d1.w)
 		lea	(Ani_obj4F).l,a1
 		bsr.w	j_AnimateSprite_2
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	($FFFFF7DA).w,d0
 		cmpi.w	#$280,d0
@@ -30769,12 +30778,12 @@ Obj4F_SubIndex:	dc.w Obj4F_MoveLeft-Obj4F_SubIndex
 Obj4F_MoveLeft:
 		subq.w	#1,$30(a0)	; is Redz not moving?
 		bpl.s	locret_15E7A	; if not, branch
-		addq.b	#2,$25(a0)
-		move.w	#$FF80,$10(a0)
-		move.b	#1,$1C(a0)
-		bchg	#0,$22(a0)
+		addq.b	#2,routine_secondary(a0)
+		move.w	#$FF80,x_vel(a0)
+		move.b	#1,anim(a0)
+		bchg	#0,status(a0)
 		bne.s	locret_15E7A
-		neg.w	$10(a0)
+		neg.w	x_vel(a0)
 
 locret_15E7A:
 		rts
@@ -30787,15 +30796,15 @@ Obj4F_ChkFloor:
 		blt.s	Obj4F_StopMoving
 		cmpi.w	#$C,d1
 		bge.s	Obj4F_StopMoving
-		add.w	d1,$C(a0)
+		add.w	d1,y_pos(a0)
 		rts
 ; ---------------------------------------------------------------------------
 ; loc_15E98:
 Obj4F_StopMoving:
-		subq.b	#2,$25(a0)
+		subq.b	#2,routine_secondary(a0)
 		move.w	#(1*60)-1,$30(a0)	; pause for 1 second
-		move.w	#0,$10(a0)
-		move.b	#0,$1C(a0)
+		move.w	#0,x_vel(a0)
+		move.b	#0,anim(a0)
 		rts
 ; ===========================================================================
 
@@ -30854,13 +30863,13 @@ Obj50_Index:	dc.w Obj50_Init-Obj50_Index ; DATA XREF: ROM:Obj50_Indexo
 
 Obj50_Init:				; DATA XREF: ROM:Obj50_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj50,4(a0)
-		move.w	#$2570,2(a0)
+		move.l	#Map_Obj50,mappings(a0)
+		move.w	#$2570,art_tile(a0)
 		ori.b	#4,1(a0)
 		move.b	#$A,$20(a0)
-		move.b	#4,$18(a0)
-		move.b	#$10,$19(a0)
-		move.w	#$FF00,$10(a0)
+		move.b	#4,priority(a0)
+		move.b	#$10,width_pixels(a0)
+		move.w	#$FF00,x_vel(a0)
 		move.b	$28(a0),d0
 		move.b	d0,d1
 		andi.w	#$F0,d1	; 'ğ'
@@ -30872,24 +30881,24 @@ Obj50_Init:				; DATA XREF: ROM:Obj50_Indexo
 		subq.w	#1,d0
 		move.w	d0,$32(a0)
 		move.w	d0,$34(a0)
-		move.w	$C(a0),$2A(a0)
+		move.w	y_pos(a0),$2A(a0)
 		bsr.w	j_SingleObjLoad
 		bne.s	loc_15FDA
 		move.b	#$50,0(a1) ; 'P'
 		move.b	#4,routine(a1)
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
-		addi.w	#$A,8(a1)
-		addi.w	#$FFFA,$C(a1)
-		move.l	#Map_Obj50,4(a1)
-		move.w	#$24E0,2(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
+		addi.w	#$A,x_pos(a1)
+		addi.w	#$FFFA,y_pos(a1)
+		move.l	#Map_Obj50,mappings(a1)
+		move.w	#$24E0,art_tile(a1)
 		ori.b	#4,1(a1)
-		move.b	#3,$18(a1)
-		move.b	$22(a0),$22(a1)
-		move.b	#3,$1C(a1)
+		move.b	#3,priority(a1)
+		move.b	status(a0),status(a1)
+		move.b	#3,anim(a1)
 		move.l	a1,$36(a0)
 		move.l	a0,$36(a1)
-		bset	#6,$22(a0)
+		bset	#6,status(a0)
 
 loc_15FDA:				; CODE XREF: ROM:00015F80j
 					; DATA XREF: ROM:00015F18o
@@ -30897,7 +30906,7 @@ loc_15FDA:				; CODE XREF: ROM:00015F80j
 		bsr.w	j_AnimateSprite_3
 		move.w	#$39C,($FFFFF646).w
 		moveq	#0,d0
-		move.b	$25(a0),d0
+		move.b	routine_secondary(a0),d0
 		move.w	Obj50_SubIndex(pc,d0.w),d1
 		jsr	Obj50_SubIndex(pc,d1.w)
 		bsr.w	sub_161D8
@@ -30915,7 +30924,7 @@ loc_16006:				; DATA XREF: ROM:00015F1Ao
 		beq.w	loc_1676E
 		cmpi.b	#$50,(a1) ; 'P'
 		bne.w	loc_1676E
-		btst	#7,$22(a1)
+		btst	#7,status(a1)
 		bne.w	loc_1676E
 		lea	(Ani_Obj50).l,a1
 		bsr.w	j_AnimateSprite_3
@@ -30958,7 +30967,7 @@ loc_16066:				; DATA XREF: ROM:00016004o
 sub_16078:				; CODE XREF: ROM:0001606Ep
 		tst.b	$2D(a0)
 		bne.s	locret_16084
-		tst.w	$12(a0)
+		tst.w	y_vel(a0)
 		bpl.s	loc_16086
 
 locret_16084:				; CODE XREF: sub_16078+4j
@@ -30971,26 +30980,26 @@ loc_16086:				; CODE XREF: sub_16078+Aj
 		bne.s	locret_160F2
 		move.b	#$50,0(a1) ; 'P'
 		move.b	#6,routine(a1)
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
-		move.l	#Map_Obj50,4(a1)
-		move.w	#$24E0,2(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
+		move.l	#Map_Obj50,mappings(a1)
+		move.w	#$24E0,art_tile(a1)
 		ori.b	#4,1(a1)
-		move.b	#3,$18(a1)
+		move.b	#3,priority(a1)
 		move.b	#$E5,$20(a1)
-		move.b	#2,$1C(a1)
+		move.b	#2,anim(a1)
 		move.w	#$C,d0
 		move.w	#$10,d1
 		move.w	#$FD00,d2
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		beq.s	loc_160E6
 		neg.w	d1
 		neg.w	d2
 
 loc_160E6:				; CODE XREF: sub_16078+68j
-		sub.w	d0,$C(a1)
-		sub.w	d1,8(a1)
-		move.w	d2,$10(a1)
+		sub.w	d0,y_pos(a1)
+		sub.w	d1,x_pos(a1)
+		move.w	d2,x_vel(a1)
 
 locret_160F2:				; CODE XREF: sub_16078+16j
 		rts
@@ -31001,13 +31010,13 @@ locret_160F2:				; CODE XREF: sub_16078+16j
 
 
 sub_160F4:				; CODE XREF: ROM:00016072p
-		move.w	$C(a0),d0
+		move.w	y_pos(a0),d0
 		cmp.w	($FFFFF646).w,d0
 		blt.s	locret_1611A
-		move.b	#2,$25(a0)
-		move.b	#0,$1C(a0)
+		move.b	#2,routine_secondary(a0)
+		move.b	#0,anim(a0)
 		move.w	$30(a0),$2E(a0)
-		move.w	#$40,$12(a0) ; '@'
+		move.w	#$40,y_vel(a0) ; '@'
 		sf	$2D(a0)
 
 locret_1611A:				; CODE XREF: sub_160F4+8j
@@ -31021,13 +31030,13 @@ locret_1611A:				; CODE XREF: sub_160F4+8j
 sub_1611C:				; CODE XREF: ROM:00016052p
 		tst.b	$2C(a0)
 		beq.s	locret_16182
-		move.w	($FFFFB008).w,d0
-		move.w	($FFFFB00C).w,d1
-		sub.w	$C(a0),d1
+		move.w	(MainCharacter+x_pos).w,d0
+		move.w	(MainCharacter+y_pos).w,d1
+		sub.w	y_pos(a0),d1
 		bpl.s	locret_16182
 		cmpi.w	#$FFD0,d1
 		blt.s	locret_16182
-		sub.w	8(a0),d0
+		sub.w	x_pos(a0),d0
 		cmpi.w	#$48,d0	; 'H'
 		bgt.s	locret_16182
 		cmpi.w	#$FFB8,d0
@@ -31036,7 +31045,7 @@ sub_1611C:				; CODE XREF: ROM:00016052p
 		bpl.s	loc_1615A
 		cmpi.w	#$FFD8,d0
 		bgt.s	locret_16182
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		bne.s	locret_16182
 		bra.s	loc_16168
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -31044,16 +31053,16 @@ sub_1611C:				; CODE XREF: ROM:00016052p
 loc_1615A:				; CODE XREF: sub_1611C+2Cj
 		cmpi.w	#$28,d0	; '('
 		blt.s	locret_16182
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		beq.s	locret_16182
 
 loc_16168:				; CODE XREF: sub_1611C+3Cj
 		moveq	#$20,d0	; ' '
 		cmp.w	$32(a0),d0
 		bgt.s	locret_16182
-		move.b	#4,$25(a0)
-		move.b	#1,$1C(a0)
-		move.w	#$FC00,$12(a0)
+		move.b	#4,routine_secondary(a0)
+		move.b	#1,anim(a0)
+		move.w	#$FC00,y_vel(a0)
 
 locret_16182:				; CODE XREF: sub_1611C+4j
 					; sub_1611C+12j ...
@@ -31068,14 +31077,14 @@ sub_16184:				; CODE XREF: ROM:0001604Ep
 		subq.w	#1,$2E(a0)
 		bne.s	locret_161A4
 		move.w	$30(a0),$2E(a0)
-		addq.b	#2,$25(a0)
+		addq.b	#2,routine_secondary(a0)
 		move.w	#$FFC0,d0
 		tst.b	$2C(a0)
 		beq.s	loc_161A0
 		neg.w	d0
 
 loc_161A0:				; CODE XREF: sub_16184+18j
-		move.w	d0,$12(a0)
+		move.w	d0,y_vel(a0)
 
 locret_161A4:				; CODE XREF: sub_16184+4j
 		rts
@@ -31086,14 +31095,14 @@ locret_161A4:				; CODE XREF: sub_16184+4j
 
 
 sub_161A6:				; CODE XREF: ROM:00016060p
-		move.w	$C(a0),d0
+		move.w	y_pos(a0),d0
 		tst.b	$2C(a0)
 		bne.s	loc_161C4
 		cmp.w	($FFFFF646).w,d0
 		bgt.s	locret_161C2
-		subq.b	#2,$25(a0)
+		subq.b	#2,routine_secondary(a0)
 		st	$2C(a0)
-		clr.w	$12(a0)
+		clr.w	y_vel(a0)
 
 locret_161C2:				; CODE XREF: sub_161A6+Ej
 					; sub_161A6+22j
@@ -31103,9 +31112,9 @@ locret_161C2:				; CODE XREF: sub_161A6+Ej
 loc_161C4:				; CODE XREF: sub_161A6+8j
 		cmp.w	$2A(a0),d0
 		blt.s	locret_161C2
-		subq.b	#2,$25(a0)
+		subq.b	#2,routine_secondary(a0)
 		sf	$2C(a0)
-		clr.w	$12(a0)
+		clr.w	y_vel(a0)
 		rts
 ; End of function sub_161A6
 
@@ -31117,18 +31126,18 @@ sub_161D8:				; CODE XREF: ROM:00015FF8p
 		moveq	#$A,d0
 		moveq	#$FFFFFFFA,d1
 		movea.l	$36(a0),a1
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
-		move.b	$22(a0),$22(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
+		move.b	status(a0),status(a1)
 		move.b	$23(a0),$23(a1)
 		move.b	1(a0),1(a1)
-		btst	#0,$22(a1)
+		btst	#0,status(a1)
 		beq.s	loc_16208
 		neg.w	d0
 
 loc_16208:				; CODE XREF: sub_161D8+2Cj
-		add.w	d0,8(a1)
-		add.w	d1,$C(a1)
+		add.w	d0,x_pos(a1)
+		add.w	d1,y_pos(a1)
 		rts
 ; End of function sub_161D8
 
@@ -31149,11 +31158,11 @@ sub_16228:				; CODE XREF: ROM:00016216p
 		jsr	ObjHitFloor
 		tst.w	d1
 		bpl.s	loc_16242
-		add.w	d1,$C(a0)
-		move.w	$12(a0),d0
+		add.w	d1,y_pos(a0)
+		move.w	y_vel(a0),d0
 		asr.w	#1,d0
 		neg.w	d0
-		move.w	d0,$12(a0)
+		move.w	d0,y_vel(a0)
 
 loc_16242:				; CODE XREF: sub_16228+8j
 		subi.b	#1,$21(a0)
@@ -31166,17 +31175,17 @@ loc_16242:				; CODE XREF: sub_16228+8j
 Obj50_Routine0A:			; DATA XREF: ROM:00015F20o
 					; ROM:0001653Ct
 		bsr.w	sub_1629E
-		tst.b	$25(a0)
+		tst.b	routine_secondary(a0)
 		beq.s	locret_1628E
 		subi.w	#1,$2C(a0)
 		beq.w	loc_1676E
-		move.w	($FFFFB008).w,8(a0)
-		move.w	($FFFFB00C).w,$C(a0)
-		addi.w	#$C,$C(a0)
+		move.w	(MainCharacter+x_pos).w,x_pos(a0)
+		move.w	(MainCharacter+y_pos).w,y_pos(a0)
+		addi.w	#$C,y_pos(a0)
 		subi.b	#1,$2A(a0)
 		bne.s	loc_16290
 		move.b	#3,$2A(a0)
-		bchg	#0,$22(a0)
+		bchg	#0,status(a0)
 		bchg	#0,1(a0)
 
 locret_1628E:				; CODE XREF: ROM:00016256j
@@ -31192,17 +31201,17 @@ loc_16290:				; CODE XREF: ROM:0001627Aj
 
 
 sub_1629E:				; CODE XREF: ROM:Obj50_Routine0Ap
-		tst.b	$25(a0)
+		tst.b	routine_secondary(a0)
 		bne.s	locret_162DC
-		move.b	($FFFFB000+routine).w,d0
+		move.b	(MainCharacter+routine).w,d0
 		cmpi.b	#2,d0
 		bne.s	locret_162DC
-		move.w	($FFFFB008).w,8(a0)
-		move.w	($FFFFB00C).w,$C(a0)
+		move.w	(MainCharacter+x_pos).w,x_pos(a0)
+		move.w	(MainCharacter+y_pos).w,y_pos(a0)
 		ori.b	#4,1(a0)
-		move.b	#1,$18(a0)
-		move.b	#5,$1C(a0)
-		st	$25(a0)
+		move.b	#1,priority(a0)
+		move.b	#5,anim(a0)
+		st	routine_secondary(a0)
 		move.w	#$12C,$2C(a0)
 		move.b	#3,$2A(a0)
 
@@ -31219,9 +31228,9 @@ sub_162DE:				; CODE XREF: ROM:0001604Ap
 		subq.w	#1,$32(a0)
 		bpl.s	locret_162FA
 		move.w	$34(a0),$32(a0)
-		neg.w	$10(a0)
-		bchg	#0,$22(a0)
-		move.b	#1,$1D(a0)
+		neg.w	x_vel(a0)
+		bchg	#0,status(a0)
+		move.b	#1,prev_anim(a0)
 
 locret_162FA:				; CODE XREF: sub_162DE+4j
 		rts
@@ -31240,31 +31249,31 @@ loc_16306:				; CODE XREF: ROM:loc_16378j
 		bne.s	loc_16378
 		move.b	0(a0),0(a1)
 		move.b	#8,routine(a1)
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
-		move.l	4(a0),4(a1)
-		move.w	#$24E0,2(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
+		move.l	mappings(a0),mappings(a1)
+		move.w	#$24E0,art_tile(a1)
 		ori.b	#4,1(a1)
-		move.b	#3,$18(a1)
-		move.w	#$FF00,$12(a1)
-		move.b	#4,$1C(a1)
+		move.b	#3,priority(a1)
+		move.w	#$FF00,y_vel(a1)
+		move.b	#4,anim(a1)
 		move.b	#$78,$21(a1) ; 'x'
 		cmpi.w	#1,d3
 		beq.s	loc_16372
 		blt.s	loc_16364
-		move.w	#$C0,$10(a1) ; 'À'
-		addi.w	#$FF40,$12(a1)
+		move.w	#$C0,x_vel(a1) ; 'À'
+		addi.w	#$FF40,y_vel(a1)
 		bra.s	loc_16378
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_16364:				; CODE XREF: ROM:00016354j
-		move.w	#$FF00,$10(a1)
-		addi.w	#$FFC0,$12(a1)
+		move.w	#$FF00,x_vel(a1)
+		addi.w	#$FFC0,y_vel(a1)
 		bra.s	loc_16378
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_16372:				; CODE XREF: ROM:00016352j
-		move.w	#$40,$10(a1) ; '@'
+		move.w	#$40,x_vel(a1) ; '@'
 
 loc_16378:				; CODE XREF: ROM:0001630Aj
 					; ROM:00016362j ...
@@ -31273,8 +31282,8 @@ loc_16378:				; CODE XREF: ROM:0001630Aj
 		bne.s	loc_1639A
 		move.b	0(a0),0(a1)
 		move.b	#$A,routine(a1)
-		move.l	4(a0),4(a1)
-		move.w	#$24E0,2(a1)
+		move.l	mappings(a0),mappings(a1)
+		move.w	#$24E0,art_tile(a1)
 
 loc_1639A:				; CODE XREF: ROM:00016380j
 		bra.w	loc_1676E
@@ -31384,13 +31393,13 @@ off_16532:	dc.w loc_1653E-off_16532 ; DATA	XREF: ROM:off_16532o
 
 loc_1653E:				; DATA XREF: ROM:off_16532o
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj50,4(a0)
-		move.w	#$2570,2(a0)
+		move.l	#Map_Obj50,mappings(a0)
+		move.w	#$2570,art_tile(a0)
 		ori.b	#4,1(a0)
 		move.b	#$A,$20(a0)
-		move.b	#4,$18(a0)
-		move.b	#$10,$19(a0)
-		move.b	#6,$1C(a0)
+		move.b	#4,priority(a0)
+		move.b	#$10,width_pixels(a0)
+		move.b	#6,anim(a0)
 		move.b	$28(a0),d0
 		andi.w	#$F,d0
 		move.w	d0,d1
@@ -31398,17 +31407,17 @@ loc_1653E:				; DATA XREF: ROM:off_16532o
 		subq.w	#1,d1
 		move.w	d1,$32(a0)
 		move.w	d1,$34(a0)
-		move.w	$C(a0),$2A(a0)
-		move.w	$C(a0),$2E(a0)
+		move.w	y_pos(a0),$2A(a0)
+		move.w	y_pos(a0),$2E(a0)
 		addi.w	#$60,$2E(a0) ; '`'
-		move.w	#$FF00,$10(a0)
+		move.w	#$FF00,x_vel(a0)
 
 loc_1659C:				; DATA XREF: ROM:00016534o
 		lea	Ani_Obj50(pc),a1
 		bsr.w	j_AnimateSprite_3
 		move.w	#$39C,($FFFFF646).w
 		moveq	#0,d0
-		move.b	$25(a0),d0
+		move.b	routine_secondary(a0),d0
 		move.w	off_165BC(pc,d0.w),d1
 		jsr	off_165BC(pc,d1.w)
 		bra.w	loc_1677A
@@ -31454,8 +31463,8 @@ loc_16600:				; CODE XREF: ROM:000165FAp
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_16614:				; CODE XREF: ROM:00016604j
-		subq.b	#2,$25(a0)
-		move.b	#6,$1C(a0)
+		subq.b	#2,routine_secondary(a0)
+		move.b	#6,anim(a0)
 		move.w	#$B4,$30(a0) ; '´'
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -31465,16 +31474,16 @@ loc_16626:				; CODE XREF: ROM:000165DCp
 		sf	$2D(a0)
 		sf	$2C(a0)
 		sf	$36(a0)
-		move.w	($FFFFB008).w,d0
-		sub.w	8(a0),d0
+		move.w	(MainCharacter+x_pos).w,d0
+		sub.w	x_pos(a0),d0
 		bpl.s	loc_16646
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		bne.s	loc_1664E
 		bra.s	loc_16652
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_16646:				; CODE XREF: ROM:0001663Aj
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		bne.s	loc_16652
 
 loc_1664E:				; CODE XREF: ROM:00016642j
@@ -31482,14 +31491,14 @@ loc_1664E:				; CODE XREF: ROM:00016642j
 
 loc_16652:				; CODE XREF: ROM:00016644j
 					; ROM:0001664Cj
-		move.w	($FFFFB00C).w,d0
-		sub.w	$C(a0),d0
+		move.w	(MainCharacter+y_pos).w,d0
+		sub.w	y_pos(a0),d0
 		cmpi.w	#$FFFC,d0
 		blt.s	locret_16676
 		cmpi.w	#4,d0
 		bgt.s	loc_16672
 		st	$2D(a0)
-		move.w	#0,$12(a0)
+		move.w	#0,y_vel(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -31507,9 +31516,9 @@ loc_16678:				; CODE XREF: ROM:000165E4p
 		bgt.s	locret_1669C
 		tst.b	$2D(a0)
 		beq.s	locret_1669C
-		move.b	#7,$1C(a0)
+		move.b	#7,anim(a0)
 		move.w	#$24,$30(a0) ; '$'
-		addi.b	#2,$25(a0)
+		addi.b	#2,routine_secondary(a0)
 
 locret_1669C:				; CODE XREF: ROM:0001667Cj
 					; ROM:00016682j ...
@@ -31521,26 +31530,26 @@ loc_1669E:				; CODE XREF: ROM:0001660Ej
 		bne.s	locret_16706
 		move.b	#$51,0(a1) ; 'Q'
 		move.b	#4,routine(a1)
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
-		move.l	#Map_Obj50,4(a1)
-		move.w	#$24E0,2(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
+		move.l	#Map_Obj50,mappings(a1)
+		move.w	#$24E0,art_tile(a1)
 		ori.b	#4,1(a1)
-		move.b	#3,$18(a1)
-		move.b	#2,$1C(a1)
+		move.b	#3,priority(a1)
+		move.b	#2,anim(a1)
 		move.b	#$E5,$20(a1)
 		move.w	#$C,d0
 		move.w	#$10,d1
 		move.w	#$FD00,d2
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		beq.s	loc_166FA
 		neg.w	d1
 		neg.w	d2
 
 loc_166FA:				; CODE XREF: ROM:000166F4j
-		sub.w	d0,$C(a1)
-		sub.w	d1,8(a1)
-		move.w	d2,$10(a1)
+		sub.w	d0,y_pos(a1)
+		sub.w	d1,x_pos(a1)
+		move.w	d2,x_vel(a1)
 
 locret_16706:				; CODE XREF: ROM:000166A2j
 		rts
@@ -31553,42 +31562,42 @@ loc_16708:				; CODE XREF: ROM:000165E0p
 		tst.b	$36(a0)
 		beq.s	loc_16738
 		move.w	$2E(a0),d0
-		cmp.w	$C(a0),d0
+		cmp.w	y_pos(a0),d0
 		ble.s	loc_1675C
 		tst.b	$2C(a0)
 		beq.s	loc_16730
 		move.w	$2A(a0),d0
-		cmp.w	$C(a0),d0
+		cmp.w	y_pos(a0),d0
 		bge.s	loc_1675C
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_16730:				; CODE XREF: ROM:00016722j
-		move.w	#$180,$12(a0)
+		move.w	#$180,y_vel(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_16738:				; CODE XREF: ROM:00016712j
 		move.w	$2A(a0),d0
-		cmp.w	$C(a0),d0
+		cmp.w	y_pos(a0),d0
 		bge.s	loc_1675C
 		tst.b	$2C(a0)
 		beq.s	loc_16754
 		move.w	$2E(a0),d0
-		cmp.w	$C(a0),d0
+		cmp.w	y_pos(a0),d0
 		ble.s	loc_1675C
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_16754:				; CODE XREF: ROM:00016746j
-		move.w	#$FE80,$12(a0)
+		move.w	#$FE80,y_vel(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_1675C:				; CODE XREF: ROM:0001671Cj
 					; ROM:0001672Cj ...
-		move.w	d0,$C(a0)
-		move.w	#0,$12(a0)
+		move.w	d0,y_pos(a0)
+		move.w	#0,y_vel(a0)
 
 locret_16766:				; CODE XREF: ROM:0001670Cj
 		rts
@@ -31663,9 +31672,9 @@ Obj4B_Flame:
 ; ---------------------------------------------------------------------------
 
 loc_167CE:
-		move.w	8(a1),8(a0)
-		move.w	$C(a1),$C(a0)
-		move.b	$22(a1),$22(a0)
+		move.w	x_pos(a1),x_pos(a0)
+		move.w	y_pos(a1),y_pos(a0)
+		move.b	status(a1),status(a0)
 		move.b	1(a1),1(a0)
 		lea	(Ani_obj4B).l,a1
 		bsr.w	j_AnimateSprite_4
@@ -31673,16 +31682,16 @@ loc_167CE:
 ; ===========================================================================
 
 Obj4B_Init:
-		move.l	#Map_obj4B,4(a0)
-		move.w	#$3E6,2(a0)
+		move.l	#Map_obj4B,mappings(a0)
+		move.w	#$3E6,art_tile(a0)
 		bsr.w	j_Adjust2PArtPointer_2
 		ori.b	#4,1(a0)
 		move.b	#$A,$20(a0)
-		move.b	#4,$18(a0)
-		move.b	#$10,$19(a0)
-		move.b	#$10,$16(a0)
-		move.b	#$18,$17(a0)
-		move.b	#3,$18(a0)
+		move.b	#4,priority(a0)
+		move.b	#$10,width_pixels(a0)
+		move.b	#$10,y_radius(a0)
+		move.b	#$18,x_radius(a0)
+		move.b	#3,priority(a0)
 		addq.b	#2,routine(a0)	; => Obj4B_Main
 
 		; load exhaust flame object
@@ -31691,22 +31700,22 @@ Obj4B_Init:
 
 		move.b	#$4B,0(a1)	; load obj4B
 		move.b	#4,routine(a1)	; => Obj4B_Flame
-		move.l	#Map_obj4B,4(a1)
-		move.w	#$3E6,2(a1)
+		move.l	#Map_obj4B,mappings(a1)
+		move.w	#$3E6,art_tile(a1)
 		bsr.w	j_Adjust2PArtPointer2
-		move.b	#4,$18(a1)
-		move.b	#$10,$19(a1)
-		move.b	$22(a0),$22(a1)
+		move.b	#4,priority(a1)
+		move.b	#$10,width_pixels(a1)
+		move.b	status(a0),status(a1)
 		move.b	1(a0),1(a1)
-		move.b	#1,$1C(a1)
+		move.b	#1,anim(a1)
 		move.l	a0,$2A(a1)
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
 		move.w	#$100,$2E(a0)
-		move.w	#-$100,$10(a0)
+		move.w	#-$100,x_vel(a0)
 		btst	#0,1(a0)
 		beq.s	locret_1689E
-		neg.w	$10(a0)
+		neg.w	x_vel(a0)
 
 locret_1689E:
 		rts
@@ -31714,7 +31723,7 @@ locret_1689E:
 
 Obj4B_Main:
 		moveq	#0,d0
-		move.b	$25(a0),d0
+		move.b	routine_secondary(a0),d0
 		move.w	Obj4B_Main_Index(pc,d0.w),d1
 		jsr	Obj4B_Main_Index(pc,d1.w)
 		lea	(Ani_obj4B).l,a1
@@ -31743,9 +31752,9 @@ locret_168E4:
 ; loc_168E6:
 Obj4B_TurnAround:
 		sf	$32(a0)	; reenable shooting
-		neg.w	$10(a0)	; reverse movement direction
+		neg.w	x_vel(a0)	; reverse movement direction
 		bchg	#0,1(a0)
-		bchg	#0,$22(a0)
+		bchg	#0,status(a0)
 		move.w	#$100,$2E(a0)
 		rts
 
@@ -31755,8 +31764,8 @@ Obj4B_TurnAround:
 Obj4B_ChkPlayers:
 		tst.b	$32(a0)
 		bne.w	locret_1694E	; branch, if shooting is disabled
-		move.w	8(a0),d0
-		sub.w	($FFFFB008).w,d0	; a1=character
+		move.w	x_pos(a0),d0
+		sub.w	(MainCharacter+x_pos).w,d0	; a1=character
 		move.w	d0,d1
 		bpl.s	loc_16918
 		neg.w	d0
@@ -31781,8 +31790,8 @@ Obj4B_PlayerIsLeft:
 ; loc_1693A:
 Obj4B_ReadyToShoot:
 		st	$32(a0)		; disable shooting
-		addq.b	#2,$25(a0)	; => Obj4B_Shooting
-		move.b	#3,$1C(a0)	; play shooting animation
+		addq.b	#2,routine_secondary(a0)	; => Obj4B_Shooting
+		move.b	#3,anim(a0)	; play shooting animation
 		move.w	#$32,$34(a0)
 
 locret_1694E:
@@ -31802,7 +31811,7 @@ Obj4B_Shooting:
 ; ===========================================================================
 ; loc_16964:
 Obj4B_DoneShooting:
-		subq.b	#2,$25(a0)	; => Obj4B_Roaming
+		subq.b	#2,routine_secondary(a0)	; => Obj4B_Roaming
 		rts
 ; ===========================================================================
 ; loc_1696A:
@@ -31812,22 +31821,22 @@ Obj4B_ShootProjectile:
 
 		move.b	#$4B,0(a1) ; load obj4B
 		move.b	#6,routine(a1)	; => Obj4B_Projectile
-		move.l	#Map_obj4B,4(a1)
-		move.w	#$3E6,2(a1)
+		move.l	#Map_obj4B,mappings(a1)
+		move.w	#$3E6,art_tile(a1)
 		bsr.w	j_Adjust2PArtPointer2
-		move.b	#4,$18(a1)
+		move.b	#4,priority(a1)
 		move.b	#$98,$20(a1)
-		move.b	#$10,$19(a1)
-		move.b	$22(a0),$22(a1)
+		move.b	#$10,width_pixels(a1)
+		move.b	status(a0),status(a1)
 		move.b	1(a0),1(a1)
-		move.b	#2,$1C(a1)
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
-		move.w	#$180,$12(a1)
-		move.w	#-$180,$10(a1)
+		move.b	#2,anim(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
+		move.w	#$180,y_vel(a1)
+		move.w	#-$180,x_vel(a1)
 		btst	#0,1(a1)	; is object facing left?
 		beq.s	locret_169D8	; if not, branch
-		neg.w	$10(a1)		; move in other direction
+		neg.w	x_vel(a1)		; move in other direction
 
 locret_169D8:
 		rts
@@ -31911,35 +31920,35 @@ loc_16AD2:				; DATA XREF: ROM:00016AB2o
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_16ADE:				; DATA XREF: ROM:Obj4A_Indexo
-		move.l	#Map_Obj4A,4(a0)
-		move.w	#$238A,2(a0)
+		move.l	#Map_Obj4A,mappings(a0)
+		move.w	#$238A,art_tile(a0)
 		ori.b	#4,1(a0)
 		move.b	#$A,$20(a0)
-		move.b	#4,$18(a0)
-		move.b	#$10,$19(a0)
-		move.b	#$10,$16(a0)
-		move.b	#8,$17(a0)
+		move.b	#4,priority(a0)
+		move.b	#$10,width_pixels(a0)
+		move.b	#$10,y_radius(a0)
+		move.b	#8,x_radius(a0)
 		bsr.w	j_ObjectMoveAndFall_3
 		jsr	ObjHitFloor
 		tst.w	d1
 		bpl.s	loc_16B3C
-		add.w	d1,$C(a0)
-		move.w	#0,$12(a0)
+		add.w	d1,y_pos(a0)
+		move.w	#0,y_vel(a0)
 		addq.b	#2,routine(a0)
-		move.w	8(a0),d0
-		sub.w	($FFFFB008).w,d0
+		move.w	x_pos(a0),d0
+		sub.w	(MainCharacter+x_pos).w,d0
 		bpl.s	loc_16B3C
-		bchg	#0,$22(a0)
+		bchg	#0,status(a0)
 
 loc_16B3C:				; CODE XREF: ROM:00016B1Cj
 					; ROM:00016B34j
-		move.w	$C(a0),$2A(a0)
+		move.w	y_pos(a0),$2A(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_16B44:				; DATA XREF: ROM:00016AB0o
 		moveq	#0,d0
-		move.b	$25(a0),d0
+		move.b	routine_secondary(a0),d0
 		move.w	Obj4A_SubIndex(pc,d0.w),d1
 		jsr	Obj4A_SubIndex(pc,d1.w)
 		lea	(Ani_Obj4A).l,a1
@@ -31954,14 +31963,14 @@ Obj4A_SubIndex:	dc.w Obj4A_Init-Obj4A_SubIndex ; DATA XREF: ROM:Obj4A_SubIndexo
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 Obj4A_Init:				; DATA XREF: ROM:Obj4A_SubIndexo
-		move.w	8(a0),d0
-		sub.w	($FFFFB008).w,d0
+		move.w	x_pos(a0),d0
+		sub.w	(MainCharacter+x_pos).w,d0
 		cmpi.w	#$80,d0	; '€'
 		bgt.s	locret_16B86
 		cmpi.w	#$FF80,d0
 		blt.s	locret_16B86
-		addq.b	#2,$25(a0)
-		move.b	#1,$1C(a0)
+		addq.b	#2,routine_secondary(a0)
+		move.b	#1,anim(a0)
 
 locret_16B86:				; CODE XREF: ROM:00016B74j
 					; ROM:00016B7Aj
@@ -31969,12 +31978,12 @@ locret_16B86:				; CODE XREF: ROM:00016B74j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 Obj4A_Main:				; DATA XREF: ROM:00016B62o
-		subi.l	#$18000,$C(a0)
+		subi.l	#$18000,y_pos(a0)
 		move.w	$2A(a0),d0
-		sub.w	$C(a0),d0
+		sub.w	y_pos(a0),d0
 		cmpi.w	#$20,d0	; ' '
 		ble.s	locret_16BA8
-		addq.b	#2,$25(a0)
+		addq.b	#2,routine_secondary(a0)
 		move.w	#0,$2C(a0)
 
 locret_16BA8:				; CODE XREF: ROM:00016B9Cj
@@ -31990,36 +31999,36 @@ loc_16BAA:				; DATA XREF: ROM:00016B64o
 		bne.s	loc_16C10
 		move.b	#$4A,0(a1) ; 'J'
 		move.b	#4,routine(a1)
-		move.l	#Map_Obj4A,4(a1)
-		move.b	#4,$1A(a1)
-		move.w	#$24C6,2(a1)
-		move.b	#3,$18(a1)
-		move.b	#$10,$19(a1)
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
+		move.l	#Map_Obj4A,mappings(a1)
+		move.b	#4,mapping_frame(a1)
+		move.w	#$24C6,art_tile(a1)
+		move.b	#3,priority(a1)
+		move.b	#$10,width_pixels(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
 		move.w	#$1E,$2C(a1)
 		move.b	1(a0),1(a1)
-		move.b	$22(a0),$22(a1)
+		move.b	status(a0),status(a1)
 
 loc_16C10:				; CODE XREF: ROM:00016BC4j
 		jsr	SingleObjLoad
 		bne.s	locret_16C74
 		move.b	#$4A,0(a1) ; 'J'
 		move.b	#6,routine(a1)
-		move.l	#Map_Obj4A,4(a1)
-		move.w	#$24C6,2(a1)
-		move.b	#4,$18(a1)
-		move.b	#$10,$19(a1)
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
+		move.l	#Map_Obj4A,mappings(a1)
+		move.w	#$24C6,art_tile(a1)
+		move.b	#4,priority(a1)
+		move.b	#$10,width_pixels(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
 		move.w	#$F,$2C(a1)
 		move.b	1(a0),1(a1)
-		move.b	$22(a0),$22(a1)
-		move.b	#2,$1C(a1)
-		move.w	#$FA80,$10(a1)
+		move.b	status(a0),status(a1)
+		move.b	#2,anim(a1)
+		move.w	#$FA80,x_vel(a1)
 		btst	#0,1(a1)
 		beq.s	locret_16C74
-		neg.w	$10(a1)
+		neg.w	x_vel(a1)
 
 locret_16C74:				; CODE XREF: ROM:00016BB4j
 					; ROM:00016C16j ...
@@ -32027,7 +32036,7 @@ locret_16C74:				; CODE XREF: ROM:00016BB4j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_16C76:				; CODE XREF: ROM:00016BB0j
-		addq.b	#2,$25(a0)
+		addq.b	#2,routine_secondary(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -32038,7 +32047,7 @@ loc_16C7C:				; DATA XREF: ROM:00016B66o
 		neg.w	d0
 
 loc_16C8A:				; CODE XREF: ROM:00016C86j
-		add.w	d0,8(a0)
+		add.w	d0,x_pos(a0)
 		bra.w	loc_16D3C
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 Ani_Obj4A:	dc.w byte_16C98-Ani_Obj4A ; DATA XREF: ROM:00016AC4o
@@ -32119,22 +32128,22 @@ Obj4C_Index:	dc.w Obj4C_Init-Obj4C_Index ; DATA XREF: ROM:Obj4C_Indexo
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 Obj4C_Init:				; DATA XREF: ROM:Obj4C_Indexo
-		move.l	#Map_Obj4C,4(a0)
-		move.w	#$2530,2(a0)
+		move.l	#Map_Obj4C,mappings(a0)
+		move.w	#$2530,art_tile(a0)
 		ori.b	#4,1(a0)
 		move.b	#$A,$20(a0)
-		move.b	#4,$18(a0)
-		move.b	#$10,$19(a0)
-		move.b	#$10,$16(a0)
-		move.b	#8,$17(a0)
+		move.b	#4,priority(a0)
+		move.b	#$10,width_pixels(a0)
+		move.b	#$10,y_radius(a0)
+		move.b	#8,x_radius(a0)
 		addq.b	#2,routine(a0)
-		move.w	$C(a0),$2E(a0)
+		move.w	y_pos(a0),$2E(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_16DA2:				; DATA XREF: ROM:00016D60o
 		moveq	#0,d0
-		move.b	$25(a0),d0
+		move.b	routine_secondary(a0),d0
 		move.w	Obj4C_SubIndex(pc,d0.w),d1
 		jsr	Obj4C_SubIndex(pc,d1.w)
 		bsr.w	sub_16DC8
@@ -32155,7 +32164,7 @@ sub_16DC8:				; CODE XREF: ROM:00016DB0p
 		jsr	(CalcSine).l
 		asr.w	#6,d0
 		add.w	$2E(a0),d0
-		move.w	d0,$C(a0)
+		move.w	d0,y_pos(a0)
 		addq.b	#4,$3F(a0)
 		rts
 ; End of function sub_16DC8
@@ -32165,14 +32174,14 @@ sub_16DC8:				; CODE XREF: ROM:00016DB0p
 
 
 sub_16DE2:				; CODE XREF: ROM:00016F36p
-		move.w	8(a0),d0
-		sub.w	($FFFFB008).w,d0
+		move.w	x_pos(a0),d0
+		sub.w	(MainCharacter+x_pos).w,d0
 		cmpi.w	#$80,d0	; '€'
 		bgt.s	locret_16E0E
 		cmpi.w	#$FF80,d0
 		blt.s	locret_16E0E
-		move.b	#4,$25(a0)
-		move.b	#2,$1C(a0)
+		move.b	#4,routine_secondary(a0)
+		move.b	#2,anim(a0)
 		move.w	#8,$2A(a0)
 		move.b	#0,$3E(a0)
 
@@ -32201,7 +32210,7 @@ sub_16E30:				; CODE XREF: ROM:00016E18p
 		tst.b	$3D(a0)
 		beq.s	locret_16E42
 		bset	#0,1(a0)
-		bset	#0,$22(a0)
+		bset	#0,status(a0)
 
 locret_16E42:				; CODE XREF: sub_16E30+4j
 		rts
@@ -32214,8 +32223,8 @@ locret_16E42:				; CODE XREF: sub_16E30+4j
 sub_16E44:				; CODE XREF: ROM:loc_16F72p
 		subi.w	#1,$2C(a0)
 		bpl.s	locret_16E8E
-		move.w	8(a0),d0
-		sub.w	($FFFFB008).w,d0
+		move.w	x_pos(a0),d0
+		sub.w	(MainCharacter+x_pos).w,d0
 		cmpi.w	#$60,d0	; '`'
 		bgt.s	loc_16E90
 		cmpi.w	#$FFA0,d0
@@ -32228,7 +32237,7 @@ loc_16E68:				; CODE XREF: sub_16E44+1Ej
 		move.b	#$40,$3F(a0) ; '@'
 		move.w	#$400,$14(a0)
 		move.b	#4,routine(a0)
-		move.b	#3,$1C(a0)
+		move.b	#3,anim(a0)
 		move.w	#$C,$2A(a0)
 		move.b	#1,$3E(a0)
 		moveq	#0,d0
@@ -32246,8 +32255,8 @@ loc_16E90:				; CODE XREF: sub_16E44+14j
 		bgt.s	locret_16E8E
 
 loc_16E9C:				; CODE XREF: sub_16E44+50j
-		move.b	#1,$1C(a0)
-		move.b	#0,$25(a0)
+		move.b	#1,anim(a0)
+		move.b	#0,routine_secondary(a0)
 		move.w	#$18,$2A(a0)
 		rts
 ; End of function sub_16E44
@@ -32281,13 +32290,13 @@ loc_16ECA:				; CODE XREF: sub_16EB0+4j
 loc_16EDE:				; CODE XREF: sub_16EB0+10j
 					; sub_16EB0+24j
 		sf	$3D(a0)
-		move.b	#0,$1C(a0)
+		move.b	#0,anim(a0)
 		move.b	#2,routine(a0)
-		move.b	#0,$25(a0)
+		move.b	#0,routine_secondary(a0)
 		move.w	#$18,$2A(a0)
-		move.b	#1,$1C(a0)
+		move.b	#1,anim(a0)
 		bclr	#0,1(a0)
-		bclr	#0,$22(a0)
+		bclr	#0,status(a0)
 		rts
 ; End of function sub_16EB0
 
@@ -32300,10 +32309,10 @@ sub_16F0E:				; CODE XREF: ROM:loc_16E10p
 		jsr	(CalcSine).l
 		muls.w	$14(a0),d1
 		asr.l	#8,d1
-		move.w	d1,$10(a0)
+		move.w	d1,x_vel(a0)
 		muls.w	$14(a0),d0
 		asr.l	#8,d0
-		move.w	d0,$12(a0)
+		move.w	d0,y_vel(a0)
 		rts
 ; End of function sub_16F0E
 
@@ -32319,8 +32328,8 @@ loc_16F2E:				; DATA XREF: ROM:Obj4C_SubIndexo
 		bne.s	locret_16F64
 		move.w	#$18,$2A(a0)
 		move.w	#$1E,$2C(a0)
-		addq.b	#2,$25(a0)
-		move.b	#1,$1C(a0)
+		addq.b	#2,routine_secondary(a0)
+		move.b	#1,anim(a0)
 		move.b	#0,$3E(a0)
 
 locret_16F64:				; CODE XREF: ROM:00016F34j
@@ -32331,7 +32340,7 @@ locret_16F64:				; CODE XREF: ROM:00016F34j
 loc_16F66:				; DATA XREF: ROM:00016DC4o
 		subq.b	#1,$2A(a0)
 		bpl.s	locret_16F70
-		subq.b	#2,$25(a0)
+		subq.b	#2,routine_secondary(a0)
 
 locret_16F70:				; CODE XREF: ROM:00016F6Aj
 		rts
@@ -32347,7 +32356,7 @@ loc_16F72:				; DATA XREF: ROM:00016DC6o
 		move.b	#0,$3E(a0)
 		move.w	#8,$2A(a0)
 		bset	#0,1(a0)
-		bset	#0,$22(a0)
+		bset	#0,status(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -32355,7 +32364,7 @@ loc_16FA0:				; CODE XREF: ROM:00016F84j
 		move.b	#1,$3E(a0)
 		move.w	#$C,$2A(a0)
 		bclr	#0,1(a0)
-		bclr	#0,$22(a0)
+		bclr	#0,status(a0)
 
 locret_16FB8:				; CODE XREF: ROM:00016F76j
 					; ROM:00016F7Ej
@@ -32487,20 +32496,20 @@ Obj4E_Index:	dc.w Obj4E_Init-Obj4E_Index ; DATA XREF: ROM:Obj4E_Indexo
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 Obj4E_Init:				; DATA XREF: ROM:Obj4E_Indexo
-		move.l	#Map_Obj4E,4(a0)
-		move.w	#$2300,2(a0)
+		move.l	#Map_Obj4E,mappings(a0)
+		move.w	#$2300,art_tile(a0)
 		ori.b	#4,1(a0)
 		move.b	#$A,$20(a0)
-		move.b	#4,$18(a0)
-		move.b	#$10,$19(a0)
-		move.b	#$10,$16(a0)
-		move.b	#8,$17(a0)
+		move.b	#4,priority(a0)
+		move.b	#$10,width_pixels(a0)
+		move.b	#$10,y_radius(a0)
+		move.b	#8,x_radius(a0)
 		bsr.w	j_ObjectMoveAndFall_4
 		jsr	ObjHitFloor
 		tst.w	d1
 		bpl.s	locret_17238
-		add.w	d1,$C(a0)
-		move.w	#0,$12(a0)
+		add.w	d1,y_pos(a0)
+		move.w	#0,y_vel(a0)
 		addq.b	#2,routine(a0)
 
 locret_17238:				; CODE XREF: ROM:00017228j
@@ -32509,7 +32518,7 @@ locret_17238:				; CODE XREF: ROM:00017228j
 
 Obj4E_Main:				; DATA XREF: ROM:000171E8o
 		moveq	#0,d0
-		move.b	$25(a0),d0
+		move.b	routine_secondary(a0),d0
 		move.w	Obj4E_SubIndex(pc,d0.w),d1
 		jsr	Obj4E_SubIndex(pc,d1.w)
 		lea	(Ani_Obj4E).l,a1
@@ -32524,12 +32533,12 @@ Obj4E_SubIndex:	dc.w loc_1725A-Obj4E_SubIndex ;	DATA XREF: ROM:Obj4E_SubIndexo
 loc_1725A:				; DATA XREF: ROM:Obj4E_SubIndexo
 		subq.w	#1,$30(a0)
 		bpl.s	locret_1727C
-		addq.b	#2,$25(a0)
-		move.w	#$FF40,$10(a0)
-		move.b	#0,$1C(a0)
-		bchg	#0,$22(a0)
+		addq.b	#2,routine_secondary(a0)
+		move.w	#$FF40,x_vel(a0)
+		move.b	#0,anim(a0)
+		bchg	#0,status(a0)
 		bne.s	locret_1727C
-		neg.w	$10(a0)
+		neg.w	x_vel(a0)
 
 locret_1727C:				; CODE XREF: ROM:0001725Ej
 					; ROM:00017276j
@@ -32544,28 +32553,28 @@ loc_1727E:				; DATA XREF: ROM:00017258o
 		blt.s	loc_1729E
 		cmpi.w	#$C,d1
 		bge.s	loc_1729E
-		add.w	d1,$C(a0)
+		add.w	d1,y_pos(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_1729E:				; CODE XREF: ROM:00017290j
 					; ROM:00017296j
-		subq.b	#2,$25(a0)
+		subq.b	#2,routine_secondary(a0)
 		move.w	#$3B,$30(a0) ; ';'
-		move.w	#0,$10(a0)
-		move.b	#1,$1C(a0)
+		move.w	#0,x_vel(a0)
+		move.b	#1,anim(a0)
 		rts
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
 
 
 sub_172B6:				; CODE XREF: ROM:loc_1727Ep
-		move.w	8(a0),d0
-		sub.w	($FFFFB008).w,d0
+		move.w	x_pos(a0),d0
+		sub.w	(MainCharacter+x_pos).w,d0
 		bmi.s	loc_172D0
 		cmpi.w	#$40,d0	; '@'
 		bgt.s	loc_172E6
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		beq.s	loc_172DE
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -32573,17 +32582,17 @@ sub_172B6:				; CODE XREF: ROM:loc_1727Ep
 loc_172D0:				; CODE XREF: sub_172B6+8j
 		cmpi.w	#$FFC0,d0
 		blt.s	loc_172E6
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		beq.s	loc_172E6
 
 loc_172DE:				; CODE XREF: sub_172B6+16j
-		move.b	#2,$1C(a0)
+		move.b	#2,anim(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_172E6:				; CODE XREF: sub_172B6+Ej
 					; sub_172B6+1Ej ...
-		move.b	#0,$1C(a0)
+		move.b	#0,anim(a0)
 		rts
 ; End of function sub_172B6
 
@@ -32703,36 +32712,36 @@ Obj53_Index:	dc.w Obj53_Init-Obj53_Index
 
 Obj53_Init:
 		addq.b	#2,routine(a0)
-		move.l	#Map_obj53,4(a0)
-		move.w	#$41C,2(a0)
+		move.l	#Map_obj53,mappings(a0)
+		move.w	#$41C,art_tile(a0)
 		bsr.w	j_Adjust2PArtPointer
 		move.b	#4,1(a0)
-		move.b	#4,$18(a0)
+		move.b	#4,priority(a0)
 		move.b	#9,$20(a0)
-		move.b	#$10,$19(a0)
-		move.w	#$FC00,$12(a0)
-		move.w	$C(a0),$30(a0)
+		move.b	#$10,width_pixels(a0)
+		move.w	#$FC00,y_vel(a0)
+		move.w	y_pos(a0),$30(a0)
 
 Obj53_Main:
 		lea	(Ani_obj53).l,a1
 		bsr.w	j_AnimateSprite
 		bsr.w	j_ObjectMove
-		addi.w	#$18,$12(a0)
+		addi.w	#$18,y_vel(a0)
 		move.w	$30(a0),d0
-		cmp.w	$C(a0),d0
+		cmp.w	y_pos(a0),d0
 		bcc.s	loc_17548
-		move.w	d0,$C(a0)
-		move.w	#$FB00,$12(a0)
+		move.w	d0,y_pos(a0)
+		move.w	#$FB00,y_vel(a0)
 
 loc_17548:
-		move.b	#1,$1C(a0)
+		move.b	#1,anim(a0)
 		subi.w	#$C0,d0
-		cmp.w	$C(a0),d0
+		cmp.w	y_pos(a0),d0
 		bcc.s	locret_1756A
-		move.b	#0,$1C(a0)
-		tst.w	$12(a0)
+		move.b	#0,anim(a0)
+		tst.w	y_vel(a0)
 		bmi.s	locret_1756A
-		move.b	#2,$1C(a0)
+		move.b	#2,anim(a0)
 
 locret_1756A:
 		rts
@@ -32783,40 +32792,40 @@ Obj54_Index:	dc.w Obj54_Init-Obj54_Index
 ; ===========================================================================
 
 Obj54_Init:
-		move.l	#Map_obj54,4(a0)
-		move.w	#$402,2(a0)
+		move.l	#Map_obj54,mappings(a0)
+		move.w	#$402,art_tile(a0)
 		bsr.w	j_Adjust2PArtPointer_3
 		ori.b	#4,1(a0)
 		move.b	#$A,$20(a0)
-		move.b	#4,$18(a0)
-		move.b	#$10,$19(a0)
-		move.b	#$10,$16(a0)
-		move.b	#$E,$17(a0)
+		move.b	#4,priority(a0)
+		move.b	#$10,width_pixels(a0)
+		move.b	#$10,y_radius(a0)
+		move.b	#$E,x_radius(a0)
 		bsr.w	j_SingleObjLoad2_1
 		bne.s	loc_17670
 		move.b	#$54,0(a1)
 		move.b	#6,routine(a1)
-		move.l	#Map_obj54,4(a1)
-		move.w	#$2402,2(a1)
+		move.l	#Map_obj54,mappings(a1)
+		move.w	#$2402,art_tile(a1)
 		bsr.w	j_Adjust2PArtPointer2_0
-		move.b	#3,$18(a1)
-		move.b	#$10,$19(a1)
-		move.b	$22(a0),$22(a1)
+		move.b	#3,priority(a1)
+		move.b	#$10,width_pixels(a1)
+		move.b	status(a0),status(a1)
 		move.b	1(a0),1(a1)
 		move.l	a0,$2A(a1)
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
-		move.b	#2,$1A(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
+		move.b	#2,mapping_frame(a1)
 
 loc_17670:
 		addq.b	#2,routine(a0)
 		move.w	#$FF80,d0
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		beq.s	loc_17682
 		neg.w	d0
 
 loc_17682:
-		move.w	d0,$10(a0)
+		move.w	d0,x_vel(a0)
 		rts
 ; ===========================================================================
 ; loc_17688:
@@ -32828,7 +32837,7 @@ Obj54_Move:
 		blt.s	Obj54_Display
 		cmpi.w	#$C,d1
 		bge.s	Obj54_Display
-		add.w	d1,$C(a0)
+		add.w	d1,y_pos(a0)
 		lea	(Ani_Obj54).l,a1
 		bsr.w	j_AnimateSprite_8
 		bra.w	loc_1786C
@@ -32848,27 +32857,27 @@ Obj54_Display:
 sub_176D0:				; CODE XREF: ROM:loc_17688p
 		tst.b	$35(a0)
 		bne.s	locret_17712
-		move.w	($FFFFB008).w,d0
-		sub.w	8(a0),d0
+		move.w	(MainCharacter+x_pos).w,d0
+		sub.w	x_pos(a0),d0
 		cmpi.w	#$64,d0	; 'd'
 		bgt.s	locret_17712
 		cmpi.w	#$FF9C,d0
 		blt.s	locret_17712
 		tst.w	d0
 		bmi.s	loc_176F8
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		beq.s	locret_17712
 		bra.s	loc_17700
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_176F8:				; CODE XREF: sub_176D0+1Cj
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		bne.s	locret_17712
 
 loc_17700:				; CODE XREF: sub_176D0+26j
-		move.w	$10(a0),d0
+		move.w	x_vel(a0),d0
 		asl.w	#2,d0
-		move.w	d0,$10(a0)
+		move.w	d0,x_vel(a0)
 		st	$35(a0)
 		bsr.w	sub_17714
 
@@ -32886,19 +32895,19 @@ sub_17714:				; CODE XREF: sub_176D0+3Ep
 		bne.s	locret_17770
 		move.b	#$54,0(a1) ; 'T'
 		move.b	#8,routine(a1)
-		move.l	#Map_obj4B,4(a1)
-		move.w	#$3E6,2(a1)
+		move.l	#Map_obj4B,mappings(a1)
+		move.w	#$3E6,art_tile(a1)
 		bsr.w	j_Adjust2PArtPointer2_0
-		move.b	#4,$18(a1)
-		move.b	#$10,$19(a1)
-		move.b	$22(a0),$22(a1)
+		move.b	#4,priority(a1)
+		move.b	#$10,width_pixels(a1)
+		move.b	status(a0),status(a1)
 		move.b	1(a0),1(a1)
 		move.l	a0,$2A(a1)
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
-		addq.w	#7,$C(a1)
-		addi.w	#$D,8(a1)
-		move.b	#1,$1C(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
+		addq.w	#7,y_pos(a1)
+		addi.w	#$D,x_pos(a1)
+		move.b	#1,anim(a1)
 
 locret_17770:				; CODE XREF: sub_17714+4j
 		rts
@@ -32912,16 +32921,16 @@ loc_17772:
 		bne.w	loc_17854
 		tst.b	$34(a1)
 		bne.w	loc_17854
-		move.w	8(a1),8(a0)
-		move.w	$C(a1),$C(a0)
-		addq.w	#7,$C(a0)
+		move.w	x_pos(a1),x_pos(a0)
+		move.w	y_pos(a1),y_pos(a0)
+		addq.w	#7,y_pos(a0)
 		moveq	#$D,d0
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		beq.s	loc_177A2
 		neg.w	d0
 
 loc_177A2:
-		add.w	d0,8(a0)
+		add.w	d0,x_pos(a0)
 		lea	(Ani_obj4B).l,a1
 		bsr.w	j_AnimateSprite_8
 		bra.w	loc_1786C
@@ -32930,12 +32939,12 @@ loc_177A2:
 loc_177B4:				; DATA XREF: ROM:000175E2o
 		subi.w	#1,$30(a0)
 		bpl.w	loc_1786C
-		neg.w	$10(a0)
+		neg.w	x_vel(a0)
 		bsr.w	j_ObjectMoveAndFall_5
-		move.w	$10(a0),d0
+		move.w	x_vel(a0),d0
 		asr.w	#2,d0
-		move.w	d0,$10(a0)
-		bchg	#0,$22(a0)
+		move.w	d0,x_vel(a0)
+		bchg	#0,status(a0)
 		bchg	#0,1(a0)
 		subq.b	#2,routine(a0)
 		sf	$34(a0)
@@ -32947,9 +32956,9 @@ loc_177EC:				; DATA XREF: ROM:000175E4o
 		movea.l	$2A(a0),a1
 		cmpi.b	#$54,(a1) ; 'T'
 		bne.w	loc_17854
-		move.w	8(a1),8(a0)
-		move.w	$C(a1),$C(a0)
-		move.b	$22(a1),$22(a0)
+		move.w	x_pos(a1),x_pos(a0)
+		move.w	y_pos(a1),y_pos(a0)
+		move.b	status(a1),status(a0)
 		move.b	1(a1),1(a0)
 		bra.w	loc_1786C
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -33009,7 +33018,7 @@ j_ObjectMove_7:				; CODE XREF: ROM:0001768Cp
 Obj57:					; DATA XREF: ROM:Obj_Indexo
 					; ROM:0001833Co
 		moveq	#0,d0
-		move.b	$25(a0),d0
+		move.b	routine_secondary(a0),d0
 		move.w	off_17892(pc,d0.w),d1
 		jmp	off_17892(pc,d1.w)
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -33024,15 +33033,15 @@ off_17892:	dc.w loc_1789E-off_17892; 0 ; DATA XREF: ROM:off_17892o
 
 loc_1789E:				; DATA XREF: ROM:off_17892o
 		move.b	#0,$20(a0)
-		cmpi.w	#$29D0,8(a0)
+		cmpi.w	#$29D0,x_pos(a0)
 		ble.s	loc_178B6
-		subi.w	#1,8(a0)
+		subi.w	#1,x_pos(a0)
 		bra.w	loc_181A8
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_178B6:				; CODE XREF: ROM:000178AAj
-		move.w	#$29D0,8(a0)
-		addq.b	#2,$25(a0)
+		move.w	#$29D0,x_pos(a0)
+		addq.b	#2,routine_secondary(a0)
 		bra.w	loc_181A8
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -33048,9 +33057,9 @@ off_178D2:	dc.w loc_178D6-off_178D2 ; DATA	XREF: ROM:off_178D2o
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_178D6:				; DATA XREF: ROM:off_178D2o
-		cmpi.w	#$41E,$C(a0)
+		cmpi.w	#$41E,y_pos(a0)
 		bge.s	loc_178E8
-		addi.w	#1,$C(a0)
+		addi.w	#1,y_pos(a0)
 		bra.w	loc_181A8
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -33064,8 +33073,8 @@ loc_178E8:				; CODE XREF: ROM:000178DCj
 loc_178FC:				; DATA XREF: ROM:000178D4o
 		subi.w	#1,$2A(a0)
 		bpl.w	loc_181A8
-		move.w	#$FE00,$10(a0)
-		addq.b	#2,$25(a0)
+		move.w	#$FE00,x_vel(a0)
+		addq.b	#2,routine_secondary(a0)
 		move.b	#$F,$20(a0)
 		bset	#1,$2D(a0)
 		bra.w	loc_181A8
@@ -33077,34 +33086,34 @@ loc_17920:				; DATA XREF: ROM:off_17892o
 		move.w	$2E(a0),d0
 		lsr.w	#1,d0
 		subi.w	#$14,d0
-		move.w	d0,$C(a0)
+		move.w	d0,y_pos(a0)
 		move.w	#0,$2E(a0)
-		move.l	8(a0),d2
-		move.w	$10(a0),d0
+		move.l	x_pos(a0),d2
+		move.w	x_vel(a0),d0
 		ext.l	d0
 		asl.l	#8,d0
 		add.l	d0,d2
-		move.l	d2,8(a0)
+		move.l	d2,x_pos(a0)
 		bra.w	loc_181A8
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_17952:				; DATA XREF: ROM:off_17892o
 		subq.w	#1,$3C(a0)
 		bpl.w	BossDefeated
-		bset	#0,$22(a0)
-		bclr	#7,$22(a0)
-		clr.w	$10(a0)
-		addq.b	#2,$25(a0)
+		bset	#0,status(a0)
+		bclr	#7,status(a0)
+		clr.w	x_vel(a0)
+		addq.b	#2,routine_secondary(a0)
 		move.w	#$FFDA,$3C(a0)
 		move.w	#$C,$2A(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_1797C:				; DATA XREF: ROM:off_17892o
-		addq.w	#1,$C(a0)
+		addq.w	#1,y_pos(a0)
 		subq.w	#1,$2A(a0)
 		bpl.w	loc_181A8
-		addq.b	#2,$25(a0)
+		addq.b	#2,routine_secondary(a0)
 		move.b	#0,$2C(a0)
 		bra.w	loc_181A8
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -33128,18 +33137,18 @@ loc_179AE:				; DATA XREF: ROM:off_179A8o
 		bne.w	loc_181A8
 		move.b	#$58,0(a1) ; 'X'
 		move.l	a0,$34(a1)
-		move.l	#Map_Obj58,4(a1)
-		move.w	#$2540,2(a1)
+		move.l	#Map_Obj58,mappings(a1)
+		move.w	#$2540,art_tile(a1)
 		move.b	#4,1(a1)
-		move.b	#$20,$19(a1) ; ' '
-		move.b	#4,$18(a1)
-		move.l	8(a0),8(a1)
-		move.l	$C(a0),$C(a1)
-		addi.w	#$C,$C(a1)
-		move.b	$22(a0),$22(a1)
+		move.b	#$20,width_pixels(a1) ; ' '
+		move.b	#4,priority(a1)
+		move.l	x_pos(a0),x_pos(a1)
+		move.l	y_pos(a0),y_pos(a1)
+		addi.w	#$C,y_pos(a1)
+		move.b	status(a0),status(a1)
 		move.b	1(a0),1(a1)
 		move.b	#8,routine(a1)
-		move.b	#2,$1C(a1)
+		move.b	#2,anim(a1)
 		move.w	#$10,$2A(a1)
 		move.w	#$32,$2A(a0) ; '2'
 		addq.b	#2,$2C(a0)
@@ -33158,12 +33167,12 @@ locret_17A3A:				; CODE XREF: ROM:00017A28j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_17A3C:				; DATA XREF: ROM:000179ACo
-		subq.w	#1,$C(a0)
+		subq.w	#1,y_pos(a0)
 		subi.w	#1,$2A(a0)
 		bpl.s	locret_17A68
-		addq.w	#1,$C(a0)
-		addq.w	#2,8(a0)
-		cmpi.w	#$2B08,8(a0)
+		addq.w	#1,y_pos(a0)
+		addq.w	#2,x_pos(a0)
+		cmpi.w	#$2B08,x_pos(a0)
 		bcs.s	locret_17A68
 		tst.b	($FFFFF7A7).w
 		bne.s	locret_17A68
@@ -33180,16 +33189,16 @@ locret_17A68:				; CODE XREF: ROM:00017A46j
 
 sub_17A6A:				; CODE XREF: ROM:00017924p
 					; ROM:loc_17C58p
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		cmpi.w	#$2720,d0
 		ble.s	loc_17A7A
 		cmpi.w	#$2B08,d0
 		blt.s	locret_17A8A
 
 loc_17A7A:				; CODE XREF: sub_17A6A+8j
-		bchg	#0,$22(a0)
+		bchg	#0,status(a0)
 		bchg	#0,1(a0)
-		neg.w	$10(a0)
+		neg.w	x_vel(a0)
 
 locret_17A8A:				; CODE XREF: sub_17A6A+Ej
 		rts
@@ -33200,9 +33209,9 @@ locret_17A8A:				; CODE XREF: sub_17A6A+Ej
 
 
 sub_17A8C:				; CODE XREF: ROM:loc_17920p
-		cmpi.b	#6,$25(a0)
+		cmpi.b	#6,routine_secondary(a0)
 		bcc.s	locret_17AD2
-		tst.b	$22(a0)
+		tst.b	status(a0)
 		bmi.s	loc_17AD4
 		tst.b	$20(a0)
 		bne.s	locret_17AD2
@@ -33233,7 +33242,7 @@ locret_17AD2:				; CODE XREF: sub_17A8C+6j
 loc_17AD4:				; CODE XREF: sub_17A8C+Cj
 		moveq	#$64,d0	; 'd'
 		bsr.w	AddPoints
-		move.b	#6,$25(a0)
+		move.b	#6,routine_secondary(a0)
 		move.w	#$B3,$3C(a0) ; '³'
 		bset	#3,$2D(a0)
 		rts
@@ -33259,7 +33268,7 @@ off_17AFC:	dc.w loc_17B2A-off_17AFC ; DATA	XREF: ROM:off_17AFCo
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_17B06:				; DATA XREF: ROM:00017B04o
-		subi.w	#1,$C(a0)
+		subi.w	#1,y_pos(a0)
 		subi.w	#1,$2A(a0)
 		bpl.w	loc_181A8
 		move.b	#0,routine(a0)
@@ -33270,7 +33279,7 @@ loc_17B06:				; DATA XREF: ROM:00017B04o
 
 loc_17B2A:				; DATA XREF: ROM:off_17AFCo
 		moveq	#0,d0
-		move.b	$25(a0),d0
+		move.b	routine_secondary(a0),d0
 		move.w	off_17B38(pc,d0.w),d1
 		jmp	off_17B38(pc,d1.w)
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -33285,14 +33294,14 @@ loc_17B3C:				; DATA XREF: ROM:off_17B38o
 		bne.w	loc_181AE
 		btst	#0,$2D(a1)
 		beq.s	loc_17B60
-		move.b	#1,$1C(a0)
+		move.b	#1,anim(a0)
 		move.w	#$18,$2A(a0)
-		addq.b	#2,$25(a0)
+		addq.b	#2,routine_secondary(a0)
 
 loc_17B60:				; CODE XREF: ROM:00017B4Ej
-		move.w	8(a1),8(a0)
-		move.w	$C(a1),$C(a0)
-		move.b	$22(a1),$22(a0)
+		move.w	x_pos(a1),x_pos(a0)
+		move.w	y_pos(a1),y_pos(a0)
+		move.b	status(a1),status(a0)
 		move.b	1(a1),1(a0)
 		lea	(Ani_Obj58).l,a1
 		bsr.w	j_AnimateSprite_9
@@ -33304,7 +33313,7 @@ loc_17B86:				; DATA XREF: ROM:00017B3Ao
 		bpl.s	loc_17BA2
 		cmpi.w	#$FFF0,$2A(a0)
 		ble.w	loc_181AE
-		addi.w	#1,$C(a0)
+		addi.w	#1,y_pos(a0)
 		bra.w	loc_181A8
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -33322,23 +33331,23 @@ loc_17BB0:				; DATA XREF: ROM:00017AFEo
 		beq.w	loc_181A8
 		btst	#2,$2D(a1)
 		bne.w	loc_17BF2
-		move.w	8(a1),8(a0)
-		move.w	$C(a1),$C(a0)
-		addi.w	#8,$C(a0)
-		move.b	$22(a1),$22(a0)
+		move.w	x_pos(a1),x_pos(a0)
+		move.w	y_pos(a1),y_pos(a0)
+		addi.w	#8,y_pos(a0)
+		move.b	status(a1),status(a0)
 		move.b	1(a1),1(a0)
 		bra.w	loc_181A8
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_17BF2:				; CODE XREF: ROM:00017BCCj
-		move.b	#8,$1A(a0)
-		move.b	#0,$18(a0)
+		move.b	#8,mapping_frame(a0)
+		move.b	#0,priority(a0)
 		bra.w	loc_181A8
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_17C02:				; DATA XREF: ROM:00017B00o
 		moveq	#0,d0
-		move.b	$25(a0),d0
+		move.b	routine_secondary(a0),d0
 		move.w	off_17C10(pc,d0.w),d1
 		jmp	off_17C10(pc,d1.w)
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -33355,7 +33364,7 @@ loc_17C18:				; DATA XREF: ROM:off_17C10o
 		bne.w	loc_181AE
 		btst	#1,$2D(a1)
 		beq.w	loc_181A8
-		addq.b	#2,$25(a0)
+		addq.b	#2,routine_secondary(a0)
 		bra.w	loc_181A8
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -33363,11 +33372,11 @@ loc_17C36:				; DATA XREF: ROM:00017C12o
 		movea.l	$34(a0),a1
 		cmpi.b	#$55,(a1) ; 'U'
 		bne.w	loc_181AE
-		move.b	$22(a1),$22(a0)
+		move.b	status(a1),status(a0)
 		move.b	1(a1),1(a0)
-		tst.b	$22(a0)
+		tst.b	status(a0)
 		bpl.s	loc_17C58
-		addq.b	#2,$25(a0)
+		addq.b	#2,routine_secondary(a0)
 
 loc_17C58:				; CODE XREF: ROM:00017C52j
 		bsr.w	sub_17A6A
@@ -33375,13 +33384,13 @@ loc_17C58:				; CODE XREF: ROM:00017C52j
 		jsr	ObjHitFloor
 		tst.w	d1
 		bpl.s	loc_17C6E
-		add.w	d1,$C(a0)
+		add.w	d1,y_pos(a0)
 
 loc_17C6E:				; CODE XREF: ROM:00017C68j
-		move.w	#$100,$12(a0)
-		cmpi.b	#1,$18(a0)
+		move.w	#$100,y_vel(a0)
+		cmpi.b	#1,priority(a0)
 		bne.s	loc_17C88
-		move.w	$C(a0),d0
+		move.w	y_pos(a0),d0
 		movea.l	$34(a0),a1
 		add.w	d0,$2E(a1)
 
@@ -33394,12 +33403,12 @@ loc_17C88:				; CODE XREF: ROM:00017C7Aj
 loc_17C96:				; DATA XREF: ROM:00017C14o
 		subi.w	#1,$2A(a0)
 		bpl.w	loc_181A8
-		addq.b	#2,$25(a0)
+		addq.b	#2,routine_secondary(a0)
 		move.w	#$A,$2A(a0)
-		move.w	#$FD00,$12(a0)
-		cmpi.b	#1,$18(a0)
+		move.w	#$FD00,y_vel(a0)
+		cmpi.b	#1,priority(a0)
 		beq.w	loc_181A8
-		neg.w	$10(a0)
+		neg.w	x_vel(a0)
 		bra.w	loc_181A8
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -33410,8 +33419,8 @@ loc_17CC2:				; DATA XREF: ROM:00017C16o
 		bsr.w	ObjHitFloor
 		tst.w	d1
 		bpl.s	loc_17CE0
-		move.w	#$FE00,$12(a0)
-		add.w	d1,$C(a0)
+		move.w	#$FE00,y_vel(a0)
+		add.w	d1,y_pos(a0)
 
 loc_17CE0:				; CODE XREF: ROM:00017CD4j
 		bra.w	loc_181B4
@@ -33427,18 +33436,18 @@ loc_17CE4:				; DATA XREF: ROM:00017B02o
 		btst	#1,$2D(a1)
 		beq.w	loc_181A8
 		move.b	#$8B,$20(a0)
-		move.w	8(a1),8(a0)
-		move.w	$C(a1),$C(a0)
-		move.b	$22(a1),$22(a0)
+		move.w	x_pos(a1),x_pos(a0)
+		move.w	y_pos(a1),y_pos(a0)
+		move.b	status(a1),status(a0)
 		move.b	1(a1),1(a0)
-		addi.w	#$10,$C(a0)
+		addi.w	#$10,y_pos(a0)
 		move.w	#$FFCA,d0
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		beq.s	loc_17D38
 		neg.w	d0
 
 loc_17D38:				; CODE XREF: ROM:00017D34j
-		add.w	d0,8(a0)
+		add.w	d0,x_pos(a0)
 		lea	(Ani_Obj58a).l,a1
 		bsr.w	j_AnimateSprite_9
 		bra.w	loc_181A8
@@ -33446,12 +33455,12 @@ loc_17D38:				; CODE XREF: ROM:00017D34j
 
 loc_17D4A:				; CODE XREF: ROM:00017CF6j
 		move.w	#$FFFD,d0
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		beq.s	loc_17D58
 		neg.w	d0
 
 loc_17D58:				; CODE XREF: ROM:00017D54j
-		add.w	d0,8(a0)
+		add.w	d0,x_pos(a0)
 		lea	(Ani_Obj58a).l,a1
 		bsr.w	j_AnimateSprite_9
 		bra.w	loc_181A8
@@ -33466,16 +33475,16 @@ sub_17D6A:				; CODE XREF: ROM:00017CF8p
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_17D74:				; CODE XREF: sub_17D6A+6j
-		move.w	8(a0),d0
-		sub.w	($FFFFB008).w,d0
+		move.w	x_pos(a0),d0
+		sub.w	(MainCharacter+x_pos).w,d0
 		bpl.s	loc_17D88
-		btst	#0,$22(a1)
+		btst	#0,status(a1)
 		bne.s	loc_17D92
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_17D88:				; CODE XREF: sub_17D6A+12j
-		btst	#0,$22(a1)
+		btst	#0,status(a1)
 		beq.s	loc_17D92
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -33495,21 +33504,21 @@ sub_17D9A:				; CODE XREF: ROM:loc_17F98p
 		bne.s	loc_17E0E
 		move.b	#$58,0(a1) ; 'X'
 		move.l	a0,$34(a1)
-		move.l	#Map_Obj58a,4(a1)
-		move.w	#$24C0,2(a1)
+		move.l	#Map_Obj58a,mappings(a1)
+		move.w	#$24C0,art_tile(a1)
 		move.b	#4,1(a1)
-		move.b	#$10,$19(a1)
-		move.b	#1,$18(a1)
-		move.b	#$10,$16(a1)
-		move.b	#$10,$17(a1)
-		move.l	8(a0),8(a1)
-		move.l	$C(a0),$C(a1)
-		addi.w	#$1C,8(a1)
-		addi.w	#$C,$C(a1)
-		move.w	#$FE00,$10(a1)
+		move.b	#$10,width_pixels(a1)
+		move.b	#1,priority(a1)
+		move.b	#$10,y_radius(a1)
+		move.b	#$10,x_radius(a1)
+		move.l	x_pos(a0),x_pos(a1)
+		move.l	y_pos(a0),y_pos(a1)
+		addi.w	#$1C,x_pos(a1)
+		addi.w	#$C,y_pos(a1)
+		move.w	#$FE00,x_vel(a1)
 		move.b	#4,routine(a1)
-		move.b	#4,$1A(a1)
-		move.b	#1,$1C(a1)
+		move.b	#4,mapping_frame(a1)
+		move.b	#1,anim(a1)
 		move.w	#$16,$2A(a1)
 
 loc_17E0E:				; CODE XREF: sub_17D9A+6j
@@ -33517,21 +33526,21 @@ loc_17E0E:				; CODE XREF: sub_17D9A+6j
 		bne.s	loc_17E82
 		move.b	#$58,0(a1) ; 'X'
 		move.l	a0,$34(a1)
-		move.l	#Map_Obj58a,4(a1)
-		move.w	#$24C0,2(a1)
+		move.l	#Map_Obj58a,mappings(a1)
+		move.w	#$24C0,art_tile(a1)
 		move.b	#4,1(a1)
-		move.b	#$10,$19(a1)
-		move.b	#1,$18(a1)
-		move.b	#$10,$16(a1)
-		move.b	#$10,$17(a1)
-		move.l	8(a0),8(a1)
-		move.l	$C(a0),$C(a1)
-		addi.w	#$FFF4,8(a1)
-		addi.w	#$C,$C(a1)
-		move.w	#$FE00,$10(a1)
+		move.b	#$10,width_pixels(a1)
+		move.b	#1,priority(a1)
+		move.b	#$10,y_radius(a1)
+		move.b	#$10,x_radius(a1)
+		move.l	x_pos(a0),x_pos(a1)
+		move.l	y_pos(a0),y_pos(a1)
+		addi.w	#$FFF4,x_pos(a1)
+		addi.w	#$C,y_pos(a1)
+		move.w	#$FE00,x_vel(a1)
 		move.b	#4,routine(a1)
-		move.b	#4,$1A(a1)
-		move.b	#1,$1C(a1)
+		move.b	#4,mapping_frame(a1)
+		move.b	#1,anim(a1)
 		move.w	#$4B,$2A(a1) ; 'K'
 
 loc_17E82:				; CODE XREF: sub_17D9A+7Aj
@@ -33539,21 +33548,21 @@ loc_17E82:				; CODE XREF: sub_17D9A+7Aj
 		bne.s	loc_17EF6
 		move.b	#$58,0(a1) ; 'X'
 		move.l	a0,$34(a1)
-		move.l	#Map_Obj58a,4(a1)
-		move.w	#$24C0,2(a1)
+		move.l	#Map_Obj58a,mappings(a1)
+		move.w	#$24C0,art_tile(a1)
 		move.b	#4,1(a1)
-		move.b	#$10,$19(a1)
-		move.b	#2,$18(a1)
-		move.b	#$10,$16(a1)
-		move.b	#$10,$17(a1)
-		move.l	8(a0),8(a1)
-		move.l	$C(a0),$C(a1)
-		addi.w	#$FFD4,8(a1)
-		addi.w	#$C,$C(a1)
-		move.w	#$FE00,$10(a1)
+		move.b	#$10,width_pixels(a1)
+		move.b	#2,priority(a1)
+		move.b	#$10,y_radius(a1)
+		move.b	#$10,x_radius(a1)
+		move.l	x_pos(a0),x_pos(a1)
+		move.l	y_pos(a0),y_pos(a1)
+		addi.w	#$FFD4,x_pos(a1)
+		addi.w	#$C,y_pos(a1)
+		move.w	#$FE00,x_vel(a1)
 		move.b	#4,routine(a1)
-		move.b	#6,$1A(a1)
-		move.b	#2,$1C(a1)
+		move.b	#6,mapping_frame(a1)
+		move.b	#2,anim(a1)
 		move.w	#$30,$2A(a1) ; '0'
 
 loc_17EF6:				; CODE XREF: sub_17D9A+EEj
@@ -33561,18 +33570,18 @@ loc_17EF6:				; CODE XREF: sub_17D9A+EEj
 		bne.s	locret_17F52
 		move.b	#$58,0(a1) ; 'X'
 		move.l	a0,$34(a1)
-		move.l	#Map_Obj58a,4(a1)
-		move.w	#$24C0,2(a1)
+		move.l	#Map_Obj58a,mappings(a1)
+		move.w	#$24C0,art_tile(a1)
 		move.b	#4,1(a1)
-		move.b	#$10,$19(a1)
-		move.b	#1,$18(a1)
-		move.l	8(a0),8(a1)
-		move.l	$C(a0),$C(a1)
-		addi.w	#$FFCA,8(a1)
-		addi.w	#8,$C(a1)
+		move.b	#$10,width_pixels(a1)
+		move.b	#1,priority(a1)
+		move.l	x_pos(a0),x_pos(a1)
+		move.l	y_pos(a0),y_pos(a1)
+		addi.w	#$FFCA,x_pos(a1)
+		addi.w	#8,y_pos(a1)
 		move.b	#6,routine(a1)
-		move.b	#1,$1A(a1)
-		move.b	#0,$1C(a1)
+		move.b	#1,mapping_frame(a1)
+		move.b	#0,anim(a1)
 
 locret_17F52:				; CODE XREF: sub_17D9A+162j
 		rts
@@ -33585,31 +33594,31 @@ loc_17F54:				; DATA XREF: ROM:000182FEo
 		bne.s	loc_17F98
 		move.b	#$58,0(a1) ; 'X'
 		move.l	a0,$34(a1)
-		move.l	#Map_Obj58a,4(a1)
-		move.w	#$4C0,2(a1)
+		move.l	#Map_Obj58a,mappings(a1)
+		move.w	#$4C0,art_tile(a1)
 		move.b	#4,1(a1)
-		move.b	#$20,$19(a1) ; ' '
-		move.b	#2,$18(a1)
-		move.l	8(a0),8(a1)
-		move.l	$C(a0),$C(a1)
+		move.b	#$20,width_pixels(a1) ; ' '
+		move.b	#2,priority(a1)
+		move.l	x_pos(a0),x_pos(a1)
+		move.l	y_pos(a0),y_pos(a1)
 		move.b	#2,routine(a1)
 
 loc_17F98:				; CODE XREF: ROM:00017F5Aj
 		bsr.w	sub_17D9A
 		subi.w	#8,$38(a0)
-		move.w	#$2A00,8(a0)
-		move.w	#$2C0,$C(a0)
+		move.w	#$2A00,x_pos(a0)
+		move.w	#$2C0,y_pos(a0)
 		jsr	SingleObjLoad2
 		bne.s	locret_17FF8
 		move.b	#$58,0(a1) ; 'X'
 		move.l	a0,$34(a1)
-		move.l	#Map_Obj58,4(a1)
-		move.w	#$2540,2(a1)
+		move.l	#Map_Obj58,mappings(a1)
+		move.w	#$2540,art_tile(a1)
 		move.b	#4,1(a1)
-		move.b	#$20,$19(a1) ; ' '
-		move.b	#4,$18(a1)
-		move.l	8(a0),8(a1)
-		move.l	$C(a0),$C(a1)
+		move.b	#$20,width_pixels(a1) ; ' '
+		move.b	#4,priority(a1)
+		move.l	x_pos(a0),x_pos(a1)
+		move.l	y_pos(a0),y_pos(a1)
 		move.w	#$1E,$2A(a1)
 		move.b	#0,routine(a1)
 
@@ -33751,20 +33760,20 @@ Obj55_Index:	dc.w Obj55_Init-Obj55_Index
 ; ===========================================================================
 ; loc_181E4:
 Obj55_Init:
-		move.l	#Map_Obj55,4(a0)
-		move.w	#$2400,2(a0)
+		move.l	#Map_Obj55,mappings(a0)
+		move.w	#$2400,art_tile(a0)
 		ori.b	#4,1(a0)
-		move.b	#$20,$19(a0)
-		move.b	#3,$18(a0)
+		move.b	#$20,width_pixels(a0)
+		move.b	#3,priority(a0)
 		move.b	#$F,$20(a0)
 		move.b	#8,$21(a0)
 		addq.b	#2,routine(a0)
-		move.w	8(a0),$30(a0)
-		move.w	$C(a0),$38(a0)
+		move.w	x_pos(a0),$30(a0)
+		move.w	y_pos(a0),$38(a0)
 		move.b	$28(a0),d0
 		cmpi.b	#$81,d0
 		bne.s	loc_18230
-		addi.w	#$60,2(a0)
+		addi.w	#$60,art_tile(a0)
 
 loc_18230:
 		jsr	(SingleObjLoad2).l
@@ -33772,20 +33781,20 @@ loc_18230:
 		move.b	#$55,0(a1)
 		move.l	a0,$34(a1)
 		move.l	a1,$34(a0)
-		move.l	#Map_Obj55,4(a1)
-		move.w	#$400,2(a1)
+		move.l	#Map_Obj55,mappings(a1)
+		move.w	#$400,art_tile(a1)
 		move.b	#4,1(a1)
-		move.b	#$20,$19(a1)
-		move.b	#3,$18(a1)
-		move.l	8(a0),8(a1)
-		move.l	$C(a0),$C(a1)
+		move.b	#$20,width_pixels(a1)
+		move.b	#3,priority(a1)
+		move.l	x_pos(a0),x_pos(a1)
+		move.l	y_pos(a0),y_pos(a1)
 		addq.b	#4,routine(a1)
-		move.b	#1,$1C(a1)
+		move.b	#1,anim(a1)
 		move.b	1(a0),1(a1)
 		move.b	$28(a0),d0
 		cmpi.b	#$81,d0
 		bne.s	loc_18294
-		addi.w	#$60,2(a1)
+		addi.w	#$60,art_tile(a1)
 
 loc_18294:
 		tst.b	$28(a0)
@@ -33796,16 +33805,16 @@ loc_18294:
 		move.l	a0,$34(a1)
 
 loc_182AC:
-		move.l	#Map_Obj55a,4(a1)
-		move.w	#$4D0,2(a1)
-		move.b	#1,$1E(a0)
+		move.l	#Map_Obj55a,mappings(a1)
+		move.w	#$4D0,art_tile(a1)
+		move.b	#1,anim_frame_duration(a0)
 
 loc_182C0:
 		move.b	#4,1(a1)
-		move.b	#$20,$19(a1)
-		move.b	#3,$18(a1)
-		move.l	8(a0),8(a1)
-		move.l	$C(a0),$C(a1)
+		move.b	#$20,width_pixels(a1)
+		move.b	#3,priority(a1)
+		move.l	x_pos(a0),x_pos(a1)
+		move.l	y_pos(a0),y_pos(a1)
 		addq.b	#6,routine(a1)
 		move.b	1(a0),1(a1)
 
@@ -33830,7 +33839,7 @@ loc_18302:
 		jsr	(a1)
 		lea	(Ani_Obj55a).l,a1
 		jsr	(AnimateSprite).l
-		move.b	$22(a0),d0
+		move.b	status(a0),d0
 		andi.b	#3,d0
 		andi.b	#$FC,1(a0)
 		or.b	d0,1(a0)
@@ -33842,9 +33851,9 @@ dword_18338:	dc.l 0
 
 loc_18340:
 		movea.l	$34(a0),a1
-		move.l	8(a1),8(a0)
-		move.l	$C(a1),$C(a0)
-		move.b	$22(a1),$22(a0)
+		move.l	x_pos(a1),x_pos(a0)
+		move.l	y_pos(a1),y_pos(a0)
+		move.b	status(a1),status(a0)
 		move.b	1(a1),1(a0)
 		movea.l	#Ani_Obj55a,a1
 		jsr	(AnimateSprite).l
@@ -33854,16 +33863,16 @@ byte_1836E:	dc.b   0,$FF,  1,  0	; 0
 ; ===========================================================================
 
 loc_18372:
-		btst	#7,$22(a0)
+		btst	#7,status(a0)
 		bne.s	loc_183C6
 		movea.l	$34(a0),a1
-		move.l	8(a1),8(a0)
-		move.l	$C(a1),$C(a0)
-		move.b	$22(a1),$22(a0)
+		move.l	x_pos(a1),x_pos(a0)
+		move.l	y_pos(a1),y_pos(a0)
+		move.b	status(a1),status(a0)
 		move.b	1(a1),1(a0)
-		subq.b	#1,$1E(a0)
+		subq.b	#1,anim_frame_duration(a0)
 		bpl.s	loc_183BA
-		move.b	#1,$1E(a0)
+		move.b	#1,anim_frame_duration(a0)
 		move.b	$2A(a0),d0
 		addq.b	#1,d0
 		cmpi.b	#2,d0
@@ -33871,11 +33880,11 @@ loc_18372:
 		moveq	#0,d0
 
 loc_183B0:
-		move.b	byte_1836E(pc,d0.w),$1A(a0)
+		move.b	byte_1836E(pc,d0.w),mapping_frame(a0)
 		move.b	d0,$2A(a0)
 
 loc_183BA:
-		cmpi.b	#$FF,$1A(a0)
+		cmpi.b	#$FF,mapping_frame(a0)
 		bne.w	loc_185D4
 		rts
 ; ===========================================================================
@@ -33889,33 +33898,33 @@ loc_183C6:
 
 loc_183D4:
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj55b,4(a0)
-		move.w	#$4D8,2(a0)
-		move.b	#0,$1A(a0)
-		move.b	#5,$1E(a0)
+		move.l	#Map_Obj55b,mappings(a0)
+		move.w	#$4D8,art_tile(a0)
+		move.b	#0,mapping_frame(a0)
+		move.b	#5,anim_frame_duration(a0)
 		movea.l	$34(a0),a1
-		move.w	8(a1),8(a0)
-		move.w	$C(a1),$C(a0)
-		addi.w	#4,$C(a0)
-		subi.w	#$28,8(a0)
+		move.w	x_pos(a1),x_pos(a0)
+		move.w	y_pos(a1),y_pos(a0)
+		addi.w	#4,y_pos(a0)
+		subi.w	#$28,x_pos(a0)
 		rts
 ; ===========================================================================
 
 loc_18410:
-		subq.b	#1,$1E(a0)
+		subq.b	#1,anim_frame_duration(a0)
 		bpl.s	loc_18452
-		move.b	#5,$1E(a0)
-		addq.b	#1,$1A(a0)
-		cmpi.b	#4,$1A(a0)
+		move.b	#5,anim_frame_duration(a0)
+		addq.b	#1,mapping_frame(a0)
+		cmpi.b	#4,mapping_frame(a0)
 		bne.w	loc_18452
-		move.b	#0,$1A(a0)
+		move.b	#0,mapping_frame(a0)
 		movea.l	$34(a0),a1
 		move.b	(a1),d0
 		beq.w	loc_185DA
-		move.w	8(a1),8(a0)
-		move.w	$C(a1),$C(a0)
-		addi.w	#4,$C(a0)
-		subi.w	#$28,8(a0)
+		move.w	x_pos(a1),x_pos(a0)
+		move.w	y_pos(a1),y_pos(a0)
+		addi.w	#4,y_pos(a0)
+		subi.w	#$28,x_pos(a0)
 
 loc_18452:
 		bra.w	loc_185D4
@@ -33934,23 +33943,23 @@ Obj56_Index:	dc.w Obj56_Init-Obj56_Index ; DATA XREF: ROM:Obj56_Indexo
 
 Obj56_Init:				; DATA XREF: ROM:Obj56_Indexo
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj56,4(a0)
-		move.w	#$5A0,2(a0)
+		move.l	#Map_Obj56,mappings(a0)
+		move.w	#$5A0,art_tile(a0)
 		move.b	#4,1(a0)
-		move.b	#1,$18(a0)
+		move.b	#1,priority(a0)
 		move.b	#0,$20(a0)
-		move.b	#$C,$19(a0)
-		move.b	#7,$1E(a0)
-		move.b	#0,$1A(a0)
+		move.b	#$C,width_pixels(a0)
+		move.b	#7,anim_frame_duration(a0)
+		move.b	#0,mapping_frame(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 Obj56_Animate:				; DATA XREF: ROM:00018466o
-		subq.b	#1,$1E(a0)
+		subq.b	#1,anim_frame_duration(a0)
 		bpl.s	loc_184BA
-		move.b	#7,$1E(a0)
-		addq.b	#1,$1A(a0)
-		cmpi.b	#7,$1A(a0)
+		move.b	#7,anim_frame_duration(a0)
+		addq.b	#1,mapping_frame(a0)
+		cmpi.b	#7,mapping_frame(a0)
 		beq.w	loc_185DA
 
 loc_184BA:				; CODE XREF: ROM:000184A4j
@@ -34051,25 +34060,25 @@ Obj8A_Index:	dc.w Obj8A_Init-Obj8A_Index
 ; loc_185F2:
 Obj8A_Init:
 		addq.b	#2,routine(a0)
-		move.w	#$120,8(a0)
-		move.w	#$F0,$A(a0)
-		move.l	#Map_obj8A,4(a0)
-		move.w	#$5A0,2(a0)
+		move.w	#$120,x_pixel(a0)
+		move.w	#$F0,y_pixel(a0)
+		move.l	#Map_obj8A,mappings(a0)
+		move.w	#$5A0,art_tile(a0)
 		bsr.w	j_Adjust2PArtPointer_4
 
 ; Obj8A_Credits:
 		move.w	($FFFFFFF4).w,d0	; load credits index number
-		move.b	d0,$1A(a0)		; display appropriate credits
+		move.b	d0,mapping_frame(a0)	; display appropriate credits
 		move.b	#0,1(a0)
-		move.b	#0,$18(a0)
+		move.b	#0,priority(a0)
 
 		cmpi.b	#GameModeID_TitleScreen,(Game_Mode).w	; is this the title screen?
 		bne.s	Obj8A_Display		; if not, branch
 
 ; Obj8A_SonicTeam:
-		move.w	#$300,2(a0)
+		move.w	#$300,art_tile(a0)
 		bsr.w	j_Adjust2PArtPointer_4
-		move.b	#$A,$1A(a0)
+		move.b	#$A,mapping_frame(a0)
 		tst.b	($FFFFFFE3).w	; is the Sonic 1 hidden credits cheat activated?
 		beq.s	Obj8A_Display	; if not, branch
 		cmpi.b	#$72,($FFFFF604).w	; has the player pressed A+B+C+Down?
@@ -34130,32 +34139,32 @@ loc_18D22:				; CODE XREF: ROM:00018D6Cj
 loc_18D2A:				; CODE XREF: ROM:00018D20j
 		move.b	(a2)+,routine(a1)
 		move.b	#$3D,0(a1) ; '='
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
-		move.l	#Map_Eggman,4(a1)
-		move.w	#$400,2(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
+		move.l	#Map_Eggman,mappings(a1)
+		move.w	#$400,art_tile(a1)
 		bsr.w	j_Adjust2PArtPointer2_1
 		move.b	#4,1(a1)
-		move.b	#$20,$19(a1) ; ' '
-		move.b	#3,$18(a1)
-		move.b	(a2)+,$1C(a1)
+		move.b	#$20,width_pixels(a1) ; ' '
+		move.b	#3,priority(a1)
+		move.b	(a2)+,anim(a1)
 		move.l	a0,$34(a1)
 		dbf	d1,loc_18D22
 
 loc_18D70:				; CODE XREF: ROM:00018D28j
-		move.w	8(a0),$30(a0)
-		move.w	$C(a0),$38(a0)
+		move.w	x_pos(a0),$30(a0)
+		move.w	y_pos(a0),$38(a0)
 		move.b	#$F,$20(a0)
 		move.b	#8,$21(a0)
 
 Obj3D_ShipMain:				; DATA XREF: ROM:00018D0Co
 		moveq	#0,d0
-		move.b	$25(a0),d0
+		move.b	routine_secondary(a0),d0
 		move.w	Obj3D_ShipIndex(pc,d0.w),d1
 		jsr	Obj3D_ShipIndex(pc,d1.w)
 		lea	(Ani_Eggman).l,a1
 		jsr	AnimateSprite
-		move.b	$22(a0),d0
+		move.b	status(a0),d0
 		andi.b	#3,d0
 		andi.b	#$FC,1(a0)
 		or.b	d0,1(a0)
@@ -34172,12 +34181,12 @@ Obj3D_ShipIndex:dc.w loc_18DC8-Obj3D_ShipIndex ; DATA XREF: ROM:Obj3D_ShipIndex
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_18DC8:				; DATA XREF: ROM:Obj3D_ShipIndexo
-		move.w	#$100,$12(a0)
+		move.w	#$100,y_vel(a0)
 		bsr.w	BossMove
 		cmpi.w	#$338,$38(a0)
 		bne.s	loc_18DE4
-		move.w	#0,$12(a0)
-		addq.b	#2,$25(a0)
+		move.w	#0,y_vel(a0)
+		addq.b	#2,routine_secondary(a0)
 
 loc_18DE4:				; CODE XREF: ROM:00018DD8j
 					; ROM:loc_18F14j ...
@@ -34185,12 +34194,12 @@ loc_18DE4:				; CODE XREF: ROM:00018DD8j
 		jsr	(CalcSine).l
 		asr.w	#6,d0
 		add.w	$38(a0),d0
-		move.w	d0,$C(a0)
-		move.w	$30(a0),8(a0)
+		move.w	d0,y_pos(a0)
+		move.w	$30(a0),x_pos(a0)
 		addq.b	#2,$3F(a0)
-		cmpi.b	#8,$25(a0)
+		cmpi.b	#8,routine_secondary(a0)
 		bcc.s	locret_18E48
-		tst.b	$22(a0)
+		tst.b	status(a0)
 		bmi.s	loc_18E4A
 		tst.b	$20(a0)
 		bne.s	locret_18E48
@@ -34221,7 +34230,7 @@ locret_18E48:				; CODE XREF: ROM:00018E08j
 loc_18E4A:				; CODE XREF: ROM:00018E0Ej
 		moveq	#$64,d0	; 'd'
 		bsr.w	AddPoints
-		move.b	#8,$25(a0)
+		move.b	#8,routine_secondary(a0)
 		move.w	#$B3,$3C(a0) ; '³'
 		rts
 
@@ -34236,18 +34245,18 @@ BossDefeated:				; CODE XREF: ROM:00017956j
 		jsr	SingleObjLoad
 		bne.s	locret_18EA0
 		move.b	#$3F,0(a1) ; '?'
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
 		jsr	(RandomNumber).l
 		move.w	d0,d1
 		moveq	#0,d1
 		move.b	d0,d1
 		lsr.b	#2,d1
 		subi.w	#$20,d1	; ' '
-		add.w	d1,8(a1)
+		add.w	d1,x_pos(a1)
 		lsr.w	#8,d0
 		lsr.b	#3,d0
-		add.w	d0,$C(a1)
+		add.w	d0,y_pos(a1)
 
 locret_18EA0:				; CODE XREF: BossDefeated+8j
 					; BossDefeated+10j
@@ -34262,11 +34271,11 @@ BossMove:				; CODE XREF: ROM:00018DCEp
 					; ROM:00018ED4p ...
 		move.l	$30(a0),d2
 		move.l	$38(a0),d3
-		move.w	$10(a0),d0
+		move.w	x_vel(a0),d0
 		ext.l	d0
 		asl.l	#8,d0
 		add.l	d0,d2
-		move.w	$12(a0),d0
+		move.w	y_vel(a0),d0
 		ext.l	d0
 		asl.l	#8,d0
 		add.l	d0,d3
@@ -34278,19 +34287,19 @@ BossMove:				; CODE XREF: ROM:00018DCEp
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_18EC8:				; DATA XREF: ROM:00018DBCo
-		move.w	#$FF00,$10(a0)
-		move.w	#$FFC0,$12(a0)
+		move.w	#$FF00,x_vel(a0)
+		move.w	#$FFC0,y_vel(a0)
 		bsr.w	BossMove
 		cmpi.w	#$2A00,$30(a0)
 		bne.s	loc_18F14
-		move.w	#0,$10(a0)
-		move.w	#0,$12(a0)
-		addq.b	#2,$25(a0)
+		move.w	#0,x_vel(a0)
+		move.w	#0,y_vel(a0)
+		addq.b	#2,routine_secondary(a0)
 		jsr	SingleObjLoad2
 		bne.s	loc_18F0E
 		move.b	#$48,0(a1) ; 'H'
-		move.w	$30(a0),8(a1)
-		move.w	$38(a0),$C(a1)
+		move.w	$30(a0),x_pos(a1)
+		move.w	$38(a0),y_pos(a1)
 		move.l	a0,$34(a1)
 
 loc_18F0E:				; CODE XREF: ROM:00018EF6j
@@ -34303,19 +34312,19 @@ loc_18F14:				; CODE XREF: ROM:00018EDEj
 loc_18F18:				; DATA XREF: ROM:00018DBEo
 		subq.w	#1,$3C(a0)
 		bpl.s	loc_18F42
-		addq.b	#2,$25(a0)
+		addq.b	#2,routine_secondary(a0)
 		move.w	#$3F,$3C(a0) ; '?'
-		move.w	#$100,$10(a0)
+		move.w	#$100,x_vel(a0)
 		cmpi.w	#$2A00,$30(a0)
 		bne.s	loc_18F42
 		move.w	#$7F,$3C(a0) ; ''
-		move.w	#$40,$10(a0) ; '@'
+		move.w	#$40,x_vel(a0) ; '@'
 
 loc_18F42:				; CODE XREF: ROM:00018F1Cj
 					; ROM:00018F34j
-		btst	#0,$22(a0)
+		btst	#0,status(a0)
 		bne.s	loc_18F4E
-		neg.w	$10(a0)
+		neg.w	x_vel(a0)
 
 loc_18F4E:				; CODE XREF: ROM:00018F48j
 		bra.w	loc_18DE4
@@ -34329,10 +34338,10 @@ loc_18F52:				; DATA XREF: ROM:00018DC0o
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_18F5E:				; CODE XREF: ROM:00018F56j
-		bchg	#0,$22(a0)
+		bchg	#0,status(a0)
 		move.w	#$3F,$3C(a0) ; '?'
-		subq.b	#2,$25(a0)
-		move.w	#0,$10(a0)
+		subq.b	#2,routine_secondary(a0)
+		move.w	#0,x_vel(a0)
 
 loc_18F74:				; CODE XREF: ROM:00018F5Cj
 		bra.w	loc_18DE4
@@ -34345,10 +34354,10 @@ loc_18F78:				; DATA XREF: ROM:00018DC2o
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_18F82:				; CODE XREF: ROM:00018F7Cj
-		bset	#0,$22(a0)
-		bclr	#7,$22(a0)
-		clr.w	$10(a0)
-		addq.b	#2,$25(a0)
+		bset	#0,status(a0)
+		bclr	#7,status(a0)
+		clr.w	x_vel(a0)
+		addq.b	#2,routine_secondary(a0)
 		move.w	#$FFDA,$3C(a0)
 		tst.b	($FFFFF7A7).w
 		bne.s	locret_18FA8
@@ -34362,12 +34371,12 @@ loc_18FAA:				; DATA XREF: ROM:00018DC4o
 		addq.w	#1,$3C(a0)
 		beq.s	loc_18FBA
 		bpl.s	loc_18FC0
-		addi.w	#$18,$12(a0)
+		addi.w	#$18,y_vel(a0)
 		bra.s	loc_18FEE
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_18FBA:				; CODE XREF: ROM:00018FAEj
-		clr.w	$12(a0)
+		clr.w	y_vel(a0)
 		bra.s	loc_18FEE
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -34377,17 +34386,17 @@ loc_18FC0:				; CODE XREF: ROM:00018FB0j
 		beq.s	loc_18FE0
 		cmpi.w	#$38,$3C(a0) ; '8'
 		bcs.s	loc_18FEE
-		addq.b	#2,$25(a0)
+		addq.b	#2,routine_secondary(a0)
 		bra.s	loc_18FEE
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_18FD8:				; CODE XREF: ROM:00018FC6j
-		subi.w	#8,$12(a0)
+		subi.w	#8,y_vel(a0)
 		bra.s	loc_18FEE
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_18FE0:				; CODE XREF: ROM:00018FC8j
-		clr.w	$12(a0)
+		clr.w	y_vel(a0)
 		move.w	#MusID_GHZ,d0	; ''
 		jsr	(PlaySound).l
 
@@ -34398,8 +34407,8 @@ loc_18FEE:				; CODE XREF: ROM:00018FB8j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_18FF6:				; DATA XREF: ROM:00018DC6o
-		move.w	#$400,$10(a0)
-		move.w	#$FFC0,$12(a0)
+		move.w	#$400,x_vel(a0)
+		move.w	#$FFC0,y_vel(a0)
 		cmpi.w	#$2AC0,($FFFFEECA).w
 		beq.s	loc_19010
 		addq.w	#2,($FFFFEECA).w
@@ -34424,7 +34433,7 @@ Obj3D_FaceMain:				; DATA XREF: ROM:00018D0Eo
 		moveq	#0,d0
 		moveq	#1,d1
 		movea.l	$34(a0),a1
-		move.b	$25(a1),d0
+		move.b	routine_secondary(a1),d0
 		subq.b	#4,d0
 		bne.s	loc_19040
 		cmpi.w	#$2A00,$30(a1)
@@ -34447,16 +34456,16 @@ loc_19048:				; CODE XREF: ROM:0001903Cj
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_19052:				; CODE XREF: ROM:0001904Cj
-		cmpi.b	#4,($FFFFB000+routine).w
+		cmpi.b	#4,(MainCharacter+routine).w
 		bcs.s	loc_1905C
 		moveq	#4,d1
 
 loc_1905C:				; CODE XREF: ROM:00019046j
 					; ROM:00019050j ...
-		move.b	d1,$1C(a0)
+		move.b	d1,anim(a0)
 		subq.b	#2,d0
 		bne.s	loc_19070
-		move.b	#6,$1C(a0)
+		move.b	#6,anim(a0)
 		tst.b	1(a0)
 		bpl.s	loc_19072
 
@@ -34469,20 +34478,20 @@ loc_19072:				; CODE XREF: ROM:0001906Ej
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 Obj3D_FlameMain:			; DATA XREF: ROM:00018D10o
-		move.b	#7,$1C(a0)
+		move.b	#7,anim(a0)
 		movea.l	$34(a0),a1
-		cmpi.b	#$C,$25(a1)
+		cmpi.b	#$C,routine_secondary(a1)
 		bne.s	loc_19098
-		move.b	#$B,$1C(a0)
+		move.b	#$B,anim(a0)
 		tst.b	1(a0)
 		bpl.s	loc_190A6
 		bra.s	loc_190A4
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_19098:				; CODE XREF: ROM:00019088j
-		move.w	$10(a1),d0
+		move.w	x_vel(a1),d0
 		beq.s	loc_190A4
-		move.b	#8,$1C(a0)
+		move.b	#8,anim(a0)
 
 loc_190A4:				; CODE XREF: ROM:00019096j
 					; ROM:0001909Cj
@@ -34496,12 +34505,12 @@ loc_190A6:				; CODE XREF: ROM:00019094j
 Obj3D_Display:				; CODE XREF: ROM:loc_19070j
 					; ROM:loc_190A4j
 		movea.l	$34(a0),a1
-		move.w	8(a1),8(a0)
-		move.w	$C(a1),$C(a0)
-		move.b	$22(a1),$22(a0)
+		move.w	x_pos(a1),x_pos(a0)
+		move.w	y_pos(a1),y_pos(a0)
+		move.b	status(a1),status(a0)
 		lea	(Ani_Eggman).l,a1
 		jsr	AnimateSprite
-		move.b	$22(a0),d0
+		move.b	status(a0),d0
 		andi.b	#3,d0
 		andi.b	#$FC,1(a0)
 		or.b	d0,1(a0)
@@ -34527,10 +34536,10 @@ Obj48_Index:	dc.w Obj48_Init-Obj48_Index ; DATA XREF: ROM:Obj48_Indexo
 
 Obj48_Init:				; DATA XREF: ROM:Obj48_Indexo
 		addq.b	#2,routine(a0)
-		move.w	#$4080,$26(a0)
+		move.w	#$4080,angle(a0)
 		move.w	#$FE00,$3E(a0)
-		move.l	#Map_BossItems,4(a0)
-		move.w	#$46C,2(a0)
+		move.l	#Map_BossItems,mappings(a0)
+		move.w	#$46C,art_tile(a0)
 		bsr.w	j_Adjust2PArtPointer_5
 		lea	$28(a0),a2
 		move.b	#0,(a2)+
@@ -34542,14 +34551,14 @@ Obj48_Init:				; DATA XREF: ROM:Obj48_Indexo
 loc_1912E:				; CODE XREF: ROM:00019190j
 		jsr	SingleObjLoad2
 		bne.s	loc_19194
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
 		move.b	#$48,0(a1) ; 'H'
 		move.b	#6,routine(a1)
-		move.l	#Map_Obj15,4(a1)
-		move.w	#$380,2(a1)
+		move.l	#Map_Obj15,mappings(a1)
+		move.w	#$380,art_tile(a1)
 		bsr.w	j_Adjust2PArtPointer2_1
-		move.b	#1,$1A(a1)
+		move.b	#1,mapping_frame(a1)
 		addq.b	#1,$28(a0)
 
 loc_1916A:				; CODE XREF: ROM:0001912Cj
@@ -34559,18 +34568,18 @@ loc_1916A:				; CODE XREF: ROM:0001912Cj
 		andi.w	#$7F,d5	; ''
 		move.b	d5,(a2)+
 		move.b	#4,1(a1)
-		move.b	#8,$19(a1)
-		move.b	#6,$18(a1)
+		move.b	#8,width_pixels(a1)
+		move.b	#6,priority(a1)
 		move.l	$34(a0),$34(a1)
 		dbf	d1,loc_1912E
 
 loc_19194:				; CODE XREF: ROM:00019134j
 		move.b	#8,routine(a1)
-		move.l	#Map_Obj48,4(a1)
-		move.w	#$43AA,2(a1)
+		move.l	#Map_Obj48,mappings(a1)
+		move.w	#$43AA,art_tile(a1)
 		bsr.w	j_Adjust2PArtPointer2_1
-		move.b	#1,$1A(a1)
-		move.b	#5,$18(a1)
+		move.b	#1,mapping_frame(a1)
+		move.b	#5,priority(a1)
 		move.b	#$81,$20(a1)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -34587,7 +34596,7 @@ loc_191D2:				; CODE XREF: ROM:loc_191ECj
 		moveq	#0,d4
 		move.b	(a2)+,d4
 		lsl.w	#6,d4
-		addi.l	#$FFFFB000,d4
+		addi.l	#Object_RAM,d4
 		movea.l	d4,a1
 		move.b	(a3)+,d0
 		cmp.b	$3C(a1),d0
@@ -34599,7 +34608,7 @@ loc_191EC:				; CODE XREF: ROM:000191E6j
 		cmp.b	$3C(a1),d0
 		bne.s	loc_19206
 		movea.l	$34(a0),a1
-		cmpi.b	#6,$25(a1)
+		cmpi.b	#6,routine_secondary(a1)
 		bne.s	loc_19206
 		addq.b	#2,routine(a0)
 
@@ -34611,7 +34620,7 @@ loc_19206:				; CODE XREF: ROM:000191F4j
 
 loc_19212:				; CODE XREF: ROM:0001920Cj
 		bsr.w	sub_19236
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		jsr	loc_842E
 		jmp	DisplaySprite
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -34627,17 +34636,17 @@ loc_19226:				; DATA XREF: ROM:000190F8o
 sub_19236:				; CODE XREF: ROM:loc_19212p
 					; ROM:loc_19226p
 		movea.l	$34(a0),a1
-		addi.b	#$20,$1B(a0) ; ' '
+		addi.b	#$20,anim_frame(a0) ; ' '
 		bcc.s	loc_19248
-		bchg	#0,$1A(a0)
+		bchg	#0,mapping_frame(a0)
 
 loc_19248:				; CODE XREF: sub_19236+Aj
-		move.w	8(a1),$3A(a0)
-		move.w	$C(a1),d0
+		move.w	x_pos(a1),$3A(a0)
+		move.w	y_pos(a1),d0
 		add.w	$32(a0),d0
 		move.w	d0,$38(a0)
-		move.b	$22(a1),$22(a0)
-		tst.b	$22(a1)
+		move.b	status(a1),status(a0)
+		tst.b	status(a1)
 		bpl.s	locret_19272
 		move.b	#$3F,0(a0) ; '?'
 		move.b	#0,routine(a0)
@@ -34650,7 +34659,7 @@ locret_19272:				; CODE XREF: sub_19236+2Ej
 
 loc_19274:				; DATA XREF: ROM:000190FAo
 		movea.l	$34(a0),a1
-		tst.b	$22(a1)
+		tst.b	status(a1)
 		bpl.s	loc_1928A
 		move.b	#$3F,0(a0) ; '?'
 		move.b	#0,routine(a0)
@@ -34661,14 +34670,14 @@ loc_1928A:				; CODE XREF: ROM:0001927Cj
 
 loc_19290:				; DATA XREF: ROM:000190FCo
 		moveq	#0,d0
-		tst.b	$1A(a0)
+		tst.b	mapping_frame(a0)
 		bne.s	loc_1929A
 		addq.b	#1,d0
 
 loc_1929A:				; CODE XREF: ROM:00019296j
-		move.b	d0,$1A(a0)
+		move.b	d0,mapping_frame(a0)
 		movea.l	$34(a0),a1
-		tst.b	$22(a1)
+		tst.b	status(a1)
 		bpl.s	loc_192C2
 		move.b	#0,$20(a0)
 		bsr.w	BossDefeated
@@ -34816,7 +34825,7 @@ Obj3E:					; DATA XREF: ROM:Obj_Indexo
 		move.b	routine(a0),d0
 		move.w	Obj3E_Index(pc,d0.w),d1
 		jsr	Obj3E_Index(pc,d1.w)
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	($FFFFF7DA).w,d0
 		cmpi.w	#$280,d0
@@ -34843,19 +34852,19 @@ Obj3E_Var:	dc.b   2,$20,  4,  0	; 0
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 Obj3E_Init:				; DATA XREF: ROM:Obj3E_Indexo
-		move.l	#Map_Obj3E,4(a0)
-		move.w	#$49D,2(a0)
+		move.l	#Map_Obj3E,mappings(a0)
+		move.w	#$49D,art_tile(a0)
 		bsr.w	j_Adjust2PArtPointer_6
 		move.b	#4,1(a0)
-		move.w	$C(a0),$30(a0)
+		move.w	y_pos(a0),$30(a0)
 		moveq	#0,d0
 		move.b	$28(a0),d0
 		lsl.w	#2,d0
 		lea	Obj3E_Var(pc,d0.w),a1
 		move.b	(a1)+,routine(a0)
-		move.b	(a1)+,$19(a0)
-		move.b	(a1)+,$18(a0)
-		move.b	(a1)+,$1A(a0)
+		move.b	(a1)+,width_pixels(a0)
+		move.b	(a1)+,priority(a0)
+		move.b	(a1)+,mapping_frame(a0)
 		cmpi.w	#8,d0
 		bne.s	locret_1957C
 		move.b	#6,$20(a0)
@@ -34871,19 +34880,19 @@ Obj3E_BodyMain:				; DATA XREF: ROM:00019512o
 		move.w	#$2B,d1	; '+'
 		move.w	#$18,d2
 		move.w	#$18,d3
-		move.w	8(a0),d4
+		move.w	x_pos(a0),d4
 		jmp	SolidObject
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_1959C:				; CODE XREF: ROM:00019584j
-		tst.b	$25(a0)
+		tst.b	routine_secondary(a0)
 		beq.s	loc_195B2
-		clr.b	$25(a0)
-		bclr	#3,($FFFFB022).w
-		bset	#1,($FFFFB022).w
+		clr.b	routine_secondary(a0)
+		bclr	#3,(MainCharacter+status).w
+		bset	#1,(MainCharacter+status).w
 
 loc_195B2:				; CODE XREF: ROM:000195A0j
-		move.b	#2,$1A(a0)
+		move.b	#2,mapping_frame(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -34891,24 +34900,24 @@ Obj3E_Switched:				; DATA XREF: ROM:00019514o
 		move.w	#$17,d1
 		move.w	#8,d2
 		move.w	#8,d3
-		move.w	8(a0),d4
+		move.w	x_pos(a0),d4
 		jsr	SolidObject
 		lea	(Ani_Obj3E).l,a1
 		jsr	AnimateSprite
-		move.w	$30(a0),$C(a0)
-		move.b	$22(a0),d0
+		move.w	$30(a0),y_pos(a0)
+		move.b	status(a0),d0
 		andi.b	#$18,d0
 		beq.s	locret_19620
-		addq.w	#8,$C(a0)
+		addq.w	#8,y_pos(a0)
 		move.b	#$A,routine(a0)
-		move.w	#$3C,$1E(a0) ; '<'
+		move.w	#$3C,anim_frame_duration(a0) ; '<'
 		clr.b	($FFFFFE1E).w
 		clr.b	($FFFFF7AA).w
 		move.b	#1,($FFFFF7CC).w
 		move.w	#$800,($FFFFF602).w
-		clr.b	$25(a0)
-		bclr	#3,($FFFFB022).w
-		bset	#1,($FFFFB022).w
+		clr.b	routine_secondary(a0)
+		bclr	#3,(MainCharacter+status).w
+		bset	#1,(MainCharacter+status).w
 
 locret_19620:				; CODE XREF: ROM:000195EAj
 		rts
@@ -34922,21 +34931,21 @@ Obj3E_Explosion:			; DATA XREF: ROM:00019516o
 		jsr	SingleObjLoad
 		bne.s	loc_19660
 		move.b	#$3F,0(a1) ; '?'
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
 		jsr	(RandomNumber).l
 		moveq	#0,d1
 		move.b	d0,d1
 		lsr.b	#2,d1
 		subi.w	#$20,d1	; ' '
-		add.w	d1,8(a1)
+		add.w	d1,x_pos(a1)
 		lsr.w	#8,d0
 		lsr.b	#3,d0
-		add.w	d0,$C(a1)
+		add.w	d0,y_pos(a1)
 
 loc_19660:				; CODE XREF: ROM:00019628j
 					; ROM:00019630j
-		subq.w	#1,$1E(a0)
+		subq.w	#1,anim_frame_duration(a0)
 		beq.s	loc_19668
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -34944,9 +34953,9 @@ loc_19660:				; CODE XREF: ROM:00019628j
 loc_19668:				; CODE XREF: ROM:00019664j
 		move.b	#2,($FFFFF7A7).w
 		move.b	#$C,routine(a0)
-		move.b	#6,$1A(a0)
-		move.w	#$96,$1E(a0) ; '–'
-		addi.w	#$20,$C(a0) ; ' '
+		move.b	#6,mapping_frame(a0)
+		move.w	#$96,anim_frame_duration(a0) ; '–'
+		addi.w	#$20,y_pos(a0) ; ' '
 		moveq	#7,d6
 		move.w	#$9A,d5	; 'š'
 		moveq	#$FFFFFFE4,d4
@@ -34955,9 +34964,9 @@ loc_1968E:				; CODE XREF: ROM:000196B4j
 		jsr	SingleObjLoad
 		bne.s	locret_196B8
 		move.b	#$28,0(a1) ; '('
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
-		add.w	d4,8(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
+		add.w	d4,x_pos(a1)
 		addq.w	#7,d4
 		move.w	d5,$36(a1)
 		subq.w	#8,d5
@@ -34974,8 +34983,8 @@ Obj3E_Animals:				; DATA XREF: ROM:0001951Co
 		jsr	SingleObjLoad
 		bne.s	loc_196F8
 		move.b	#$28,0(a1) ; '('
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
 		jsr	(RandomNumber).l
 		andi.w	#$1F,d0
 		subq.w	#6,d0
@@ -34984,15 +34993,15 @@ Obj3E_Animals:				; DATA XREF: ROM:0001951Co
 		neg.w	d0
 
 loc_196EE:				; CODE XREF: ROM:000196EAj
-		add.w	d0,8(a1)
+		add.w	d0,x_pos(a1)
 		move.w	#$C,$36(a1)
 
 loc_196F8:				; CODE XREF: ROM:000196C0j
 					; ROM:000196C8j
-		subq.w	#1,$1E(a0)
+		subq.w	#1,anim_frame_duration(a0)
 		bne.s	locret_19708
 		addq.b	#2,routine(a0)
-		move.w	#$B4,$1E(a0) ; '´'
+		move.w	#$B4,anim_frame_duration(a0) ; '´'
 
 locret_19708:				; CODE XREF: ROM:000196FCj
 		rts
@@ -35002,7 +35011,7 @@ Obj3E_EndAct:				; DATA XREF: ROM:0001951Eo
 		moveq	#$3E,d0	; '>'
 		moveq	#$28,d1	; '('
 		moveq	#$40,d2	; '@'
-		lea	($FFFFB040).w,a1
+		lea	(Sidekick).w,a1
 
 loc_19714:				; CODE XREF: ROM:0001971Aj
 		cmp.b	(a1),d1
@@ -35072,14 +35081,14 @@ TouchResponse:				; CODE XREF: ROM:0000FB08p
 
 		nop
 		bsr.w	loc_19B7A
-		move.w	8(a0),d2
-		move.w	$C(a0),d3
+		move.w	x_pos(a0),d2
+		move.w	y_pos(a0),d3
 		subi.w	#8,d2
 		moveq	#0,d5
-		move.b	$16(a0),d5
+		move.b	y_radius(a0),d5
 		subq.b	#3,d5
 		sub.w	d5,d3
-		cmpi.b	#$39,$1A(a0) ; '9'
+		cmpi.b	#$39,mapping_frame(a0) ; '9'
 		bne.s	loc_19812
 		addi.w	#$C,d3
 		moveq	#$A,d5
@@ -35087,7 +35096,7 @@ TouchResponse:				; CODE XREF: ROM:0000FB08p
 loc_19812:				; CODE XREF: TouchResponse+22j
 		move.w	#$10,d4
 		add.w	d5,d5
-		lea	($FFFFB800).w,a1
+		lea	(Object_RAM+$800).w,a1
 		move.w	#$5F,d6	; '_'
 
 loc_19820:				; CODE XREF: TouchResponse+42j
@@ -35147,7 +35156,7 @@ Touch_Height:				; CODE XREF: TouchResponse+3Cj
 		lea	Touch_Sizes-2(pc,d0.w),a2
 		moveq	#0,d1
 		move.b	(a2)+,d1
-		move.w	8(a1),d0
+		move.w	x_pos(a1),d0
 		sub.w	d1,d0
 		sub.w	d2,d0
 		bcc.s	loc_1989C
@@ -35164,7 +35173,7 @@ loc_1989C:				; CODE XREF: TouchResponse+A8j
 loc_198A2:				; CODE XREF: TouchResponse+AEj
 		moveq	#0,d1
 		move.b	(a2)+,d1
-		move.w	$C(a1),d0
+		move.w	y_pos(a1),d0
 		sub.w	d1,d0
 		sub.w	d3,d0
 		bcc.s	loc_198BA
@@ -35199,28 +35208,28 @@ locret_198F8:				; CODE XREF: TouchResponse+106j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_198FA:				; CODE XREF: TouchResponse+FEj
-		tst.w	$12(a0)
+		tst.w	y_vel(a0)
 		bpl.s	loc_19926
-		move.w	$C(a0),d0
+		move.w	y_pos(a0),d0
 		subi.w	#$10,d0
-		cmp.w	$C(a1),d0
+		cmp.w	y_pos(a1),d0
 		bcs.s	locret_19938
 
 loc_1990E:
-		neg.w	$12(a0)
+		neg.w	y_vel(a0)
 
 loc_19912:
-		move.w	#$FE80,$12(a1)
-		tst.b	$25(a1)
+		move.w	#$FE80,y_vel(a1)
+		tst.b	routine_secondary(a1)
 		bne.s	locret_19938
-		move.b	#4,$25(a1)
+		move.b	#4,routine_secondary(a1)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_19926:				; CODE XREF: TouchResponse+116j
-		cmpi.b	#2,$1C(a0)
+		cmpi.b	#2,anim(a0)
 		bne.s	locret_19938
-		neg.w	$12(a0)
+		neg.w	y_vel(a0)
 		move.b	#4,routine(a1)
 
 locret_19938:				; CODE XREF: TouchResponse+124j
@@ -35232,30 +35241,30 @@ loc_1993A:				; CODE XREF: TouchResponse+E0j
 					; TouchResponse:loc_19B56j
 		tst.b	($FFFFFE2D).w
 		bne.s	loc_19952
-		cmpi.b	#9,$1C(a0)
+		cmpi.b	#9,anim(a0)
 		beq.s	loc_19952
-		cmpi.b	#2,$1C(a0)
+		cmpi.b	#2,anim(a0)
 		bne.w	loc_199F2
 
 loc_19952:				; CODE XREF: TouchResponse+156j
 					; TouchResponse+15Ej
 		tst.b	$21(a1)
 		beq.s	Touch_KillEnemy
-		neg.w	$10(a0)
-		neg.w	$12(a0)
-		asr	$10(a0)
-		asr	$12(a0)
+		neg.w	x_vel(a0)
+		neg.w	y_vel(a0)
+		asr	x_vel(a0)
+		asr	y_vel(a0)
 		move.b	#0,$20(a1)
 		subq.b	#1,$21(a1)
 		bne.s	locret_1997A
-		bset	#7,$22(a1)
+		bset	#7,status(a1)
 
 locret_1997A:				; CODE XREF: TouchResponse+18Aj
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 Touch_KillEnemy:			; CODE XREF: TouchResponse+16Ej
-		bset	#7,$22(a1)
+		bset	#7,status(a1)
 		moveq	#0,d0
 		move.w	($FFFFF7D0).w,d0
 		addq.w	#2,($FFFFF7D0).w
@@ -35275,22 +35284,22 @@ loc_199AE:				; CODE XREF: TouchResponse+1BAj
 		bsr.w	AddPoints
 		move.b	#$27,0(a1) ; '''
 		move.b	#0,routine(a1)
-		tst.w	$12(a0)
+		tst.w	y_vel(a0)
 		bmi.s	loc_199D4
-		move.w	$C(a0),d0
-		cmp.w	$C(a1),d0
+		move.w	y_pos(a0),d0
+		cmp.w	y_pos(a1),d0
 		bcc.s	loc_199DC
-		neg.w	$12(a0)
+		neg.w	y_vel(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_199D4:				; CODE XREF: TouchResponse+1DAj
-		addi.w	#$100,$12(a0)
+		addi.w	#$100,y_vel(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_199DC:				; CODE XREF: TouchResponse+1E4j
-		subi.w	#$100,$12(a0)
+		subi.w	#$100,y_vel(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 Enemy_Points:
@@ -35298,7 +35307,7 @@ Enemy_Points:
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_199EC:				; CODE XREF: TouchResponse:Touch_Caterkillerj
-		bset	#7,$22(a1)
+		bset	#7,status(a1)
 
 loc_199F2:				; CODE XREF: TouchResponse+EEj
 					; TouchResponse+166j ...
@@ -35331,31 +35340,31 @@ loc_19A10:
 		jsr	SingleObjLoad
 		bne.s	HurtShield
 		move.b	#$37,0(a1) ; '7'
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
 
 HurtShield:				; CODE XREF: HurtSonic+4j
 					; HurtSonic+14j ...
 		move.b	#0,($FFFFFE2C).w
 		move.b	#4,routine(a0)
 		bsr.w	j_Sonic_ResetOnFloor
-		bset	#1,$22(a0)
-		move.w	#$FC00,$12(a0)
-		move.w	#$FE00,$10(a0)
-		btst	#6,$22(a0)
+		bset	#1,status(a0)
+		move.w	#$FC00,y_vel(a0)
+		move.w	#$FE00,x_vel(a0)
+		btst	#6,status(a0)
 		beq.s	Hurt_Reverse
-		move.w	#$FE00,$12(a0)
-		move.w	#$FF00,$10(a0)
+		move.w	#$FE00,y_vel(a0)
+		move.w	#$FF00,x_vel(a0)
 
 Hurt_Reverse:				; CODE XREF: HurtSonic+50j
-		move.w	8(a0),d0
-		cmp.w	8(a2),d0
+		move.w	x_pos(a0),d0
+		cmp.w	x_pos(a2),d0
 		bcs.s	Hurt_ChkSpikes
-		neg.w	$10(a0)
+		neg.w	x_vel(a0)
 
 Hurt_ChkSpikes:				; CODE XREF: HurtSonic+66j
 		move.w	#0,$14(a0)
-		move.b	#$1A,$1C(a0)
+		move.b	#$1A,anim(a0)
 		move.w	#$78,$30(a0) ; 'x'
 		move.w	#$A3,d0	; '£'
 		cmpi.b	#$36,(a2) ; '6'
@@ -35387,13 +35396,13 @@ KillSonic:				; CODE XREF: sub_F456+268p
 		move.b	#0,($FFFFFE2D).w
 		move.b	#6,routine(a0)
 		bsr.w	j_Sonic_ResetOnFloor
-		bset	#1,$22(a0)
-		move.w	#$F900,$12(a0)
-		move.w	#0,$10(a0)
+		bset	#1,status(a0)
+		move.w	#$F900,y_vel(a0)
+		move.w	#0,x_vel(a0)
 		move.w	#0,$14(a0)
-		move.w	$C(a0),$38(a0)
-		move.b	#$18,$1C(a0)
-		bset	#7,2(a0)
+		move.w	y_pos(a0),$38(a0)
+		move.b	#$18,anim(a0)
+		bset	#7,art_tile(a0)
 		move.w	#$A3,d0	; '£'
 		cmpi.b	#$36,(a2) ; '6'
 		bne.s	loc_19AF8
@@ -35432,9 +35441,9 @@ Touch_Yadrin:				; CODE XREF: TouchResponse+32Cj
 		sub.w	d0,d5
 		cmpi.w	#8,d5
 		bcc.s	loc_19B56
-		move.w	8(a1),d0
+		move.w	x_pos(a1),d0
 		subq.w	#4,d0
-		btst	#0,$22(a1)
+		btst	#0,status(a1)
 		beq.s	loc_19B42
 		subi.w	#$10,d0
 
@@ -35891,7 +35900,7 @@ loc_1A006:				; DATA XREF: ROM:00019F32o
 		bne.s	locret_1A03E
 		clr.l	(a0)
 		clr.l	4(a0)
-		move.b	#4,($FFFFB000+routine).w
+		move.b	#4,(MainCharacter+routine).w
 		move.w	#$A8,d0	; '¨'
 		jsr	(PlaySound_Special).l
 
@@ -35967,8 +35976,8 @@ loc_1A0E8:				; CODE XREF: S1SS_Load+1Ej
 					; S1SS_Load+28j
 		lsl.w	#2,d0
 		lea	S1SS_StartLoc(pc,d0.w),a1
-		move.w	(a1)+,($FFFFB008).w
-		move.w	(a1)+,($FFFFB00C).w
+		move.w	(a1)+,(MainCharacter+x_pos).w
+		move.w	(a1)+,(MainCharacter+y_pos).w
 		movea.l	S1SS_LayoutIndex(pc,d0.w),a0
 		lea	($FFFF4000).l,a1
 		move.w	#0,d0
@@ -36260,16 +36269,16 @@ Obj09_Index:	dc.w loc_1A3DC-Obj09_Index ; DATA XREF:	ROM:Obj09_Indexo
 
 loc_1A3DC:				; DATA XREF: ROM:Obj09_Indexo
 		addq.b	#2,routine(a0)
-		move.b	#$E,$16(a0)
-		move.b	#7,$17(a0)
-		move.l	#Map_Sonic,4(a0)
-		move.w	#$780,2(a0)
+		move.b	#$E,y_radius(a0)
+		move.b	#7,x_radius(a0)
+		move.l	#Map_Sonic,mappings(a0)
+		move.w	#$780,art_tile(a0)
 		bsr.w	j_Adjust2PArtPointer_7
 		move.b	#4,1(a0)
-		move.b	#0,$18(a0)
-		move.b	#2,$1C(a0)
-		bset	#2,$22(a0)
-		bset	#1,$22(a0)
+		move.b	#0,priority(a0)
+		move.b	#2,anim(a0)
+		bset	#2,status(a0)
+		bset	#1,status(a0)
 
 loc_1A41C:				; DATA XREF: ROM:0001A3D6o
 		tst.w	(Debug_mode_flag).w
@@ -36282,7 +36291,7 @@ loc_1A430:				; CODE XREF: ROM:0001A420j
 					; ROM:0001A428j
 		move.b	#0,$30(a0)
 		moveq	#0,d0
-		move.b	$22(a0),d0
+		move.b	status(a0),d0
 		andi.w	#2,d0
 		move.w	Obj09_Modes(pc,d0.w),d1
 		jsr	Obj09_Modes(pc,d1.w)
@@ -36363,17 +36372,17 @@ loc_1A4E0:				; CODE XREF: Obj09_Move+20j
 		neg.b	d0
 		jsr	(CalcSine).l
 		muls.w	$14(a0),d1
-		add.l	d1,8(a0)
+		add.l	d1,x_pos(a0)
 		muls.w	$14(a0),d0
-		add.l	d0,$C(a0)
+		add.l	d0,y_pos(a0)
 		movem.l	d0-d1,-(sp)
-		move.l	$C(a0),d2
-		move.l	8(a0),d3
+		move.l	y_pos(a0),d2
+		move.l	x_pos(a0),d3
 		bsr.w	sub_1A720
 		beq.s	loc_1A52A
 		movem.l	(sp)+,d0-d1
-		sub.l	d1,8(a0)
-		sub.l	d0,$C(a0)
+		sub.l	d1,x_pos(a0)
+		sub.l	d0,y_pos(a0)
 		move.w	#0,$14(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -36388,7 +36397,7 @@ loc_1A52A:				; CODE XREF: Obj09_Move+7Cj
 
 
 Obj09_MoveLeft:				; CODE XREF: Obj09_Move+8p
-		bset	#0,$22(a0)
+		bset	#0,status(a0)
 		move.w	$14(a0),d0
 		beq.s	loc_1A53E
 		bpl.s	loc_1A552
@@ -36419,7 +36428,7 @@ loc_1A55A:				; CODE XREF: Obj09_MoveLeft+26j
 
 
 Obj09_MoveRight:			; CODE XREF: Obj09_Move+14p
-		bclr	#0,$22(a0)
+		bclr	#0,status(a0)
 		move.w	$14(a0),d0
 		bmi.s	loc_1A580
 		addi.w	#$C,d0
@@ -36459,11 +36468,11 @@ Obj09_Jump:				; CODE XREF: ROM:Obj09_OnWallp
 		jsr	(CalcSine).l
 		muls.w	#$680,d1
 		asr.l	#8,d1
-		move.w	d1,$10(a0)
+		move.w	d1,x_vel(a0)
 		muls.w	#$680,d0
 		asr.l	#8,d0
-		move.w	d0,$12(a0)
-		bset	#1,$22(a0)
+		move.w	d0,y_vel(a0)
+		bset	#1,status(a0)
 		move.w	#$A0,d0	; ' '
 		jsr	(PlaySound_Special).l
 
@@ -36481,12 +36490,12 @@ nullsub_2:				; CODE XREF: ROM:Obj09_InAirp
 
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		move.w	#$FC00,d1
-		cmp.w	$12(a0),d1
+		cmp.w	y_vel(a0),d1
 		ble.s	locret_1A5EC
 		move.b	($FFFFF602).w,d0
 		andi.b	#$70,d0	; 'p'
 		bne.s	locret_1A5EC
-		move.w	d1,$12(a0)
+		move.w	d1,y_vel(a0)
 
 locret_1A5EC:				; CODE XREF: ROM:0001A5DCj
 					; ROM:0001A5E6j
@@ -36497,8 +36506,8 @@ locret_1A5EC:				; CODE XREF: ROM:0001A5DCj
 
 S1SS_FixCamera:				; CODE XREF: ROM:0001A3BEp
 					; ROM:0001A480p ...
-		move.w	$C(a0),d2
-		move.w	8(a0),d3
+		move.w	y_pos(a0),d2
+		move.w	x_pos(a0),d3
 		move.w	($FFFFEE00).w,d0
 		subi.w	#$A0,d3	; ' '
 		bcs.s	loc_1A606
@@ -36558,17 +36567,17 @@ loc_1A678:				; CODE XREF: ROM:0001A670j
 
 Obj09_Fall:				; CODE XREF: ROM:0001A460p
 					; ROM:0001A46Ep
-		move.l	$C(a0),d2
-		move.l	8(a0),d3
+		move.l	y_pos(a0),d2
+		move.l	x_pos(a0),d3
 		move.b	($FFFFF780).w,d0
 		andi.b	#$FC,d0
 		jsr	(CalcSine).l
-		move.w	$10(a0),d4
+		move.w	x_vel(a0),d4
 		ext.l	d4
 		asl.l	#8,d4
 		muls.w	#$2A,d0	; '*'
 		add.l	d4,d0
-		move.w	$12(a0),d4
+		move.w	y_vel(a0),d4
 		ext.l	d4
 		asl.l	#8,d4
 		muls.w	#$2A,d1	; '*'
@@ -36578,14 +36587,14 @@ Obj09_Fall:				; CODE XREF: ROM:0001A460p
 		beq.s	loc_1A6E8
 		sub.l	d0,d3
 		moveq	#0,d0
-		move.w	d0,$10(a0)
-		bclr	#1,$22(a0)
+		move.w	d0,x_vel(a0)
+		bclr	#1,status(a0)
 		add.l	d1,d2
 		bsr.w	sub_1A720
 		beq.s	loc_1A6FE
 		sub.l	d1,d2
 		moveq	#0,d1
-		move.w	d1,$12(a0)
+		move.w	d1,y_vel(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -36595,23 +36604,23 @@ loc_1A6E8:				; CODE XREF: Obj09_Fall+38j
 		beq.s	loc_1A70C
 		sub.l	d1,d2
 		moveq	#0,d1
-		move.w	d1,$12(a0)
-		bclr	#1,$22(a0)
+		move.w	d1,y_vel(a0)
+		bclr	#1,status(a0)
 
 loc_1A6FE:				; CODE XREF: Obj09_Fall+4Ej
 		asr.l	#8,d0
 		asr.l	#8,d1
-		move.w	d0,$10(a0)
-		move.w	d1,$12(a0)
+		move.w	d0,x_vel(a0)
+		move.w	d1,y_vel(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_1A70C:				; CODE XREF: Obj09_Fall+60j
 		asr.l	#8,d0
 		asr.l	#8,d1
-		move.w	d0,$10(a0)
-		move.w	d1,$12(a0)
-		bset	#1,$22(a0)
+		move.w	d0,x_vel(a0)
+		move.w	d1,y_vel(a0)
+		bset	#1,status(a0)
 		rts
 ; End of function Obj09_Fall
 
@@ -36684,13 +36693,13 @@ loc_1A77E:				; CODE XREF: sub_1A768+Cj
 Obj09_ChkItems:				; CODE XREF: ROM:Obj09_Displayp
 		lea	($FFFF0000).l,a1
 		moveq	#0,d4
-		move.w	$C(a0),d4
+		move.w	y_pos(a0),d4
 		addi.w	#$50,d4	; 'P'
 		divu.w	#$18,d4
 		mulu.w	#$80,d4	; '€'
 		adda.l	d4,a1
 		moveq	#0,d4
-		move.w	8(a0),d4
+		move.w	x_pos(a0),d4
 		addi.w	#$20,d4	; ' '
 		divu.w	#$18,d4
 		adda.w	d4,a1
@@ -36848,17 +36857,17 @@ loc_1A8E6:				; CODE XREF: OBj09_ChkItems2+4j
 		andi.w	#$7F,d2	; ''
 		mulu.w	#$18,d2
 		subi.w	#$44,d2	; 'D'
-		sub.w	8(a0),d1
-		sub.w	$C(a0),d2
+		sub.w	x_pos(a0),d1
+		sub.w	y_pos(a0),d2
 		jsr	(CalcAngle).l
 		jsr	(CalcSine).l
 		muls.w	#$F900,d1
 		asr.l	#8,d1
-		move.w	d1,$10(a0)
+		move.w	d1,x_vel(a0)
 		muls.w	#$F900,d0
 		asr.l	#8,d0
-		move.w	d0,$12(a0)
-		bset	#1,$22(a0)
+		move.w	d0,y_vel(a0)
+		bset	#1,status(a0)
 		bsr.w	sub_19EEC
 		bne.s	loc_1A954
 		move.b	#2,(a2)
@@ -37429,13 +37438,13 @@ Obj21_Index:	dc.w Obj21_Init-Obj21_Index
 
 Obj21_Init:
 		addq.b	#2,routine(a0)
-		move.w	#$90,8(a0)
-		move.w	#$108,$A(a0)
-		move.l	#Map_obj21,4(a0)
-		move.w	#$6CA,2(a0)
+		move.w	#$90,x_pixel(a0)
+		move.w	#$108,y_pixel(a0)
+		move.l	#Map_obj21,mappings(a0)
+		move.w	#$6CA,art_tile(a0)
 		bsr.w	j_Adjust2PArtPointer_8
 		move.b	#0,1(a0)
-		move.b	#0,$18(a0)
+		move.b	#0,priority(a0)
 
 Obj21_Main:
 		tst.w	($FFFFFE20).w
@@ -37448,7 +37457,7 @@ Obj21_Main:
 		addq.w	#2,d0
 ; loc_1B082:
 Obj21_Display:
-		move.b	d0,$1A(a0)
+		move.b	d0,mapping_frame(a0)
 		jmp	(DisplaySprite).l
 ; ---------------------------------------------------------------------------
 ; loc_1B08C:
@@ -37462,7 +37471,7 @@ Obj21_NoRings:
 		addq.w	#2,d0
 ; loc_1B0A2:
 Obj21_Display2:
-		move.b	d0,$1A(a0)
+		move.b	d0,mapping_frame(a0)
 		jmp	(DisplaySprite).l
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
@@ -37588,7 +37597,7 @@ locret_1B318:
 ; to its "beq" command being noped out above
 S1TimeOver:
 		clr.b	($FFFFFE1E).w
-		lea	($FFFFB000).w,a0
+		lea	(MainCharacter).w,a0
 		movea.l	a0,a2
 		bsr.w	KillSonic
 		move.b	#1,($FFFFFE1A).w
@@ -37697,11 +37706,11 @@ HUDDebug_XY:				; CODE XREF: HudUpdate:loc_1B330p
 		move.l	#$5C400003,(VDP_control_port).l
 		move.w	($FFFFEE00).w,d1
 		swap	d1
-		move.w	($FFFFB008).w,d1
+		move.w	(MainCharacter+x_pos).w,d1
 		bsr.s	HUDDebug_XY2
 		move.w	($FFFFEE04).w,d1
 		swap	d1
-		move.w	($FFFFB00C).w,d1
+		move.w	(MainCharacter+y_pos).w,d1
 ; End of function HUDDebug_XY
 
 
@@ -38119,11 +38128,11 @@ Debug_Init:
 		move.w	($FFFFEEC6).w,($FFFFFEF2).w
 		move.w	#0,($FFFFEECC).w
 		move.w	#$720,($FFFFEEC6).w
-		andi.w	#$7FF,($FFFFB00C).w
+		andi.w	#$7FF,(MainCharacter+y_pos).w
 		andi.w	#$7FF,($FFFFEE04).w
 		andi.w	#$3FF,($FFFFEE0C).w
-		move.b	#0,$1A(a0)
-		move.b	#0,$1C(a0)
+		move.b	#0,mapping_frame(a0)
+		move.b	#0,anim(a0)
 
 ; Debug_CheckSS:
 		cmpi.b	#GameModeID_SpecialStage,(Game_Mode).w	; is this the Special Stage?
@@ -38205,8 +38214,8 @@ Debug_TimerNotOver:
 		addq.w	#1,d1
 		swap	d1
 		asr.l	#4,d1
-		move.l	$C(a0),d2
-		move.l	8(a0),d3
+		move.l	y_pos(a0),d2
+		move.l	x_pos(a0),d3
 
 		; move up
 		btst	#0,d4
@@ -38239,8 +38248,8 @@ loc_1BBE4:
 		add.l	d1,d3
 
 loc_1BBEC:
-		move.l	d2,$C(a0)
-		move.l	d3,8(a0)
+		move.l	d2,y_pos(a0)
+		move.l	d3,x_pos(a0)
 ; loc_1BBF4:
 Debug_ControlObjects:
 		btst	#6,($FFFFF604).w
@@ -38272,12 +38281,12 @@ Debug_SpawnObject:
 		; spawn object
 		jsr	(SingleObjLoad).l
 		bne.s	Debug_ExitDebugMode
-		move.w	8(a0),8(a1)
-		move.w	$C(a0),$C(a1)
-		move.b	4(a0),0(a1) ; load obj
+		move.w	x_pos(a0),x_pos(a1)
+		move.w	y_pos(a0),y_pos(a1)
+		move.b	mappings(a0),0(a1) ; load obj
 		move.b	1(a0),1(a1)
-		move.b	1(a0),$22(a1)
-		andi.b	#$7F,$22(a1)
+		move.b	1(a0),status(a1)
+		andi.b	#$7F,status(a1)
 		moveq	#0,d0
 		move.b	(Debug_object).w,d0
 		lsl.w	#3,d0
@@ -38291,16 +38300,16 @@ Debug_ExitDebugMode:
 		; exit Debug Mode
 		moveq	#0,d0
 		move.w	d0,(Debug_placement_mode).w
-		move.l	#Map_Sonic,($FFFFB004).w
-		move.w	#$780,($FFFFB002).w
+		move.l	#Map_Sonic,(MainCharacter+mappings).w
+		move.w	#$780,(MainCharacter+art_tile).w
 		tst.w	(Two_player_mode).w
 		beq.s	loc_1BC98
-		move.w	#$3C0,($FFFFB002).w
+		move.w	#$3C0,(MainCharacter+art_tile).w
 
 loc_1BC98:
-		move.b	d0,($FFFFB01C).w
-		move.w	d0,$A(a0)
-		move.w	d0,$E(a0)
+		move.b	d0,(MainCharacter+anim).w
+		move.w	d0,x_sub(a0)
+		move.w	d0,y_sub(a0)
 		move.w	($FFFFFEF0).w,($FFFFEECC).w
 		move.w	($FFFFFEF2).w,($FFFFEEC6).w
 		cmpi.b	#GameModeID_SpecialStage,(Game_Mode).w	; is this the Special Stage?
@@ -38311,9 +38320,9 @@ loc_1BC98:
 		;move.l	#Map_Sonic,($FFFFD004).w
 		;move.w	#$780,($FFFFD002).w
 
-		move.b	#2,($FFFFB01C).w
-		bset	#2,($FFFFB022).w
-		bset	#1,($FFFFB022).w
+		move.b	#2,(MainCharacter+anim).w
+		bset	#2,(MainCharacter+status).w
+		bset	#1,(MainCharacter+status).w
 
 locret_1BCCA:
 		rts
@@ -38327,9 +38336,9 @@ LoadDebugObjectSprite:
 		moveq	#0,d0
 		move.b	(Debug_object).w,d0
 		lsl.w	#3,d0
-		move.l	(a2,d0.w),4(a0)
-		move.w	6(a2,d0.w),2(a0)
-		move.b	5(a2,d0.w),$1A(a0)
+		move.l	(a2,d0.w),mappings(a0)
+		move.w	6(a2,d0.w),art_tile(a0)
+		move.b	5(a2,d0.w),mapping_frame(a0)
 		;move.b	4(a2,d0.w),$28(a0)	; this does... something with the object's subtype
 		bsr.w	j_Adjust2PArtPointer_1
 		rts
