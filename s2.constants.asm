@@ -3,7 +3,30 @@
 ; Object Status Table offsets
 ; ---------------------------------------------------------------------------
 ; universally followed object conventions:
+art_tile:		equ 2			; and 3 ; start of sprite's art
+mappings:		equ 4			; and 5 and 6 and 7
+x_pos:			equ 8			; and 9 ... some objects use $A and $B as well when extra precision is required (see ObjectMove) ... for screen-space objects this is called x_pixel instead
+x_sub:			equ $A			; and $B
+y_pos:			equ $C			; and $D ... some objects use $E and $F as well when extra precision is required ... screen-space objects use y_pixel instead
+y_sub:			equ $E			; and $F
+x_vel:			equ $10			; and $11 ; horizontal velocity
+y_vel:			equ $12			; and $13 ; vertical velocity
+y_radius:		equ $16			; collision height / 2
+x_radius:		equ $17			; collision width / 2
+priority:		equ $18			; 0 = front
+width_pixels:		equ $19
+mapping_frame:		equ $1A
+anim_frame:		equ $1B
+anim:			equ $1C
+prev_anim:		equ $1D
+anim_frame_duration:	equ $1E
+status:			equ $22			; note: exact meaning depends on the object... for Sonic/Tails: bit 0: left-facing. bit 1: in-air. bit 2: spinning. bit 3: on-object. bit 4: roll-jumping. bit 5: pushing. bit 6: underwater.
 routine:		equ $24
+routine_secondary:	equ $25
+angle:			equ $26			; angle about the z axis (360 degrees = 256)
+
+x_pixel:		equ x_pos		; and 1+x_pos ; x coordinate for objects using screen-space coordinate system
+y_pixel:		equ 2+x_pos		; and 3+x_pos ; y coordinate for objects using screen-space coordinate system
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
@@ -54,6 +77,10 @@ MusID_Boss:			equ ((MusPtr_Boss-MusicIndex)/4)+MusID__First		; $8C
 ; ---------------------------------------------------------------------------
 ; Main RAM
 Decomp_Buffer:			equ $FFFFAA00
+
+Object_RAM:			equ $FFFFB000
+MainCharacter:			equ Object_RAM
+Sidekick:			equ Object_RAM+$40
 
 VDP_Command_Buffer:		equ $FFFFDC00
 VDP_Command_Buffer_Slot:	equ $FFFFDCFC
@@ -201,3 +228,7 @@ SFXToPlay3:			equ $C	; third (broken) sound queue
 
 ; unused byte
 
+; ---------------------------------------------------------------------------
+; Extended RAM constants (for routines that would convert data for STI's use)
+
+ConvertedChunksLoc:		equ $00FE0000
