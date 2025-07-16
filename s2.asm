@@ -13,6 +13,10 @@
 
 	include	"s2.constants.asm"
 
+convertGHZ = 0
+; This converts Green Hill's data to be compatible with the regular Nick Arcade
+; level format, allowing it to be edited in SonLVL
+
 ; ---------------------------------------------------------------------------
 ; Macros
 align macro
@@ -655,7 +659,7 @@ loc_D60:
 		move.w	(DMA_data_thunk).w,(a5)
 		bsr.w	ProcessDMAQueue
 		startZ80
-		movem.l	($FFFFEE00).w,d0-d7
+		movem.l	(Camera_RAM).w,d0-d7
 		movem.l	d0-d7,($FFFFEE60).w
 		movem.l	($FFFFEE20).w,d0-d7
 		movem.l	d0-d7,($FFFFEE80).w
@@ -768,7 +772,7 @@ loc_F08:
 		move.w	(DMA_data_thunk).w,(a5)
 		bsr.w	ProcessDMAQueue
 		startZ80
-		movem.l	($FFFFEE00).w,d0-d7
+		movem.l	(Camera_RAM).w,d0-d7
 		movem.l	d0-d7,($FFFFEE60).w
 		movem.l	($FFFFEE50).w,d0-d1
 		movem.l	d0-d1,($FFFFEEA0).w
@@ -4032,7 +4036,7 @@ loc_3240:				; CODE XREF: ROM:00003242j
 loc_3250:				; CODE XREF: ROM:00003252j
 		move.l	d0,(a1)+
 		dbf	d1,loc_3250
-		lea	($FFFFEE00).w,a1
+		lea	(Camera_RAM).w,a1
 		moveq	#0,d0
 		move.w	#$3F,d1	; '?'
 
@@ -4220,6 +4224,11 @@ LevelSelect_ClearVRAM:			; CODE XREF: ROM:000034DAj
 		dbf	d1,LevelSelect_ClearVRAM
 		bsr.w	LevelSelect_TextLoad
 
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Level Select
+; ---------------------------------------------------------------------------
+
 LevelSelect_Loop:
 		move.b	#VintID_Title,(Vint_routine).w
 		bsr.w	WaitForVint
@@ -4227,57 +4236,59 @@ LevelSelect_Loop:
 		bsr.w	RunPLC_RAM
 		tst.l	(Plc_Buffer).w
 		bne.s	LevelSelect_Loop
-		andi.b	#$F0,($FFFFF605).w
-		beq.s	LevelSelect_Loop
+		andi.b	#$F0,($FFFFF605).w		; is A, B, C, or Start being pressed?
+		beq.s	LevelSelect_Loop		; if not, branch
 		move.w	#0,(Two_player_mode).w
-		btst	#4,($FFFFF604).w
-		beq.s	loc_3516
+		btst	#4,($FFFFF604).w		; is B being held?
+		beq.s	.singlePlayer			; if not, branch
 		move.w	#1,(Two_player_mode).w
-
-loc_3516:				; CODE XREF: ROM:0000350Ej
+; loc_3516:
+.singlePlayer:
 		move.w	($FFFFFF82).w,d0
-		cmpi.w	#$14,d0
-		bne.s	loc_3570
+		cmpi.w	#$14,d0				; have you selected item $14 (sound test)?
+		bne.s	LevelSelect_StartGame		; if not, go to	Level/SS subroutine
 		move.w	($FFFFFF84).w,d0
-		addi.w	#$80,d0	; '€'
-		tst.b	($FFFFFFE3).w
-		beq.s	loc_353A
-		cmpi.w	#$9F,d0	; 'Ÿ'
-		beq.s	loc_354C
-		cmpi.w	#$9E,d0	; ''
-		beq.s	loc_355A
-
-loc_353A:				; CODE XREF: ROM:0000352Cj
-		cmpi.w	#$94,d0	; '”'
-		bcs.s	loc_3546
-		cmpi.w	#$A0,d0	; ' '
+		addi.w	#$80,d0
+		tst.b	($FFFFFFE3).w			; is the Japanese credits cheat on?
+		beq.s	LevelSelect_NoCheats		; if not, branch
+		cmpi.w	#$9F,d0				; is sound $9F being played?
+		beq.s	LevelSelect_PlayEnding		; if yes, branch
+		cmpi.w	#$9E,d0				; is sound $9E being played?
+		beq.s	LevelSelect_PlayCredits		; if yes, branch
+; loc_353A:
+LevelSelect_NoCheats:
+		cmpi.w	#$94,d0
+		bcs.s	LevelSelect_PlaySound
+		cmpi.w	#$A0,d0
 		bcs.s	LevelSelect_Loop
-
-loc_3546:				; CODE XREF: ROM:0000353Ej
+; loc_3546:
+LevelSelect_PlaySound:
 		bsr.w	PlaySound_Special
 		bra.s	LevelSelect_Loop
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_354C:				; CODE XREF: ROM:00003532j
+; ===========================================================================
+; loc_354C:
+LevelSelect_PlayEnding:
 		move.b	#GameModeID_S1Ending,(Game_Mode).w
 		move.w	#$600,(Current_ZoneAndAct).w
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_355A:				; CODE XREF: ROM:00003538j
+; ===========================================================================
+; loc_355A:
+LevelSelect_PlayCredits:
 		move.b	#GameModeID_S1Credits,(Game_Mode).w
 		move.b	#$91,d0
 		bsr.w	PlaySound_Special
 		move.w	#0,($FFFFFFF4).w
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_3570:				; CODE XREF: ROM:0000351Ej
+; ===========================================================================
+; loc_3570:
+LevelSelect_StartGame:
 		add.w	d0,d0
 		move.w	LevelSelect_LevelOrder(pc,d0.w),d0
 		bmi.w	LevelSelect_Loop
-		cmpi.w	#$700,d0
-		bne.s	LevelSelect_Level
+		cmpi.w	#$700,d0		; is level $700 loaded?
+		bne.s	LevelSelect_StartZone	; if not, branch
+
+; LevelSelect_SpecialStage:
 		move.b	#GameModeID_SpecialStage,(Game_Mode).w
 		clr.w	(Current_ZoneAndAct).w
 		move.b	#3,($FFFFFE12).w
@@ -4287,21 +4298,26 @@ loc_3570:				; CODE XREF: ROM:0000351Ej
 		move.l	d0,($FFFFFE26).w
 		move.l	#$1388,($FFFFFFC0).w
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-LevelSelect_LevelOrder:dc.w	0,    1,    2  ; 0
-		dc.w  $200, $201, $202	; 3
-		dc.w  $400, $401, $402	; 6
-		dc.w  $100, $101, $102	; 9
-		dc.w  $300, $301, $302	; 12
-		dc.w  $500, $501, $103	; 15
-		dc.w  $502, $700,$8000	; 18
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; ===========================================================================
 
-LevelSelect_Level:			; CODE XREF: ROM:0000357Ej
+LevelSelect_LevelOrder:
+		dc.w	0,    1,    2
+		dc.w	$200, $201, $202
+		dc.w	$400, $401, $402
+		dc.w	$100, $101, $102
+		dc.w	$300, $301, $302
+		dc.w	$500, $501, $103
+		dc.w	$502
+		dc.w	$700
+		dc.w	$8000
+		even
+; ===========================================================================
+; LevelSelect_Level:
+LevelSelect_StartZone:
 		andi.w	#$3FFF,d0
 		move.w	d0,(Current_ZoneAndAct).w
 
-PlayLevel:				; CODE XREF: ROM:000034A2j
+PlayLevel:
 		move.b	#GameModeID_Level,(Game_Mode).w
 		move.b	#3,($FFFFFE12).w
 		moveq	#0,d0
@@ -4317,10 +4333,15 @@ PlayLevel:				; CODE XREF: ROM:000034A2j
 		move.b	#$E0,d0
 		bsr.w	PlaySound_Special
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-LvlSelCode_J:	dc.b   1,  2,  2,  2,  2,  1,  0,$FF; 0	; DATA XREF: ROM:Title_RegionJo
-LvlSelCode_US:	dc.b   1,  2,  2,  2,  2,  1,  0,$FF; 0	; DATA XREF: ROM:00003418o
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; End of function LevelSelect
+
+; ===========================================================================
+
+LvlSelCode_J:	dc.b   1,  2,  2,  2,  2,  1,  0,$FF
+		even
+LvlSelCode_US:	dc.b   1,  2,  2,  2,  2,  1,  0,$FF
+		even
+; ===========================================================================
 
 Demo:
 		move.w	#$1E,(Demo_Time_left).w
@@ -4388,43 +4409,41 @@ Demo_Levels:	dc.w  $200, $300	; 0
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
 
 
-LevelSelect_Controls:			; CODE XREF: ROM:000034ECp
+LevelSelect_Controls:
 		move.b	($FFFFF605).w,d1
 		andi.b	#3,d1
-		bne.s	loc_3706
+		bne.s	.holdButton
 		subq.w	#1,($FFFFFF80).w
-		bpl.s	loc_3740
-
-loc_3706:				; CODE XREF: LevelSelect_Controls+8j
+		bpl.s	LevelSelect_CheckLR
+; loc_3706:
+.holdButton:
 		move.w	#$B,($FFFFFF80).w
 		move.b	($FFFFF604).w,d1
 		andi.b	#3,d1
-		beq.s	loc_3740
+		beq.s	LevelSelect_CheckLR
+; .pressUp:
 		move.w	($FFFFFF82).w,d0
 		btst	#0,d1
-		beq.s	loc_3726
+		beq.s	.pressDown
 		subq.w	#1,d0
-		bcc.s	loc_3726
+		bcc.s	.pressDown
 		moveq	#$14,d0
-
-loc_3726:				; CODE XREF: LevelSelect_Controls+28j
-					; LevelSelect_Controls+2Cj
+; loc_3726:
+.pressDown:
 		btst	#1,d1
-		beq.s	loc_3736
+		beq.s	.updateSelection
 		addq.w	#1,d0
 		cmpi.w	#$15,d0
-		bcs.s	loc_3736
+		bcs.s	.updateSelection
 		moveq	#0,d0
-
-loc_3736:				; CODE XREF: LevelSelect_Controls+34j
-					; LevelSelect_Controls+3Cj
+; loc_3736:
+.updateSelection:
 		move.w	d0,($FFFFFF82).w
 		bsr.w	LevelSelect_TextLoad
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_3740:				; CODE XREF: LevelSelect_Controls+Ej
-					; LevelSelect_Controls+1Ej
+; ===========================================================================
+; loc_3740:
+LevelSelect_CheckLR:
 		cmpi.w	#$14,($FFFFFF82).w
 		bne.s	locret_377A
 		move.b	($FFFFF605).w,d1
@@ -4437,8 +4456,7 @@ loc_3740:				; CODE XREF: LevelSelect_Controls+Ej
 		bcc.s	loc_3762
 		moveq	#$4F,d0	; 'O'
 
-loc_3762:				; CODE XREF: LevelSelect_Controls+64j
-					; LevelSelect_Controls+68j
+loc_3762:
 		btst	#3,d1
 		beq.s	loc_3772
 		addq.w	#1,d0
@@ -4446,13 +4464,11 @@ loc_3762:				; CODE XREF: LevelSelect_Controls+64j
 		bcs.s	loc_3772
 		moveq	#0,d0
 
-loc_3772:				; CODE XREF: LevelSelect_Controls+70j
-					; LevelSelect_Controls+78j
+loc_3772:
 		move.w	d0,($FFFFFF84).w
 		bsr.w	LevelSelect_TextLoad
 
-locret_377A:				; CODE XREF: LevelSelect_Controls+50j
-					; LevelSelect_Controls+5Aj
+locret_377A:
 		rts
 ; End of function LevelSelect_Controls
 
@@ -4565,7 +4581,7 @@ ConvertChunkFlags:
 		lea	($FFFF0000).l,a1
 		move.w	#$2EC-1,d2
 ; loc_3A3A:
-@loopPerBlock:
+.loopPerBlock:
 		move.w	(a1),d0			; get block info from chunk
 		move.w	d0,d1
 		andi.w	#$F800,d1		; get top bits for 0PPYX0
@@ -4573,7 +4589,7 @@ ConvertChunkFlags:
 		lsr.w	#1,d0			; perform a right-shift to convert block format to 00PPYX
 		or.w	d0,d1			; apply this new format to the block
 		move.w	d1,(a1)+		; and apply this to the chunk
-		dbf	d2,@loopPerBlock	; repeat until all blocks in the chunk are converted
+		dbf	d2,.loopPerBlock	; repeat until all blocks in the chunk are converted
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -4840,7 +4856,7 @@ loc_3CDC:
 
 loc_3CE6:
 		lea	MusicList(pc),a1
-		nop
+		nop				; ???
 		move.b	(a1,d0.w),d0
 		bsr.w	PlaySound
 		move.b	#$34,(Object_RAM+$80).w
@@ -5004,6 +5020,7 @@ Level_StartGame:
 ; ---------------------------------------------------------------------------
 ; Main level loop (when all title card and loading sequences are finished)
 ; ---------------------------------------------------------------------------
+
 Level_MainLoop:
 		bsr.w	PauseGame
 		move.b	#VintID_Level,(Vint_routine).w
@@ -5087,7 +5104,7 @@ loc_400E:
 ChangeWaterSurfacePos:			; CODE XREF: ROM:loc_3F54p
 		tst.b	(Water_flag).w
 		beq.s	locret_403E
-		move.w	($FFFFEE00).w,d1
+		move.w	(Camera_X_pos).w,d1
 		btst	#0,($FFFFFE05).w
 		beq.s	loc_402C
 		addi.w	#$20,d1	; ' '
@@ -5126,7 +5143,7 @@ loc_4058:				; CODE XREF: WaterEffects+Aj
 		add.w	($FFFFF648).w,d0
 		move.w	d0,($FFFFF646).w
 		move.w	($FFFFF646).w,d0
-		sub.w	($FFFFEE04).w,d0
+		sub.w	(Camera_Y_pos).w,d0
 		bcc.s	loc_4086
 		tst.w	d0
 		bpl.s	loc_4086
@@ -5173,36 +5190,36 @@ locret_40C6:				; CODE XREF: DynamicWaterHeight+1Ej
 		rts
 ; End of function DynamicWaterHeight
 
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-DynWater_Index:	dc.w DynWater_HPZ1-DynWater_Index; 0 ; DATA XREF: ROM:DynWater_Indexo
-					; ROM:DynWater_Index+2o ...
-		dc.w DynWater_HPZ2-DynWater_Index; 1 ; leftover	from Sonic 1's LZ2
-		dc.w DynWater_HPZ3-DynWater_Index; 2
-		dc.w DynWater_HPZ4-DynWater_Index; 3
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; ===========================================================================
 
-DynWater_HPZ1:				; DATA XREF: ROM:DynWater_Indexo
-		btst	#0,($FFFFF606).w
-		beq.s	loc_40E2
+DynWater_Index:	dc.w DynWater_HPZ1-DynWater_Index
+		dc.w DynWater_HPZ2-DynWater_Index
+		dc.w DynWater_HPZ3-DynWater_Index
+		dc.w DynWater_HPZ4-DynWater_Index
+; ===========================================================================
+
+DynWater_HPZ1:
+		; An interesting function that allows Tails to manipulate
+		; the water level using the up/down buttons
+		btst	#0,($FFFFF606).w	; is up being held?
+		beq.s	loc_40E2		; if not, branch
 		tst.w	($FFFFF64A).w
-		beq.s	loc_40E2
-		subq.w	#1,($FFFFF64A).w
+		beq.s	loc_40E2		; stop increasing water level if we've hit the limit
+		subq.w	#1,($FFFFF64A).w	; increase water level
 
-loc_40E2:				; CODE XREF: ROM:000040D6j
-					; ROM:000040DCj
-		btst	#1,($FFFFF606).w
-		beq.s	locret_40F6
+loc_40E2:
+		btst	#1,($FFFFF606).w	; is down being held?
+		beq.s	locret_40F6		; if not, branch
 		cmpi.w	#$700,($FFFFF64A).w
-		beq.s	locret_40F6
-		addq.w	#1,($FFFFF64A).w
+		beq.s	locret_40F6		; stop decreasing water level if we've hit the limit
+		addq.w	#1,($FFFFF64A).w	; decrease water level
 
-locret_40F6:				; CODE XREF: ROM:000040E8j
-					; ROM:000040F0j
+locret_40F6:
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; ===========================================================================
 
 S1DynWater_LZ1:				; leftover from	Sonic 1
-		move.w	($FFFFEE00).w,d0
+		move.w	(Camera_X_pos).w,d0
 		move.b	($FFFFF64D).w,d2
 		bne.s	loc_4164
 		move.w	#$B8,d1	; '¸'
@@ -5261,7 +5278,7 @@ locret_4188:				; CODE XREF: ROM:00004166j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 DynWater_HPZ2:				; DATA XREF: ROM:DynWater_Indexo
-		move.w	($FFFFEE00).w,d0 ; leftover from Sonic 1's LZ2
+		move.w	(Camera_X_pos).w,d0 ; leftover from Sonic 1's LZ2
 		move.w	#$328,d1
 		cmpi.w	#$500,d0
 		bcs.s	loc_41A6
@@ -5277,7 +5294,7 @@ loc_41A6:				; CODE XREF: ROM:00004196j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 DynWater_HPZ3:				; DATA XREF: ROM:DynWater_Indexo
-		move.w	($FFFFEE00).w,d0 ; in fact, this is a leftover from Sonic 1's LZ3
+		move.w	(Camera_X_pos).w,d0 ; in fact, this is a leftover from Sonic 1's LZ3
 		move.b	($FFFFF64D).w,d2
 		bne.s	loc_41F2
 		move.w	#$900,d1
@@ -5288,7 +5305,7 @@ DynWater_HPZ3:				; DATA XREF: ROM:DynWater_Indexo
 		cmpi.w	#$600,(MainCharacter+y_pos).w
 		bcc.s	loc_41E8
 		move.w	#$4C8,d1
-		move.b	#$4B,($FFFF8206).w ; 'K'
+		move.b	#$4B,(Level_Layout+$206).w ; 'K'
 		move.b	#1,($FFFFF64D).w
 		move.w	#$B7,d0	; '·'
 		bsr.w	PlaySound_Special
@@ -5385,7 +5402,7 @@ locret_42AE:				; CODE XREF: ROM:000042A6j
 
 DynWater_HPZ4:				; DATA XREF: ROM:DynWater_Indexo
 		move.w	#$228,d1	; in fact, this	is a leftover from Sonic 1's SBZ3
-		cmpi.w	#$F00,($FFFFEE00).w
+		cmpi.w	#$F00,(Camera_X_pos).w
 		bcs.s	loc_42C0
 		move.w	#$4C8,d1
 
@@ -5495,7 +5512,7 @@ S1_LZWaterSlides:
 loc_43E4:
 		andi.w	#$7F,d1	; ''
 		add.w	d1,d0
-		lea	($FFFF8000).w,a2
+		lea	(Level_Layout).w,a2
 		move.b	(a2,d0.w),d0
 		lea	byte_4465(pc),a2
 		moveq	#6,d1
@@ -5663,15 +5680,15 @@ loc_4572:				; CODE XREF: MoveSonicInDemo+DAj
 		rts
 ; End of function MoveSonicInDemo
 
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-Demo_Index:	dc.l Demo_S1GHZ		; leftover demo	from Sonic 1 GHZ
-		dc.l Demo_S1GHZ		; leftover demo	from Sonic 1 GHZ
+; ===========================================================================
+Demo_Index:	dc.l Demo_S1GHZ
+		dc.l Demo_S1GHZ
 		dc.l Demo_CPZ
 		dc.l Demo_EHZ
 		dc.l Demo_HPZ
 		dc.l Demo_HTZ
-		dc.l Demo_S1SS		; leftover demo	from Sonic 1 Special Stage
-		dc.l Demo_S1SS		; leftover demo	from Sonic 1 Special Stage
+		dc.l Demo_S1SS
+		dc.l Demo_S1SS
 		dc.l $FE8000
 		dc.l $FE8000
 		dc.l $FE8000
@@ -5681,7 +5698,9 @@ Demo_Index:	dc.l Demo_S1GHZ		; leftover demo	from Sonic 1 GHZ
 		dc.l $FE8000
 		dc.l $FE8000
 		dc.l $FE8000
-Demo_S1EndIndex:dc.l $8B0837		; garbage, leftover from Sonic 1's ending sequence demos
+; the actual ending demo index has been removed, so it instead points to
+; the unused Sonic 1 TTS demo inputs
+Demo_S1EndIndex:dc.l $8B0837
 		dc.l $42085C
 		dc.l $6A085F
 		dc.l $2F082C
@@ -5731,12 +5750,12 @@ loc_4616:
 ; Contains an array of pointers to the primary collision index data for each
 ; level. 1 pointer for each level, pointing the primary collision index.
 ; ---------------------------------------------------------------------------
-ColP_Index:	dc.l ColP_GHZ		; 0
-		dc.l ColP_CPZ		; 1
-		dc.l ColP_CPZ		; 2
-		dc.l ColP_EHZ		; 3
-		dc.l ColP_HPZ		; 4
-		dc.l ColP_EHZ		; 5
+ColP_Index:	dc.l ColP_GHZ
+		dc.l ColP_CPZ
+		dc.l ColP_CPZ
+		dc.l ColP_EHZ
+		dc.l ColP_HPZ
+		dc.l ColP_EHZ
 
 ; ---------------------------------------------------------------------------
 ; Pointers to secondary collision indexes
@@ -5745,12 +5764,12 @@ ColP_Index:	dc.l ColP_GHZ		; 0
 ; each level. 1 pointer for each level, pointing the secondary collision
 ; index.
 ; ---------------------------------------------------------------------------
-ColS_Index:	dc.l ColS_GHZ		; 0
-		dc.l ColS_CPZ		; 1
-		dc.l ColS_CPZ		; 2
-		dc.l ColS_EHZ		; 3
-		dc.l ColS_HPZ		; 4
-		dc.l ColS_EHZ		; 5
+ColS_Index:	dc.l ColS_GHZ
+		dc.l ColS_CPZ
+		dc.l ColS_CPZ
+		dc.l ColS_EHZ
+		dc.l ColS_HPZ
+		dc.l ColS_EHZ
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
 
@@ -5900,7 +5919,7 @@ SignpostArtLoad:
 		bne.w	locret_47E2
 		cmpi.b	#1,(Current_Act).w
 		beq.s	locret_47E2
-		move.w	($FFFFEE00).w,d0
+		move.w	(Camera_X_pos).w,d0
 		move.w	($FFFFEECA).w,d1
 		subi.w	#$100,d1
 		cmp.w	d1,d0
@@ -6142,8 +6161,8 @@ loc_50CC:
 		moveq	#$A,d0
 		bsr.w	PalLoad1
 		jsr	(S1SS_Load).l
-		move.l	#0,($FFFFEE00).w
-		move.l	#0,($FFFFEE04).w
+		move.l	#0,(Camera_X_pos).w
+		move.l	#0,(Camera_Y_pos).w
 		move.b	#9,(MainCharacter).w
 		bsr.w	PalCycle_S1SS
 		clr.w	($FFFFF780).w
@@ -6466,21 +6485,21 @@ S1SS_BgAnimate:				; CODE XREF: ROM:00005194p
 					; ROM:00005200p
 		move.w	($FFFFF7A0).w,d0
 		bne.s	loc_5634
-		move.w	#0,($FFFFEE0C).w
-		move.w	($FFFFEE0C).w,($FFFFF618).w
+		move.w	#0,(Camera_BG_Y_pos).w
+		move.w	(Camera_BG_Y_pos).w,($FFFFF618).w
 
 loc_5634:				; CODE XREF: S1SS_BgAnimate+4j
 		cmpi.w	#8,d0
 		bcc.s	loc_568C
 		cmpi.w	#6,d0
 		bne.s	loc_564E
-		addq.w	#1,($FFFFEE18).w
-		addq.w	#1,($FFFFEE0C).w
-		move.w	($FFFFEE0C).w,($FFFFF618).w
+		addq.w	#1,(Camera_BG3_X_pos).w
+		addq.w	#1,(Camera_BG_Y_pos).w
+		move.w	(Camera_BG_Y_pos).w,($FFFFF618).w
 
 loc_564E:				; CODE XREF: S1SS_BgAnimate+1Cj
 		moveq	#0,d0
-		move.w	($FFFFEE08).w,d0
+		move.w	(Camera_BG_X_pos).w,d0
 		neg.w	d0
 		swap	d0
 		lea	(byte_5709).l,a1
@@ -6507,7 +6526,7 @@ loc_5664:				; CODE XREF: S1SS_BgAnimate+5Aj
 loc_568C:				; CODE XREF: S1SS_BgAnimate+16j
 		cmpi.w	#$C,d0
 		bne.s	loc_56B2
-		subq.w	#1,($FFFFEE18).w
+		subq.w	#1,(Camera_BG3_X_pos).w
 		lea	($FFFFAB00).w,a3
 		move.l	#$18000,d2
 		moveq	#6,d1
@@ -6525,12 +6544,12 @@ loc_56B2:				; CODE XREF: S1SS_BgAnimate+6Ej
 
 loc_56BC:				; CODE XREF: S1SS_BgAnimate+68j
 		lea	($FFFFE000).w,a1
-		move.w	($FFFFEE18).w,d0
+		move.w	(Camera_BG3_X_pos).w,d0
 		neg.w	d0
 		swap	d0
 		moveq	#0,d3
 		move.b	(a2)+,d3
-		move.w	($FFFFEE0C).w,d2
+		move.w	(Camera_BG_Y_pos).w,d2
 		neg.w	d2
 		andi.w	#$FF,d2
 		lsl.w	#2,d2
@@ -6674,7 +6693,7 @@ loc_58E6:				; CODE XREF: LevelSizeLoad+1C2j
 		move.w	d2,d1
 
 loc_58F0:				; CODE XREF: LevelSizeLoad+1CCj
-		move.w	d1,($FFFFEE00).w
+		move.w	d1,(Camera_X_pos).w
 		move.w	d1,($FFFFEE20).w
 		subi.w	#$60,d0	; '`'
 		bcc.s	loc_5900
@@ -6686,7 +6705,7 @@ loc_5900:				; CODE XREF: LevelSizeLoad+1DCj
 		move.w	($FFFFEECE).w,d0
 
 loc_590A:				; CODE XREF: LevelSizeLoad+1E4j
-		move.w	d0,($FFFFEE04).w
+		move.w	d0,(Camera_Y_pos).w
 		move.w	d0,($FFFFEE24).w
 		bsr.w	BgScrollSpeed
 		rts
@@ -6728,11 +6747,11 @@ StartLocArray:	dc.w   $50, $3B0		; GHZ1
 BgScrollSpeed:				; CODE XREF: LevelSizeLoad+1F2p
 		tst.b	($FFFFFE30).w
 		bne.s	loc_59B6
-		move.w	d0,($FFFFEE0C).w
-		move.w	d0,($FFFFEE14).w
-		move.w	d1,($FFFFEE08).w
-		move.w	d1,($FFFFEE10).w
-		move.w	d1,($FFFFEE18).w
+		move.w	d0,(Camera_BG_Y_pos).w
+		move.w	d0,(Camera_BG2_Y_pos).w
+		move.w	d1,(Camera_BG_X_pos).w
+		move.w	d1,(Camera_BG2_X_pos).w
+		move.w	d1,(Camera_BG3_X_pos).w
 		move.w	d0,($FFFFEE2C).w
 		move.w	d0,($FFFFEE34).w
 		move.w	d1,($FFFFEE28).w
@@ -6759,10 +6778,10 @@ BgScroll_Index:	dc.w BgScroll_GHZ-BgScroll_Index; 0 ; DATA XREF: ROM:BgScroll_In
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 BgScroll_GHZ:				; DATA XREF: ROM:BgScroll_Indexo
-		clr.l	($FFFFEE08).w
-		clr.l	($FFFFEE0C).w
-		clr.l	($FFFFEE14).w
-		clr.l	($FFFFEE1C).w
+		clr.l	(Camera_BG_X_pos).w
+		clr.l	(Camera_BG_Y_pos).w
+		clr.l	(Camera_BG2_Y_pos).w
+		clr.l	(Camera_BG3_Y_pos).w
 		lea	($FFFFA800).w,a2
 		clr.l	(a2)+
 		clr.l	(a2)+
@@ -6776,24 +6795,24 @@ BgScroll_GHZ:				; DATA XREF: ROM:BgScroll_Indexo
 
 BgScroll_LZ:				; DATA XREF: ROM:BgScroll_Indexo
 		asr.l	#1,d0
-		move.w	d0,($FFFFEE0C).w
+		move.w	d0,(Camera_BG_Y_pos).w
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 BgScroll_CPZ:				; DATA XREF: ROM:BgScroll_Indexo
 		lsr.w	#2,d0
-		move.w	d0,($FFFFEE0C).w
+		move.w	d0,(Camera_BG_Y_pos).w
 		move.w	d0,($FFFFEE2C).w
-		clr.l	($FFFFEE08).w
-		clr.l	($FFFFEE10).w
+		clr.l	(Camera_BG_X_pos).w
+		clr.l	(Camera_BG2_X_pos).w
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 BgScroll_EHZ:				; DATA XREF: ROM:BgScroll_Indexo
-		clr.l	($FFFFEE08).w
-		clr.l	($FFFFEE0C).w
-		clr.l	($FFFFEE14).w
-		clr.l	($FFFFEE1C).w
+		clr.l	(Camera_BG_X_pos).w
+		clr.l	(Camera_BG_Y_pos).w
+		clr.l	(Camera_BG2_Y_pos).w
+		clr.l	(Camera_BG3_Y_pos).w
 		lea	($FFFFA800).w,a2
 		clr.l	(a2)+
 		clr.l	(a2)+
@@ -6807,8 +6826,8 @@ BgScroll_EHZ:				; DATA XREF: ROM:BgScroll_Indexo
 
 BgScroll_HPZ:				; DATA XREF: ROM:BgScroll_Indexo
 		asr.w	#1,d0
-		move.w	d0,($FFFFEE0C).w
-		clr.l	($FFFFEE08).w
+		move.w	d0,(Camera_BG_Y_pos).w
+		clr.l	(Camera_BG_X_pos).w
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -6819,24 +6838,24 @@ BgScroll_S1SYZ:				; leftover from	Sonic 1
 		add.l	d2,d0
 		asr.l	#8,d0
 		addq.w	#1,d0
-		move.w	d0,($FFFFEE0C).w
-		clr.l	($FFFFEE08).w
+		move.w	d0,(Camera_BG_Y_pos).w
+		clr.l	(Camera_BG_X_pos).w
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 BgScroll_S1Ending:			; DATA XREF: ROM:BgScroll_Indexo
-		move.w	($FFFFEE00).w,d0
+		move.w	(Camera_X_pos).w,d0
 		asr.w	#1,d0
-		move.w	d0,($FFFFEE08).w
-		move.w	d0,($FFFFEE10).w
+		move.w	d0,(Camera_BG_X_pos).w
+		move.w	d0,(Camera_BG2_X_pos).w
 		asr.w	#2,d0
 		move.w	d0,d1
 		add.w	d0,d0
 		add.w	d1,d0
-		move.w	d0,($FFFFEE18).w
-		clr.l	($FFFFEE0C).w
-		clr.l	($FFFFEE14).w
-		clr.l	($FFFFEE1C).w
+		move.w	d0,(Camera_BG3_X_pos).w
+		clr.l	(Camera_BG_Y_pos).w
+		clr.l	(Camera_BG2_Y_pos).w
+		clr.l	(Camera_BG3_Y_pos).w
 		lea	($FFFFA800).w,a2
 		clr.l	(a2)+
 		clr.l	(a2)+
@@ -6863,14 +6882,14 @@ loc_5AA4:				; CODE XREF: DeformBGLayer+4j
 		clr.w	($FFFFEE5C).w
 		clr.w	($FFFFEE5E).w
 		lea	(MainCharacter).w,a0
-		lea	($FFFFEE00).w,a1
+		lea	(Camera_X_pos).w,a1
 		lea	($FFFFEE40).w,a2
 		lea	($FFFFEE50).w,a3
 		lea	($FFFFEEB0).w,a4
 		lea	($FFFFEED0).w,a5
 		lea	(Sonic_Pos_Record_Buf).w,a6
 		bsr.w	ScrollHorizontal
-		lea	($FFFFEE04).w,a1
+		lea	(Camera_Y_pos).w,a1
 		lea	($FFFFEE41).w,a2
 		lea	($FFFFEEB2).w,a4
 		bsr.w	ScrollVertical
@@ -6891,8 +6910,8 @@ loc_5AA4:				; CODE XREF: DeformBGLayer+4j
 
 loc_5B2A:				; CODE XREF: DeformBGLayer+5Cj
 		bsr.w	DynScreenResizeLoad
-		move.w	($FFFFEE04).w,(Vscroll_Factor).w
-		move.w	($FFFFEE0C).w,($FFFFF618).w
+		move.w	(Camera_Y_pos).w,(Vscroll_Factor).w
+		move.w	(Camera_BG_Y_pos).w,($FFFFF618).w
 		moveq	#0,d0
 		move.b	(Current_Zone).w,d0
 		add.w	d0,d0
@@ -6928,7 +6947,7 @@ Deform_GHZ:				; DATA XREF: ROM:Deform_Indexo
 		moveq	#0,d6
 		bsr.w	ScrollBlock5
 		lea	($FFFFE000).w,a1
-		move.w	($FFFFEE04).w,d0
+		move.w	(Camera_Y_pos).w,d0
 		andi.w	#$7FF,d0
 		lsr.w	#5,d0
 		neg.w	d0
@@ -6939,7 +6958,7 @@ Deform_GHZ:				; DATA XREF: ROM:Deform_Indexo
 loc_5B9A:				; CODE XREF: ROM:00005B96j
 		move.w	d0,d4
 		move.w	d0,($FFFFF618).w
-		move.w	($FFFFEE00).w,d0
+		move.w	(Camera_X_pos).w,d0
 		cmpi.b	#GameModeID_TitleScreen,(Game_Mode).w
 		bne.s	loc_5BAE
 		moveq	#0,d0
@@ -6952,7 +6971,7 @@ loc_5BAE:				; CODE XREF: ROM:00005BAAj
 		addi.l	#$C000,(a2)+
 		addi.l	#$8000,(a2)+
 		move.w	($FFFFA800).w,d0
-		add.w	($FFFFEE18).w,d0
+		add.w	(Camera_BG3_X_pos).w,d0
 		neg.w	d0
 		move.w	#$1F,d1
 		sub.w	d4,d1
@@ -6964,7 +6983,7 @@ loc_5BDA:				; CODE XREF: ROM:00005BDCj
 
 loc_5BE0:				; CODE XREF: ROM:00005BD8j
 		move.w	($FFFFA804).w,d0
-		add.w	($FFFFEE18).w,d0
+		add.w	(Camera_BG3_X_pos).w,d0
 		neg.w	d0
 		move.w	#$F,d1
 
@@ -6972,7 +6991,7 @@ loc_5BEE:				; CODE XREF: ROM:00005BF0j
 		move.l	d0,(a1)+
 		dbf	d1,loc_5BEE
 		move.w	($FFFFA808).w,d0
-		add.w	($FFFFEE18).w,d0
+		add.w	(Camera_BG3_X_pos).w,d0
 		neg.w	d0
 		move.w	#$F,d1
 
@@ -6980,21 +6999,21 @@ loc_5C02:				; CODE XREF: ROM:00005C04j
 		move.l	d0,(a1)+
 		dbf	d1,loc_5C02
 		move.w	#$2F,d1	; '/'
-		move.w	($FFFFEE18).w,d0
+		move.w	(Camera_BG3_X_pos).w,d0
 		neg.w	d0
 
 loc_5C12:				; CODE XREF: ROM:00005C14j
 		move.l	d0,(a1)+
 		dbf	d1,loc_5C12
 		move.w	#$27,d1	; '''
-		move.w	($FFFFEE10).w,d0
+		move.w	(Camera_BG2_X_pos).w,d0
 		neg.w	d0
 
 loc_5C22:				; CODE XREF: ROM:00005C24j
 		move.l	d0,(a1)+
 		dbf	d1,loc_5C22
-		move.w	($FFFFEE10).w,d0
-		move.w	($FFFFEE00).w,d2
+		move.w	(Camera_BG2_X_pos).w,d0
+		move.w	(Camera_X_pos).w,d2
 		sub.w	d0,d2
 		ext.l	d2
 		asl.l	#8,d2
@@ -7032,7 +7051,7 @@ loc_5C5A:				; CODE XREF: ROM:00005B5Cj
 		moveq	#0,d6
 		bsr.w	ScrollBlock5
 		lea	($FFFFE000).w,a1
-		move.w	($FFFFEE04).w,d0
+		move.w	(Camera_Y_pos).w,d0
 		andi.w	#$7FF,d0
 		lsr.w	#5,d0
 		neg.w	d0
@@ -7046,7 +7065,7 @@ loc_5C94:				; CODE XREF: ROM:00005C90j
 		lsr.w	#1,d4
 		move.w	d0,($FFFFF618).w
 		andi.l	#$FFFEFFFE,(Vscroll_Factor).w
-		move.w	($FFFFEE00).w,d0
+		move.w	(Camera_X_pos).w,d0
 		cmpi.b	#GameModeID_TitleScreen,(Game_Mode).w
 		bne.s	loc_5CB6
 		moveq	#0,d0
@@ -7059,7 +7078,7 @@ loc_5CB6:				; CODE XREF: ROM:00005CB2j
 		addi.l	#$C000,(a2)+
 		addi.l	#$8000,(a2)+
 		move.w	($FFFFA800).w,d0
-		add.w	($FFFFEE18).w,d0
+		add.w	(Camera_BG3_X_pos).w,d0
 		neg.w	d0
 		move.w	#$F,d1
 		sub.w	d4,d1
@@ -7071,7 +7090,7 @@ loc_5CE2:				; CODE XREF: ROM:00005CE4j
 
 loc_5CE8:				; CODE XREF: ROM:00005CE0j
 		move.w	($FFFFA804).w,d0
-		add.w	($FFFFEE18).w,d0
+		add.w	(Camera_BG3_X_pos).w,d0
 		neg.w	d0
 		move.w	#7,d1
 
@@ -7079,7 +7098,7 @@ loc_5CF6:				; CODE XREF: ROM:00005CF8j
 		move.l	d0,(a1)+
 		dbf	d1,loc_5CF6
 		move.w	($FFFFA808).w,d0
-		add.w	($FFFFEE18).w,d0
+		add.w	(Camera_BG3_X_pos).w,d0
 		neg.w	d0
 		move.w	#7,d1
 
@@ -7087,21 +7106,21 @@ loc_5D0A:				; CODE XREF: ROM:00005D0Cj
 		move.l	d0,(a1)+
 		dbf	d1,loc_5D0A
 		move.w	#$17,d1
-		move.w	($FFFFEE18).w,d0
+		move.w	(Camera_BG3_X_pos).w,d0
 		neg.w	d0
 
 loc_5D1A:				; CODE XREF: ROM:00005D1Cj
 		move.l	d0,(a1)+
 		dbf	d1,loc_5D1A
 		move.w	#$17,d1
-		move.w	($FFFFEE10).w,d0
+		move.w	(Camera_BG2_X_pos).w,d0
 		neg.w	d0
 
 loc_5D2A:				; CODE XREF: ROM:00005D2Cj
 		move.l	d0,(a1)+
 		dbf	d1,loc_5D2A
-		move.w	($FFFFEE10).w,d0
-		move.w	($FFFFEE00).w,d2
+		move.w	(Camera_BG2_X_pos).w,d0
+		move.w	(Camera_X_pos).w,d2
 		sub.w	d0,d2
 		ext.l	d2
 		asl.l	#8,d2
@@ -7234,26 +7253,26 @@ Deform_LZ:				; DATA XREF: ROM:Deform_Indexo
 		ext.l	d5
 		asl.l	#7,d5
 		bsr.w	ScrollBlock1
-		move.w	($FFFFEE0C).w,($FFFFF618).w
+		move.w	(Camera_BG_Y_pos).w,($FFFFF618).w
 		lea	(Deform_LZ_Data1).l,a3
 		lea	(Obj0A_WobbleData).l,a2
 		move.b	($FFFFF7D8).w,d2
 		move.b	d2,d3
 		addi.w	#$80,($FFFFF7D8).w ; '€'
-		add.w	($FFFFEE0C).w,d2
+		add.w	(Camera_BG_Y_pos).w,d2
 		andi.w	#$FF,d2
-		add.w	($FFFFEE04).w,d3
+		add.w	(Camera_Y_pos).w,d3
 		andi.w	#$FF,d3
 		lea	($FFFFE000).w,a1
 		move.w	#$DF,d1	; 'ß'
-		move.w	($FFFFEE00).w,d0
+		move.w	(Camera_X_pos).w,d0
 		neg.w	d0
 		move.w	d0,d6
 		swap	d0
-		move.w	($FFFFEE08).w,d0
+		move.w	(Camera_BG_X_pos).w,d0
 		neg.w	d0
 		move.w	($FFFFF646).w,d4
-		move.w	($FFFFEE04).w,d5
+		move.w	(Camera_Y_pos).w,d5
 
 loc_5EC6:				; CODE XREF: ROM:00005ED2j
 		cmp.w	d4,d5
@@ -7308,13 +7327,13 @@ Deform_CPZ:				; DATA XREF: ROM:Deform_Indexo
 		ext.l	d5
 		asl.l	#6,d5
 		bsr.w	ScrollBlock1
-		move.w	($FFFFEE0C).w,($FFFFF618).w
+		move.w	(Camera_BG_Y_pos).w,($FFFFF618).w
 		lea	($FFFFE000).w,a1
 		move.w	#$DF,d1	; 'ß'
-		move.w	($FFFFEE00).w,d0
+		move.w	(Camera_X_pos).w,d0
 		neg.w	d0
 		swap	d0
-		move.w	($FFFFEE08).w,d0
+		move.w	(Camera_BG_X_pos).w,d0
 		neg.w	d0
 
 loc_6026:				; CODE XREF: ROM:00006028j
@@ -7336,21 +7355,21 @@ Deform_Unk:				; unknown BG deform
 		asl.l	#7,d4
 		moveq	#4,d6
 		bsr.w	ScrollBlock5
-		move.w	($FFFFEE0C).w,($FFFFF618).w
+		move.w	(Camera_BG_Y_pos).w,($FFFFF618).w
 		move.b	($FFFFEE52).w,d0
 		or.b	($FFFFEE54).w,d0
 		move.b	d0,($FFFFEE56).w
 		clr.b	($FFFFEE52).w
 		clr.b	($FFFFEE54).w
 		lea	($FFFFA800).w,a1
-		move.w	($FFFFEE08).w,d0
+		move.w	(Camera_BG_X_pos).w,d0
 		neg.w	d0
 		move.w	#$12,d1
 
 loc_6078:				; CODE XREF: ROM:0000607Aj
 		move.w	d0,(a1)+
 		dbf	d1,loc_6078
-		move.w	($FFFFEE10).w,d0
+		move.w	(Camera_BG2_X_pos).w,d0
 		neg.w	d0
 		move.w	#$1C,d1
 
@@ -7358,7 +7377,7 @@ loc_6088:				; CODE XREF: ROM:0000608Aj
 		move.w	d0,(a1)+
 		dbf	d1,loc_6088
 		lea	($FFFFA800).w,a2
-		move.w	($FFFFEE0C).w,d0
+		move.w	(Camera_BG_Y_pos).w,d0
 		andi.w	#$3F0,d0
 		lsr.w	#3,d0
 		lea	(a2,d0.w),a2
@@ -7371,16 +7390,16 @@ Deform_TitleScreen:			; CODE XREF: ROM:00003404p
 
 ; FUNCTION CHUNK AT 0000620E SIZE 00000056 BYTES
 
-		move.w	($FFFFEE0C).w,($FFFFF618).w
-		move.w	($FFFFEE00).w,d0
+		move.w	(Camera_BG_Y_pos).w,($FFFFF618).w
+		move.w	(Camera_X_pos).w,d0
 		cmpi.w	#$1C00,d0
 		bcc.s	loc_60B6
 		addq.w	#8,d0
 
 loc_60B6:				; CODE XREF: Deform_TitleScreen+Ej
-		move.w	d0,($FFFFEE00).w
+		move.w	d0,(Camera_X_pos).w
 		lea	($FFFFE000).w,a1
-		move.w	($FFFFEE00).w,d2
+		move.w	(Camera_X_pos).w,d2
 		neg.w	d2
 		moveq	#0,d0
 		bra.s	loc_60E4
@@ -7389,9 +7408,9 @@ loc_60B6:				; CODE XREF: Deform_TitleScreen+Ej
 Deform_EHZ:				; DATA XREF: ROM:Deform_Indexo
 		tst.w	(Two_player_mode).w
 		bne.w	loc_620E
-		move.w	($FFFFEE0C).w,($FFFFF618).w
+		move.w	(Camera_BG_Y_pos).w,($FFFFF618).w
 		lea	($FFFFE000).w,a1
-		move.w	($FFFFEE00).w,d0
+		move.w	(Camera_X_pos).w,d0
 		neg.w	d0
 		move.w	d0,d2
 		swap	d0
@@ -7524,10 +7543,10 @@ loc_620E:				; CODE XREF: Deform_TitleScreen+28j
 		subq.w	#1,($FFFFA800).w
 
 loc_621C:				; CODE XREF: Deform_TitleScreen+172j
-		move.w	($FFFFEE0C).w,($FFFFF618).w
+		move.w	(Camera_BG_Y_pos).w,($FFFFF618).w
 		andi.l	#$FFFEFFFE,(Vscroll_Factor).w
 		lea	($FFFFE000).w,a1
-		move.w	($FFFFEE00).w,d0
+		move.w	(Camera_X_pos).w,d0
 		move.w	#$A,d1
 		bsr.s	sub_6264
 		moveq	#0,d0
@@ -7630,7 +7649,7 @@ loc_6306:				; CODE XREF: ROM:000060A0j
 					; ROM:0000640Cj
 		lea	($FFFFE000).w,a1
 		move.w	#$E,d1
-		move.w	($FFFFEE00).w,d0
+		move.w	(Camera_X_pos).w,d0
 		neg.w	d0
 		swap	d0
 		andi.w	#$F,d2
@@ -7674,9 +7693,9 @@ Deform_HPZ:				; DATA XREF: ROM:Deform_Indexo
 		asl.l	#7,d5
 		moveq	#6,d6
 		bsr.w	ScrollBlock2
-		move.w	($FFFFEE0C).w,($FFFFF618).w
+		move.w	(Camera_BG_Y_pos).w,($FFFFF618).w
 		lea	($FFFFA800).w,a1
-		move.w	($FFFFEE00).w,d2
+		move.w	(Camera_X_pos).w,d2
 		neg.w	d2
 		move.w	d2,d0
 		asr.w	#1,d0
@@ -7724,7 +7743,7 @@ loc_637E:				; CODE XREF: ROM:00006380j
 		swap	d3
 		move.w	d3,(a1)+
 		move.w	d3,-(a2)
-		move.w	($FFFFEE08).w,d0
+		move.w	(Camera_BG_X_pos).w,d0
 		neg.w	d0
 		move.w	#$19,d1
 
@@ -7740,7 +7759,7 @@ loc_63F2:				; CODE XREF: ROM:000063F4j
 		move.w	d0,(a1)+
 		dbf	d1,loc_63F2
 		lea	($FFFFA800).w,a2
-		move.w	($FFFFEE0C).w,d0
+		move.w	(Camera_BG_Y_pos).w,d0
 		move.w	d0,d2
 		andi.w	#$3F0,d0
 		lsr.w	#3,d0
@@ -7749,9 +7768,9 @@ loc_63F2:				; CODE XREF: ROM:000063F4j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 Deform_HTZ:				; DATA XREF: ROM:Deform_Indexo
-		move.w	($FFFFEE0C).w,($FFFFF618).w
+		move.w	(Camera_BG_Y_pos).w,($FFFFF618).w
 		lea	($FFFFE000).w,a1
-		move.w	($FFFFEE00).w,d0
+		move.w	(Camera_X_pos).w,d0
 		neg.w	d0
 		move.w	d0,d2
 		swap	d0
@@ -8119,10 +8138,10 @@ locret_66B4:				; CODE XREF: ScrollVertical+118j
 
 ScrollBlock1:				; CODE XREF: ROM:00005E74p
 					; ROM:00006006p ...
-		move.l	($FFFFEE08).w,d2
+		move.l	(Camera_BG_X_pos).w,d2
 		move.l	d2,d0
 		add.l	d4,d0
-		move.l	d0,($FFFFEE08).w
+		move.l	d0,(Camera_BG_X_pos).w
 		move.l	d0,d1
 		swap	d1
 		andi.w	#$10,d1
@@ -8141,10 +8160,10 @@ loc_66E4:				; CODE XREF: ScrollBlock1+24j
 
 loc_66EA:				; CODE XREF: ScrollBlock1+1Aj
 					; ScrollBlock1+2Cj
-		move.l	($FFFFEE0C).w,d3
+		move.l	(Camera_BG_Y_pos).w,d3
 		move.l	d3,d0
 		add.l	d5,d0
-		move.l	d0,($FFFFEE0C).w
+		move.l	d0,(Camera_BG_Y_pos).w
 		move.l	d0,d1
 		swap	d1
 		andi.w	#$10,d1
@@ -8170,10 +8189,10 @@ locret_671E:				; CODE XREF: ScrollBlock1+4Ej
 
 
 ScrollBlock2:				; CODE XREF: ROM:00006362p
-		move.l	($FFFFEE0C).w,d3
+		move.l	(Camera_BG_Y_pos).w,d3
 		move.l	d3,d0
 		add.l	d5,d0
-		move.l	d0,($FFFFEE0C).w
+		move.l	d0,(Camera_BG_Y_pos).w
 		move.l	d0,d1
 		swap	d1
 		andi.w	#$10,d1
@@ -8198,8 +8217,8 @@ locret_6752:				; CODE XREF: ScrollBlock2+1Aj
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 ScrollBlock3:
-		move.w	($FFFFEE0C).w,d3
-		move.w	d0,($FFFFEE0C).w
+		move.w	(Camera_BG_Y_pos).w,d3
+		move.w	d0,(Camera_BG_Y_pos).w
 		move.w	d0,d1
 		andi.w	#$10,d1
 		move.b	($FFFFEE43).w,d2
@@ -8222,10 +8241,10 @@ locret_6782:				; CODE XREF: ROM:00006768j
 
 
 ScrollBlock4:				; CODE XREF: ROM:00006354p
-		move.l	($FFFFEE08).w,d2
+		move.l	(Camera_BG_X_pos).w,d2
 		move.l	d2,d0
 		add.l	d4,d0
-		move.l	d0,($FFFFEE08).w
+		move.l	d0,(Camera_BG_X_pos).w
 		move.l	d0,d1
 		swap	d1
 		andi.w	#$10,d1
@@ -8254,10 +8273,10 @@ locret_67B6:				; CODE XREF: ScrollBlock4+1Aj
 
 ScrollBlock5:				; CODE XREF: ROM:00005B7Ep
 					; ROM:00005C78p ...
-		move.l	($FFFFEE10).w,d2
+		move.l	(Camera_BG2_X_pos).w,d2
 		move.l	d2,d0
 		add.l	d4,d0
-		move.l	d0,($FFFFEE10).w
+		move.l	d0,(Camera_BG2_X_pos).w
 		move.l	d0,d1
 		swap	d1
 		andi.w	#$10,d1
@@ -8286,10 +8305,10 @@ locret_67EA:				; CODE XREF: ScrollBlock5+1Aj
 
 ScrollBlock6:				; CODE XREF: ROM:00005B70p
 					; ROM:00005C6Ap
-		move.l	($FFFFEE18).w,d2
+		move.l	(Camera_BG3_X_pos).w,d2
 		move.l	d2,d0
 		add.l	d4,d0
-		move.l	d0,($FFFFEE18).w
+		move.l	d0,(Camera_BG3_X_pos).w
 		move.l	d0,d1
 		swap	d1
 		andi.w	#$10,d1
@@ -8316,23 +8335,24 @@ locret_681E:				; CODE XREF: ScrollBlock6+1Aj
 		lea	(VDP_control_port).l,a5
 		lea	(VDP_data_port).l,a6
 		lea	($FFFFEE52).w,a2
-		lea	($FFFFEE08).w,a3
-		lea	($FFFF8080).w,a4
+		lea	(Camera_BG_X_pos).w,a3
+		lea	(Level_Layout+$80).w,a4
 		move.w	#$6000,d2
 		bsr.w	sub_69B2
 		lea	($FFFFEE54).w,a2
-		lea	($FFFFEE10).w,a3
+		lea	(Camera_BG2_X_pos).w,a3
 		bra.w	sub_6A82
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
 
 
-LoadTilesAsYouMove:			; CODE XREF: Do_Updatesp	ROM:00000F78p
+LoadTilesAsYouMove:
 		lea	(VDP_control_port).l,a5
 		lea	(VDP_data_port).l,a6
+		; update the background
 		lea	($FFFFEEA2).w,a2
 		lea	($FFFFEE68).w,a3
-		lea	($FFFF8080).w,a4
+		lea	(Level_Layout+$80).w,a4
 		move.w	#$6000,d2
 		bsr.w	sub_69B2
 		lea	($FFFFEEA4).w,a2
@@ -8341,48 +8361,50 @@ LoadTilesAsYouMove:			; CODE XREF: Do_Updatesp	ROM:00000F78p
 		lea	($FFFFEEA6).w,a2
 		lea	($FFFFEE78).w,a3
 		bsr.w	sub_6B7C
+		; then draw the foreground
 		tst.w	(Two_player_mode).w
-		beq.s	loc_689E
+		beq.s	.drawPlayerOne
 		lea	($FFFFEEA8).w,a2
 		lea	($FFFFEE80).w,a3
-		lea	($FFFF8000).w,a4
+		lea	(Level_Layout).w,a4
 		move.w	#$6000,d2
 		bsr.w	sub_694C
-
-loc_689E:				; CODE XREF: LoadTilesAsYouMove+3Cj
+; loc_689E:
+.drawPlayerOne:
 		lea	($FFFFEEA0).w,a2
 		lea	($FFFFEE60).w,a3
-		lea	($FFFF8000).w,a4
+		lea	(Level_Layout).w,a4
 		move.w	#$4000,d2
 		tst.b	($FFFFF720).w
 		beq.s	loc_68E6
 		move.b	#0,($FFFFF720).w
 		moveq	#$FFFFFFF0,d4
 		moveq	#$F,d6
-
-loc_68BE:				; CODE XREF: LoadTilesAsYouMove+8Ej
+; loc_68BE:
+Draw_EntireScreen:
+		; redraw the entire screen; not actually used yet in this prototype
 		movem.l	d4-d6,-(sp)
 		moveq	#$FFFFFFF0,d5
 		move.w	d4,d1
-		bsr.w	sub_7084
+		bsr.w	CalculateVRAMPosition
 		move.w	d1,d4
 		moveq	#$FFFFFFF0,d5
-		bsr.w	sub_6D8C
+		bsr.w	sub_6D8C		; draw the current row
 		movem.l	(sp)+,d4-d6
-		addi.w	#$10,d4
-		dbf	d6,loc_68BE
+		addi.w	#$10,d4			; move onto the next row
+		dbf	d6,Draw_EntireScreen	; repeat for all rows
 		move.b	#0,($FFFFEEA0).w
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; ===========================================================================
 
-loc_68E6:				; CODE XREF: LoadTilesAsYouMove+66j
-		tst.b	(a2)
-		beq.s	locret_694A
+loc_68E6:
+		tst.b	(a2)			; are any scroll flags set?
+		beq.s	locret_694A		; if not, no need to update
 		bclr	#0,(a2)
 		beq.s	loc_6900
 		moveq	#$FFFFFFF0,d4
 		moveq	#$FFFFFFF0,d5
-		bsr.w	sub_7084
+		bsr.w	CalculateVRAMPosition
 		moveq	#$FFFFFFF0,d4
 		moveq	#$FFFFFFF0,d5
 		bsr.w	sub_6D8C
@@ -8392,7 +8414,7 @@ loc_6900:				; CODE XREF: LoadTilesAsYouMove+A2j
 		beq.s	loc_691A
 		move.w	#$E0,d4	; 'à'
 		moveq	#$FFFFFFF0,d5
-		bsr.w	sub_7084
+		bsr.w	CalculateVRAMPosition
 		move.w	#$E0,d4	; 'à'
 		moveq	#$FFFFFFF0,d5
 		bsr.w	sub_6D8C
@@ -8402,7 +8424,7 @@ loc_691A:				; CODE XREF: LoadTilesAsYouMove+B8j
 		beq.s	loc_6930
 		moveq	#$FFFFFFF0,d4
 		moveq	#$FFFFFFF0,d5
-		bsr.w	sub_7084
+		bsr.w	CalculateVRAMPosition
 		moveq	#$FFFFFFF0,d4
 		moveq	#$FFFFFFF0,d5
 		bsr.w	sub_6CFE
@@ -8412,7 +8434,7 @@ loc_6930:				; CODE XREF: LoadTilesAsYouMove+D2j
 		beq.s	locret_694A
 		moveq	#$FFFFFFF0,d4
 		move.w	#$140,d5
-		bsr.w	sub_7084
+		bsr.w	CalculateVRAMPosition
 		moveq	#$FFFFFFF0,d4
 		move.w	#$140,d5
 		bsr.w	sub_6CFE
@@ -8433,7 +8455,7 @@ sub_694C:				; CODE XREF: LoadTilesAsYouMove+4Ep
 		beq.s	loc_6966
 		moveq	#$FFFFFFF0,d4
 		moveq	#$FFFFFFF0,d5
-		bsr.w	sub_70C0
+		bsr.w	CalculateVRAMPosition2
 		moveq	#$FFFFFFF0,d4
 		moveq	#$FFFFFFF0,d5
 		bsr.w	sub_6D8C
@@ -8443,7 +8465,7 @@ loc_6966:				; CODE XREF: sub_694C+8j
 		beq.s	loc_6980
 		move.w	#$E0,d4	; 'à'
 		moveq	#$FFFFFFF0,d5
-		bsr.w	sub_70C0
+		bsr.w	CalculateVRAMPosition2
 		move.w	#$E0,d4	; 'à'
 		moveq	#$FFFFFFF0,d5
 		bsr.w	sub_6D8C
@@ -8453,7 +8475,7 @@ loc_6980:				; CODE XREF: sub_694C+1Ej
 		beq.s	loc_6996
 		moveq	#$FFFFFFF0,d4
 		moveq	#$FFFFFFF0,d5
-		bsr.w	sub_70C0
+		bsr.w	CalculateVRAMPosition2
 		moveq	#$FFFFFFF0,d4
 		moveq	#$FFFFFFF0,d5
 		bsr.w	sub_6CFE
@@ -8463,7 +8485,7 @@ loc_6996:				; CODE XREF: sub_694C+38j
 		beq.s	locret_69B0
 		moveq	#$FFFFFFF0,d4
 		move.w	#$140,d5
-		bsr.w	sub_70C0
+		bsr.w	CalculateVRAMPosition2
 		moveq	#$FFFFFFF0,d4
 		move.w	#$140,d5
 		bsr.w	sub_6CFE
@@ -8484,7 +8506,7 @@ sub_69B2:				; CODE XREF: ROM:0000683Cp
 		beq.s	loc_69CE
 		moveq	#$FFFFFFF0,d4
 		moveq	#$FFFFFFF0,d5
-		bsr.w	sub_7084
+		bsr.w	CalculateVRAMPosition
 		moveq	#$FFFFFFF0,d4
 		moveq	#$FFFFFFF0,d5
 		bsr.w	sub_6D8C
@@ -8494,7 +8516,7 @@ loc_69CE:				; CODE XREF: sub_69B2+Aj
 		beq.s	loc_69E8
 		move.w	#$E0,d4	; 'à'
 		moveq	#$FFFFFFF0,d5
-		bsr.w	sub_7084
+		bsr.w	CalculateVRAMPosition
 		move.w	#$E0,d4	; 'à'
 		moveq	#$FFFFFFF0,d5
 		bsr.w	sub_6D8C
@@ -8504,7 +8526,7 @@ loc_69E8:				; CODE XREF: sub_69B2+20j
 		beq.s	loc_69FE
 		moveq	#$FFFFFFF0,d4
 		moveq	#$FFFFFFF0,d5
-		bsr.w	sub_7084
+		bsr.w	CalculateVRAMPosition
 		moveq	#$FFFFFFF0,d4
 		moveq	#$FFFFFFF0,d5
 		bsr.w	sub_6CFE
@@ -8514,7 +8536,7 @@ loc_69FE:				; CODE XREF: sub_69B2+3Aj
 		beq.s	loc_6A18
 		moveq	#$FFFFFFF0,d4
 		move.w	#$140,d5
-		bsr.w	sub_7084
+		bsr.w	CalculateVRAMPosition
 		moveq	#$FFFFFFF0,d4
 		move.w	#$140,d5
 		bsr.w	sub_6CFE
@@ -8524,7 +8546,7 @@ loc_6A18:				; CODE XREF: sub_69B2+50j
 		beq.s	loc_6A30
 		moveq	#$FFFFFFF0,d4
 		moveq	#0,d5
-		bsr.w	sub_7086
+		bsr.w	CalculateVRAMPosition_Absolute
 		moveq	#$FFFFFFF0,d4
 		moveq	#0,d5
 		moveq	#$1F,d6
@@ -8535,7 +8557,7 @@ loc_6A30:				; CODE XREF: sub_69B2+6Aj
 		beq.s	loc_6A4C
 		move.w	#$E0,d4	; 'à'
 		moveq	#0,d5
-		bsr.w	sub_7086
+		bsr.w	CalculateVRAMPosition_Absolute
 		move.w	#$E0,d4	; 'à'
 		moveq	#0,d5
 		moveq	#$1F,d6
@@ -8546,7 +8568,7 @@ loc_6A4C:				; CODE XREF: sub_69B2+82j
 		beq.s	loc_6A64
 		moveq	#$FFFFFFF0,d4
 		moveq	#$FFFFFFF0,d5
-		bsr.w	sub_7084
+		bsr.w	CalculateVRAMPosition
 		moveq	#$FFFFFFF0,d4
 		moveq	#$FFFFFFF0,d5
 		moveq	#$1F,d6
@@ -8557,7 +8579,7 @@ loc_6A64:				; CODE XREF: sub_69B2+9Ej
 		beq.s	locret_6A80
 		move.w	#$E0,d4	; 'à'
 		moveq	#$FFFFFFF0,d5
-		bsr.w	sub_7084
+		bsr.w	CalculateVRAMPosition
 		move.w	#$E0,d4	; 'à'
 		moveq	#$FFFFFFF0,d5
 		moveq	#$1F,d6
@@ -8581,7 +8603,7 @@ sub_6A82:				; CODE XREF: ROM:00006848j
 		beq.s	loc_6AAE
 		move.w	#$70,d4	; 'p'
 		moveq	#$FFFFFFF0,d5
-		bsr.w	sub_7084
+		bsr.w	CalculateVRAMPosition
 		move.w	#$70,d4	; 'p'
 		moveq	#$FFFFFFF0,d5
 		moveq	#2,d6
@@ -8592,7 +8614,7 @@ loc_6AAE:				; CODE XREF: sub_6A82+14j
 		beq.s	locret_6ACE
 		move.w	#$70,d4	; 'p'
 		move.w	#$140,d5
-		bsr.w	sub_7084
+		bsr.w	CalculateVRAMPosition
 		move.w	#$70,d4	; 'p'
 		move.w	#$140,d5
 		moveq	#2,d6
@@ -8619,7 +8641,7 @@ loc_6AF2:				; CODE XREF: sub_6A82+Cj
 
 loc_6B04:				; CODE XREF: sub_6A82+76j
 		lea	byte_6AD1(pc),a0
-		move.w	($FFFFEE0C).w,d0
+		move.w	(Camera_BG_Y_pos).w,d0
 		add.w	d4,d0
 		andi.w	#$1F0,d0
 		lsr.w	#4,d0
@@ -8629,7 +8651,7 @@ loc_6B04:				; CODE XREF: sub_6A82+76j
 		beq.s	loc_6B38
 		moveq	#$FFFFFFF0,d5
 		movem.l	d4-d5,-(sp)
-		bsr.w	sub_7084
+		bsr.w	CalculateVRAMPosition
 		movem.l	(sp)+,d4-d5
 		bsr.w	sub_6D8C
 		bra.s	loc_6B4C
@@ -8638,7 +8660,7 @@ loc_6B04:				; CODE XREF: sub_6A82+76j
 loc_6B38:				; CODE XREF: sub_6A82+A0j
 		moveq	#0,d5
 		movem.l	d4-d5,-(sp)
-		bsr.w	sub_7086
+		bsr.w	CalculateVRAMPosition_Absolute
 		movem.l	(sp)+,d4-d5
 		moveq	#$1F,d6
 		bsr.w	sub_6D90
@@ -8661,7 +8683,7 @@ loc_6B52:				; CODE XREF: sub_6A82+CCj
 
 loc_6B66:				; CODE XREF: sub_6A82+DAj
 		lea	byte_6AD0(pc),a0
-		move.w	($FFFFEE0C).w,d0
+		move.w	(Camera_BG_Y_pos).w,d0
 		andi.w	#$1F0,d0
 		lsr.w	#4,d0
 		lea	(a0,d0.w),a0
@@ -8681,7 +8703,7 @@ sub_6B7C:				; CODE XREF: LoadTilesAsYouMove+34p
 		beq.s	loc_6BA8
 		move.w	#$40,d4	; '@'
 		moveq	#$FFFFFFF0,d5
-		bsr.w	sub_7084
+		bsr.w	CalculateVRAMPosition
 		move.w	#$40,d4	; '@'
 		moveq	#$FFFFFFF0,d5
 		moveq	#2,d6
@@ -8692,7 +8714,7 @@ loc_6BA8:				; CODE XREF: sub_6B7C+14j
 		beq.s	locret_6BC8
 		move.w	#$40,d4	; '@'
 		move.w	#$140,d5
-		bsr.w	sub_7084
+		bsr.w	CalculateVRAMPosition
 		move.w	#$40,d4	; '@'
 		move.w	#$140,d5
 		moveq	#2,d6
@@ -8721,7 +8743,7 @@ loc_6C0C:				; CODE XREF: sub_6B7C+Cj
 
 loc_6C1E:				; CODE XREF: sub_6B7C+96j
 		lea	byte_6BCB(pc),a0
-		move.w	($FFFFEE0C).w,d0
+		move.w	(Camera_BG_Y_pos).w,d0
 		add.w	d4,d0
 		andi.w	#$3F0,d0
 		lsr.w	#4,d0
@@ -8729,7 +8751,7 @@ loc_6C1E:				; CODE XREF: sub_6B7C+96j
 		movea.w	word_6C78(pc,d0.w),a3
 		moveq	#$FFFFFFF0,d5
 		movem.l	d4-d5,-(sp)
-		bsr.w	sub_7084
+		bsr.w	CalculateVRAMPosition
 		movem.l	(sp)+,d4-d5
 		bsr.w	sub_6D8C
 
@@ -8751,7 +8773,7 @@ loc_6C4E:				; CODE XREF: sub_6B7C+CEj
 
 loc_6C62:				; CODE XREF: sub_6B7C+DCj
 		lea	byte_6BCA(pc),a0
-		move.w	($FFFFEE0C).w,d0
+		move.w	(Camera_BG_Y_pos).w,d0
 		andi.w	#$7F0,d0
 		lsr.w	#4,d0
 		lea	(a0,d0.w),a0
@@ -8776,7 +8798,7 @@ loc_6C8E:				; CODE XREF: sub_6B7C+13Ej
 		movem.l	d4-d5,-(sp)
 		bsr.w	sub_7040
 		movem.l	(sp)+,d4-d5
-		bsr.w	sub_7084
+		bsr.w	CalculateVRAMPosition
 		bsr.w	sub_6F70
 		movem.l	(sp)+,d4-d5/a0
 
@@ -8801,7 +8823,7 @@ loc_6CCA:				; CODE XREF: sub_6B7C+17Aj
 		movem.l	d4-d5,-(sp)
 		bsr.w	sub_7040
 		movem.l	(sp)+,d4-d5
-		bsr.w	sub_7084
+		bsr.w	CalculateVRAMPosition
 		bsr.w	sub_6FF6
 		movem.l	(sp)+,d4-d5/a0
 
@@ -9297,22 +9319,15 @@ sub_7040:				; CODE XREF: sub_6B7C+126p
 
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-sub_7084:				; CODE XREF: LoadTilesAsYouMove+7Ap
-					; LoadTilesAsYouMove+A8p ...
+; sub_7084:
+CalculateVRAMPosition:
 		add.w	(a3),d5
-; End of function sub_7084
-
-
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-sub_7086:				; CODE XREF: sub_69B2+70p sub_69B2+8Ap ...
+; sub_7086:
+CalculateVRAMPosition_Absolute:
 		tst.w	(Two_player_mode).w
-		bne.s	loc_70A6
+		bne.s	CalculateVRAMPosition_TwoPlayer
 		add.w	4(a3),d4
-		andi.w	#$F0,d4	; 'ğ'
+		andi.w	#$F0,d4
 		andi.w	#$1F0,d5
 		lsl.w	#4,d4
 		lsr.w	#2,d5
@@ -9321,9 +9336,9 @@ sub_7086:				; CODE XREF: sub_69B2+70p sub_69B2+8Ap ...
 		swap	d0
 		move.w	d4,d0
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_70A6:				; CODE XREF: sub_7086+4j
+; ===========================================================================
+; loc_70A6:
+CalculateVRAMPosition_TwoPlayer:
 		add.w	4(a3),d4
 		andi.w	#$1F0,d4
 		andi.w	#$1F0,d5
@@ -9334,18 +9349,17 @@ loc_70A6:				; CODE XREF: sub_7086+4j
 		swap	d0
 		move.w	d4,d0
 		rts
-; End of function sub_7086
+; End of function CalculateVRAMPosition
 
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-sub_70C0:				; CODE XREF: sub_694C+Ep sub_694C+26p	...
+; sub_70C0:
+CalculateVRAMPosition2:
 		tst.w	(Two_player_mode).w
-		bne.s	loc_70E2
+		bne.s	CalculateVRAMPosition2_PlayerTwo
 		add.w	4(a3),d4
 		add.w	(a3),d5
-		andi.w	#$F0,d4	; 'ğ'
+		andi.w	#$F0,d4
 		andi.w	#$1F0,d5
 		lsl.w	#4,d4
 		lsr.w	#2,d5
@@ -9354,9 +9368,15 @@ sub_70C0:				; CODE XREF: sub_694C+Ep sub_694C+26p	...
 		swap	d0
 		move.w	d4,d0
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_70E2:				; CODE XREF: sub_70C0+4j
+; ===========================================================================
+; In Sonic 1, this was unused but was part of an abandoned set of functions
+; that would effectively create a third scrolling layer (at the cost of the
+; background appearing cut-off at the bottom), similar to one that was seen
+; in the Tokyo Toy Show '90 demo
+;
+; Now, it is instead used to draw player two's screen in interlaced mode
+; loc_70E2:
+CalculateVRAMPosition2_PlayerTwo:
 		add.w	4(a3),d4
 		add.w	(a3),d5
 		andi.w	#$1F0,d4
@@ -9368,86 +9388,80 @@ loc_70E2:				; CODE XREF: sub_70C0+4j
 		swap	d0
 		move.w	d4,d0
 		rts
-; End of function sub_70C0
+; End of function CalculateVRAMPosition2
+
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Subroutine to load the level's initial state into VRAM; the final game
+; would considerably cut down on this, instead just loading the background
+; while the foreground is loaded in DrawLevelTitleCard
+; ---------------------------------------------------------------------------
+
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 
 
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-LoadTilesFromStart:			; CODE XREF: ROM:00003D48p
-
-; FUNCTION CHUNK AT 000071A0 SIZE 0000002A BYTES
-
+LoadTilesFromStart:
 		lea	(VDP_control_port).l,a5
 		lea	(VDP_data_port).l,a6
-		tst.w	(Two_player_mode).w
-		beq.s	loc_711E
+		tst.w	(Two_player_mode).w	; is this two player mode?
+		beq.s	loc_711E		; if not, branch
 		lea	($FFFFEE20).w,a3
-		lea	($FFFF8000).w,a4
+		lea	(Level_Layout).w,a4
 		move.w	#$6000,d2
 		bsr.s	LoadTilesFromStart_2p
 
-loc_711E:				; CODE XREF: LoadTilesFromStart+10j
-		lea	($FFFFEE00).w,a3
-		lea	($FFFF8000).w,a4
+loc_711E:
+		lea	(Camera_X_pos).w,a3
+		lea	(Level_Layout).w,a4
 		move.w	#$4000,d2
 		bsr.s	LoadTilesFromStart2
-		lea	($FFFFEE08).w,a3
-		lea	($FFFF8080).w,a4
+		lea	(Camera_BG_X_pos).w,a3
+		lea	(Level_Layout+$80).w,a4
 		move.w	#$6000,d2
 		tst.b	(Current_Zone).w
 		beq.w	loc_71A0
-; End of function LoadTilesFromStart
 
+LoadTilesFromStart2:
+		moveq	#-16,d4
+		moveq	#256/16-1,d6
 
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-LoadTilesFromStart2:			; CODE XREF: LoadTilesFromStart+2Cp
-		moveq	#$FFFFFFF0,d4
-		moveq	#$F,d6
-
-loc_7144:				; CODE XREF: LoadTilesFromStart2+2Aj
+loc_7144:
 		movem.l	d4-d6,-(sp)
 		moveq	#0,d5
 		move.w	d4,d1
-		bsr.w	sub_7084
+		bsr.w	CalculateVRAMPosition
 		move.w	d1,d4
 		moveq	#0,d5
-		moveq	#$1F,d6
+		moveq	#512/16-1,d6
 		move	#$2700,sr
 		bsr.w	sub_6D84
 		move	#$2300,sr
 		movem.l	(sp)+,d4-d6
-		addi.w	#$10,d4
+		addi.w	#16,d4
 		dbf	d6,loc_7144
 		rts
-; End of function LoadTilesFromStart2
+; ---------------------------------------------------------------------------
+; This is still in the final game, unused
+LoadTilesFromStart_2p:
+		moveq	#-16,d4
+		moveq	#256/16-1,d6
 
-
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-LoadTilesFromStart_2p:			; CODE XREF: LoadTilesFromStart+1Ep
-		moveq	#$FFFFFFF0,d4
-		moveq	#$F,d6
-
-loc_7174:				; CODE XREF: LoadTilesFromStart_2p+2Aj
+loc_7174:
 		movem.l	d4-d6,-(sp)
 		moveq	#0,d5
 		move.w	d4,d1
-		bsr.w	sub_70C0
+		bsr.w	CalculateVRAMPosition2
 		move.w	d1,d4
 		moveq	#0,d5
-		moveq	#$1F,d6
+		moveq	#512/16-1,d6
 		move	#$2700,sr
 		bsr.w	sub_6D84
 		move	#$2300,sr
 		movem.l	(sp)+,d4-d6
-		addi.w	#$10,d4
+		addi.w	#16,d4
 		dbf	d6,loc_7174
 		rts
-; End of function LoadTilesFromStart_2p
+; End of function LoadTilesFromStart
 
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 ; START	OF FUNCTION CHUNK FOR LoadTilesFromStart
@@ -9459,7 +9473,7 @@ loc_71A0:				; CODE XREF: LoadTilesFromStart+3Ej
 loc_71A4:				; CODE XREF: LoadTilesFromStart+C6j
 		movem.l	d4-d6,-(sp)
 		lea	(byte_71CA).l,a0
-		move.w	($FFFFEE0C).w,d0
+		move.w	(Camera_BG_Y_pos).w,d0
 		add.w	d4,d0
 		andi.w	#$F0,d0	; 'ğ'
 		bsr.w	sub_7232
@@ -9478,7 +9492,7 @@ byte_71CA:	dc.b   0,  0,  0,  0,  6,  6,  6,  4,  4,  4,  0,  0,  0,  0,  0,  0;
 loc_71DE:				; CODE XREF: ROM:000071FCj
 		movem.l	d4-d6,-(sp)
 		lea	byte_6BCB(pc),a0
-		move.w	($FFFFEE0C).w,d0
+		move.w	(Camera_BG_Y_pos).w,d0
 		add.w	d4,d0
 		andi.w	#$3F0,d0
 		bsr.w	sub_7232
@@ -9493,7 +9507,7 @@ loc_71DE:				; CODE XREF: ROM:000071FCj
 loc_7206:				; CODE XREF: ROM:00007224j
 		movem.l	d4-d6,-(sp)
 		lea	byte_6AD1(pc),a0
-		move.w	($FFFFEE0C).w,d0
+		move.w	(Camera_BG_Y_pos).w,d0
 		add.w	d4,d0
 		andi.w	#$1F0,d0
 		bsr.w	sub_7232
@@ -9502,10 +9516,10 @@ loc_7206:				; CODE XREF: ROM:00007224j
 		dbf	d6,loc_7206
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-word_722A:	dc.w $EE08
-		dc.w $EE08
-		dc.w $EE10
-		dc.w $EE18
+word_722A:	dc.w Camera_BG_X_pos
+		dc.w Camera_BG_X_pos
+		dc.w Camera_BG2_X_pos
+		dc.w Camera_BG3_X_pos
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
 
@@ -9518,7 +9532,7 @@ sub_7232:				; CODE XREF: LoadTilesFromStart+BAp
 		beq.s	loc_725A
 		moveq	#$FFFFFFF0,d5
 		movem.l	d4-d5,-(sp)
-		bsr.w	sub_7084
+		bsr.w	CalculateVRAMPosition
 		movem.l	(sp)+,d4-d5
 		move	#$2700,sr
 		bsr.w	sub_6D8C
@@ -9529,7 +9543,7 @@ sub_7232:				; CODE XREF: LoadTilesFromStart+BAp
 loc_725A:				; CODE XREF: sub_7232+Aj
 		moveq	#0,d5
 		movem.l	d4-d5,-(sp)
-		bsr.w	sub_7086
+		bsr.w	CalculateVRAMPosition_Absolute
 		movem.l	(sp)+,d4-d5
 		moveq	#$1F,d6
 		bsr.w	sub_6D90
@@ -9552,112 +9566,114 @@ MainLevelLoadBlock:
 		addq.l	#4,a2
 		movea.l	(a2)+,a0
 		tst.b	(Current_Zone).w		; is this Green Hill Zone?
-		beq.s	@uncompressedBlocks		; if yes... jump to where we were going anyways
-		bra.s	@uncompressedBlocks
+		beq.s	.uncompressedBlocks		; if yes... jump to where we were going anyways
+		bra.s	.uncompressedBlocks
 ; ---------------------------------------------------------------------------
 ; Sonic 1 compresses its 16x16 blocks in Enigma; Sonic 2 Nick Arcade leaves
 ; them uncompressed, likely so that the developers wouldn't have to recompress
 ; them every time a change was made.
 ; MainLevelLoadBlock_Skip16Convert:
-@enigmaBlocks:
+.enigmaBlocks:
 		lea	($FFFF9000).w,a1
 		move.w	#0,d0
 		bsr.w	EniDec
 		bra.s	loc_72C2
 ; ---------------------------------------------------------------------------
 ; MainLevelLoadBlock_Convert16:
-@uncompressedBlocks:
+.uncompressedBlocks:
 		lea	($FFFF9000).w,a1
 		move.w	#$BFF,d2
 ; MainLevelLoadBlock_ConvertLoop:
-@uncompressedLoop:
+.uncompressedLoop:
 		move.w	(a0)+,d0
 		tst.w	(Two_player_mode).w
-		beq.s	@notTwoPlayer
+		beq.s	.notTwoPlayer
 		move.w	d0,d1
 		andi.w	#$F800,d0
 		andi.w	#$7FF,d1
 		lsr.w	#1,d1
 		or.w	d1,d0
 ; MainLevelLoadBlock_Not2p:
-@notTwoPlayer:
+.notTwoPlayer:
 		move.w	d0,(a1)+
-		dbf	d2,@uncompressedLoop
+		dbf	d2,.uncompressedLoop
 
 loc_72C2:
 		cmpi.b	#5,(Current_Zone).w
-		bne.s	@loadChunks
+		bne.s	.loadChunks
 		lea	($FFFF9980).w,a1
 		lea	(Map16_HTZ).l,a0
 		move.w	#$3FF,d2
 ; loc_72D8:
-@uncompressedLoop2:
+.uncompressedLoop2:
 		move.w	(a0)+,d0
 		tst.w	(Two_player_mode).w
-		beq.s	@notTwoPlayer2
+		beq.s	.notTwoPlayer2
 		move.w	d0,d1
 		andi.w	#$F800,d0
 		andi.w	#$7FF,d1
 		lsr.w	#1,d1
 		or.w	d1,d0
 ; loc_72EE:
-@notTwoPlayer2:
+.notTwoPlayer2:
 		move.w	d0,(a1)+
-		dbf	d2,@uncompressedLoop2
+		dbf	d2,.uncompressedLoop2
 ; loc_72F4:
-@loadChunks:
+.loadChunks:
 		movea.l	(a2)+,a0
+	if convertGHZ=0
 		cmpi.b	#2,(Current_Zone).w
-		beq.s	@uncompressedChunks
+		beq.s	.uncompressedChunks
 		cmpi.b	#3,(Current_Zone).w
-		beq.s	@uncompressedChunks
+		beq.s	.uncompressedChunks
 		cmpi.b	#4,(Current_Zone).w
-		beq.s	@uncompressedChunks
+		beq.s	.uncompressedChunks
 		cmpi.b	#5,(Current_Zone).w
-		beq.s	@uncompressedChunks
+		beq.s	.uncompressedChunks
 		move.l	a2,-(sp)
 		moveq	#0,d1
 		moveq	#0,d2
 		move.w	(a0)+,d0
 		lea	(a0,d0.w),a1
 		lea	($FFFF0000).l,a2
-		lea	($FFFF8000).w,a3
+		lea	(Level_Layout).w,a3
 ; loc_732C:
-@chameleonChunks:
+.chameleonChunks:
 		bsr.w	ChaDec
 		tst.w	d0
-		bmi.s	@chameleonChunks
+		bmi.s	.chameleonChunks
 		movea.l	(sp)+,a2
-		bra.s	@loadLevelAndPalette
+		bra.s	.loadLevelAndPalette
 ; ---------------------------------------------------------------------------
 ; loc_7338:
-@uncompressedChunks:
+.uncompressedChunks:
+	endif
 		lea	($FFFF0000).l,a1
 		move.w	#$3FFF,d0
 ; loc_7342:
-@uncompressedLoop3:
+.uncompressedLoop3:
 		move.w	(a0)+,(a1)+
-		dbf	d0,@uncompressedLoop3
+		dbf	d0,.uncompressedLoop3
 ; loc_7348:
-@loadLevelAndPalette:
+.loadLevelAndPalette:
 		bsr.w	LevelLayoutLoad
 		move.w	(a2)+,d0
 		move.w	(a2),d0
 		andi.w	#$FF,d0
 		cmpi.w	#$103,(Current_ZoneAndAct).w
-		bne.s	@notLZ4
+		bne.s	.notLZ4
 		moveq	#$C,d0
 ; loc_735E:
-@notLZ4:
+.notLZ4:
 		cmpi.w	#$501,(Current_ZoneAndAct).w
-		beq.s	@notSBZ2
+		beq.s	.notSBZ2
 		cmpi.w	#$502,(Current_ZoneAndAct).w
-		bne.s	@loadPaletteAndPLC
+		bne.s	.loadPaletteAndPLC
 ; loc_736E:
-@notSBZ2:
+.notSBZ2:
 		moveq	#$E,d0
 ; loc_7370:
-@loadPaletteAndPLC:
+.loadPaletteAndPLC:
 		bsr.w	PalLoad1
 		movea.l	(sp)+,a2
 		addq.w	#4,a2
@@ -9682,7 +9698,7 @@ locret_7382:
 
 
 LevelLayoutLoad:
-		lea	($FFFF8000).w,a3
+		lea	(Level_Layout).w,a3
 		move.w	#$3FF,d1
 		moveq	#0,d0
 
@@ -9691,10 +9707,10 @@ loc_738E:
 		dbf	d1,loc_738E		; fill $8000-$8FFF with 0
 
 		; interlace the foreground and background data for every row
-		lea	($FFFF8000).w,a3	; load foreground into RAM
+		lea	(Level_Layout).w,a3	; load foreground into RAM
 		moveq	#0,d1
 		bsr.w	LevelLayoutLoad2
-		lea	($FFFF8080).w,a3	; load background into RAM
+		lea	(Level_Layout+$80).w,a3	; load background into RAM
 		moveq	#2,d1
 
 LevelLayoutLoad2:
@@ -9904,7 +9920,7 @@ DynScreenResizeLoad:			; CODE XREF: DeformBGLayer:loc_5B2Ap
 		beq.s	locret_756A
 		bcc.s	loc_756C
 		neg.w	d1
-		move.w	($FFFFEE04).w,d0
+		move.w	(Camera_Y_pos).w,d0
 		cmp.w	($FFFFEEC6).w,d0
 		bls.s	loc_7560
 		move.w	d0,($FFFFEECE).w
@@ -9919,7 +9935,7 @@ locret_756A:				; CODE XREF: DynScreenResizeLoad+1Aj
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_756C:				; CODE XREF: DynScreenResizeLoad+1Cj
-		move.w	($FFFFEE04).w,d0
+		move.w	(Camera_Y_pos).w,d0
 		addi.w	#8,d0
 		cmp.w	($FFFFEECE).w,d0
 		bcs.s	loc_7586
@@ -9962,7 +9978,7 @@ DynResize_GHZ_Index:dc.w DynResize_GHZ1-DynResize_GHZ_Index; 0
 
 DynResize_GHZ1:				; DATA XREF: ROM:DynResize_GHZ_Indexo
 		move.w	#$300,($FFFFEEC6).w
-		cmpi.w	#$1780,($FFFFEE00).w
+		cmpi.w	#$1780,(Camera_X_pos).w
 		bcs.s	locret_75CA
 		move.w	#$400,($FFFFEEC6).w
 
@@ -9972,13 +9988,13 @@ locret_75CA:				; CODE XREF: ROM:000075C2j
 
 DynResize_GHZ2:				; DATA XREF: ROM:DynResize_GHZ_Indexo
 		move.w	#$300,($FFFFEEC6).w
-		cmpi.w	#$ED0,($FFFFEE00).w
+		cmpi.w	#$ED0,(Camera_X_pos).w
 		bcs.s	locret_75FC
 		move.w	#$200,($FFFFEEC6).w
-		cmpi.w	#$1600,($FFFFEE00).w
+		cmpi.w	#$1600,(Camera_X_pos).w
 		bcs.s	locret_75FC
 		move.w	#$400,($FFFFEEC6).w
-		cmpi.w	#$1D60,($FFFFEE00).w
+		cmpi.w	#$1D60,(Camera_X_pos).w
 		bcs.s	locret_75FC
 		move.w	#$300,($FFFFEEC6).w
 
@@ -10002,21 +10018,21 @@ DynResize_GHZ3_Index:dc.w DynResize_GHZ3_Main-DynResize_GHZ3_Index; 0
 
 DynResize_GHZ3_Main:			; DATA XREF: ROM:DynResize_GHZ3_Indexo
 		move.w	#$300,($FFFFEEC6).w
-		cmpi.w	#$380,($FFFFEE00).w
+		cmpi.w	#$380,(Camera_X_pos).w
 		bcs.s	locret_7658
 		move.w	#$310,($FFFFEEC6).w
-		cmpi.w	#$960,($FFFFEE00).w
+		cmpi.w	#$960,(Camera_X_pos).w
 		bcs.s	locret_7658
-		cmpi.w	#$280,($FFFFEE04).w
+		cmpi.w	#$280,(Camera_Y_pos).w
 		bcs.s	loc_765A
 		move.w	#$400,($FFFFEEC6).w
-		cmpi.w	#$1380,($FFFFEE00).w
+		cmpi.w	#$1380,(Camera_X_pos).w
 		bcc.s	loc_7650
 		move.w	#$4C0,($FFFFEEC6).w
 		move.w	#$4C0,($FFFFEECE).w
 
 loc_7650:				; CODE XREF: ROM:00007642j
-		cmpi.w	#$1700,($FFFFEE00).w
+		cmpi.w	#$1700,(Camera_X_pos).w
 		bcc.s	loc_765A
 
 locret_7658:				; CODE XREF: ROM:0000761Ej
@@ -10032,16 +10048,16 @@ loc_765A:				; CODE XREF: ROM:00007634j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 DynResize_GHZ3_Boss:			; DATA XREF: ROM:DynResize_GHZ3_Indexo
-		cmpi.w	#$960,($FFFFEE00).w
+		cmpi.w	#$960,(Camera_X_pos).w
 		bcc.s	loc_7672
 		subq.b	#2,($FFFFEEDF).w
 
 loc_7672:				; CODE XREF: ROM:0000766Cj
-		cmpi.w	#$2960,($FFFFEE00).w
+		cmpi.w	#$2960,(Camera_X_pos).w
 		bcs.s	locret_76AA
 		bsr.w	SingleObjLoad
 		bne.s	loc_7692
-		move.b	#$3D,0(a1) ; '='
+		move.b	#$3D,id(a1) ; '='
 		move.w	#$2A60,x_pos(a1)
 		move.w	#$280,y_pos(a1)
 
@@ -10059,7 +10075,7 @@ locret_76AA:				; CODE XREF: ROM:00007678j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 DynResize_GHZ3_End:			; DATA XREF: ROM:DynResize_GHZ3_Indexo
-		move.w	($FFFFEE00).w,($FFFFEEC8).w
+		move.w	(Camera_X_pos).w,($FFFFEEC8).w
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -10085,7 +10101,7 @@ DynResize_LZ_Null:			; DATA XREF: ROM:DynResize_LZ_Indexo
 DynResize_LZ3:				; DATA XREF: ROM:DynResize_LZ_Indexo
 		tst.b	($FFFFF7EF).w
 		beq.s	loc_76EA
-		lea	($FFFF8206).w,a1
+		lea	(Level_Layout+$206).w,a1
 		cmpi.b	#7,(a1)
 		beq.s	loc_76EA
 		move.b	#7,(a1)
@@ -10096,13 +10112,13 @@ loc_76EA:				; CODE XREF: ROM:000076D2j
 					; ROM:000076DCj
 		tst.b	($FFFFEEDF).w
 		bne.s	locret_7726
-		cmpi.w	#$1CA0,($FFFFEE00).w
+		cmpi.w	#$1CA0,(Camera_X_pos).w
 		bcs.s	locret_7724
-		cmpi.w	#$600,($FFFFEE04).w
+		cmpi.w	#$600,(Camera_Y_pos).w
 		bcc.s	locret_7724
 		bsr.w	SingleObjLoad
 		bne.s	loc_770C
-		move.b	#$77,0(a1) ; 'w'
+		move.b	#$77,id(a1) ; 'w'
 
 loc_770C:				; CODE XREF: ROM:00007704j
 		move.w	#MusID_Boss,d0
@@ -10123,7 +10139,7 @@ locret_7726:				; CODE XREF: ROM:000076EEj
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 DynResize_LZ4:				; DATA XREF: ROM:DynResize_LZ_Indexo
-		cmpi.w	#$D00,($FFFFEE00).w
+		cmpi.w	#$D00,(Camera_X_pos).w
 		bcs.s	locret_774E
 		cmpi.w	#$18,(MainCharacter+y_pos).w
 		bcc.s	locret_774E
@@ -10168,13 +10184,13 @@ off_7776:	dc.w loc_777E-off_7776	; 0 ; DATA XREF: ROM:off_7776o
 
 loc_777E:				; DATA XREF: ROM:off_7776o
 		move.w	#$1D0,($FFFFEEC6).w
-		cmpi.w	#$700,($FFFFEE00).w
+		cmpi.w	#$700,(Camera_X_pos).w
 		bcs.s	locret_77AC
 		move.w	#$220,($FFFFEEC6).w
-		cmpi.w	#$D00,($FFFFEE00).w
+		cmpi.w	#$D00,(Camera_X_pos).w
 		bcs.s	locret_77AC
 		move.w	#$340,($FFFFEEC6).w
-		cmpi.w	#$340,($FFFFEE04).w
+		cmpi.w	#$340,(Camera_Y_pos).w
 		bcs.s	locret_77AC
 		addq.b	#2,($FFFFEEDF).w
 
@@ -10184,7 +10200,7 @@ locret_77AC:				; CODE XREF: ROM:0000778Aj
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_77AE:				; DATA XREF: ROM:off_7776o
-		cmpi.w	#$340,($FFFFEE04).w
+		cmpi.w	#$340,(Camera_Y_pos).w
 		bcc.s	loc_77BC
 		subq.b	#2,($FFFFEEDF).w
 		rts
@@ -10192,14 +10208,14 @@ loc_77AE:				; DATA XREF: ROM:off_7776o
 
 loc_77BC:				; CODE XREF: ROM:000077B4j
 		move.w	#0,($FFFFEECC).w
-		cmpi.w	#$E00,($FFFFEE00).w
+		cmpi.w	#$E00,(Camera_X_pos).w
 		bcc.s	locret_77F0
 		move.w	#$340,($FFFFEECC).w
 		move.w	#$340,($FFFFEEC6).w
-		cmpi.w	#$A90,($FFFFEE00).w
+		cmpi.w	#$A90,(Camera_X_pos).w
 		bcc.s	locret_77F0
 		move.w	#$500,($FFFFEEC6).w
-		cmpi.w	#$370,($FFFFEE04).w
+		cmpi.w	#$370,(Camera_Y_pos).w
 		bcs.s	locret_77F0
 		addq.b	#2,($FFFFEEDF).w
 
@@ -10209,16 +10225,16 @@ locret_77F0:				; CODE XREF: ROM:000077C8j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_77F2:				; DATA XREF: ROM:off_7776o
-		cmpi.w	#$370,($FFFFEE04).w
+		cmpi.w	#$370,(Camera_Y_pos).w
 		bcc.s	loc_7800
 		subq.b	#2,($FFFFEEDF).w
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_7800:				; CODE XREF: ROM:000077F8j
-		cmpi.w	#$500,($FFFFEE04).w
+		cmpi.w	#$500,(Camera_Y_pos).w
 		bcs.s	locret_781A
-		cmpi.w	#$B80,($FFFFEE00).w
+		cmpi.w	#$B80,(Camera_X_pos).w
 		bcs.s	locret_781A
 		move.w	#$500,($FFFFEECC).w
 		addq.b	#2,($FFFFEEDF).w
@@ -10229,7 +10245,7 @@ locret_781A:				; CODE XREF: ROM:00007806j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_781C:				; DATA XREF: ROM:off_7776o
-		cmpi.w	#$B80,($FFFFEE00).w
+		cmpi.w	#$B80,(Camera_X_pos).w
 		bcc.s	loc_7832
 		cmpi.w	#$340,($FFFFEECC).w
 		beq.s	locret_786A
@@ -10240,16 +10256,16 @@ loc_781C:				; DATA XREF: ROM:off_7776o
 loc_7832:				; CODE XREF: ROM:00007822j
 		cmpi.w	#$500,($FFFFEECC).w
 		beq.s	loc_7848
-		cmpi.w	#$500,($FFFFEE04).w
+		cmpi.w	#$500,(Camera_Y_pos).w
 		bcs.s	locret_786A
 		move.w	#$500,($FFFFEECC).w
 
 loc_7848:				; CODE XREF: ROM:00007838j
-		cmpi.w	#$E70,($FFFFEE00).w
+		cmpi.w	#$E70,(Camera_X_pos).w
 		bcs.s	locret_786A
 		move.w	#0,($FFFFEECC).w
 		move.w	#$500,($FFFFEEC6).w
-		cmpi.w	#$1430,($FFFFEE00).w
+		cmpi.w	#$1430,(Camera_X_pos).w
 		bcs.s	locret_786A
 		move.w	#$210,($FFFFEEC6).w
 
@@ -10264,7 +10280,7 @@ DynResize_CPZ2:				; DATA XREF: ROM:DynResize_CPZ_Indexo
 
 S1DynResize_MZ2:			; leftover from	Sonic 1
 		move.w	#$520,($FFFFEEC6).w
-		cmpi.w	#$1700,($FFFFEE00).w
+		cmpi.w	#$1700,(Camera_X_pos).w
 		bcs.s	locret_7882
 		move.w	#$200,($FFFFEEC6).w
 
@@ -10283,19 +10299,19 @@ off_7892:	dc.w DynResize_CPZ3_BossCheck-off_7892
 ; ===========================================================================
 
 DynResize_CPZ3_BossCheck:
-		cmpi.w	#$480,($FFFFEE00).w
+		cmpi.w	#$480,(Camera_X_pos).w
 		blt.s	DynResize_CPZ3_Null
-		cmpi.w	#$740,($FFFFEE00).w
+		cmpi.w	#$740,(Camera_X_pos).w
 		bgt.s	DynResize_CPZ3_Null
 		move.w	($FFFFEECE).w,d0
-		cmp.w	($FFFFEE04).w,d0
+		cmp.w	(Camera_Y_pos).w,d0
 		bne.s	DynResize_CPZ3_Null
 		move.w	#$740,($FFFFEECA).w
 		move.w	#$480,($FFFFEEC8).w
 		addq.b	#2,($FFFFEEDF).w
 		bsr.w	SingleObjLoad
 		bne.s	DynResize_CPZ3_Null
-		move.b	#$55,0(a1)	; load Obj55 (EHZ boss, likely CPZ boss at one point)
+		move.b	#$55,id(a1)	; load Obj55 (EHZ boss, likely CPZ boss at one point)
 		move.w	#$680,x_pos(a1)
 		move.w	#$540,y_pos(a1)
 		moveq	#$11,d0
@@ -10338,9 +10354,9 @@ DynResize_EHZ2_Index:dc.w DynResize_EHZ2_01-DynResize_EHZ2_Index
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 DynResize_EHZ2_01:			; DATA XREF: ROM:DynResize_EHZ2_Indexo
-		cmpi.w	#$26E0,($FFFFEE00).w
+		cmpi.w	#$26E0,(Camera_X_pos).w
 		bcs.s	locret_795A
-		move.w	($FFFFEE00).w,($FFFFEEC8).w
+		move.w	(Camera_X_pos).w,($FFFFEEC8).w
 		move.w	#$390,($FFFFEEC6).w
 		move.w	#$390,($FFFFEECE).w
 		addq.b	#2,($FFFFEEDF).w
@@ -10364,7 +10380,7 @@ locret_795A:				; CODE XREF: ROM:00007912j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 DynResize_EHZ2_02:			; DATA XREF: ROM:00007908o
-		cmpi.w	#$2880,($FFFFEE00).w
+		cmpi.w	#$2880,(Camera_X_pos).w
 		bcs.s	locret_796E
 		move.w	#$2880,($FFFFEEC8).w
 		addq.b	#2,($FFFFEEDF).w
@@ -10401,7 +10417,7 @@ off_7990:	dc.w loc_7996-off_7990	; DATA XREF: ROM:off_7990o
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_7996:				; DATA XREF: ROM:off_7990o
-		cmpi.w	#$1E70,($FFFFEE00).w
+		cmpi.w	#$1E70,(Camera_X_pos).w
 		bcs.s	locret_79A8
 		move.w	#$210,($FFFFEEC6).w
 		addq.b	#2,($FFFFEEDF).w
@@ -10411,7 +10427,7 @@ locret_79A8:				; CODE XREF: ROM:0000799Cj
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_79AA:				; DATA XREF: ROM:00007992o
-		cmpi.w	#$2000,($FFFFEE00).w
+		cmpi.w	#$2000,(Camera_X_pos).w
 		bcs.s	locret_79D4
 		bsr.w	SingleObjLoad
 		bne.s	loc_79BC
@@ -10431,7 +10447,7 @@ locret_79D4:				; CODE XREF: ROM:000079B0j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_79D6:				; DATA XREF: ROM:00007994o
-		move.w	($FFFFEE00).w,($FFFFEEC8).w
+		move.w	(Camera_X_pos).w,($FFFFEEC8).w
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		rts
@@ -10457,7 +10473,7 @@ DynResize_HPZ1:				; DATA XREF: ROM:DynResize_HPZ_Indexo
 
 DynResize_HPZ2:				; DATA XREF: ROM:000079F2o
 		move.w	#$520,($FFFFEEC6).w
-		cmpi.w	#$25A0,($FFFFEE00).w
+		cmpi.w	#$25A0,(Camera_X_pos).w
 		bcs.s	locret_7A1A
 		move.w	#$420,($FFFFEEC6).w
 		cmpi.w	#$4D0,(MainCharacter+y_pos).w
@@ -10483,7 +10499,7 @@ DynResize_HPZ3_Index:dc.w loc_7A30-DynResize_HPZ3_Index
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_7A30:				; DATA XREF: ROM:DynResize_HPZ3_Indexo
-		cmpi.w	#$2AC0,($FFFFEE00).w
+		cmpi.w	#$2AC0,(Camera_X_pos).w
 		bcs.s	locret_7A46
 		bsr.w	SingleObjLoad
 		bne.s	locret_7A46
@@ -10496,7 +10512,7 @@ locret_7A46:				; CODE XREF: ROM:00007A36j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_7A48:				; DATA XREF: ROM:00007A2Co
-		cmpi.w	#$2C00,($FFFFEE00).w
+		cmpi.w	#$2C00,(Camera_X_pos).w
 		bcs.s	locret_7A78
 		move.w	#$4CC,($FFFFEEC6).w
 		bsr.w	SingleObjLoad
@@ -10517,7 +10533,7 @@ locret_7A78:				; CODE XREF: ROM:00007A4Ej
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_7A7A:				; DATA XREF: ROM:00007A2Eo
-		move.w	($FFFFEE00).w,($FFFFEEC8).w
+		move.w	(Camera_X_pos).w,($FFFFEEC8).w
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -10537,10 +10553,10 @@ DynResize_HTZ_Index:dc.w DynResize_HTZ1-DynResize_HTZ_Index
 
 DynResize_HTZ1:				; DATA XREF: ROM:DynResize_HTZ_Indexo
 		move.w	#$720,($FFFFEEC6).w
-		cmpi.w	#$1880,($FFFFEE00).w
+		cmpi.w	#$1880,(Camera_X_pos).w
 		bcs.s	locret_7ABA
 		move.w	#$620,($FFFFEEC6).w
-		cmpi.w	#$2000,($FFFFEE00).w
+		cmpi.w	#$2000,(Camera_X_pos).w
 		bcs.s	locret_7ABA
 		move.w	#$2A0,($FFFFEEC6).w
 
@@ -10565,10 +10581,10 @@ DynResize_HTZ2_Index:dc.w loc_7AD2-DynResize_HTZ2_Index
 
 loc_7AD2:				; DATA XREF: ROM:DynResize_HTZ2_Indexo
 		move.w	#$800,($FFFFEEC6).w
-		cmpi.w	#$1800,($FFFFEE00).w
+		cmpi.w	#$1800,(Camera_X_pos).w
 		bcs.s	locret_7AF2
 		move.w	#$510,($FFFFEEC6).w
-		cmpi.w	#$1E00,($FFFFEE00).w
+		cmpi.w	#$1E00,(Camera_X_pos).w
 		bcs.s	locret_7AF2
 		addq.b	#2,($FFFFEEDF).w
 
@@ -10578,7 +10594,7 @@ locret_7AF2:				; CODE XREF: ROM:00007ADEj
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_7AF4:				; DATA XREF: ROM:00007ACCo
-		cmpi.w	#$1EB0,($FFFFEE00).w
+		cmpi.w	#$1EB0,(Camera_X_pos).w
 		bcs.s	locret_7B10
 		bsr.w	SingleObjLoad
 		bne.s	locret_7B10
@@ -10594,7 +10610,7 @@ locret_7B10:				; CODE XREF: ROM:00007AFAj
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_7B12:				; DATA XREF: ROM:00007ACEo
-		cmpi.w	#$1F60,($FFFFEE00).w
+		cmpi.w	#$1F60,(Camera_X_pos).w
 		bcs.s	loc_7B2E
 		bsr.w	SingleObjLoad
 		bne.s	loc_7B28
@@ -10609,14 +10625,14 @@ loc_7B2E:				; CODE XREF: ROM:00007B18j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_7B30:				; DATA XREF: ROM:00007AD0o
-		cmpi.w	#$2050,($FFFFEE00).w
+		cmpi.w	#$2050,(Camera_X_pos).w
 		bcs.s	loc_7B3A
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_7B3A:				; CODE XREF: ROM:loc_7B2Ej
 					; ROM:00007B36j ...
-		move.w	($FFFFEE00).w,($FFFFEEC8).w
+		move.w	(Camera_X_pos).w,($FFFFEEC8).w
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -10636,7 +10652,7 @@ DynResize_HTZ3_Index:dc.w loc_7B5A-DynResize_HTZ3_Index
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_7B5A:				; DATA XREF: ROM:DynResize_HTZ3_Indexo
-		cmpi.w	#$2148,($FFFFEE00).w
+		cmpi.w	#$2148,(Camera_X_pos).w
 		bcs.s	loc_7B6C
 		addq.b	#2,($FFFFEEDF).w
 		moveq	#$1F,d0
@@ -10647,7 +10663,7 @@ loc_7B6C:				; CODE XREF: ROM:00007B60j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_7B6E:				; DATA XREF: ROM:00007B52o
-		cmpi.w	#$2300,($FFFFEE00).w
+		cmpi.w	#$2300,(Camera_X_pos).w
 		bcs.s	loc_7B8A
 		bsr.w	SingleObjLoad
 		bne.s	loc_7B8A
@@ -10661,7 +10677,7 @@ loc_7B8A:				; CODE XREF: ROM:00007B74j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_7B8C:				; DATA XREF: ROM:00007B54o
-		cmpi.w	#$2450,($FFFFEE00).w
+		cmpi.w	#$2450,(Camera_X_pos).w
 		bcs.s	loc_7B98
 		addq.b	#2,($FFFFEEDF).w
 
@@ -10685,7 +10701,7 @@ DynResize_S1Ending:			; DATA XREF: ROM:DynResize_Indexo
 ;----------------------------------------------------
 
 Obj11:					; DATA XREF: ROM:Obj_Indexo
-		btst	#6,1(a0)
+		btst	#6,render_flags(a0)
 		bne.w	loc_7BB8
 		moveq	#0,d0
 		move.b	routine(a0),d0
@@ -10724,7 +10740,7 @@ loc_7BFA:				; CODE XREF: ROM:00007BE4j
 
 loc_7C14:				; CODE XREF: ROM:00007C00j
 		bsr.w	Adjust2PArtPointer
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#$80,width_pixels(a0)
 		move.w	y_pos(a0),d2
 		move.w	d2,$3C(a0)
@@ -10766,13 +10782,13 @@ sub_7C76:				; CODE XREF: ROM:00007C46p
 					; ROM:00007C5Ep
 		bsr.w	SingleObjLoad2
 		bne.s	locret_7CC6
-		move.b	0(a0),0(a1)
+		move.b	id(a0),id(a1)
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		move.l	mappings(a0),mappings(a1)
 		move.w	art_tile(a0),art_tile(a1)
-		move.b	1(a0),1(a1)
-		bset	#6,1(a1)
+		move.b	render_flags(a0),render_flags(a1)
+		bset	#6,render_flags(a1)
 		move.b	#$40,$E(a1) ; '@'
 		move.b	d1,$F(a1)
 		subq.b	#1,d1
@@ -11260,7 +11276,7 @@ loc_821E:				; DATA XREF: ROM:Obj15_Indexo
 		move.l	#Map_Obj15,mappings(a0)
 		move.w	#$44D0,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#3,priority(a0)
 		move.b	#$18,width_pixels(a0)
 		move.b	#8,y_radius(a0)
@@ -11292,7 +11308,7 @@ loc_8284:				; CODE XREF: ROM:0000825Ej
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_82BE:				; CODE XREF: ROM:0000828Aj
-		move.b	0(a0),d4
+		move.b	id(a0),d4
 		moveq	#0,d1
 		lea	$28(a0),a2
 		move.b	(a2),d1
@@ -11320,11 +11336,11 @@ loc_82F0:				; CODE XREF: ROM:000082E8j
 		andi.w	#$7F,d5	; ''
 		move.b	d5,(a2)+
 		move.b	#8,routine(a1)
-		move.b	d4,0(a1)
+		move.b	d4,id(a1)
 		move.l	mappings(a0),mappings(a1)
 		move.w	art_tile(a0),art_tile(a1)
 		bclr	#6,art_tile(a1)
-		move.b	#4,1(a1)
+		move.b	#4,render_flags(a1)
 		move.b	#4,priority(a1)
 		move.b	#8,width_pixels(a1)
 		move.b	#1,mapping_frame(a1)
@@ -11621,12 +11637,12 @@ loc_8680:				; DATA XREF: ROM:Obj17_Indexo
 		move.w	#$4398,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#7,status(a0)
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#3,priority(a0)
 		move.b	#8,width_pixels(a0)
 		move.w	y_pos(a0),d2
 		move.w	x_pos(a0),d3
-		move.b	0(a0),d4
+		move.b	id(a0),d4
 		lea	$28(a0),a2
 		moveq	#0,d1
 		move.b	(a2),d1
@@ -11649,13 +11665,13 @@ loc_86D4:				; CODE XREF: ROM:loc_8746j
 		andi.w	#$7F,d5	; ''
 		move.b	d5,(a2)+
 		move.b	#4,routine(a1)
-		move.b	d4,0(a1)
+		move.b	d4,id(a1)
 		move.w	d2,y_pos(a1)
 		move.w	d3,x_pos(a1)
 		move.l	mappings(a0),mappings(a1)
 		move.w	#$4398,art_tile(a1)
 		bsr.w	Adjust2PArtPointer2
-		move.b	#4,1(a1)
+		move.b	#4,render_flags(a1)
 		move.b	#3,priority(a1)
 		move.b	#8,width_pixels(a1)
 		move.b	d6,$3E(a1)
@@ -11793,7 +11809,7 @@ loc_8866:				; CODE XREF: ROM:0000885Cj
 
 loc_8874:				; CODE XREF: ROM:00008864j
 		bsr.w	Adjust2PArtPointer
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#4,priority(a0)
 		move.w	y_pos(a0),$2C(a0)
 		move.w	y_pos(a0),$34(a0)
@@ -12145,7 +12161,7 @@ loc_8C58:				; DATA XREF: ROM:Obj1A_Indexo
 		move.l	#Map_Obj1A,mappings(a0)
 		move.w	#$4000,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		ori.b	#4,1(a0)
+		ori.b	#4,render_flags(a0)
 		move.b	#4,priority(a0)
 		move.b	#7,$38(a0)
 		move.b	$28(a0),mapping_frame(a0)
@@ -12163,7 +12179,7 @@ loc_8CB0:				; CODE XREF: ROM:00008C8Cj
 		move.l	#Obj1A_Conf,$3C(a0)
 		move.b	#$34,width_pixels(a0) ; '4'
 		move.b	#$38,y_radius(a0) ; '8'
-		bset	#4,1(a0)
+		bset	#4,render_flags(a0)
 
 loc_8CCA:				; CODE XREF: ROM:00008CAEj
 					; DATA XREF: ROM:00008C54o
@@ -12233,7 +12249,7 @@ locret_8D44:				; CODE XREF: ROM:00008D1Ej sub_8D2A+6j
 
 loc_8D46:				; CODE XREF: ROM:00008D06j
 		bsr.w	ObjectMoveAndFall
-		tst.b	1(a0)
+		tst.b	render_flags(a0)
 		bpl.w	DeleteObject
 		bra.w	DisplaySprite
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -12265,7 +12281,7 @@ loc_8D8E:				; CODE XREF: ROM:00008D82j
 		move.w	#$43F5,art_tile(a0)
 
 loc_8D9C:				; CODE XREF: ROM:00008D94j
-		ori.b	#4,1(a0)
+		ori.b	#4,render_flags(a0)
 		move.b	#4,priority(a0)
 		move.b	#7,$38(a0)
 		move.b	#$44,width_pixels(a0) ; 'D'
@@ -12332,7 +12348,7 @@ locret_8E2C:				; CODE XREF: ROM:00008E06j sub_8E12+6j
 
 loc_8E2E:				; CODE XREF: ROM:00008DEEj
 		bsr.w	ObjectMoveAndFall
-		tst.b	1(a0)
+		tst.b	render_flags(a0)
 		bpl.w	DeleteObject
 		bra.w	DisplaySprite
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -12365,9 +12381,9 @@ loc_8E70:				; CODE XREF: ROM:00008E56j
 		adda.w	(a3,d0.w),a3
 		move.w	(a3)+,d1
 		subq.w	#1,d1
-		bset	#5,1(a0)
-		move.b	0(a0),d4
-		move.b	1(a0),d5
+		bset	#5,render_flags(a0)
+		move.b	id(a0),d4
+		move.b	render_flags(a0),d5
 		movea.l	a0,a1
 		bra.s	loc_8E9E
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -12379,9 +12395,9 @@ loc_8E96:				; CODE XREF: ROM:loc_8EE0j
 
 loc_8E9E:				; CODE XREF: ROM:00008E94j
 		move.b	#4,routine(a1)
-		move.b	d4,0(a1)
+		move.b	d4,id(a1)
 		move.l	a3,mappings(a1)
-		move.b	d5,1(a1)
+		move.b	d5,render_flags(a1)
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		move.w	art_tile(a0),art_tile(a1)
@@ -12633,7 +12649,7 @@ loc_93F4:				; DATA XREF: ROM:Obj1C_Indexo
 		move.l	(a1)+,mappings(a0)
 		move.w	(a1)+,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		ori.b	#4,1(a0)
+		ori.b	#4,render_flags(a0)
 		move.b	(a1)+,mapping_frame(a0)
 		move.b	(a1)+,width_pixels(a0)
 		move.b	(a1)+,priority(a0)
@@ -12720,7 +12736,7 @@ loc_94FE:				; DATA XREF: ROM:Obj2A_Indexo
 		move.l	#Map_Obj2A,mappings(a0)
 		move.w	#$42E8,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		ori.b	#4,1(a0)
+		ori.b	#4,render_flags(a0)
 		move.b	#8,width_pixels(a0)
 		move.b	#4,priority(a0)
 
@@ -12832,7 +12848,7 @@ loc_966E:				; DATA XREF: ROM:S1Obj_1E_Indexo
 		move.l	#Map_S1Obj1E,mappings(a0)
 		move.w	#$2302,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#4,priority(a0)
 		move.b	#5,$20(a0)
 		move.b	#$C,width_pixels(a0)
@@ -12870,7 +12886,7 @@ loc_96E4:				; CODE XREF: ROM:000096D8j
 		move.b	#1,$32(a0)
 		bsr.w	SingleObjLoad
 		bne.s	loc_972E
-		move.b	#$20,0(a1) ; ' '
+		move.b	#$20,id(a1) ; ' '
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		move.w	#$FF00,x_vel(a1)
@@ -12911,7 +12927,7 @@ loc_9742:				; DATA XREF: ROM:S1Obj20_Indexo
 		move.l	#Map_S1Obj1E,mappings(a0)
 		move.w	#$2302,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#3,priority(a0)
 		move.b	#$87,$20(a0)
 		move.b	#8,width_pixels(a0)
@@ -12948,8 +12964,8 @@ loc_97C6:				; CODE XREF: ROM:00009794j
 					; ROM:0000979Ej ...
 		subq.w	#1,$30(a0)
 		bpl.s	loc_97E2
-		move.b	#$24,0(a0) ; '$'
-		move.b	#$3F,0(a0) ; '?'
+		move.b	#$24,id(a0) ; '$'
+		move.b	#$3F,id(a0) ; '?'
 		move.b	#0,routine(a0)
 		bra.w	Obj3F		; explosion object
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -12988,7 +13004,7 @@ loc_981A:				; DATA XREF: ROM:Obj24_Indexo
 		move.l	#Map_Obj24,mappings(a0)
 		move.w	#$41C,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#1,priority(a0)
 		move.b	#0,$20(a0)
 		move.b	#$C,width_pixels(a0)
@@ -13028,7 +13044,7 @@ loc_9890:				; DATA XREF: ROM:Obj27_Indexo
 		addq.b	#2,routine(a0)
 		bsr.w	SingleObjLoad
 		bne.s	loc_98B2
-		move.b	#$28,0(a1) ; '('
+		move.b	#$28,id(a1) ; '('
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		move.w	$3E(a0),$3E(a1)
@@ -13039,7 +13055,7 @@ loc_98B2:				; CODE XREF: ROM:00009898j
 		move.l	#Map_Obj27,mappings(a0)
 		move.w	#$5A0,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#1,priority(a0)
 		move.b	#0,$20(a0)
 		move.b	#$C,width_pixels(a0)
@@ -13081,7 +13097,7 @@ loc_9926:				; DATA XREF: ROM:Obj3F_Indexo
 		move.l	#Map_Obj3F,mappings(a0)
 		move.w	#$5A0,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#1,priority(a0)
 		move.b	#0,$20(a0)
 		move.b	#$C,width_pixels(a0)
@@ -13243,8 +13259,8 @@ loc_9B92:				; DATA XREF: ROM:off_9AB6o
 		move.w	2(a1,d0.w),y_vel(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#$C,y_radius(a0)
-		move.b	#4,1(a0)
-		bset	#0,1(a0)
+		move.b	#4,render_flags(a0)
+		bset	#0,render_flags(a0)
 		move.b	#6,priority(a0)
 		move.b	#8,width_pixels(a0)
 		move.b	#7,anim_frame_duration(a0)
@@ -13276,8 +13292,8 @@ loc_9C00:				; CODE XREF: ROM:00009B96j
 loc_9C4A:				; CODE XREF: ROM:00009C42j
 		bsr.w	Adjust2PArtPointer
 		move.b	#$C,y_radius(a0)
-		move.b	#4,1(a0)
-		bset	#0,1(a0)
+		move.b	#4,render_flags(a0)
+		bset	#0,render_flags(a0)
 		move.b	#6,priority(a0)
 		move.b	#8,width_pixels(a0)
 		move.b	#7,anim_frame_duration(a0)
@@ -13287,7 +13303,7 @@ loc_9C4A:				; CODE XREF: ROM:00009C42j
 		bne.s	loc_9CAA
 		bsr.w	SingleObjLoad
 		bne.s	loc_9CA6
-		move.b	#$29,0(a1) ; ')'
+		move.b	#$29,id(a1) ; ')'
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		move.w	$3E(a0),d0
@@ -13305,7 +13321,7 @@ loc_9CAA:				; CODE XREF: ROM:00009C82j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_9CB8:				; DATA XREF: ROM:off_9AB6o
-		tst.b	1(a0)
+		tst.b	render_flags(a0)
 		bpl.w	DeleteObject
 		bsr.w	ObjectMoveAndFall
 		tst.w	y_vel(a0)
@@ -13326,7 +13342,7 @@ loc_9CB8:				; DATA XREF: ROM:off_9AB6o
 		btst	#4,($FFFFFE0F).w
 		beq.s	loc_9D0E
 		neg.w	x_vel(a0)
-		bchg	#0,1(a0)
+		bchg	#0,render_flags(a0)
 
 loc_9D0E:				; CODE XREF: ROM:00009CC8j
 					; ROM:00009CD2j ...
@@ -13350,7 +13366,7 @@ loc_9D3C:				; CODE XREF: ROM:00009D20j
 					; ROM:00009D30j
 		tst.b	$28(a0)
 		bne.s	loc_9DB2
-		tst.b	1(a0)
+		tst.b	render_flags(a0)
 		bpl.w	DeleteObject
 		bra.w	DisplaySprite
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -13371,7 +13387,7 @@ loc_9D4E:				; CODE XREF: ROM:00009E06j
 		cmpi.b	#$A,$28(a0)
 		beq.s	loc_9D8A
 		neg.w	x_vel(a0)
-		bchg	#0,1(a0)
+		bchg	#0,render_flags(a0)
 
 loc_9D8A:				; CODE XREF: ROM:00009D5Cj
 					; ROM:00009D66j ...
@@ -13384,7 +13400,7 @@ loc_9D8A:				; CODE XREF: ROM:00009D5Cj
 loc_9DA0:				; CODE XREF: ROM:00009D8Ej
 		tst.b	$28(a0)
 		bne.s	loc_9DB2
-		tst.b	1(a0)
+		tst.b	render_flags(a0)
 		bpl.w	DeleteObject
 		bra.w	DisplaySprite
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -13396,7 +13412,7 @@ loc_9DB2:				; CODE XREF: ROM:00009D40j
 		bcs.s	loc_9DCA
 		subi.w	#$180,d0
 		bpl.s	loc_9DCA
-		tst.b	1(a0)
+		tst.b	render_flags(a0)
 		bpl.w	DeleteObject
 
 loc_9DCA:				; CODE XREF: ROM:00009DBAj
@@ -13405,7 +13421,7 @@ loc_9DCA:				; CODE XREF: ROM:00009DBAj
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_9DCE:				; DATA XREF: ROM:off_9AB6o
-		tst.b	1(a0)
+		tst.b	render_flags(a0)
 		bpl.w	DeleteObject
 		subq.w	#1,$36(a0)
 		bne.w	loc_9DEA
@@ -13470,7 +13486,7 @@ loc_9E64:				; DATA XREF: ROM:off_9AB6o
 		not.b	$29(a0)
 		bne.s	loc_9E94
 		neg.w	x_vel(a0)
-		bchg	#0,1(a0)
+		bchg	#0,render_flags(a0)
 
 loc_9E94:				; CODE XREF: ROM:00009E88j
 		add.w	d1,y_pos(a0)
@@ -13506,7 +13522,7 @@ loc_9EC0:				; DATA XREF: ROM:off_9AB6o
 		tst.w	d1
 		bpl.s	loc_9EFA
 		neg.w	x_vel(a0)
-		bchg	#0,1(a0)
+		bchg	#0,render_flags(a0)
 		add.w	d1,y_pos(a0)
 		move.w	$34(a0),y_vel(a0)
 
@@ -13528,7 +13544,7 @@ loc_9EFE:				; DATA XREF: ROM:off_9AB6o
 		not.b	$29(a0)
 		bne.s	loc_9F2E
 		neg.w	x_vel(a0)
-		bchg	#0,1(a0)
+		bchg	#0,render_flags(a0)
 
 loc_9F2E:				; CODE XREF: ROM:00009F22j
 		add.w	d1,y_pos(a0)
@@ -13571,11 +13587,11 @@ locret_9F78:				; CODE XREF: sub_9F52+Aj sub_9F52+1Aj
 
 sub_9F7A:				; CODE XREF: ROM:00009E2Ap
 					; ROM:00009EB8p
-		bset	#0,1(a0)
+		bset	#0,render_flags(a0)
 		move.w	x_pos(a0),d0
 		sub.w	(MainCharacter+x_pos).w,d0
 		bcc.s	locret_9F90
-		bclr	#0,1(a0)
+		bclr	#0,render_flags(a0)
 
 locret_9F90:				; CODE XREF: sub_9F7A+Ej
 		rts
@@ -13614,7 +13630,7 @@ loc_9FB2:				; DATA XREF: ROM:Obj29_Indexo
 		move.l	#Map_Obj29,mappings(a0)
 		move.w	#$4AC,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#1,priority(a0)
 		move.b	#8,width_pixels(a0)
 		move.w	#$FD00,y_vel(a0)
@@ -13712,7 +13728,7 @@ Obj1F_Init:
 		move.l	#Map_obj1F,mappings(a0)
 		move.w	#$400,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#3,priority(a0)
 		move.b	#6,$20(a0)
 		move.b	#$15,width_pixels(a0)
@@ -13745,7 +13761,7 @@ Obj1F_Main_Index:	dc.w Obj1F_WaitMove-Obj1F_Main_Index
 Obj1F_WaitMove:
 		subq.w	#1,obj1F_timer(a0)
 		bpl.s	locret_A19A
-		tst.b	1(a0)
+		tst.b	render_flags(a0)
 		bpl.s	Obj1F_Move
 		bchg	#1,obj1F_status(a0)
 		bne.s	Obj1F_MakeFire
@@ -13770,7 +13786,7 @@ Obj1F_MakeFire:
 		move.b	#6,anim(a0)
 		bsr.w	SingleObjLoad
 		bne.s	Obj1F_MakeFire2
-		move.b	#$1F,0(a1)
+		move.b	#$1F,id(a1)
 		move.b	#6,routine(a1)
 		move.w	x_pos(a0),x_pos(a1)
 		subi.w	#$10,x_pos(a1)
@@ -13780,7 +13796,7 @@ Obj1F_MakeFire:
 Obj1F_MakeFire2:
 		bsr.w	SingleObjLoad
 		bne.s	locret_A1FC
-		move.b	#$1F,0(a1)
+		move.b	#$1F,id(a1)
 		move.b	#6,routine(a1)
 		move.w	x_pos(a0),x_pos(a1)
 		addi.w	#$10,x_pos(a1)
@@ -13875,7 +13891,7 @@ Obj1F_BallInit:
 		move.l	#Map_obj1F,mappings(a0)
 		move.w	#$400,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#3,priority(a0)
 		move.b	#$87,$20(a0)
 		move.b	#8,width_pixels(a0)
@@ -13920,9 +13936,9 @@ Map_obj1F:	incbin	"mappings/sprite/obj1F.bin"
 ; Object 22 - Buzz Bomber from GHZ
 ; ---------------------------------------------------------------------------
 ; OST:
-obj22_time:	equ $32		; time to wait for performing an action
-obj22_status:	equ $34		; 0 = still, 1 = flying, 2 = shooting
-obj22_parent:	equ $3C
+buzzbomber_time:	equ $32		; time to wait for performing an action
+buzzbomber_status:	equ $34		; 0 = still, 1 = flying, 2 = shooting
+buzzbomber_parent:	equ $3C
 ; ---------------------------------------------------------------------------
 
 Obj22:	
@@ -13941,7 +13957,7 @@ Obj22_Init:
 		move.l	#Map_obj22,mappings(a0)
 		move.w	#$444,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#3,priority(a0)
 		move.b	#8,$20(a0)
 		move.b	#$18,width_pixels(a0)
@@ -13960,12 +13976,12 @@ Obj22_Main_Index:	dc.w Obj22_Move-Obj22_Main_Index
 ; ===========================================================================
 ; loc_A46A:
 Obj22_Move:
-		subq.w	#1,obj22_time(a0)
+		subq.w	#1,buzzbomber_time(a0)
 		bpl.s	locret_A49A
-		btst	#1,obj22_status(a0)
+		btst	#1,buzzbomber_status(a0)
 		bne.s	Obj22_LoadMissile
 		addq.b	#2,routine_secondary(a0)
-		move.w	#$7F,obj22_time(a0)
+		move.w	#$7F,buzzbomber_time(a0)
 		move.w	#$400,x_vel(a0)
 		move.b	#1,anim(a0)
 		btst	#0,status(a0)
@@ -13979,7 +13995,7 @@ locret_A49A:
 Obj22_LoadMissile:
 		bsr.w	SingleObjLoad
 		bne.s	locret_A4FE
-		move.b	#$23,0(a1)	; load Obj23 (Buzz Bomber/Newtron missile)
+		move.b	#$23,id(a1)	; load Obj23 (Buzz Bomber/Newtron missile)
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		addi.w	#$1C,y_pos(a1)
@@ -13994,10 +14010,10 @@ Obj22_LoadMissile:
 loc_A4D8:
 		add.w	d0,x_pos(a1)
 		move.b	status(a0),status(a1)
-		move.w	#$E,obj22_time(a1)
-		move.l	a0,obj22_parent(a1)
-		move.b	#1,obj22_status(a0)
-		move.w	#$3B,obj22_time(a0)
+		move.w	#$E,buzzbomber_time(a1)
+		move.l	a0,buzzbomber_parent(a1)
+		move.b	#1,buzzbomber_status(a0)
+		move.w	#$3B,buzzbomber_time(a0)
 		move.b	#2,anim(a0)
 
 locret_A4FE:
@@ -14005,10 +14021,10 @@ locret_A4FE:
 ; ===========================================================================
 ; loc_A500:
 Obj22_NearSonic:
-		subq.w	#1,obj22_time(a0)
+		subq.w	#1,buzzbomber_time(a0)
 		bmi.s	loc_A536
 		bsr.w	ObjectMove
-		tst.b	obj22_status(a0)
+		tst.b	buzzbomber_status(a0)
 		bne.s	locret_A558
 		move.w	(MainCharacter+x_pos).w,d0
 		sub.w	x_pos(a0),d0
@@ -14018,17 +14034,17 @@ Obj22_NearSonic:
 loc_A51C:
 		cmpi.w	#$60,d0		; is Buzz Bomber within $60 pixels of Sonic?
 		bcc.s	locret_A558	; if not, branch
-		tst.b	1(a0)
+		tst.b	render_flags(a0)
 		bpl.s	locret_A558
-		move.b	#2,obj22_status(a0)
-		move.w	#$1D,obj22_time(a0)
+		move.b	#2,buzzbomber_status(a0)
+		move.w	#$1D,buzzbomber_time(a0)
 		bra.s	loc_A548
 ; ===========================================================================
 
 loc_A536:
-		move.b	#0,obj22_status(a0)
+		move.b	#0,buzzbomber_status(a0)
 		bchg	#0,status(a0)
-		move.w	#$3B,obj22_time(a0)
+		move.w	#$3B,buzzbomber_time(a0)
 
 loc_A548:
 		subq.b	#2,routine_secondary(a0)
@@ -14046,7 +14062,7 @@ Obj22_Delete:
 ; Object 23 - Buzz Bomber/Newtron missile
 ; ---------------------------------------------------------------------------
 ; OST:
-obj23_parent:	equ $3C
+missile_parent:	equ $3C
 ; ---------------------------------------------------------------------------
 
 Obj23:
@@ -14069,7 +14085,7 @@ Obj23_Init:
 		move.l	#Map_obj23,mappings(a0)
 		move.w	#$2444,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#3,priority(a0)
 		move.b	#8,width_pixels(a0)
 		andi.b	#3,status(a0)
@@ -14083,8 +14099,8 @@ Obj23_Init:
 ; ===========================================================================
 ; loc_A5C4:
 Obj23_Animate:
-		movea.l	obj23_parent(a0),a1
-		cmpi.b	#$27,0(a1)	; is Buzz Bomber destroyed?
+		movea.l	missile_parent(a0),a1
+		cmpi.b	#$27,id(a1)	; is Buzz Bomber destroyed?
 		beq.s	Obj23_Delete	; if yes, branch
 		lea	(Ani_obj23).l,a1
 		bsr.w	AnimateSprite
@@ -14099,8 +14115,8 @@ Obj23_Animate:
 
 ; loc_A5DE:
 Obj23_ChkDel:
-		movea.l	obj23_parent(a0),a1
-		cmpi.b	#$27,0(a1)	; is Buzz Bomber destroyed?
+		movea.l	missile_parent(a0),a1
+		cmpi.b	#$27,id(a1)	; is Buzz Bomber destroyed?
 		beq.s	Obj23_Delete	; if yes, branch
 		rts
 ; End of function Obj23_ChkDel
@@ -14123,7 +14139,7 @@ Obj23_Move:
 ; ===========================================================================
 ; loc_A620:
 Obj23_Explode:
-		move.b	#$24,0(a0) ; load Obj24 (unused Buzz Bomber missile explosion)
+		move.b	#$24,id(a0) ; load Obj24 (unused Buzz Bomber missile explosion)
 		move.b	#0,routine(a0)
 		bra.w	Obj24
 ; ===========================================================================
@@ -14133,7 +14149,7 @@ Obj23_Delete:
 ; ===========================================================================
 ; loc_A634:
 Obj23_Newtron:
-		tst.b	1(a0)
+		tst.b	render_flags(a0)
 		bpl.s	Obj23_Delete
 		bsr.w	ObjectMove
 ; loc_A63E:
@@ -14208,7 +14224,7 @@ loc_A82A:				; CODE XREF: ROM:0000A886j
 		bne.s	loc_A88A
 
 loc_A832:				; CODE XREF: ROM:0000A828j
-		move.b	#$25,0(a1) ; '%'
+		move.b	#$25,id(a1) ; '%'
 		addq.b	#2,routine(a1)
 		move.w	d2,x_pos(a1)
 		move.w	x_pos(a0),$32(a1)
@@ -14216,7 +14232,7 @@ loc_A832:				; CODE XREF: ROM:0000A828j
 		move.l	#Map_Obj25,mappings(a1)
 		move.w	#$26BC,art_tile(a1)
 		bsr.w	Adjust2PArtPointer2
-		move.b	#4,1(a1)
+		move.b	#4,render_flags(a1)
 		move.b	#2,priority(a1)
 		move.b	#$47,$20(a1) ; 'G'
 		move.b	#8,width_pixels(a1)
@@ -14325,7 +14341,7 @@ loc_A94E:				; CODE XREF: ROM:0000A9DAj
 		bne.w	loc_A9DE
 
 loc_A956:				; CODE XREF: ROM:0000A94Cj
-		move.b	#$37,0(a1) ; '7'
+		move.b	#$37,id(a1) ; '7'
 		addq.b	#2,routine(a1)
 		move.b	#8,y_radius(a1)
 		move.b	#8,x_radius(a1)
@@ -14334,7 +14350,7 @@ loc_A956:				; CODE XREF: ROM:0000A94Cj
 		move.l	#Map_Obj25,mappings(a1)
 		move.w	#$26BC,art_tile(a1)
 		bsr.w	Adjust2PArtPointer2
-		move.b	#4,1(a1)
+		move.b	#4,render_flags(a1)
 		move.b	#3,priority(a1)
 		move.b	#$47,$20(a1) ; 'G'
 		move.b	#8,width_pixels(a1)
@@ -14437,9 +14453,9 @@ loc_AA88:				; DATA XREF: ROM:S1Obj4B_Indexo
 		move.l	#Map_S1Obj4B,mappings(a0)
 		move.w	#$2400,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		ori.b	#4,1(a0)
+		ori.b	#4,render_flags(a0)
 		move.b	#$40,width_pixels(a0) ; '@'
-		tst.b	1(a0)
+		tst.b	render_flags(a0)
 		bpl.s	loc_AAD6
 		cmpi.b	#6,($FFFFFE57).w
 		beq.w	loc_AB38
@@ -14471,14 +14487,14 @@ loc_AAF4:				; DATA XREF: ROM:0000AA84o
 		move.b	#0,$20(a0)
 		bsr.w	SingleObjLoad
 		bne.w	loc_AB2C
-		move.b	#$7C,0(a1) ; '|'
+		move.b	#$7C,id(a1) ; '|'
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		move.l	a0,$3C(a1)
 		move.w	(MainCharacter+x_pos).w,d0
 		cmp.w	x_pos(a0),d0
 		bcs.s	loc_AB2C
-		bset	#0,1(a1)
+		bset	#0,render_flags(a1)
 
 loc_AB2C:				; CODE XREF: ROM:0000AB02j
 					; ROM:0000AB24j
@@ -14513,7 +14529,7 @@ loc_AB50:				; DATA XREF: ROM:Obj_S1Obj7C_Indexo
 		move.l	#Map_S1Obj7C,mappings(a0)
 		move.w	#$2462,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		ori.b	#4,1(a0)
+		ori.b	#4,render_flags(a0)
 		move.b	#0,priority(a0)
 		move.b	#$20,width_pixels(a0) ; ' '
 		move.b	#$FF,mapping_frame(a0)
@@ -14683,7 +14699,7 @@ loc_AE70:				; DATA XREF: ROM:Obj26_Indexo
 		move.l	#Map_Obj26,mappings(a0)
 		move.w	#$680,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#3,priority(a0)
 		move.b	#$F,width_pixels(a0)
 		lea	($FFFFFC00).w,a2
@@ -14809,7 +14825,7 @@ loc_AFDC:				; DATA XREF: ROM:0000AE6Ao
 		move.b	#0,$20(a0)
 		bsr.w	SingleObjLoad
 		bne.s	loc_B004
-		move.b	#$2E,0(a1) ; '.'
+		move.b	#$2E,id(a1) ; '.'
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		move.b	anim(a0),anim(a1)
@@ -14817,7 +14833,7 @@ loc_AFDC:				; DATA XREF: ROM:0000AE6Ao
 loc_B004:				; CODE XREF: ROM:0000AFEAj
 		bsr.w	SingleObjLoad
 		bne.s	loc_B020
-		move.b	#$27,0(a1) ; '''
+		move.b	#$27,id(a1) ; '''
 		addq.b	#2,routine(a1)
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
@@ -14850,7 +14866,7 @@ loc_B04E:				; DATA XREF: ROM:Obj2E_Indexo
 		addq.b	#2,routine(a0)
 		move.w	#$680,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#$24,1(a0) ; '$'
+		move.b	#$24,render_flags(a0) ; '$'
 		move.b	#3,priority(a0)
 		move.b	#8,width_pixels(a0)
 		move.w	#-$300,y_vel(a0)
@@ -15172,7 +15188,7 @@ loc_B438:
 loc_B44C:
 		btst	#4,d0		; has B been pressed?
 		beq.s	locret_B458	; if not, branch
-		bchg	#0,($FFFFFFE9).w	; set unused variable... which crashes the game?
+		bchg	#0,(Two_player_mode+1).w	; set unused variable... which crashes the game?
 
 locret_B458:
 		rts
@@ -15329,7 +15345,7 @@ loc_B72E:				; DATA XREF: ROM:Obj2B_Indexo
 		move.l	#Map_Obj2B,mappings(a0)
 		move.w	#$470,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#4,priority(a0)
 		move.b	#9,$20(a0)
 		move.b	#$10,width_pixels(a0)
@@ -15396,7 +15412,7 @@ loc_B7F0:				; DATA XREF: ROM:Obj2C_Indexo
 		move.l	#Map_Obj2C,mappings(a0)
 		move.w	#$2486,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		ori.b	#4,1(a0)
+		ori.b	#4,render_flags(a0)
 		move.b	#$A,$20(a0)
 		move.b	#4,priority(a0)
 		move.b	#$10,width_pixels(a0)
@@ -15485,7 +15501,7 @@ Obj34_CheckConfig:			; CODE XREF: ROM:0000B8F8j
 		moveq	#3,d1
 
 Obj34_Loop:				; CODE XREF: ROM:0000B976j
-		move.b	#$34,0(a1) ; '4'
+		move.b	#$34,id(a1) ; '4'
 		move.w	(a3),x_pixel(a1)
 		move.w	(a3)+,$32(a1)
 		move.w	(a3)+,$30(a1)
@@ -15510,7 +15526,7 @@ Obj34_MakeSprite:			; CODE XREF: ROM:0000B934j
 		move.w	#$8580,art_tile(a1)
 		bsr.w	Adjust2PArtPointer2
 		move.b	#$78,width_pixels(a1) ; 'x'
-		move.b	#0,1(a1)
+		move.b	#0,render_flags(a1)
 		move.b	#0,priority(a1)
 		move.w	#$3C,anim_frame_duration(a1) ; '<'
 		lea	$40(a1),a1
@@ -15552,7 +15568,7 @@ Obj34_Wait:				; DATA XREF: ROM:Obj34_Indexo
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 Obj34_CheckPos2:			; CODE XREF: ROM:0000B9A6j
-		tst.b	1(a0)
+		tst.b	render_flags(a0)
 		bpl.s	Obj34_ChangeArt
 		moveq	#$20,d1	; ' '
 		move.w	$32(a0),d0
@@ -15642,7 +15658,7 @@ loc_BAB8:				; CODE XREF: ROM:0000BAB0j
 		move.l	#Map_Obj39,mappings(a0)
 		move.w	#$855E,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#0,1(a0)
+		move.b	#0,render_flags(a0)
 		move.b	#0,priority(a0)
 
 loc_BADC:				; DATA XREF: ROM:0000BA94o
@@ -15722,7 +15738,7 @@ Obj3A_Config:
 		moveq	#6,d1
 ; loc_BB6E:
 Obj3A_Init:
-		move.b	#$3A,0(a1)
+		move.b	#$3A,id(a1)
 		move.w	(a2),x_pixel(a1)
 		move.w	(a2)+,$32(a1)
 		move.w	(a2)+,$30(a1)
@@ -15738,7 +15754,7 @@ loc_BB94:
 		move.l	#Map_Obj3A,mappings(a1)
 		move.w	#$8580,art_tile(a1)
 		bsr.w	Adjust2PArtPointer2
-		move.b	#0,1(a1)
+		move.b	#0,render_flags(a1)
 		lea	$40(a1),a1
 		dbf	d1,Obj3A_Init
 ; loc_BBB8:
@@ -15954,7 +15970,7 @@ loc_BDAE:				; CODE XREF: ROM:0000BDAAj
 
 loc_BDC2:				; CODE XREF: ROM:0000BDBEj
 					; ROM:0000BDF8j
-		move.b	#$7E,0(a1) ; '~'
+		move.b	#$7E,id(a1) ; '~'
 		move.w	(a2)+,x_pixel(a1)
 		move.w	(a2)+,$30(a1)
 		move.w	(a2)+,y_pixel(a1)
@@ -15963,7 +15979,7 @@ loc_BDC2:				; CODE XREF: ROM:0000BDBEj
 		move.l	#Map_S1Obj7E,mappings(a1)
 		move.w	#$8580,art_tile(a1)
 		bsr.w	Adjust2PArtPointer2
-		move.b	#0,1(a1)
+		move.b	#0,render_flags(a1)
 		lea	$40(a1),a1
 		dbf	d1,loc_BDC2
 		moveq	#7,d0
@@ -16113,7 +16129,7 @@ loc_BF4C:				; DATA XREF: ROM:S1Obj7F_Indexo
 		bcs.w	DeleteObject
 
 loc_BF60:				; CODE XREF: ROM:0000BFA2j
-		move.b	#$7F,0(a1) ; ''
+		move.b	#$7F,id(a1) ; ''
 		move.w	(a2)+,x_pixel(a1)
 		move.w	#$F0,y_pixel(a1) ; 'ğ'
 		lea	($FFFFFE58).w,a3
@@ -16125,7 +16141,7 @@ loc_BF60:				; CODE XREF: ROM:0000BFA2j
 		move.l	#Map_S1Obj7F,mappings(a1)
 		move.w	#$8541,art_tile(a1)
 		bsr.w	Adjust2PArtPointer2
-		move.b	#0,1(a1)
+		move.b	#0,render_flags(a1)
 		lea	$40(a1),a1
 		dbf	d1,loc_BF60
 
@@ -16446,7 +16462,7 @@ loc_C682:				; DATA XREF: ROM:Obj36_Indexo
 		move.l	#Map_Obj36,mappings(a0)
 		move.w	#$2434,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		ori.b	#4,1(a0)
+		ori.b	#4,render_flags(a0)
 		move.b	#4,priority(a0)
 		move.b	$28(a0),d0
 		andi.b	#$F,$28(a0)
@@ -16579,7 +16595,7 @@ sub_C7C8:				; CODE XREF: ROM:loc_C7A0p
 		beq.s	loc_C7E6
 		subq.w	#1,$38(a0)
 		bne.s	locret_C828
-		tst.b	1(a0)
+		tst.b	render_flags(a0)
 		bpl.s	locret_C828
 		move.w	#$B6,d0	; '¶'
 		jsr	(PlaySound_Special).l
@@ -16635,7 +16651,7 @@ loc_C85A:				; DATA XREF: ROM:Obj3B_Indexo
 		move.l	#Map_Obj3B,mappings(a0)
 		move.w	#$66C0,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#$13,width_pixels(a0)
 		move.b	#4,priority(a0)
 
@@ -16681,7 +16697,7 @@ loc_C8DC:				; DATA XREF: ROM:Obj3C_Indexo
 		move.l	#Map_Obj3C,mappings(a0)
 		move.w	#$4590,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#$10,width_pixels(a0)
 		move.b	#4,priority(a0)
 		move.b	$28(a0),mapping_frame(a0)
@@ -16732,7 +16748,7 @@ loc_C96E:				; CODE XREF: ROM:0000C960j
 loc_C988:				; DATA XREF: ROM:0000C8DAo
 		bsr.w	ObjectMove
 		addi.w	#$70,y_vel(a0) ; 'p'
-		tst.b	1(a0)
+		tst.b	render_flags(a0)
 		bpl.w	DeleteObject
 		bra.w	DisplaySprite
 
@@ -16746,9 +16762,9 @@ sub_C99E:				; CODE XREF: ROM:0000C986p
 		movea.l	mappings(a0),a3
 		adda.w	(a3,d0.w),a3
 		addq.w	#2,a3
-		bset	#5,1(a0)
-		move.b	0(a0),d4
-		move.b	1(a0),d5
+		bset	#5,render_flags(a0)
+		move.b	id(a0),d4
+		move.b	render_flags(a0),d5
 		movea.l	a0,a1
 		bra.s	loc_C9CA
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -16760,9 +16776,9 @@ loc_C9C2:				; CODE XREF: sub_C99E:loc_CA18j
 
 loc_C9CA:				; CODE XREF: sub_C99E+22j
 		move.b	#4,routine(a1)
-		move.b	d4,0(a1)
+		move.b	d4,id(a1)
 		move.l	a3,mappings(a1)
-		move.b	d5,1(a1)
+		move.b	d5,render_flags(a1)
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		move.w	art_tile(a0),art_tile(a1)
@@ -16888,7 +16904,7 @@ RunObjectsDisplayOnly:
 		moveq	#0,d0
 		move.b	(a0),d0		; get the object's ID
 		beq.s	loc_CB74	; if it's obj00, skip it
-		tst.b	1(a0)		; should we render it?
+		tst.b	render_flags(a0)	; should we render it?
 		bpl.s	loc_CB74	; if not, skip it
 		bsr.w	DisplaySprite
 
@@ -16920,7 +16936,7 @@ Obj_Index:
 		dc.l Obj0D		; End of level signpost
 		dc.l Obj0E		; Sonic and Tails from the title screen
 		dc.l Obj0F		; Mappings test?
-		dc.l Obj10		; (S1) Blank, animation test in prototype
+		dc.l Obj10		; (S1) Animation test in prototype, now blank
 		dc.l Obj11		; Bridges in GHZ, EHZ and HPZ
 		dc.l Obj12		; Emerald from Hidden Palace Zone
 		dc.l Obj13		; Waterfall from Hidden Palace Zone
@@ -17046,7 +17062,8 @@ Obj_Index:
 		dc.l ObjNull
 		dc.l ObjNull
 ; ===========================================================================
-; blank object, allocates its array
+; Blank object, allocates its array; this pointer existed in Sonic 1 as well,
+; but there it lacked any branch and instead fell into ObjectMoveAndFall
 ; jmp_DeleteObject:
 ObjNull:
 		bra.w	DeleteObject
@@ -17336,8 +17353,8 @@ Anim_Next:
 		rol.b	#3,d1		; with the orientation used by the object engine
 		eor.b	d0,d1
 		andi.b	#3,d1
-		andi.b	#$FC,1(a0)
-		or.b	d1,1(a0)
+		andi.b	#$FC,render_flags(a0)
+		or.b	d1,render_flags(a0)
 		addq.b	#1,anim_frame(a0)	; next frame number
 ; locret_CFA4:
 Anim_Wait:
@@ -17396,10 +17413,12 @@ Anim_End:
 ; End of function AnimateSprite
 
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; Sonic 1's sprite engine has the unique ability to use other camera coordinates
+; to figure out where sprites should be; sadly, Sonic 2 Final removed this
 BldSpr_ScrPos:	dc.l 0
-		dc.l $FFFFEE00
-		dc.l $FFFFEE08
-		dc.l $FFFFEE18
+		dc.l Camera_X_pos
+		dc.l Camera_BG_X_pos
+		dc.l Camera_BG3_X_pos
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
 
@@ -17429,8 +17448,8 @@ loc_D034:				; CODE XREF: BuildSprites+F2j
 		beq.w	loc_D124
 		tst.l	mappings(a0)
 		beq.w	loc_D124
-		andi.b	#$7F,1(a0) ; ''
-		move.b	1(a0),d0
+		andi.b	#$7F,render_flags(a0) ; ''
+		move.b	render_flags(a0),d0
 		move.b	d0,d4
 		btst	#6,d0
 		bne.w	loc_D126
@@ -17498,7 +17517,7 @@ loc_D0F0:				; CODE XREF: BuildSprites+D2j
 		bsr.w	sub_D1B6
 
 loc_D0F4:				; CODE XREF: BuildSprites+E2j
-		ori.b	#$80,1(a0)
+		ori.b	#$80,render_flags(a0)
 
 loc_D0FA:				; CODE XREF: BuildSprites+68j
 					; BuildSprites+74j ...
@@ -17528,7 +17547,7 @@ loc_D124:				; CODE XREF: BuildSprites+2Ej
 
 loc_D126:				; CODE XREF: BuildSprites+4Aj
 		move.l	a4,-(sp)
-		lea	($FFFFEE00).w,a4
+		lea	(Camera_X_pos).w,a4
 		movea.w	art_tile(a0),a3
 		movea.l	mappings(a0),a5
 		moveq	#0,d0
@@ -17549,7 +17568,7 @@ loc_D126:				; CODE XREF: BuildSprites+4Aj
 		bcs.s	loc_D1B0
 		cmpi.w	#$180,d2
 		bcc.s	loc_D1B0
-		ori.b	#$80,1(a0)
+		ori.b	#$80,render_flags(a0)
 		lea	$10(a0),a6
 		moveq	#0,d0
 		move.b	$F(a0),d0
@@ -17748,9 +17767,9 @@ byte_D2E2:	dc.b   8,  8,  8,  8	; 0
 		dc.b $18,$18,$18,$18	; 8
 		dc.b $20,$20,$20,$20	; 12
 BldSpr_ScrPos_2p:dc.l 0
-		dc.l $FFFFEE00
-		dc.l $FFFFEE08
-		dc.l $FFFFEE18
+		dc.l Camera_X_pos
+		dc.l Camera_BG_X_pos
+		dc.l Camera_BG3_X_pos
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 ; START	OF FUNCTION CHUNK FOR BuildSprites
 
@@ -17783,8 +17802,8 @@ loc_D342:				; CODE XREF: BuildSprites+3FEj
 		movea.w	(a4,d6.w),a0
 		tst.b	(a0)
 		beq.w	loc_D406
-		andi.b	#$7F,1(a0) ; ''
-		move.b	1(a0),d0
+		andi.b	#$7F,render_flags(a0) ; ''
+		move.b	render_flags(a0),d0
 		move.b	d0,d4
 		btst	#6,d0
 		bne.w	loc_D54A
@@ -17854,7 +17873,7 @@ loc_D3FC:				; CODE XREF: BuildSprites+3DEj
 		bsr.w	sub_D6A2
 
 loc_D400:				; CODE XREF: BuildSprites+3EEj
-		ori.b	#$80,1(a0)
+		ori.b	#$80,render_flags(a0)
 
 loc_D406:				; CODE XREF: BuildSprites+33Cj
 					; BuildSprites+36Ej ...
@@ -17907,7 +17926,7 @@ loc_D462:				; CODE XREF: BuildSprites+518j
 		movea.w	(a4,d6.w),a0
 		tst.b	(a0)
 		beq.w	loc_D520
-		move.b	1(a0),d0
+		move.b	render_flags(a0),d0
 		move.b	d0,d4
 		btst	#6,d0
 		bne.w	loc_D5DA
@@ -17977,7 +17996,7 @@ loc_D516:				; CODE XREF: BuildSprites+4F8j
 		bsr.w	sub_D6A2
 
 loc_D51A:				; CODE XREF: BuildSprites+508j
-		ori.b	#$80,1(a0)
+		ori.b	#$80,render_flags(a0)
 
 loc_D520:				; CODE XREF: BuildSprites+45Cj
 					; BuildSprites+488j ...
@@ -18002,7 +18021,7 @@ loc_D542:				; CODE XREF: BuildSprites+52Cj
 
 loc_D54A:				; CODE XREF: BuildSprites+350j
 		move.l	a4,-(sp)
-		lea	($FFFFEE00).w,a4
+		lea	(Camera_X_pos).w,a4
 		movea.w	art_tile(a0),a3
 		movea.l	mappings(a0),a5
 		moveq	#0,d0
@@ -18023,7 +18042,7 @@ loc_D54A:				; CODE XREF: BuildSprites+350j
 		bcs.s	loc_D5D4
 		cmpi.w	#$180,d2
 		bcc.s	loc_D5D4
-		ori.b	#$80,1(a0)
+		ori.b	#$80,render_flags(a0)
 		lea	$10(a0),a6
 		moveq	#0,d0
 		move.b	$F(a0),d0
@@ -18082,7 +18101,7 @@ loc_D5DA:				; CODE XREF: BuildSprites+46Aj
 		bcs.s	loc_D664
 		cmpi.w	#$180,d2
 		bcc.s	loc_D664
-		ori.b	#$80,1(a0)
+		ori.b	#$80,render_flags(a0)
 		lea	$10(a0),a6
 		moveq	#0,d0
 		move.b	$F(a0),d0
@@ -18337,12 +18356,12 @@ byte_D7FA:	dc.b   8,  8,  8,  8	; 0
 		dc.b $20,$20,$20,$20	; 12
 		dc.b $30,$28,  0,  8	; 16
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-		sub.w	($FFFFEE00).w,d0
+		sub.w	(Camera_X_pos).w,d0
 		bmi.s	loc_D82E
 		cmpi.w	#$140,d0
 		bge.s	loc_D82E
 		move.w	y_pos(a0),d1
-		sub.w	($FFFFEE04).w,d1
+		sub.w	(Camera_Y_pos).w,d1
 		bmi.s	loc_D82E
 		cmpi.w	#$E0,d1	; 'à'
 		bge.s	loc_D82E
@@ -18358,7 +18377,7 @@ loc_D82E:				; CODE XREF: ROM:0000D812j
 		moveq	#0,d1
 		move.b	width_pixels(a0),d1
 		move.w	x_pos(a0),d0
-		sub.w	($FFFFEE00).w,d0
+		sub.w	(Camera_X_pos).w,d0
 		add.w	d1,d0
 		bmi.s	loc_D862
 		add.w	d1,d1
@@ -18366,7 +18385,7 @@ loc_D82E:				; CODE XREF: ROM:0000D812j
 		cmpi.w	#$140,d0
 		bge.s	loc_D862
 		move.w	y_pos(a0),d1
-		sub.w	($FFFFEE04).w,d1
+		sub.w	(Camera_Y_pos).w,d1
 		bmi.s	loc_D862
 		cmpi.w	#$E0,d1	; 'à'
 		bge.s	loc_D862
@@ -18406,7 +18425,7 @@ RingsManager_Init:
 		addq.b	#2,(Rings_manager_routine).w	; => RingsManager_Main
 		bsr.w	RingsManager_Setup	; perform initial setup
 		lea	(Ring_Positions).w,a1
-		move.w	($FFFFEE00).w,d4
+		move.w	(Camera_X_pos).w,d4
 		subq.w	#8,d4
 		bhi.s	loc_D896
 		moveq	#1,d4			; no negative values allowed
@@ -18459,7 +18478,7 @@ loc_D8EA:
 
 		; update ring start and end addresses
 		movea.w	(Ring_start_addr).w,a1
-		move.w	($FFFFEE00).w,d4
+		move.w	(Camera_X_pos).w,d4
 		subq.w	#8,d4
 		bhi.s	loc_D906
 		moveq	#1,d4
@@ -18655,7 +18674,7 @@ BuildSprites2:				; CODE XREF: BuildSprites+16p
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_DA46:				; CODE XREF: BuildSprites2+Aj
-		lea	($FFFFEE00).w,a3
+		lea	(Camera_X_pos).w,a3
 
 loc_DA4A:				; CODE XREF: BuildSprites2+76j
 		tst.w	(a0)
@@ -18707,7 +18726,7 @@ loc_DAA8:				; CODE XREF: BuildSprites2+14j
 
 
 BuildSprites2_2p:			; CODE XREF: BuildSprites+322p
-		lea	($FFFFEE00).w,a3
+		lea	(Camera_X_pos).w,a3
 		move.w	#$78,d6	; 'x'
 		movea.w	(Ring_start_addr).w,a0
 		movea.w	(Ring_end_addr).w,a4
@@ -18928,7 +18947,7 @@ loc_DC9C:
 		dbf	d0,loc_DC9C
 		lea	($FFFFFC00).w,a2
 		moveq	#0,d2
-		move.w	($FFFFEE00).w,d6
+		move.w	(Camera_X_pos).w,d6
 		subi.w	#$80,d6
 		bcc.s	loc_DCB4
 		moveq	#0,d6
@@ -18981,13 +19000,13 @@ loc_DCF2:
 ; ===========================================================================
 ; loc_DD14:
 ObjectsManager_Main:
-		move.w	($FFFFEE00).w,d1
+		move.w	(Camera_X_pos).w,d1
 		subi.w	#$80,d1
 		andi.w	#$FF80,d1
 		move.w	d1,($FFFFF7DA).w
 		lea	($FFFFFC00).w,a2
 		moveq	#0,d2
-		move.w	($FFFFEE00).w,d6
+		move.w	(Camera_X_pos).w,d6
 		andi.w	#$FF80,d6
 		cmp.w	(Camera_X_pos_last).w,d6
 		beq.w	locret_DDDE
@@ -19122,13 +19141,13 @@ loc_DDE0:
 		bsr.w	sub_DF80
 
 loc_DE5C:
-		move.w	($FFFFEE00).w,d1
+		move.w	(Camera_X_pos).w,d1
 		andi.w	#$FF00,d1
 		move.w	d1,($FFFFF7DA).w
 		move.w	($FFFFEE20).w,d1
 		andi.w	#$FF00,d1
 		move.w	d1,($FFFFF7DC).w
-		move.b	($FFFFEE00).w,d6
+		move.b	(Camera_X_pos).w,d6
 		andi.w	#$FF,d6
 		move.w	(Camera_X_pos_last).w,d0
 		cmp.w	(Camera_X_pos_last).w,d6
@@ -19478,7 +19497,7 @@ loc_E0E6:				; CODE XREF: sub_E0D2+4j sub_E0D2+Cj
 		move.w	d0,y_pos(a1)
 		rol.w	#2,d1
 		andi.b	#3,d1
-		move.b	d1,1(a1)
+		move.b	d1,render_flags(a1)
 		move.b	d1,status(a1)
 		move.b	(a0)+,d0
 		bpl.s	loc_E116
@@ -19486,7 +19505,7 @@ loc_E0E6:				; CODE XREF: sub_E0D2+4j sub_E0D2+Cj
 		move.b	d2,$23(a1)
 
 loc_E116:				; CODE XREF: sub_E0D2+3Aj
-		move.b	d0,0(a1)
+		move.b	d0,id(a1)
 		move.b	(a0)+,$28(a1)
 		moveq	#0,d0
 
@@ -19529,7 +19548,7 @@ loc_E14C:				; CODE XREF: sub_E122+22j
 		move.w	d0,y_pos(a1)
 		rol.w	#2,d1
 		andi.b	#3,d1
-		move.b	d1,1(a1)
+		move.b	d1,render_flags(a1)
 		move.b	d1,status(a1)
 		move.b	(a0)+,d0
 		bpl.s	loc_E176
@@ -19537,7 +19556,7 @@ loc_E14C:				; CODE XREF: sub_E122+22j
 		move.b	d2,$23(a1)
 
 loc_E176:				; CODE XREF: sub_E122+4Aj
-		move.b	d0,0(a1)
+		move.b	d0,id(a1)
 		move.b	(a0)+,$28(a1)
 		moveq	#0,d0
 
@@ -19660,7 +19679,7 @@ Obj41_Init:
 		move.w	#$45C,art_tile(a0)
 
 loc_E22A:
-		ori.b	#4,1(a0)
+		ori.b	#4,render_flags(a0)
 		move.b	#$10,width_pixels(a0)
 		move.b	#4,priority(a0)
 		move.b	$28(a0),d0
@@ -20421,7 +20440,7 @@ Obj42_Init:
 		move.l	#Map_obj42,mappings(a0)
 		move.w	#$49B,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#4,priority(a0)
 		move.b	#$14,width_pixels(a0)
 		move.b	#$10,y_radius(a0)
@@ -20545,7 +20564,7 @@ Obj42_FireMissile:
 		move.b	#1,$32(a0)
 		bsr.w	SingleObjLoad
 		bne.s	locret_ED6C
-		move.b	#$23,0(a1)
+		move.b	#$23,id(a1)
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		subq.w	#8,y_pos(a1)
@@ -20606,7 +20625,7 @@ Obj44_Init:
 		move.l	#Map_obj44,mappings(a0)
 		move.w	#$434C,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		ori.b	#4,1(a0)
+		ori.b	#4,render_flags(a0)
 		move.b	#8,width_pixels(a0)
 		move.b	#6,priority(a0)
 		move.b	$28(a0),mapping_frame(a0)
@@ -20668,7 +20687,7 @@ Obj0D_Init:
 		move.l	#Map_obj0D,mappings(a0)
 		move.w	#$680,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#$18,width_pixels(a0)
 		move.b	#4,priority(a0)
 ; loc_EFFE:
@@ -20708,7 +20727,7 @@ Obj0D_Sparkle:
 		lea	Obj0D_RingSparklePositions(pc,d0.w),a2
 		bsr.w	SingleObjLoad
 		bne.s	locret_F0B2
-		move.b	#$25,0(a1)
+		move.b	#$25,id(a1)
 		move.b	#6,routine(a1)
 		move.b	(a2)+,d0
 		ext.w	d0
@@ -20721,7 +20740,7 @@ Obj0D_Sparkle:
 		move.l	#Map_Obj25,mappings(a1)
 		move.w	#$27B2,art_tile(a1)
 		bsr.w	Adjust2PArtPointer2
-		move.b	#4,1(a1)
+		move.b	#4,render_flags(a1)
 		move.b	#2,priority(a1)
 		move.b	#8,width_pixels(a1)
 
@@ -20854,7 +20873,7 @@ Obj40_Init:
 		move.l	#Map_obj40,mappings(a0)
 		move.w	#$4E0,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#4,priority(a0)
 		move.b	#$14,width_pixels(a0)
 		tst.b	anim(a0)
@@ -20921,7 +20940,7 @@ Obj40_Floor:
 		move.b	#$F,$33(a0)
 		bsr.w	SingleObjLoad
 		bne.s	locret_F354
-		move.b	#$40,0(a1)
+		move.b	#$40,id(a1)
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		move.b	status(a0),status(a1)
@@ -20992,7 +21011,7 @@ SolidObject:
 		bsr.s	sub_F456	; first collision check with Sonic
 		movem.l	(sp)+,d1-d4	; restore input registers
 		lea	(Sidekick).w,a1	; a1=character ; now check collision with Tails
-		tst.b	1(a1)
+		tst.b	render_flags(a1)
 		bpl.w	locret_F490	; return if not Tails
 		addq.b	#1,d6
 
@@ -21127,7 +21146,7 @@ SlopedSolid_cont:
 		cmp.w	d3,d0
 		bhi.w	SolidObject_TestClearPush
 		move.w	d0,d5
-		btst	#0,1(a0)
+		btst	#0,render_flags(a0)
 		beq.s	loc_F55C
 		not.w	d5
 		add.w	d3,d5
@@ -21155,7 +21174,7 @@ loc_F55C:
 ; ===========================================================================
 ; loc_F590:
 SolidObject_OnScreenTest:
-		tst.b	1(a0)
+		tst.b	render_flags(a0)
 		bpl.w	SolidObject_TestClearPush
 ; loc_F598:
 SolidObject_cont:
@@ -21387,7 +21406,7 @@ sub_F748:				; CODE XREF: sub_F456+D8p sub_F7F2+34p
 		sub.w	x_pos(a0),d0
 		add.w	d1,d0
 		lsr.w	#1,d0
-		btst	#0,1(a0)
+		btst	#0,render_flags(a0)
 		beq.s	loc_F768
 		not.w	d0
 		add.w	d1,d0
@@ -21656,7 +21675,7 @@ SlopedPlatform_cont:
 		add.w	d1,d1
 		cmp.w	d1,d0
 		bcc.s	locret_F966
-		btst	#0,1(a0)
+		btst	#0,render_flags(a0)
 		beq.s	loc_F98E
 		not.w	d0
 		add.w	d1,d0
@@ -21745,7 +21764,7 @@ Obj01_Init:
 		bsr.w	Adjust2PArtPointer
 		move.b	#2,priority(a0)
 		move.b	#$18,width_pixels(a0)
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.w	#$600,(Sonic_top_speed).w	; set Sonic's top speed
 		move.w	#$C,(Sonic_acceleration).w	; set Sonic's acceleration
 		move.w	#$80,(Sonic_deceleration).w	; set Sonic's deceleration
@@ -21886,7 +21905,6 @@ Obj01_ExitChk:
 		rts
 ; End of function Sonic_Display
 
-
 ; ---------------------------------------------------------------------------
 ; Subroutine to record Sonic's previous positions for invincibility stars
 ; and input/status flags for Tails' AI to follow
@@ -21935,7 +21953,6 @@ Unused_RecordPos:
 locret_FC02:
 		rts
 ; End of subroutine Unused_RecordPos
-
 
 ; ---------------------------------------------------------------------------
 ; Subroutine for Sonic when he's underwater
@@ -22069,7 +22086,6 @@ loc_FD34:
 		bsr.w	Sonic_DoLevelCollision
 		rts
 ; End of subroutine Obj01_MdJump
-
 
 ; ---------------------------------------------------------------------------
 ; Subroutine to make Sonic walk/run
@@ -23389,97 +23405,87 @@ locret_108C8:				; CODE XREF: ROM:000108BAj
 					; ROM:000108C0j
 		rts
 
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Subroutine to animate Sonic's sprites
+; ---------------------------------------------------------------------------
+
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 
 
-Sonic_Animate:				; CODE XREF: ROM:loc_FAFEp
-					; ROM:0001078Ap ...
-
-; FUNCTION CHUNK AT 0001095C SIZE 0000015E BYTES
-
+Sonic_Animate:
 		lea	(SonicAniData).l,a1
 		moveq	#0,d0
 		move.b	anim(a0),d0
 		cmp.b	prev_anim(a0),d0
-		beq.s	loc_108EC
+		beq.s	SonicAnimate_Do
 		move.b	d0,prev_anim(a0)
 		move.b	#0,anim_frame(a0)
 		move.b	#0,anim_frame_duration(a0)
-
-loc_108EC:				; CODE XREF: Sonic_Animate+10j
+; loc_108EC:
+SonicAnimate_Do:
 		add.w	d0,d0
 		adda.w	(a1,d0.w),a1
 		move.b	(a1),d0
-		bmi.s	loc_1095C
+		bmi.s	SonicAnimate_WalkRun
 		move.b	status(a0),d1
 		andi.b	#1,d1
-		andi.b	#$FC,1(a0)
-		or.b	d1,1(a0)
+		andi.b	#$FC,render_flags(a0)
+		or.b	d1,render_flags(a0)
 		subq.b	#1,anim_frame_duration(a0)
-		bpl.s	locret_1092A
+		bpl.s	SonicAnimate_Delay
 		move.b	d0,anim_frame_duration(a0)
-; End of function Sonic_Animate
-
-
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-sub_10912:				; CODE XREF: Sonic_Animate+116p
-					; Sonic_Animate+1BAj ...
+; sub_10912:
+SonicAnimate_Do2:
 		moveq	#0,d1
 		move.b	anim_frame(a0),d1
 		move.b	1(a1,d1.w),d0
 		cmpi.b	#$F0,d0
-		bcc.s	loc_1092C
-
-loc_10922:				; CODE XREF: sub_10912+28j
-					; sub_10912+3Cj
+		bcc.s	SonicAnimate_CmdFF
+; loc_10922:
+SonicAnimate_Next:
 		move.b	d0,mapping_frame(a0)
 		addq.b	#1,anim_frame(a0)
-
-locret_1092A:				; CODE XREF: Sonic_Animate+42j
-					; Sonic_Animate+96j
+; locret_1092A:
+SonicAnimate_Delay:
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_1092C:				; CODE XREF: sub_10912+Ej
+; ===========================================================================
+; loc_1092C:
+SonicAnimate_CmdFF:
 		addq.b	#1,d0
-		bne.s	loc_1093C
+		bne.s	SonicAnimate_CmdFE
 		move.b	#0,anim_frame(a0)
 		move.b	1(a1),d0
-		bra.s	loc_10922
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_1093C:				; CODE XREF: sub_10912+1Cj
+		bra.s	SonicAnimate_Next
+; ===========================================================================
+; loc_1093C:
+SonicAnimate_CmdFE:
 		addq.b	#1,d0
-		bne.s	loc_10950
+		bne.s	SonicAnimate_CmdFD
 		move.b	2(a1,d1.w),d0
 		sub.b	d0,anim_frame(a0)
 		sub.b	d0,d1
 		move.b	1(a1,d1.w),d0
-		bra.s	loc_10922
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_10950:				; CODE XREF: sub_10912+2Cj
+		bra.s	SonicAnimate_Next
+; ===========================================================================
+; loc_10950:
+SonicAnimate_CmdFD:
 		addq.b	#1,d0
-		bne.s	locret_1095A
+		bne.s	SonicAnimate_End
 		move.b	2(a1,d1.w),anim(a0)
-
-locret_1095A:				; CODE XREF: sub_10912+40j
+; locret_1095A:
+SonicAnimate_End:
 		rts
-; End of function sub_10912
-
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-; START	OF FUNCTION CHUNK FOR Sonic_Animate
-
-loc_1095C:				; CODE XREF: Sonic_Animate+2Aj
+; ===========================================================================
+; loc_1095C:
+SonicAnimate_WalkRun:
 		subq.b	#1,anim_frame_duration(a0)
-		bpl.s	locret_1092A
+		bpl.s	SonicAnimate_Delay
 		addq.b	#1,d0
-		bne.w	loc_10A44
+		bne.w	SonicAnimate_Roll
 		moveq	#0,d0
 		move.b	$27(a0),d0
-		bne.w	loc_109EA
+		bne.w	SonicAnimate_Tumble
 		moveq	#0,d1
 		move.b	angle(a0),d0
 		move.b	status(a0),d2
@@ -23487,30 +23493,30 @@ loc_1095C:				; CODE XREF: Sonic_Animate+2Aj
 		bne.s	loc_10984
 		not.b	d0
 
-loc_10984:				; CODE XREF: Sonic_Animate+B6j
+loc_10984:
 		addi.b	#$10,d0
 		bpl.s	loc_1098C
 		moveq	#3,d1
 
-loc_1098C:				; CODE XREF: Sonic_Animate+BEj
-		andi.b	#$FC,1(a0)
+loc_1098C:
+		andi.b	#$FC,render_flags(a0)
 		eor.b	d1,d2
-		or.b	d2,1(a0)
+		or.b	d2,render_flags(a0)
 		btst	#5,status(a0)
-		bne.w	loc_10A88
+		bne.w	SonicAnimate_Push
 		lsr.b	#4,d0
 		andi.b	#6,d0
 		move.w	$14(a0),d2
 		bpl.s	loc_109B0
 		neg.w	d2
 
-loc_109B0:				; CODE XREF: Sonic_Animate+E2j
+loc_109B0:
 		lea	(SonicAni_Run).l,a1
 		cmpi.w	#$600,d2
 		bcc.s	loc_109C2
 		lea	(SonicAni_Walk).l,a1
 
-loc_109C2:				; CODE XREF: Sonic_Animate+F0j
+loc_109C2:
 		move.b	d0,d1
 		lsr.b	#1,d1
 		add.b	d1,d0
@@ -23522,36 +23528,37 @@ loc_109C2:				; CODE XREF: Sonic_Animate+F0j
 		bpl.s	loc_109D8
 		moveq	#0,d2
 
-loc_109D8:				; CODE XREF: Sonic_Animate+10Aj
+loc_109D8:
 		lsr.w	#8,d2
 		lsr.w	#1,d2
 		move.b	d2,anim_frame_duration(a0)
-		bsr.w	sub_10912
+		bsr.w	SonicAnimate_Do2
 		add.b	d3,mapping_frame(a0)
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_109EA:				; CODE XREF: Sonic_Animate+A4j
+; ===========================================================================
+; loc_109EA:
+SonicAnimate_Tumble:
 		move.b	$27(a0),d0
 		moveq	#0,d1
 		move.b	status(a0),d2
 		andi.b	#1,d2
-		bne.s	loc_10A1E
-		andi.b	#$FC,1(a0)
+		bne.s	SonicAnimate_TumbleLeft
+
+		andi.b	#$FC,render_flags(a0)
 		moveq	#0,d2
-		or.b	d2,1(a0)
+		or.b	d2,render_flags(a0)
 		addi.b	#$B,d0
 		divu.w	#$16,d0
 		addi.b	#$9B,d0
 		move.b	d0,mapping_frame(a0)
 		move.b	#0,anim_frame_duration(a0)
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_10A1E:				; CODE XREF: Sonic_Animate+12Ej
+; ---------------------------------------------------------------------------
+; loc_10A1E:
+SonicAnimate_TumbleLeft:
 		moveq	#3,d2
-		andi.b	#$FC,1(a0)
-		or.b	d2,1(a0)
+		andi.b	#$FC,render_flags(a0)
+		or.b	d2,render_flags(a0)
 		neg.b	d0
 		addi.b	#$8F,d0
 		divu.w	#$16,d0
@@ -23559,58 +23566,58 @@ loc_10A1E:				; CODE XREF: Sonic_Animate+12Ej
 		move.b	d0,mapping_frame(a0)
 		move.b	#0,anim_frame_duration(a0)
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_10A44:				; CODE XREF: Sonic_Animate+9Aj
+; ===========================================================================
+; loc_10A44:
+SonicAnimate_Roll:
 		addq.b	#1,d0
-		bne.s	loc_10A88
+		bne.s	SonicAnimate_Push
 		move.w	$14(a0),d2
 		bpl.s	loc_10A50
 		neg.w	d2
 
-loc_10A50:				; CODE XREF: Sonic_Animate+182j
+loc_10A50:
 		lea	(SonicAni_Roll2).l,a1
 		cmpi.w	#$600,d2
 		bcc.s	loc_10A62
 		lea	(SonicAni_Roll).l,a1
 
-loc_10A62:				; CODE XREF: Sonic_Animate+190j
+loc_10A62:
 		neg.w	d2
 		addi.w	#$400,d2
 		bpl.s	loc_10A6C
 		moveq	#0,d2
 
-loc_10A6C:				; CODE XREF: Sonic_Animate+19Ej
+loc_10A6C:
 		lsr.w	#8,d2
 		move.b	d2,anim_frame_duration(a0)
 		move.b	status(a0),d1
 		andi.b	#1,d1
-		andi.b	#$FC,1(a0)
-		or.b	d1,1(a0)
-		bra.w	sub_10912
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_10A88:				; CODE XREF: Sonic_Animate+D4j
-					; Sonic_Animate+17Cj
+		andi.b	#$FC,render_flags(a0)
+		or.b	d1,render_flags(a0)
+		bra.w	SonicAnimate_Do2
+; ===========================================================================
+; loc_10A88:
+SonicAnimate_Push:
 		move.w	$14(a0),d2
 		bmi.s	loc_10A90
 		neg.w	d2
 
-loc_10A90:				; CODE XREF: Sonic_Animate+1C2j
+loc_10A90:
 		addi.w	#$800,d2
 		bpl.s	loc_10A98
 		moveq	#0,d2
 
-loc_10A98:				; CODE XREF: Sonic_Animate+1CAj
+loc_10A98:
 		lsr.w	#6,d2
 		move.b	d2,anim_frame_duration(a0)
 		lea	(SonicAni_Push).l,a1
 		move.b	status(a0),d1
 		andi.b	#1,d1
-		andi.b	#$FC,1(a0)
-		or.b	d1,1(a0)
-		bra.w	sub_10912
+		andi.b	#$FC,render_flags(a0)
+		or.b	d1,render_flags(a0)
+		bra.w	SonicAnimate_Do2
 ; End of function Sonic_Animate
+
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Animation script - Sonic
@@ -23757,7 +23764,7 @@ Obj02_Init:
 		bsr.w	Adjust2PArtPointer
 		move.b	#2,priority(a0)
 		move.b	#$18,width_pixels(a0)
-		move.b	#$84,1(a0)
+		move.b	#$84,render_flags(a0)
 		move.w	#$600,(Sonic_top_speed).w
 		move.w	#$C,(Sonic_acceleration).w
 		move.w	#$80,(Sonic_deceleration).w
@@ -25274,8 +25281,8 @@ loc_119BE:				; CODE XREF: Tails_Animate+10j
 		bmi.s	loc_11A2E
 		move.b	status(a0),d1
 		andi.b	#1,d1
-		andi.b	#$FC,1(a0)
-		or.b	d1,1(a0)
+		andi.b	#$FC,render_flags(a0)
+		or.b	d1,render_flags(a0)
 		subq.b	#1,anim_frame_duration(a0)
 		bpl.s	locret_119FC
 		move.b	d0,anim_frame_duration(a0)
@@ -25354,9 +25361,9 @@ loc_11A56:				; CODE XREF: Tails_Animate+B6j
 		moveq	#3,d1
 
 loc_11A5E:				; CODE XREF: Tails_Animate+BEj
-		andi.b	#$FC,1(a0)
+		andi.b	#$FC,render_flags(a0)
 		eor.b	d1,d2
-		or.b	d2,1(a0)
+		or.b	d2,render_flags(a0)
 		lsr.b	#4,d0
 		andi.b	#6,d0
 		move.w	$14(a0),d2
@@ -25397,9 +25404,9 @@ loc_11AB4:				; CODE XREF: Tails_Animate+A4j
 		move.b	status(a0),d2
 		andi.b	#1,d2
 		bne.s	loc_11AE8
-		andi.b	#$FC,1(a0)
+		andi.b	#$FC,render_flags(a0)
 		moveq	#0,d2
-		or.b	d2,1(a0)
+		or.b	d2,render_flags(a0)
 		addi.b	#$B,d0
 		divu.w	#$16,d0
 		addi.b	#$75,d0	; 'u'
@@ -25410,8 +25417,8 @@ loc_11AB4:				; CODE XREF: Tails_Animate+A4j
 
 loc_11AE8:				; CODE XREF: Tails_Animate+126j
 		moveq	#3,d2
-		andi.b	#$FC,1(a0)
-		or.b	d2,1(a0)
+		andi.b	#$FC,render_flags(a0)
+		or.b	d2,render_flags(a0)
 		neg.b	d0
 		addi.b	#$8F,d0
 		divu.w	#$16,d0
@@ -25445,8 +25452,8 @@ loc_11B36:				; CODE XREF: Tails_Animate+196j
 		move.b	d2,anim_frame_duration(a0)
 		move.b	status(a0),d1
 		andi.b	#1,d1
-		andi.b	#$FC,1(a0)
-		or.b	d1,1(a0)
+		andi.b	#$FC,render_flags(a0)
+		or.b	d1,render_flags(a0)
 		bra.w	sub_119E4
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -25468,8 +25475,8 @@ loc_11B66:				; CODE XREF: Tails_Animate+1C6j
 		lea	(TailsAni_Push_NoArt).l,a1
 		move.b	status(a0),d1
 		andi.b	#1,d1
-		andi.b	#$FC,1(a0)
-		or.b	d1,1(a0)
+		andi.b	#$FC,render_flags(a0)
+		or.b	d1,render_flags(a0)
 		bra.w	sub_119E4
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -25494,9 +25501,9 @@ loc_11BAA:				; CODE XREF: Tails_Animate+208j
 		moveq	#3,d1
 
 loc_11BB2:				; CODE XREF: Tails_Animate+212j
-		andi.b	#$FC,1(a0)
+		andi.b	#$FC,render_flags(a0)
 		eor.b	d1,d2
-		or.b	d2,1(a0)
+		or.b	d2,render_flags(a0)
 		lsr.b	#3,d0
 		andi.b	#$C,d0
 		move.b	d0,d3
@@ -25658,7 +25665,7 @@ Obj05_Init:
 		bsr.w	Adjust2PArtPointer
 		move.b	#2,priority(a0)
 		move.b	#$18,width_pixels(a0)
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 
 Obj05_Main:
 		move.b	(Sidekick+$26).w,angle(a0)
@@ -25748,7 +25755,7 @@ Obj0A_Init:				; DATA XREF: ROM:Obj0A_Indexo
 		addq.b	#2,routine(a0)
 		move.l	#Map_Obj0A_Bubbles,mappings(a0)
 		move.w	#$8348,art_tile(a0)
-		move.b	#$84,1(a0)
+		move.b	#$84,render_flags(a0)
 		move.b	#$10,width_pixels(a0)
 		move.b	#1,priority(a0)
 		move.b	$28(a0),d0
@@ -25798,7 +25805,7 @@ loc_11F14:				; CODE XREF: ROM:00011F0Ej
 		move.w	d0,x_pos(a0)
 		bsr.s	Obj0A_ShowNumber
 		jsr	ObjectMove
-		tst.b	1(a0)
+		tst.b	render_flags(a0)
 		bpl.s	loc_11F48
 		jmp	DisplaySprite
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -25833,7 +25840,7 @@ Obj0A_AirLeft:				; DATA XREF: ROM:00011E7Eo
 loc_11F82:				; CODE XREF: ROM:00011F74j
 		lea	(Ani_Obj0A).l,a1
 		jsr	AnimateSprite
-		tst.b	1(a0)
+		tst.b	render_flags(a0)
 		bpl.s	loc_11F9A
 		jmp	DisplaySprite
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -25855,13 +25862,13 @@ Obj0A_ShowNumber:			; CODE XREF: ROM:00011F34p
 		bcc.s	locret_11FEA
 		move.w	#$F,$38(a0)
 		clr.w	y_vel(a0)
-		move.b	#$80,1(a0)
+		move.b	#$80,render_flags(a0)
 		move.w	x_pos(a0),d0
-		sub.w	($FFFFEE00).w,d0
+		sub.w	(Camera_X_pos).w,d0
 		addi.w	#$80,d0	; '€'
 		move.w	d0,x_pos(a0)
 		move.w	y_pos(a0),d0
-		sub.w	($FFFFEE04).w,d0
+		sub.w	(Camera_Y_pos).w,d0
 		addi.w	#$80,d0	; '€'
 		move.w	d0,x_sub(a0)
 		move.b	#$C,routine(a0)
@@ -25991,7 +25998,7 @@ loc_1220C:				; CODE XREF: ROM:loc_121FAj
 		move.w	d0,$3A(a0)
 		jsr	SingleObjLoad
 		bne.w	locret_122DC
-		move.b	#$A,0(a1)
+		move.b	#$A,id(a1)
 		move.w	(MainCharacter+x_pos).w,x_pos(a1)
 		moveq	#6,d0
 		btst	#0,(MainCharacter+status).w
@@ -26131,7 +26138,7 @@ Obj38_Index:	dc.w Obj38_Init-Obj38_Index
 Obj38_Init:
 		addq.b	#2,routine(a0)
 		move.l	#Map_obj38,mappings(a0)
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#1,priority(a0)
 		move.b	#$18,width_pixels(a0)
 		tst.b	anim(a0)	; is this the shield?
@@ -26196,7 +26203,7 @@ Obj38_Stars:
 		move.w	d0,y_pos(a0)
 		move.b	(MainCharacter+status).w,status(a0)
 		move.b	(MainCharacter+mapping_frame).w,mapping_frame(a0)
-		move.b	(MainCharacter+1).w,1(a0)
+		move.b	(MainCharacter+render_flags).w,render_flags(a0)
 		jmp	(DisplaySprite).l
 ; ===========================================================================
 ; loc_124B2:
@@ -26230,7 +26237,7 @@ S1Obj4A_Init:
 loc_124D4:
 		addq.b	#2,routine(a0)
 		move.l	#Map_S1obj4A,mappings(a0)
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#1,priority(a0)
 		move.b	#$38,width_pixels(a0)
 		move.w	#$541,art_tile(a0)
@@ -26283,7 +26290,7 @@ Obj08_Index:	dc.w Obj08_Init-Obj08_Index
 Obj08_Init:
 		addq.b	#2,routine(a0)
 		move.l	#Map_obj08,mappings(a0)
-		ori.b	#4,1(a0)
+		ori.b	#4,render_flags(a0)
 		move.b	#1,priority(a0)
 		move.b	#$10,width_pixels(a0)
 		move.w	#$4259,art_tile(a0)
@@ -26724,7 +26731,7 @@ Floor_ChkTile:				; CODE XREF: FindFloorp FindFloor2p ...
 		andi.w	#$7F,d1	; ''
 		add.w	d1,d0
 		moveq	#$FFFFFFFF,d1
-		lea	($FFFF8000).w,a1
+		lea	(Level_Layout).w,a1
 		move.b	(a1,d0.w),d1
 		andi.w	#$FF,d1
 		lsl.w	#7,d1
@@ -27588,7 +27595,7 @@ Obj79_Init:				; DATA XREF: ROM:Obj79_Indexo
 		move.l	#Map_Obj79,mappings(a0)
 		move.w	#$47C,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#8,width_pixels(a0)
 		move.b	#5,priority(a0)
 		lea	($FFFFFC00).w,a2
@@ -27676,14 +27683,14 @@ Lamppost_StoreInfo:			; CODE XREF: ROM:000135B6p
 		move.l	($FFFFFE22).w,($FFFFFE38).w
 		move.b	($FFFFEEDF).w,($FFFFFE3C).w
 		move.w	($FFFFEECE).w,($FFFFFE3E).w
-		move.w	($FFFFEE00).w,($FFFFFE40).w
-		move.w	($FFFFEE04).w,($FFFFFE42).w
-		move.w	($FFFFEE08).w,($FFFFFE44).w
-		move.w	($FFFFEE0C).w,($FFFFFE46).w
-		move.w	($FFFFEE10).w,($FFFFFE48).w
-		move.w	($FFFFEE14).w,($FFFFFE4A).w
-		move.w	($FFFFEE18).w,($FFFFFE4C).w
-		move.w	($FFFFEE1C).w,($FFFFFE4E).w
+		move.w	(Camera_X_pos).w,($FFFFFE40).w
+		move.w	(Camera_Y_pos).w,($FFFFFE42).w
+		move.w	(Camera_BG_X_pos).w,($FFFFFE44).w
+		move.w	(Camera_BG_Y_pos).w,($FFFFFE46).w
+		move.w	(Camera_BG2_X_pos).w,($FFFFFE48).w
+		move.w	(Camera_BG2_Y_pos).w,($FFFFFE4A).w
+		move.w	(Camera_BG3_X_pos).w,($FFFFFE4C).w
+		move.w	(Camera_BG3_Y_pos).w,($FFFFFE4E).w
 		move.w	($FFFFF648).w,($FFFFFE50).w
 		move.b	($FFFFF64D).w,($FFFFFE52).w
 		move.b	(Water_fullscreen_flag).w,($FFFFFE53).w
@@ -27709,14 +27716,14 @@ Lamppost_LoadInfo:			; CODE XREF: LevelSizeLoad+180p
 		move.b	($FFFFFE52).w,($FFFFF64D).w
 		move.w	($FFFFFE3E).w,($FFFFEECE).w
 		move.w	($FFFFFE3E).w,($FFFFEEC6).w
-		move.w	($FFFFFE40).w,($FFFFEE00).w
-		move.w	($FFFFFE42).w,($FFFFEE04).w
-		move.w	($FFFFFE44).w,($FFFFEE08).w
-		move.w	($FFFFFE46).w,($FFFFEE0C).w
-		move.w	($FFFFFE48).w,($FFFFEE10).w
-		move.w	($FFFFFE4A).w,($FFFFEE14).w
-		move.w	($FFFFFE4C).w,($FFFFEE18).w
-		move.w	($FFFFFE4E).w,($FFFFEE1C).w
+		move.w	($FFFFFE40).w,(Camera_X_pos).w
+		move.w	($FFFFFE42).w,(Camera_Y_pos).w
+		move.w	($FFFFFE44).w,(Camera_BG_X_pos).w
+		move.w	($FFFFFE46).w,(Camera_BG_Y_pos).w
+		move.w	($FFFFFE48).w,(Camera_BG2_X_pos).w
+		move.w	($FFFFFE4A).w,(Camera_BG2_Y_pos).w
+		move.w	($FFFFFE4C).w,(Camera_BG3_X_pos).w
+		move.w	($FFFFFE4E).w,(Camera_BG3_Y_pos).w
 		cmpi.b	#1,(Current_Zone).w
 		bne.s	loc_136F0
 		move.w	($FFFFFE50).w,($FFFFF648).w
@@ -27793,7 +27800,7 @@ Obj7D_Main:				; DATA XREF: ROM:Obj7D_Indexo
 		move.l	#Map_Obj7D,mappings(a0)
 		move.w	#$84B6,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		ori.b	#4,1(a0)
+		ori.b	#4,render_flags(a0)
 		move.b	#0,priority(a0)
 		move.b	#$10,width_pixels(a0)
 		move.b	$28(a0),mapping_frame(a0)
@@ -27868,7 +27875,7 @@ S1Obj47_Init:				; DATA XREF: ROM:S1Obj47_Indexo
 		move.l	#Map_S1Obj47,mappings(a0)
 		move.w	#$380,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#$10,width_pixels(a0)
 		move.b	#1,priority(a0)
 		move.b	#$D7,$20(a0)
@@ -27928,7 +27935,7 @@ loc_1394E:				; CODE XREF: S1Obj47_Bump+60j
 		jsr	AddPoints
 		bsr.w	SingleObjLoad
 		bne.s	locret_13974
-		move.b	#$29,0(a1) ; ')'
+		move.b	#$29,id(a1) ; ')'
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		move.b	#4,mapping_frame(a1)
@@ -27987,7 +27994,7 @@ S1Obj64_Init:				; DATA XREF: ROM:S1Obj64_Indexo
 		move.l	#Map_Obj0A_Bubbles,mappings(a0)
 		move.w	#$8348,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#$84,1(a0)
+		move.b	#$84,render_flags(a0)
 		move.b	#$10,width_pixels(a0)
 		move.b	#1,priority(a0)
 		move.b	$28(a0),d0
@@ -28064,7 +28071,7 @@ loc_13A7E:				; CODE XREF: ROM:00013A6Ej
 loc_13B0A:				; CODE XREF: ROM:00013AA2j
 					; ROM:00013AA8j
 		bsr.w	ObjectMove
-		tst.b	1(a0)
+		tst.b	render_flags(a0)
 		bpl.s	loc_13B1A
 		jmp	DisplaySprite
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -28077,7 +28084,7 @@ S1Obj64_Display:			; CODE XREF: ROM:00013A7Aj
 					; DATA XREF: ROM:000139E4o
 		lea	(Ani_S1Obj64).l,a1
 		jsr	AnimateSprite
-		tst.b	1(a0)
+		tst.b	render_flags(a0)
 		bpl.s	loc_13B38
 		jmp	DisplaySprite
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -28097,7 +28104,7 @@ S1Obj64_BblMaker:			; CODE XREF: ROM:00013A2Ej
 		move.w	($FFFFF646).w,d0
 		cmp.w	y_pos(a0),d0
 		bcc.w	loc_13C50
-		tst.b	1(a0)
+		tst.b	render_flags(a0)
 		bpl.w	loc_13C50
 		subq.w	#1,$38(a0)
 		bpl.w	loc_13C44
@@ -28133,7 +28140,7 @@ loc_13BAC:				; CODE XREF: ROM:loc_13BA2j
 		move.w	d0,$38(a0)
 		bsr.w	SingleObjLoad
 		bne.s	loc_13C28
-		move.b	#$64,0(a1) ; 'd'
+		move.b	#$64,id(a1) ; 'd'
 		move.w	x_pos(a0),x_pos(a1)
 		jsr	(RandomNumber).l
 		andi.w	#$F,d0
@@ -28339,7 +28346,7 @@ Obj03_Init:				; DATA XREF: ROM:Obj03_Indexo
 		move.l	#Map_Obj03,mappings(a0)
 		move.w	#$26BC,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#$10,width_pixels(a0)
 		move.b	#5,priority(a0)
 		move.b	$28(a0),d0
@@ -28596,7 +28603,7 @@ loc_141C8:				; DATA XREF: ROM:Obj0B_Indexo
 		move.l	#Map_Obj0B,mappings(a0)
 		move.w	#$E000,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		ori.b	#4,1(a0)
+		ori.b	#4,render_flags(a0)
 		move.b	#$10,width_pixels(a0)
 		move.b	#4,priority(a0)
 		moveq	#0,d0
@@ -28696,7 +28703,7 @@ Obj0C_Init:				; DATA XREF: ROM:Obj0C_Indexo
 		move.l	#Map_Obj0C,mappings(a0)
 		move.w	#$E418,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		ori.b	#4,1(a0)
+		ori.b	#4,render_flags(a0)
 		move.b	#$10,width_pixels(a0)
 		move.b	#4,priority(a0)
 		move.w	y_pos(a0),d0
@@ -28799,7 +28806,7 @@ Obj12_Init:				; DATA XREF: ROM:Obj12_Indexo
 		move.l	#Map_Obj12,mappings(a0)
 		move.w	#$6392,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#$20,width_pixels(a0) ; ' '
 		move.b	#4,priority(a0)
 
@@ -28844,13 +28851,13 @@ loc_1446C:				; DATA XREF: ROM:Obj13_Indexo
 		move.l	#Map_Obj13,mappings(a0)
 		move.w	#$E315,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#$10,width_pixels(a0)
 		move.b	#1,priority(a0)
 		move.b	#$12,mapping_frame(a0)
 		bsr.s	sub_144D4
 		move.b	#$A0,y_radius(a1)
-		bset	#4,1(a1)
+		bset	#4,render_flags(a1)
 		move.l	a1,$38(a0)
 		move.w	y_pos(a0),$34(a0)
 		move.w	y_pos(a0),$36(a0)
@@ -28869,14 +28876,14 @@ sub_144D4:				; CODE XREF: ROM:0001449Ap
 					; ROM:000144C0p
 		jsr	SingleObjLoad2
 		bne.s	locret_14516
-		move.b	#$13,0(a1)
+		move.b	#$13,id(a1)
 		addq.b	#4,routine(a1)
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		move.l	#Map_Obj13,mappings(a1)
 		move.w	#$E315,art_tile(a1)
 		bsr.w	Adjust2PArtPointer2
-		move.b	#4,1(a1)
+		move.b	#4,render_flags(a1)
 		move.b	#$10,width_pixels(a1)
 		move.b	#1,priority(a1)
 
@@ -29344,7 +29351,7 @@ loc_14CD2:				; DATA XREF: ROM:Obj14_Indexo
 		move.l	#Map_obj14,mappings(a0)
 		move.w	#$3CE,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		ori.b	#4,1(a0)
+		ori.b	#4,render_flags(a0)
 		move.b	#4,priority(a0)
 		move.b	#$30,width_pixels(a0) ; '0'
 		move.w	x_pos(a0),$30(a0)
@@ -29352,7 +29359,7 @@ loc_14CD2:				; DATA XREF: ROM:Obj14_Indexo
 		bne.s	loc_14D2C
 		bsr.w	SingleObjLoad2
 		bne.s	loc_14D2C
-		move.b	#$14,0(a1)
+		move.b	#$14,id(a1)
 		addq.b	#6,routine(a1)
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
@@ -29478,10 +29485,10 @@ loc_14E1C:				; CODE XREF: sub_14E10+8j
 		subq.b	#1,d0
 		move.b	d0,mapping_frame(a0)
 		move.b	d1,$3A(a0)
-		bclr	#0,1(a0)
+		bclr	#0,render_flags(a0)
 		btst	#1,mapping_frame(a0)
 		beq.s	locret_14E3A
-		bset	#0,1(a0)
+		bset	#0,render_flags(a0)
 
 locret_14E3A:				; CODE XREF: sub_14E10+6j
 					; sub_14E10+22j
@@ -29495,7 +29502,7 @@ loc_14E3C:				; DATA XREF: ROM:00014CCCo
 		move.l	#Map_obj14b,mappings(a0)
 		move.w	#$3CE,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		ori.b	#4,1(a0)
+		ori.b	#4,render_flags(a0)
 		move.b	#4,priority(a0)
 		move.b	#$8B,$20(a0)
 		move.b	#$C,width_pixels(a0)
@@ -29704,7 +29711,7 @@ Obj16_Init:				; DATA XREF: ROM:Obj16_Indexo
 		move.l	#Map_Obj16,mappings(a0)
 		move.w	#$43E6,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#$20,width_pixels(a0) ; ' '
 		move.b	#0,mapping_frame(a0)
 		move.b	#1,priority(a0)
@@ -29845,7 +29852,7 @@ Obj19_Init:				; DATA XREF: ROM:Obj19_Indexo
 		move.l	#Map_Obj19,mappings(a0)
 		move.w	#$6400,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		moveq	#0,d0
 		move.b	$28(a0),d0
 		lsr.w	#3,d0
@@ -30090,7 +30097,7 @@ Obj04_Init:				; DATA XREF: ROM:Obj04_Indexo
 		move.l	#Map_Obj04,mappings(a0)
 		move.w	#$8400,art_tile(a0)
 		bsr.w	j_Adjust2PArtPointer_0
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#$80,width_pixels(a0)
 		move.w	x_pos(a0),$30(a0)
 
@@ -30188,12 +30195,12 @@ Obj49_Init:				; DATA XREF: ROM:Obj49_Indexo
 		move.l	#Map_Obj49,mappings(a0)
 		move.w	#$23AE,art_tile(a0)
 		bsr.w	j_Adjust2PArtPointer_0
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#$20,width_pixels(a0) ; ' '
 		move.w	x_pos(a0),$30(a0)
 		move.b	#0,priority(a0)
 		move.b	#$80,y_radius(a0)
-		bset	#4,1(a0)
+		bset	#4,render_flags(a0)
 
 Obj49_Main:				; DATA XREF: ROM:000156A0o
 		tst.w	(Two_player_mode).w
@@ -30316,7 +30323,7 @@ Obj4D_Index:	dc.w Obj4D_Init-Obj4D_Index ; DATA XREF: ROM:Obj4D_Indexo
 Obj4D_Init:				; DATA XREF: ROM:Obj4D_Indexo
 		move.l	#Map_Obj4D,mappings(a0)
 		move.w	#$23C4,art_tile(a0)
-		ori.b	#4,1(a0)
+		ori.b	#4,render_flags(a0)
 		move.b	#$A,$20(a0)
 		move.b	#4,priority(a0)
 		move.b	#$18,width_pixels(a0)
@@ -30529,7 +30536,7 @@ Obj52_Init:				; DATA XREF: ROM:Obj52_Indexo
 		addq.b	#2,routine(a0)
 		move.l	#Map_Obj52,mappings(a0)
 		move.w	#$2530,art_tile(a0)
-		ori.b	#4,1(a0)
+		ori.b	#4,render_flags(a0)
 		move.b	#$A,$20(a0)
 		move.b	#4,priority(a0)
 		move.b	#$10,width_pixels(a0)
@@ -30725,7 +30732,7 @@ Obj4F_Index:	dc.w Obj4F_Init-Obj4F_Index
 Obj4F_Init:
 		move.l	#Map_obj4F,mappings(a0)
 		move.w	#$500,art_tile(a0)
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#4,priority(a0)
 		move.b	#$10,width_pixels(a0)
 		move.b	#$10,y_radius(a0)
@@ -30865,7 +30872,7 @@ Obj50_Init:				; DATA XREF: ROM:Obj50_Indexo
 		addq.b	#2,routine(a0)
 		move.l	#Map_Obj50,mappings(a0)
 		move.w	#$2570,art_tile(a0)
-		ori.b	#4,1(a0)
+		ori.b	#4,render_flags(a0)
 		move.b	#$A,$20(a0)
 		move.b	#4,priority(a0)
 		move.b	#$10,width_pixels(a0)
@@ -30884,7 +30891,7 @@ Obj50_Init:				; DATA XREF: ROM:Obj50_Indexo
 		move.w	y_pos(a0),$2A(a0)
 		bsr.w	j_SingleObjLoad
 		bne.s	loc_15FDA
-		move.b	#$50,0(a1) ; 'P'
+		move.b	#$50,id(a1) ; 'P'
 		move.b	#4,routine(a1)
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
@@ -30892,7 +30899,7 @@ Obj50_Init:				; DATA XREF: ROM:Obj50_Indexo
 		addi.w	#$FFFA,y_pos(a1)
 		move.l	#Map_Obj50,mappings(a1)
 		move.w	#$24E0,art_tile(a1)
-		ori.b	#4,1(a1)
+		ori.b	#4,render_flags(a1)
 		move.b	#3,priority(a1)
 		move.b	status(a0),status(a1)
 		move.b	#3,anim(a1)
@@ -30978,13 +30985,13 @@ loc_16086:				; CODE XREF: sub_16078+Aj
 		st	$2D(a0)
 		bsr.w	j_SingleObjLoad
 		bne.s	locret_160F2
-		move.b	#$50,0(a1) ; 'P'
+		move.b	#$50,id(a1) ; 'P'
 		move.b	#6,routine(a1)
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		move.l	#Map_Obj50,mappings(a1)
 		move.w	#$24E0,art_tile(a1)
-		ori.b	#4,1(a1)
+		ori.b	#4,render_flags(a1)
 		move.b	#3,priority(a1)
 		move.b	#$E5,$20(a1)
 		move.b	#2,anim(a1)
@@ -31130,7 +31137,7 @@ sub_161D8:				; CODE XREF: ROM:00015FF8p
 		move.w	y_pos(a0),y_pos(a1)
 		move.b	status(a0),status(a1)
 		move.b	$23(a0),$23(a1)
-		move.b	1(a0),1(a1)
+		move.b	render_flags(a0),render_flags(a1)
 		btst	#0,status(a1)
 		beq.s	loc_16208
 		neg.w	d0
@@ -31186,7 +31193,7 @@ Obj50_Routine0A:			; DATA XREF: ROM:00015F20o
 		bne.s	loc_16290
 		move.b	#3,$2A(a0)
 		bchg	#0,status(a0)
-		bchg	#0,1(a0)
+		bchg	#0,render_flags(a0)
 
 locret_1628E:				; CODE XREF: ROM:00016256j
 		rts
@@ -31208,7 +31215,7 @@ sub_1629E:				; CODE XREF: ROM:Obj50_Routine0Ap
 		bne.s	locret_162DC
 		move.w	(MainCharacter+x_pos).w,x_pos(a0)
 		move.w	(MainCharacter+y_pos).w,y_pos(a0)
-		ori.b	#4,1(a0)
+		ori.b	#4,render_flags(a0)
 		move.b	#1,priority(a0)
 		move.b	#5,anim(a0)
 		st	routine_secondary(a0)
@@ -31247,13 +31254,13 @@ loc_162FC:				; CODE XREF: ROM:loc_16030p
 loc_16306:				; CODE XREF: ROM:loc_16378j
 		bsr.w	j_SingleObjLoad
 		bne.s	loc_16378
-		move.b	0(a0),0(a1)
+		move.b	id(a0),id(a1)
 		move.b	#8,routine(a1)
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		move.l	mappings(a0),mappings(a1)
 		move.w	#$24E0,art_tile(a1)
-		ori.b	#4,1(a1)
+		ori.b	#4,render_flags(a1)
 		move.b	#3,priority(a1)
 		move.w	#$FF00,y_vel(a1)
 		move.b	#4,anim(a1)
@@ -31280,7 +31287,7 @@ loc_16378:				; CODE XREF: ROM:0001630Aj
 		dbf	d3,loc_16306
 		bsr.w	j_SingleObjLoad
 		bne.s	loc_1639A
-		move.b	0(a0),0(a1)
+		move.b	id(a0),id(a1)
 		move.b	#$A,routine(a1)
 		move.l	mappings(a0),mappings(a1)
 		move.w	#$24E0,art_tile(a1)
@@ -31395,7 +31402,7 @@ loc_1653E:				; DATA XREF: ROM:off_16532o
 		addq.b	#2,routine(a0)
 		move.l	#Map_Obj50,mappings(a0)
 		move.w	#$2570,art_tile(a0)
-		ori.b	#4,1(a0)
+		ori.b	#4,render_flags(a0)
 		move.b	#$A,$20(a0)
 		move.b	#4,priority(a0)
 		move.b	#$10,width_pixels(a0)
@@ -31528,13 +31535,13 @@ locret_1669C:				; CODE XREF: ROM:0001667Cj
 loc_1669E:				; CODE XREF: ROM:0001660Ej
 		bsr.w	j_SingleObjLoad
 		bne.s	locret_16706
-		move.b	#$51,0(a1) ; 'Q'
+		move.b	#$51,id(a1) ; 'Q'
 		move.b	#4,routine(a1)
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		move.l	#Map_Obj50,mappings(a1)
 		move.w	#$24E0,art_tile(a1)
-		ori.b	#4,1(a1)
+		ori.b	#4,render_flags(a1)
 		move.b	#3,priority(a1)
 		move.b	#2,anim(a1)
 		move.b	#$E5,$20(a1)
@@ -31642,6 +31649,8 @@ j_ObjectMove_4:
 ; ---------------------------------------------------------------------------
 ; Object 4B - Buzzer from EHZ
 ; ---------------------------------------------------------------------------
+buzzer_parent:	equ $2A
+; ---------------------------------------------------------------------------
 
 Obj4B:
 		moveq	#0,d0
@@ -31663,7 +31672,7 @@ Obj4B_Projectile:
 ; ===========================================================================
 ; loc_167BC:
 Obj4B_Flame:
-		movea.l	$2A(a0),a1
+		movea.l	buzzer_parent(a0),a1
 		tst.b	(a1)
 		beq.w	loc_16A74
 		tst.w	$30(a1)
@@ -31675,7 +31684,7 @@ loc_167CE:
 		move.w	x_pos(a1),x_pos(a0)
 		move.w	y_pos(a1),y_pos(a0)
 		move.b	status(a1),status(a0)
-		move.b	1(a1),1(a0)
+		move.b	render_flags(a1),render_flags(a0)
 		lea	(Ani_obj4B).l,a1
 		bsr.w	j_AnimateSprite_4
 		bra.w	loc_16A8C
@@ -31685,7 +31694,7 @@ Obj4B_Init:
 		move.l	#Map_obj4B,mappings(a0)
 		move.w	#$3E6,art_tile(a0)
 		bsr.w	j_Adjust2PArtPointer_2
-		ori.b	#4,1(a0)
+		ori.b	#4,render_flags(a0)
 		move.b	#$A,$20(a0)
 		move.b	#4,priority(a0)
 		move.b	#$10,width_pixels(a0)
@@ -31698,7 +31707,7 @@ Obj4B_Init:
 		bsr.w	j_SingleObjLoad2_0
 		bne.s	locret_1689E
 
-		move.b	#$4B,0(a1)	; load obj4B
+		move.b	#$4B,id(a1)	; load obj4B
 		move.b	#4,routine(a1)	; => Obj4B_Flame
 		move.l	#Map_obj4B,mappings(a1)
 		move.w	#$3E6,art_tile(a1)
@@ -31706,14 +31715,14 @@ Obj4B_Init:
 		move.b	#4,priority(a1)
 		move.b	#$10,width_pixels(a1)
 		move.b	status(a0),status(a1)
-		move.b	1(a0),1(a1)
+		move.b	render_flags(a0),render_flags(a1)
 		move.b	#1,anim(a1)
-		move.l	a0,$2A(a1)
+		move.l	a0,buzzer_parent(a1)
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		move.w	#$100,$2E(a0)
 		move.w	#-$100,x_vel(a0)
-		btst	#0,1(a0)
+		btst	#0,render_flags(a0)
 		beq.s	locret_1689E
 		neg.w	x_vel(a0)
 
@@ -31753,7 +31762,7 @@ locret_168E4:
 Obj4B_TurnAround:
 		sf	$32(a0)	; reenable shooting
 		neg.w	x_vel(a0)	; reverse movement direction
-		bchg	#0,1(a0)
+		bchg	#0,render_flags(a0)
 		bchg	#0,status(a0)
 		move.w	#$100,$2E(a0)
 		rts
@@ -31779,13 +31788,13 @@ loc_16918:
 
 		tst.w	d1			; test sign of distance
 		bpl.s	Obj4B_PlayerIsLeft	; branch, if player is left from object
-		btst	#0,1(a0)
+		btst	#0,render_flags(a0)
 		beq.s	locret_1694E		; branch, if object is facing right
 		bra.s	Obj4B_ReadyToShoot
 ; ---------------------------------------------------------------------------
 ; loc_16932:
 Obj4B_PlayerIsLeft:
-		btst	#0,1(a0)
+		btst	#0,render_flags(a0)
 		bne.s	locret_1694E	; branch, if object is facing left
 ; loc_1693A:
 Obj4B_ReadyToShoot:
@@ -31819,7 +31828,7 @@ Obj4B_ShootProjectile:
 		jsr	(SingleObjLoad2).l
 		bne.s	locret_169D8
 
-		move.b	#$4B,0(a1) ; load obj4B
+		move.b	#$4B,id(a1) ; load obj4B
 		move.b	#6,routine(a1)	; => Obj4B_Projectile
 		move.l	#Map_obj4B,mappings(a1)
 		move.w	#$3E6,art_tile(a1)
@@ -31828,13 +31837,13 @@ Obj4B_ShootProjectile:
 		move.b	#$98,$20(a1)
 		move.b	#$10,width_pixels(a1)
 		move.b	status(a0),status(a1)
-		move.b	1(a0),1(a1)
+		move.b	render_flags(a0),render_flags(a1)
 		move.b	#2,anim(a1)
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		move.w	#$180,y_vel(a1)
 		move.w	#-$180,x_vel(a1)
-		btst	#0,1(a1)	; is object facing left?
+		btst	#0,render_flags(a1)	; is object facing left?
 		beq.s	locret_169D8	; if not, branch
 		neg.w	x_vel(a1)		; move in other direction
 
@@ -31922,7 +31931,7 @@ loc_16AD2:				; DATA XREF: ROM:00016AB2o
 loc_16ADE:				; DATA XREF: ROM:Obj4A_Indexo
 		move.l	#Map_Obj4A,mappings(a0)
 		move.w	#$238A,art_tile(a0)
-		ori.b	#4,1(a0)
+		ori.b	#4,render_flags(a0)
 		move.b	#$A,$20(a0)
 		move.b	#4,priority(a0)
 		move.b	#$10,width_pixels(a0)
@@ -31997,7 +32006,7 @@ loc_16BAA:				; DATA XREF: ROM:00016B64o
 		move.w	#$1E,$2C(a0)
 		jsr	SingleObjLoad
 		bne.s	loc_16C10
-		move.b	#$4A,0(a1) ; 'J'
+		move.b	#$4A,id(a1) ; 'J'
 		move.b	#4,routine(a1)
 		move.l	#Map_Obj4A,mappings(a1)
 		move.b	#4,mapping_frame(a1)
@@ -32007,13 +32016,13 @@ loc_16BAA:				; DATA XREF: ROM:00016B64o
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		move.w	#$1E,$2C(a1)
-		move.b	1(a0),1(a1)
+		move.b	render_flags(a0),render_flags(a1)
 		move.b	status(a0),status(a1)
 
 loc_16C10:				; CODE XREF: ROM:00016BC4j
 		jsr	SingleObjLoad
 		bne.s	locret_16C74
-		move.b	#$4A,0(a1) ; 'J'
+		move.b	#$4A,id(a1) ; 'J'
 		move.b	#6,routine(a1)
 		move.l	#Map_Obj4A,mappings(a1)
 		move.w	#$24C6,art_tile(a1)
@@ -32022,11 +32031,11 @@ loc_16C10:				; CODE XREF: ROM:00016BC4j
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		move.w	#$F,$2C(a1)
-		move.b	1(a0),1(a1)
+		move.b	render_flags(a0),render_flags(a1)
 		move.b	status(a0),status(a1)
 		move.b	#2,anim(a1)
 		move.w	#$FA80,x_vel(a1)
-		btst	#0,1(a1)
+		btst	#0,render_flags(a1)
 		beq.s	locret_16C74
 		neg.w	x_vel(a1)
 
@@ -32042,7 +32051,7 @@ loc_16C76:				; CODE XREF: ROM:00016BB0j
 
 loc_16C7C:				; DATA XREF: ROM:00016B66o
 		move.w	#$FFFA,d0
-		btst	#0,1(a0)
+		btst	#0,render_flags(a0)
 		beq.s	loc_16C8A
 		neg.w	d0
 
@@ -32130,7 +32139,7 @@ Obj4C_Index:	dc.w Obj4C_Init-Obj4C_Index ; DATA XREF: ROM:Obj4C_Indexo
 Obj4C_Init:				; DATA XREF: ROM:Obj4C_Indexo
 		move.l	#Map_Obj4C,mappings(a0)
 		move.w	#$2530,art_tile(a0)
-		ori.b	#4,1(a0)
+		ori.b	#4,render_flags(a0)
 		move.b	#$A,$20(a0)
 		move.b	#4,priority(a0)
 		move.b	#$10,width_pixels(a0)
@@ -32209,7 +32218,7 @@ loc_16E10:				; DATA XREF: ROM:00016D62o
 sub_16E30:				; CODE XREF: ROM:00016E18p
 		tst.b	$3D(a0)
 		beq.s	locret_16E42
-		bset	#0,1(a0)
+		bset	#0,render_flags(a0)
 		bset	#0,status(a0)
 
 locret_16E42:				; CODE XREF: sub_16E30+4j
@@ -32295,7 +32304,7 @@ loc_16EDE:				; CODE XREF: sub_16EB0+10j
 		move.b	#0,routine_secondary(a0)
 		move.w	#$18,$2A(a0)
 		move.b	#1,anim(a0)
-		bclr	#0,1(a0)
+		bclr	#0,render_flags(a0)
 		bclr	#0,status(a0)
 		rts
 ; End of function sub_16EB0
@@ -32355,7 +32364,7 @@ loc_16F72:				; DATA XREF: ROM:00016DC6o
 		beq.s	loc_16FA0
 		move.b	#0,$3E(a0)
 		move.w	#8,$2A(a0)
-		bset	#0,1(a0)
+		bset	#0,render_flags(a0)
 		bset	#0,status(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -32363,7 +32372,7 @@ loc_16F72:				; DATA XREF: ROM:00016DC6o
 loc_16FA0:				; CODE XREF: ROM:00016F84j
 		move.b	#1,$3E(a0)
 		move.w	#$C,$2A(a0)
-		bclr	#0,1(a0)
+		bclr	#0,render_flags(a0)
 		bclr	#0,status(a0)
 
 locret_16FB8:				; CODE XREF: ROM:00016F76j
@@ -32498,7 +32507,7 @@ Obj4E_Index:	dc.w Obj4E_Init-Obj4E_Index ; DATA XREF: ROM:Obj4E_Indexo
 Obj4E_Init:				; DATA XREF: ROM:Obj4E_Indexo
 		move.l	#Map_Obj4E,mappings(a0)
 		move.w	#$2300,art_tile(a0)
-		ori.b	#4,1(a0)
+		ori.b	#4,render_flags(a0)
 		move.b	#$A,$20(a0)
 		move.b	#4,priority(a0)
 		move.b	#$10,width_pixels(a0)
@@ -32715,7 +32724,7 @@ Obj53_Init:
 		move.l	#Map_obj53,mappings(a0)
 		move.w	#$41C,art_tile(a0)
 		bsr.w	j_Adjust2PArtPointer
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#4,priority(a0)
 		move.b	#9,$20(a0)
 		move.b	#$10,width_pixels(a0)
@@ -32795,7 +32804,7 @@ Obj54_Init:
 		move.l	#Map_obj54,mappings(a0)
 		move.w	#$402,art_tile(a0)
 		bsr.w	j_Adjust2PArtPointer_3
-		ori.b	#4,1(a0)
+		ori.b	#4,render_flags(a0)
 		move.b	#$A,$20(a0)
 		move.b	#4,priority(a0)
 		move.b	#$10,width_pixels(a0)
@@ -32803,7 +32812,7 @@ Obj54_Init:
 		move.b	#$E,x_radius(a0)
 		bsr.w	j_SingleObjLoad2_1
 		bne.s	loc_17670
-		move.b	#$54,0(a1)
+		move.b	#$54,id(a1)
 		move.b	#6,routine(a1)
 		move.l	#Map_obj54,mappings(a1)
 		move.w	#$2402,art_tile(a1)
@@ -32811,7 +32820,7 @@ Obj54_Init:
 		move.b	#3,priority(a1)
 		move.b	#$10,width_pixels(a1)
 		move.b	status(a0),status(a1)
-		move.b	1(a0),1(a1)
+		move.b	render_flags(a0),render_flags(a1)
 		move.l	a0,$2A(a1)
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
@@ -32893,7 +32902,7 @@ locret_17712:				; CODE XREF: sub_176D0+4j
 sub_17714:				; CODE XREF: sub_176D0+3Ep
 		bsr.w	j_SingleObjLoad2_1
 		bne.s	locret_17770
-		move.b	#$54,0(a1) ; 'T'
+		move.b	#$54,id(a1) ; 'T'
 		move.b	#8,routine(a1)
 		move.l	#Map_obj4B,mappings(a1)
 		move.w	#$3E6,art_tile(a1)
@@ -32901,7 +32910,7 @@ sub_17714:				; CODE XREF: sub_176D0+3Ep
 		move.b	#4,priority(a1)
 		move.b	#$10,width_pixels(a1)
 		move.b	status(a0),status(a1)
-		move.b	1(a0),1(a1)
+		move.b	render_flags(a0),render_flags(a1)
 		move.l	a0,$2A(a1)
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
@@ -32945,7 +32954,7 @@ loc_177B4:				; DATA XREF: ROM:000175E2o
 		asr.w	#2,d0
 		move.w	d0,x_vel(a0)
 		bchg	#0,status(a0)
-		bchg	#0,1(a0)
+		bchg	#0,render_flags(a0)
 		subq.b	#2,routine(a0)
 		sf	$34(a0)
 		sf	$35(a0)
@@ -32959,7 +32968,7 @@ loc_177EC:				; DATA XREF: ROM:000175E4o
 		move.w	x_pos(a1),x_pos(a0)
 		move.w	y_pos(a1),y_pos(a0)
 		move.b	status(a1),status(a0)
-		move.b	1(a1),1(a0)
+		move.b	render_flags(a1),render_flags(a0)
 		bra.w	loc_1786C
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 Ani_Obj54:	dc.w byte_17818-Ani_Obj54 ; DATA XREF: ROM:000176A6o
@@ -33135,18 +33144,18 @@ loc_179AE:				; DATA XREF: ROM:off_179A8o
 		bclr	#0,$2D(a0)
 		bsr.w	j_SingleObjLoad2
 		bne.w	loc_181A8
-		move.b	#$58,0(a1) ; 'X'
+		move.b	#$58,id(a1) ; 'X'
 		move.l	a0,$34(a1)
 		move.l	#Map_Obj58,mappings(a1)
 		move.w	#$2540,art_tile(a1)
-		move.b	#4,1(a1)
+		move.b	#4,render_flags(a1)
 		move.b	#$20,width_pixels(a1) ; ' '
 		move.b	#4,priority(a1)
 		move.l	x_pos(a0),x_pos(a1)
 		move.l	y_pos(a0),y_pos(a1)
 		addi.w	#$C,y_pos(a1)
 		move.b	status(a0),status(a1)
-		move.b	1(a0),1(a1)
+		move.b	render_flags(a0),render_flags(a1)
 		move.b	#8,routine(a1)
 		move.b	#2,anim(a1)
 		move.w	#$10,$2A(a1)
@@ -33197,7 +33206,7 @@ sub_17A6A:				; CODE XREF: ROM:00017924p
 
 loc_17A7A:				; CODE XREF: sub_17A6A+8j
 		bchg	#0,status(a0)
-		bchg	#0,1(a0)
+		bchg	#0,render_flags(a0)
 		neg.w	x_vel(a0)
 
 locret_17A8A:				; CODE XREF: sub_17A6A+Ej
@@ -33302,7 +33311,7 @@ loc_17B60:				; CODE XREF: ROM:00017B4Ej
 		move.w	x_pos(a1),x_pos(a0)
 		move.w	y_pos(a1),y_pos(a0)
 		move.b	status(a1),status(a0)
-		move.b	1(a1),1(a0)
+		move.b	render_flags(a1),render_flags(a0)
 		lea	(Ani_Obj58).l,a1
 		bsr.w	j_AnimateSprite_9
 		bra.w	loc_181A8
@@ -33335,7 +33344,7 @@ loc_17BB0:				; DATA XREF: ROM:00017AFEo
 		move.w	y_pos(a1),y_pos(a0)
 		addi.w	#8,y_pos(a0)
 		move.b	status(a1),status(a0)
-		move.b	1(a1),1(a0)
+		move.b	render_flags(a1),render_flags(a0)
 		bra.w	loc_181A8
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -33373,7 +33382,7 @@ loc_17C36:				; DATA XREF: ROM:00017C12o
 		cmpi.b	#$55,(a1) ; 'U'
 		bne.w	loc_181AE
 		move.b	status(a1),status(a0)
-		move.b	1(a1),1(a0)
+		move.b	render_flags(a1),render_flags(a0)
 		tst.b	status(a0)
 		bpl.s	loc_17C58
 		addq.b	#2,routine_secondary(a0)
@@ -33439,7 +33448,7 @@ loc_17CE4:				; DATA XREF: ROM:00017B02o
 		move.w	x_pos(a1),x_pos(a0)
 		move.w	y_pos(a1),y_pos(a0)
 		move.b	status(a1),status(a0)
-		move.b	1(a1),1(a0)
+		move.b	render_flags(a1),render_flags(a0)
 		addi.w	#$10,y_pos(a0)
 		move.w	#$FFCA,d0
 		btst	#0,status(a0)
@@ -33502,11 +33511,11 @@ loc_17D92:				; CODE XREF: sub_17D6A+1Aj
 sub_17D9A:				; CODE XREF: ROM:loc_17F98p
 		jsr	SingleObjLoad2
 		bne.s	loc_17E0E
-		move.b	#$58,0(a1) ; 'X'
+		move.b	#$58,id(a1) ; 'X'
 		move.l	a0,$34(a1)
 		move.l	#Map_Obj58a,mappings(a1)
 		move.w	#$24C0,art_tile(a1)
-		move.b	#4,1(a1)
+		move.b	#4,render_flags(a1)
 		move.b	#$10,width_pixels(a1)
 		move.b	#1,priority(a1)
 		move.b	#$10,y_radius(a1)
@@ -33524,11 +33533,11 @@ sub_17D9A:				; CODE XREF: ROM:loc_17F98p
 loc_17E0E:				; CODE XREF: sub_17D9A+6j
 		jsr	SingleObjLoad2
 		bne.s	loc_17E82
-		move.b	#$58,0(a1) ; 'X'
+		move.b	#$58,id(a1) ; 'X'
 		move.l	a0,$34(a1)
 		move.l	#Map_Obj58a,mappings(a1)
 		move.w	#$24C0,art_tile(a1)
-		move.b	#4,1(a1)
+		move.b	#4,render_flags(a1)
 		move.b	#$10,width_pixels(a1)
 		move.b	#1,priority(a1)
 		move.b	#$10,y_radius(a1)
@@ -33546,11 +33555,11 @@ loc_17E0E:				; CODE XREF: sub_17D9A+6j
 loc_17E82:				; CODE XREF: sub_17D9A+7Aj
 		jsr	SingleObjLoad2
 		bne.s	loc_17EF6
-		move.b	#$58,0(a1) ; 'X'
+		move.b	#$58,id(a1) ; 'X'
 		move.l	a0,$34(a1)
 		move.l	#Map_Obj58a,mappings(a1)
 		move.w	#$24C0,art_tile(a1)
-		move.b	#4,1(a1)
+		move.b	#4,render_flags(a1)
 		move.b	#$10,width_pixels(a1)
 		move.b	#2,priority(a1)
 		move.b	#$10,y_radius(a1)
@@ -33568,11 +33577,11 @@ loc_17E82:				; CODE XREF: sub_17D9A+7Aj
 loc_17EF6:				; CODE XREF: sub_17D9A+EEj
 		jsr	SingleObjLoad2
 		bne.s	locret_17F52
-		move.b	#$58,0(a1) ; 'X'
+		move.b	#$58,id(a1) ; 'X'
 		move.l	a0,$34(a1)
 		move.l	#Map_Obj58a,mappings(a1)
 		move.w	#$24C0,art_tile(a1)
-		move.b	#4,1(a1)
+		move.b	#4,render_flags(a1)
 		move.b	#$10,width_pixels(a1)
 		move.b	#1,priority(a1)
 		move.l	x_pos(a0),x_pos(a1)
@@ -33592,11 +33601,11 @@ locret_17F52:				; CODE XREF: sub_17D9A+162j
 loc_17F54:				; DATA XREF: ROM:000182FEo
 		jsr	SingleObjLoad2
 		bne.s	loc_17F98
-		move.b	#$58,0(a1) ; 'X'
+		move.b	#$58,id(a1) ; 'X'
 		move.l	a0,$34(a1)
 		move.l	#Map_Obj58a,mappings(a1)
 		move.w	#$4C0,art_tile(a1)
-		move.b	#4,1(a1)
+		move.b	#4,render_flags(a1)
 		move.b	#$20,width_pixels(a1) ; ' '
 		move.b	#2,priority(a1)
 		move.l	x_pos(a0),x_pos(a1)
@@ -33610,11 +33619,11 @@ loc_17F98:				; CODE XREF: ROM:00017F5Aj
 		move.w	#$2C0,y_pos(a0)
 		jsr	SingleObjLoad2
 		bne.s	locret_17FF8
-		move.b	#$58,0(a1) ; 'X'
+		move.b	#$58,id(a1) ; 'X'
 		move.l	a0,$34(a1)
 		move.l	#Map_Obj58,mappings(a1)
 		move.w	#$2540,art_tile(a1)
-		move.b	#4,1(a1)
+		move.b	#4,render_flags(a1)
 		move.b	#$20,width_pixels(a1) ; ' '
 		move.b	#4,priority(a1)
 		move.l	x_pos(a0),x_pos(a1)
@@ -33762,7 +33771,7 @@ Obj55_Index:	dc.w Obj55_Init-Obj55_Index
 Obj55_Init:
 		move.l	#Map_Obj55,mappings(a0)
 		move.w	#$2400,art_tile(a0)
-		ori.b	#4,1(a0)
+		ori.b	#4,render_flags(a0)
 		move.b	#$20,width_pixels(a0)
 		move.b	#3,priority(a0)
 		move.b	#$F,$20(a0)
@@ -33778,19 +33787,19 @@ Obj55_Init:
 loc_18230:
 		jsr	(SingleObjLoad2).l
 		bne.w	loc_182E8
-		move.b	#$55,0(a1)
+		move.b	#$55,id(a1)
 		move.l	a0,$34(a1)
 		move.l	a1,$34(a0)
 		move.l	#Map_Obj55,mappings(a1)
 		move.w	#$400,art_tile(a1)
-		move.b	#4,1(a1)
+		move.b	#4,render_flags(a1)
 		move.b	#$20,width_pixels(a1)
 		move.b	#3,priority(a1)
 		move.l	x_pos(a0),x_pos(a1)
 		move.l	y_pos(a0),y_pos(a1)
 		addq.b	#4,routine(a1)
 		move.b	#1,anim(a1)
-		move.b	1(a0),1(a1)
+		move.b	render_flags(a0),render_flags(a1)
 		move.b	$28(a0),d0
 		cmpi.b	#$81,d0
 		bne.s	loc_18294
@@ -33801,7 +33810,7 @@ loc_18294:
 		bmi.s	loc_182E8
 		jsr	(SingleObjLoad2).l
 		bne.s	loc_182E8
-		move.b	#$55,0(a1)
+		move.b	#$55,id(a1)
 		move.l	a0,$34(a1)
 
 loc_182AC:
@@ -33810,13 +33819,13 @@ loc_182AC:
 		move.b	#1,anim_frame_duration(a0)
 
 loc_182C0:
-		move.b	#4,1(a1)
+		move.b	#4,render_flags(a1)
 		move.b	#$20,width_pixels(a1)
 		move.b	#3,priority(a1)
 		move.l	x_pos(a0),x_pos(a1)
 		move.l	y_pos(a0),y_pos(a1)
 		addq.b	#6,routine(a1)
-		move.b	1(a0),1(a1)
+		move.b	render_flags(a0),render_flags(a1)
 
 loc_182E8:
 		move.b	$28(a0),d0
@@ -33841,8 +33850,8 @@ loc_18302:
 		jsr	(AnimateSprite).l
 		move.b	status(a0),d0
 		andi.b	#3,d0
-		andi.b	#$FC,1(a0)
-		or.b	d0,1(a0)
+		andi.b	#$FC,render_flags(a0)
+		or.b	d0,render_flags(a0)
 		jmp	(DisplaySprite).l
 ; ===========================================================================
 dword_18338:	dc.l 0
@@ -33854,7 +33863,7 @@ loc_18340:
 		move.l	x_pos(a1),x_pos(a0)
 		move.l	y_pos(a1),y_pos(a0)
 		move.b	status(a1),status(a0)
-		move.b	1(a1),1(a0)
+		move.b	render_flags(a1),render_flags(a0)
 		movea.l	#Ani_Obj55a,a1
 		jsr	(AnimateSprite).l
 		jmp	(DisplaySprite).l
@@ -33869,7 +33878,7 @@ loc_18372:
 		move.l	x_pos(a1),x_pos(a0)
 		move.l	y_pos(a1),y_pos(a0)
 		move.b	status(a1),status(a0)
-		move.b	1(a1),1(a0)
+		move.b	render_flags(a1),render_flags(a0)
 		subq.b	#1,anim_frame_duration(a0)
 		bpl.s	loc_183BA
 		move.b	#1,anim_frame_duration(a0)
@@ -33945,7 +33954,7 @@ Obj56_Init:				; DATA XREF: ROM:Obj56_Indexo
 		addq.b	#2,routine(a0)
 		move.l	#Map_Obj56,mappings(a0)
 		move.w	#$5A0,art_tile(a0)
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#1,priority(a0)
 		move.b	#0,$20(a0)
 		move.b	#$C,width_pixels(a0)
@@ -34069,7 +34078,7 @@ Obj8A_Init:
 ; Obj8A_Credits:
 		move.w	($FFFFFFF4).w,d0	; load credits index number
 		move.b	d0,mapping_frame(a0)	; display appropriate credits
-		move.b	#0,1(a0)
+		move.b	#0,render_flags(a0)
 		move.b	#0,priority(a0)
 
 		cmpi.b	#GameModeID_TitleScreen,(Game_Mode).w	; is this the title screen?
@@ -34138,13 +34147,13 @@ loc_18D22:				; CODE XREF: ROM:00018D6Cj
 
 loc_18D2A:				; CODE XREF: ROM:00018D20j
 		move.b	(a2)+,routine(a1)
-		move.b	#$3D,0(a1) ; '='
+		move.b	#$3D,id(a1) ; '='
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		move.l	#Map_Eggman,mappings(a1)
 		move.w	#$400,art_tile(a1)
 		bsr.w	j_Adjust2PArtPointer2_1
-		move.b	#4,1(a1)
+		move.b	#4,render_flags(a1)
 		move.b	#$20,width_pixels(a1) ; ' '
 		move.b	#3,priority(a1)
 		move.b	(a2)+,anim(a1)
@@ -34166,8 +34175,8 @@ Obj3D_ShipMain:				; DATA XREF: ROM:00018D0Co
 		jsr	AnimateSprite
 		move.b	status(a0),d0
 		andi.b	#3,d0
-		andi.b	#$FC,1(a0)
-		or.b	d0,1(a0)
+		andi.b	#$FC,render_flags(a0)
+		or.b	d0,render_flags(a0)
 		jmp	DisplaySprite
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 Obj3D_ShipIndex:dc.w loc_18DC8-Obj3D_ShipIndex ; DATA XREF: ROM:Obj3D_ShipIndexo
@@ -34244,7 +34253,7 @@ BossDefeated:				; CODE XREF: ROM:00017956j
 		bne.s	locret_18EA0
 		jsr	SingleObjLoad
 		bne.s	locret_18EA0
-		move.b	#$3F,0(a1) ; '?'
+		move.b	#$3F,id(a1) ; '?'
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		jsr	(RandomNumber).l
@@ -34297,7 +34306,7 @@ loc_18EC8:				; DATA XREF: ROM:00018DBCo
 		addq.b	#2,routine_secondary(a0)
 		jsr	SingleObjLoad2
 		bne.s	loc_18F0E
-		move.b	#$48,0(a1) ; 'H'
+		move.b	#$48,id(a1) ; 'H'
 		move.w	$30(a0),x_pos(a1)
 		move.w	$38(a0),y_pos(a1)
 		move.l	a0,$34(a1)
@@ -34416,7 +34425,7 @@ loc_18FF6:				; DATA XREF: ROM:00018DC6o
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_19010:				; CODE XREF: ROM:00019008j
-		tst.b	1(a0)
+		tst.b	render_flags(a0)
 		bpl.s	loc_1901E
 
 loc_19016:				; CODE XREF: ROM:0001900Ej
@@ -34466,7 +34475,7 @@ loc_1905C:				; CODE XREF: ROM:00019046j
 		subq.b	#2,d0
 		bne.s	loc_19070
 		move.b	#6,anim(a0)
-		tst.b	1(a0)
+		tst.b	render_flags(a0)
 		bpl.s	loc_19072
 
 loc_19070:				; CODE XREF: ROM:00019062j
@@ -34483,7 +34492,7 @@ Obj3D_FlameMain:			; DATA XREF: ROM:00018D10o
 		cmpi.b	#$C,routine_secondary(a1)
 		bne.s	loc_19098
 		move.b	#$B,anim(a0)
-		tst.b	1(a0)
+		tst.b	render_flags(a0)
 		bpl.s	loc_190A6
 		bra.s	loc_190A4
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -34512,8 +34521,8 @@ Obj3D_Display:				; CODE XREF: ROM:loc_19070j
 		jsr	AnimateSprite
 		move.b	status(a0),d0
 		andi.b	#3,d0
-		andi.b	#$FC,1(a0)
-		or.b	d0,1(a0)
+		andi.b	#$FC,render_flags(a0)
+		or.b	d0,render_flags(a0)
 		jmp	DisplaySprite
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 ;----------------------------------------------------
@@ -34553,7 +34562,7 @@ loc_1912E:				; CODE XREF: ROM:00019190j
 		bne.s	loc_19194
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
-		move.b	#$48,0(a1) ; 'H'
+		move.b	#$48,id(a1) ; 'H'
 		move.b	#6,routine(a1)
 		move.l	#Map_Obj15,mappings(a1)
 		move.w	#$380,art_tile(a1)
@@ -34567,7 +34576,7 @@ loc_1916A:				; CODE XREF: ROM:0001912Cj
 		lsr.w	#6,d5
 		andi.w	#$7F,d5	; ''
 		move.b	d5,(a2)+
-		move.b	#4,1(a1)
+		move.b	#4,render_flags(a1)
 		move.b	#8,width_pixels(a1)
 		move.b	#6,priority(a1)
 		move.l	$34(a0),$34(a1)
@@ -34648,7 +34657,7 @@ loc_19248:				; CODE XREF: sub_19236+Aj
 		move.b	status(a1),status(a0)
 		tst.b	status(a1)
 		bpl.s	locret_19272
-		move.b	#$3F,0(a0) ; '?'
+		move.b	#$3F,id(a0) ; '?'
 		move.b	#0,routine(a0)
 
 locret_19272:				; CODE XREF: sub_19236+2Ej
@@ -34661,7 +34670,7 @@ loc_19274:				; DATA XREF: ROM:000190FAo
 		movea.l	$34(a0),a1
 		tst.b	status(a1)
 		bpl.s	loc_1928A
-		move.b	#$3F,0(a0) ; '?'
+		move.b	#$3F,id(a0) ; '?'
 		move.b	#0,routine(a0)
 
 loc_1928A:				; CODE XREF: ROM:0001927Cj
@@ -34855,7 +34864,7 @@ Obj3E_Init:				; DATA XREF: ROM:Obj3E_Indexo
 		move.l	#Map_Obj3E,mappings(a0)
 		move.w	#$49D,art_tile(a0)
 		bsr.w	j_Adjust2PArtPointer_6
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.w	y_pos(a0),$30(a0)
 		moveq	#0,d0
 		move.b	$28(a0),d0
@@ -34930,7 +34939,7 @@ Obj3E_Explosion:			; DATA XREF: ROM:00019516o
 		bne.s	loc_19660
 		jsr	SingleObjLoad
 		bne.s	loc_19660
-		move.b	#$3F,0(a1) ; '?'
+		move.b	#$3F,id(a1) ; '?'
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		jsr	(RandomNumber).l
@@ -34963,7 +34972,7 @@ loc_19668:				; CODE XREF: ROM:00019664j
 loc_1968E:				; CODE XREF: ROM:000196B4j
 		jsr	SingleObjLoad
 		bne.s	locret_196B8
-		move.b	#$28,0(a1) ; '('
+		move.b	#$28,id(a1) ; '('
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		add.w	d4,x_pos(a1)
@@ -34982,7 +34991,7 @@ Obj3E_Animals:				; DATA XREF: ROM:0001951Co
 		bne.s	loc_196F8
 		jsr	SingleObjLoad
 		bne.s	loc_196F8
-		move.b	#$28,0(a1) ; '('
+		move.b	#$28,id(a1) ; '('
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		jsr	(RandomNumber).l
@@ -35282,7 +35291,7 @@ loc_19994:				; CODE XREF: TouchResponse+1A8j
 
 loc_199AE:				; CODE XREF: TouchResponse+1BAj
 		bsr.w	AddPoints
-		move.b	#$27,0(a1) ; '''
+		move.b	#$27,id(a1) ; '''
 		move.b	#0,routine(a1)
 		tst.w	y_vel(a0)
 		bmi.s	loc_199D4
@@ -35339,7 +35348,7 @@ loc_19A10:
 		beq.w	Hurt_NoRings
 		jsr	SingleObjLoad
 		bne.s	HurtShield
-		move.b	#$37,0(a1) ; '7'
+		move.b	#$37,id(a1) ; '7'
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 
@@ -35503,7 +35512,7 @@ S1SS_ShowLayout:			; CODE XREF: ROM:0000518Ep
 		bsr.w	sub_19CC2
 		bsr.w	sub_19F02
 		move.w	d5,-(sp)
-		lea	($FFFF8000).w,a1
+		lea	(Level_Layout).w,a1
 		move.b	($FFFFF780).w,d0
 		andi.b	#$FC,d0
 		jsr	(CalcSine).l
@@ -35512,13 +35521,13 @@ S1SS_ShowLayout:			; CODE XREF: ROM:0000518Ep
 		muls.w	#$18,d4
 		muls.w	#$18,d5
 		moveq	#0,d2
-		move.w	($FFFFEE00).w,d2
+		move.w	(Camera_X_pos).w,d2
 		divu.w	#$18,d2
 		swap	d2
 		neg.w	d2
 		addi.w	#$FF4C,d2
 		moveq	#0,d3
-		move.w	($FFFFEE04).w,d3
+		move.w	(Camera_Y_pos).w,d3
 		divu.w	#$18,d3
 		swap	d3
 		neg.w	d3
@@ -35556,15 +35565,15 @@ loc_19BF2:				; CODE XREF: S1SS_ShowLayout+82j
 		move.w	(sp)+,d5
 		lea	($FFFF0000).l,a0
 		moveq	#0,d0
-		move.w	($FFFFEE04).w,d0
+		move.w	(Camera_Y_pos).w,d0
 		divu.w	#$18,d0
 		mulu.w	#$80,d0	; '€'
 		adda.l	d0,a0
 		moveq	#0,d0
-		move.w	($FFFFEE00).w,d0
+		move.w	(Camera_X_pos).w,d0
 		divu.w	#$18,d0
 		adda.w	d0,a0
-		lea	($FFFF8000).w,a4
+		lea	(Level_Layout).w,a4
 		move.w	#$F,d7
 
 loc_19C3E:				; CODE XREF: S1SS_ShowLayout+124j
@@ -36274,7 +36283,7 @@ loc_1A3DC:				; DATA XREF: ROM:Obj09_Indexo
 		move.l	#Map_Sonic,mappings(a0)
 		move.w	#$780,art_tile(a0)
 		bsr.w	j_Adjust2PArtPointer_7
-		move.b	#4,1(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#0,priority(a0)
 		move.b	#2,anim(a0)
 		bset	#2,status(a0)
@@ -36508,18 +36517,18 @@ S1SS_FixCamera:				; CODE XREF: ROM:0001A3BEp
 					; ROM:0001A480p ...
 		move.w	y_pos(a0),d2
 		move.w	x_pos(a0),d3
-		move.w	($FFFFEE00).w,d0
+		move.w	(Camera_X_pos).w,d0
 		subi.w	#$A0,d3	; ' '
 		bcs.s	loc_1A606
 		sub.w	d3,d0
-		sub.w	d0,($FFFFEE00).w
+		sub.w	d0,(Camera_X_pos).w
 
 loc_1A606:				; CODE XREF: S1SS_FixCamera+10j
-		move.w	($FFFFEE04).w,d0
+		move.w	(Camera_Y_pos).w,d0
 		subi.w	#$70,d2	; 'p'
 		bcs.s	locret_1A616
 		sub.w	d2,d0
-		sub.w	d0,($FFFFEE04).w
+		sub.w	d0,(Camera_Y_pos).w
 
 locret_1A616:				; CODE XREF: S1SS_FixCamera+20j
 		rts
@@ -36983,7 +36992,7 @@ locret_1AA58:				; CODE XREF: OBj09_ChkItems2+B8j
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
-; Object 10 - Blank, animation test in Sonic 1 prototype
+; Object 10 - Animation test in Sonic 1 prototype, now blank
 ; ---------------------------------------------------------------------------
 
 Obj10:
@@ -37004,6 +37013,8 @@ j_Adjust2PArtPointer_7:		; JmpTo
 
 ; DynamicArtCues:
 AniArt_Load:
+		;bsr.w	ShiftCPZBackground		; this was commented out of this build, we know this
+							; thanks to the symbol tables
 		moveq	#0,d0
 		move.b	(Current_Zone).w,d0
 		add.w	d0,d0
@@ -37257,7 +37268,8 @@ AnimCue_CPZ:	dc.w 7
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 
 
-; sub_1AC1E: ShiftCPZBackground:
+; sub_1AC1E:
+ShiftCPZBackground:
 		cmpi.b	#2,(Current_Zone).w	; is this Chemical Plant Zone?
 		beq.s	loc_1AC28		; if yes, branch
 
@@ -37269,7 +37281,7 @@ locret_1AC26:
 ; i.e. rotates the blocks to the left by one
 
 loc_1AC28:
-		move.w	($FFFFEE00).w,d0
+		move.w	(Camera_X_pos).w,d0
 		cmpi.w	#$1940,d0
 		bcs.s	locret_1AC26
 		cmpi.w	#$1F80,d0
@@ -37443,7 +37455,7 @@ Obj21_Init:
 		move.l	#Map_obj21,mappings(a0)
 		move.w	#$6CA,art_tile(a0)
 		bsr.w	j_Adjust2PArtPointer_8
-		move.b	#0,1(a0)
+		move.b	#0,render_flags(a0)
 		move.b	#0,priority(a0)
 
 Obj21_Main:
@@ -37704,11 +37716,11 @@ HUD_TilesZero:	dc.b $FF,$FF,  0,  0	; 0 ; DATA XREF: HUD_LoadZero+At
 
 HUDDebug_XY:				; CODE XREF: HudUpdate:loc_1B330p
 		move.l	#$5C400003,(VDP_control_port).l
-		move.w	($FFFFEE00).w,d1
+		move.w	(Camera_X_pos).w,d1
 		swap	d1
 		move.w	(MainCharacter+x_pos).w,d1
 		bsr.s	HUDDebug_XY2
-		move.w	($FFFFEE04).w,d1
+		move.w	(Camera_Y_pos).w,d1
 		swap	d1
 		move.w	(MainCharacter+y_pos).w,d1
 ; End of function HUDDebug_XY
@@ -38129,8 +38141,8 @@ Debug_Init:
 		move.w	#0,($FFFFEECC).w
 		move.w	#$720,($FFFFEEC6).w
 		andi.w	#$7FF,(MainCharacter+y_pos).w
-		andi.w	#$7FF,($FFFFEE04).w
-		andi.w	#$3FF,($FFFFEE0C).w
+		andi.w	#$7FF,(Camera_Y_pos).w
+		andi.w	#$3FF,(Camera_BG_Y_pos).w
 		move.b	#0,mapping_frame(a0)
 		move.b	#0,anim(a0)
 
@@ -38283,9 +38295,9 @@ Debug_SpawnObject:
 		bne.s	Debug_ExitDebugMode
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
-		move.b	mappings(a0),0(a1) ; load obj
-		move.b	1(a0),1(a1)
-		move.b	1(a0),status(a1)
+		move.b	mappings(a0),id(a1) ; load obj
+		move.b	render_flags(a0),render_flags(a1)
+		move.b	render_flags(a0),status(a1)
 		andi.b	#$7F,status(a1)
 		moveq	#0,d0
 		move.b	(Debug_object).w,d0
@@ -38339,7 +38351,7 @@ LoadDebugObjectSprite:
 		move.l	(a2,d0.w),mappings(a0)
 		move.w	6(a2,d0.w),art_tile(a0)
 		move.b	5(a2,d0.w),mapping_frame(a0)
-		;move.b	4(a2,d0.w),$28(a0)	; this does... something with the object's subtype
+		;move.b	4(a2,d0.w),$28(a0)		; this is useless since we already loaded it earlier
 		bsr.w	j_Adjust2PArtPointer_1
 		rts
 ; End of function Debug_ShowItem
@@ -40244,61 +40256,14 @@ Level_Index:	dc.w Level_GHZ1-Level_Index,Level_GHZBg-Level_Index,Level_Null-Leve
 		dc.w Level_CPZ1-Level_Index,Level_CPZBg-Level_Index,Level_Null-Level_Index
 		dc.w Level_CPZ1-Level_Index,Level_CPZBg-Level_Index,Level_Null-Level_Index
 
-Level_GHZ1:	dc.b $2F,  4,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 0
-					; DATA XREF: ROM:Level_Indexo
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,$38,  1,  1,  1,$24,  0,  0; 16
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 32
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 48
-		dc.b   0,  0,  0,  0,$38,$24,  0,  0,$21,$26,$11,$11,$1F, $F,  0,  0; 64
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 80
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$2D,$31; 96
-		dc.b $24,$14,$38,  4,$23,$25,$2D,$B5,$26,$11,$1F,$1E,$20, $F,  0,  0; 112
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 128
-		dc.b   0,  0,$2D,$2D,  3,$31,$24,$10,  2,  7,  4,  5,$2B, $E,$1E,$11; 144
-		dc.b $25,$1A,$26,$11,  8,  9, $A,$17,$1E,$1E,$20,$11,$1F, $F,  0,$10; 160
-		dc.b   5,$2B,$16,  2,  3,$37,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 176
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 192
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,$1E,$1E,$1E,$20,$25,  7,$22; 208
-		dc.b  $C, $D,$15,$19,$11,$25,$2D,$2D,$2D,$2D,  0,  0,  0,  0,  0,  0; 224
-		dc.b   0,  0		; 240
-Level_GHZ2:	dc.b $20,  5,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 0
-					; DATA XREF: ROM:Level_Indexo
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 16
-		dc.b   0,  0,  0, $E,$2B,$16,$1C,  5,$2B,$16,  2,$37,  0,  0,  0,  0; 32
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,$21,  3,  0,  0,  0,  0,$21,$31; 48
-		dc.b $24,  0,  0,  0, $C, $D,  6, $C,$1E, $D,$15,$11,$25,$32,$2B, $B; 64
-		dc.b $2D,$B5,$2D,  7,$24,$12,$38,$24,$2D,$26,  8,  5,$2B, $B,$21,$26; 80
-		dc.b $1F, $F,  0,  0,  0,$1E,$1E,$1E,$1E, $A,$17,$1E,$1E, $C, $C, $D; 96
-		dc.b $19,$11,  8,$17,$1E,$1E,$1E,$1E,$1E,$1E,$1E,$1E,$18, $D,  8,$23; 112
-		dc.b $11,$20,$25,$2D,$2D,$2D,$1E,$1E,$1E,$1E,$1E,$1E,$1E,$1E,$1E,$1E; 128
-		dc.b $1E,$1E,$1E,$1E,$1E,$1E,  0,  0,  0,  0,  0,$1E,$1E, $A,$17,$1E; 144
-		dc.b $11,  8,$1D,  9,$1E,$1E,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 160
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$1E,$1E,$1E; 176
-		dc.b $1E,$1E,$1E,$1E,$1E,$1E,$1E,  0; 192
-Level_GHZ3:	dc.b $2F,  5,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 0
-					; DATA XREF: ROM:Level_Indexo
-		dc.b $2D,$37,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 16
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 32
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$13,$38; 48
-		dc.b $18, $F,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 64
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 80
-		dc.b   0,  0,  0,  0,  0,$13,$38,$24,$14,  0,$13,$38,$27,  2,$1A,$26; 96
-		dc.b $1F, $F,  0,  0,$14,$21,$2D,  0,  0,  0,$13,$33,$33,$10,$24,$2C; 112
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 128
-		dc.b   0,  0,$2D,$37,$16,$1B,$23,$25,$1A,  3,  6,$26,$1F,$1E,$1E,$1E; 144
-		dc.b $20,$25,$B5,$31,$1B,$23,$11,$33,$33,  2,$1A,$34,$34,$19,$25,  6; 160
-		dc.b $31,$27,  0,$16,  2,  7,  2,$37,$2D,$2D,$2D,$3C,$3C,$2D,$2D,  0; 176
-		dc.b   0,  0,$1E, $F,$15,$1E,$1E,$1E,$1E,$1E,$1E,$1E,$20,$1F,$1E,$1E; 192
-		dc.b $1E,$1E,$1E,$1E, $C,$11,  9,$34,$34,$11,$1E,$1E,$1E,$1E,  0,  0; 208
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 224
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$1E,$1E,$20,$11,  8; 240
-		dc.b   9, $A,$1D,  9,$1E,$1E,$1E,$1E,$1E,$1E,  0,  0,  0,  0,  0,  0; 256
-		dc.b   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 272
-		dc.b   0,  0		; 288
-Level_GHZBg:	dc.b $1F,  0,$3D,$3E,$3A,$3F,$30,$39,$3B,$3D,$3A,$30,$3E,$39,$3D,$3B; 0
-					; DATA XREF: ROM:Level_Indexo
-		dc.b $3B,$3D,$3E,$3A,$3F,$3E,$3A,$3F,$30,$39,$3B,$3D,$3A,$30,$3E,$39; 16
-		dc.b $3D,$3B		; 32
+Level_GHZ1:	incbin	"level/layout/GHZ_1.bin"
+		even
+Level_GHZ2:	incbin	"level/layout/GHZ_2.bin"
+		even
+Level_GHZ3:	incbin	"level/layout/GHZ_3.bin"
+		even
+Level_GHZBg:	incbin	"level/layout/GHZ_BG.bin"
+		even
 Level_EHZ1:	incbin	"level/layout/EHZ_1.bin"
 		even
 Level_EHZ2:	incbin	"level/layout/EHZ_2.bin"
@@ -41031,7 +40996,7 @@ ObjPos_Null:	dc.w $FFFF,    0,    0
 ; ---------------------------------------------------------------------------
 ; Leftover symbol tables due to compiler weirdness; these are formatted
 ; with a Unix-like line break instead of a DOS-like line break, as Sonic 2
-; was made using ProASM rather than 2500AD.
+; was made using ProASM on an Amiga rather than 2500AD.
 ;
 ; Read more about it here:
 ; https://clownacy.wordpress.com/2022/03/30/everything-that-i-know-about-sonic-the-hedgehogs-source-code/
@@ -41102,6 +41067,7 @@ RingPos_CPZ1:	incbin	"level/rings/CPZ_1.bin"
 ; Yet another symbol table that doesn't match up with the prototype, also
 ; containing a lot of other leftovers such as the Debug Mode source code
 ; and remnants of an early title screen
+; https://github.com/devon-artmeier/s2na-scraps/tree/main
 ; ---------------------------------------------------------------------------
 
 Leftover_50A9C:
@@ -42256,348 +42222,21 @@ Nem_CPZ_Unknown:dc.b   0,  8,$80,$12,  0,$73,  4,$82,$15,$1A,$87,$13,  2,$88,$13
 		dc.b $AF,$AF,$FF,$BD,$7D,$7A,$5A,$5F,$F2,$D3,$D3,$D2,$D2,$FF,$E7,$CB,$E5,$F2,$F9,$7F,$F3,$8B,$8B,$8B,$8B,$FF,$7C,$5C,$5B,$CD,$E7,$FE,$B6,$B6,$AE,$5C,$FF,$CD,$55,$3C,$79,$FF,$85,$8B,$16,$2C,$FF,$BF,$BD,$EF,$78,  0; 64
 Map128_CPZ:	incbin	"mappings/128x128/CPZ.bin"
 		even
-Map16_GHZ:	dc.w $4000,$4000,$4001,$4001,$4002,$4802,$4003,$4803,$4004,$4006,$4005,$4007,$4008,$400A,$4009,$400B,$400C,$400E,$400D,$400F,$4010,$4012,$4011,$4013,$4014,$4016,$4015,$4017,$4018,$401A,$4019,$401B,$401C,$401E,$401D,$401F,$4020,$4022,$4021,$4023,$4024,$4026,$4025,$4027,$4028,$402A,$4029,$402B,$402C,$402E,$402D,$402F,$4030,$4032,$4031,$4033,$4034,$4036,$4035,$4037,$4038,$400A,$4039,$400B; 0
-					; DATA XREF: ROM:0001BFF0t
-					; ROM:0001C050o
-		dc.w $403A,$403C,$403B,$403D,$403E,$4040,$403F,$4041,$4042,$4044,$4043,$4045,$4046,$4842,$4047,$4843,$4048,$404A,$4049,$404B,$404C,$404E,$404D,$404F,$4050,$4052,$4051,$4053,$4054,$4056,$4055,$4057,$4058,$405A,$4059,$405B,$405C,$405E,$405D,$405F,$4060,$4062,$4061,$4063,$4064,$4066,$4065,$4067,$4068,$406A,$4069,$406B,$406C,$406E,$406D,$406F,$4070,$4072,$4071,$4073,$4074,$4076,$4075,$4077; 64
-		dc.w $4078,$407A,$4079,$407B,$407C,$407E,$407D,$407F,$4080,$4082,$4081,$4083,$4084,$4086,$4085,$4087,$4088,$408A,$4089,$408B,$408C,$408E,$408D,$408F,$4090,$4092,$4091,$4093,$4000,$4094,$4001,$4095,$4008,$4096,$4009,$4097,$4098,$409A,$4099,$409B,$409C,$409E,$409D,$409F,$40A0,$40A2,$40A1,$40A3,$40A4,$402C,$40A5,$402D,$4030,$4034,$4031,$4035,$40A6,$40A8,$40A7,$40A9,$40AA,$40AC,$40AB,$40AD; 128
-		dc.w $40AE,$40B0,$40AF,$40B1,$40B2,$40B4,$40B3,$40B5,$40B6,$40B8,$40B7,$40B9,$40BA,$40BC,$40BB,$40BD,$40BE,$40C0,$40BF,$40C1,$40C2,$40C4,$40C3,$40C5,$4064,$406E,$4065,$406F,$4070,$40C6,$4071,$40C7,$4080,$408A,$4081,$408B,$4090,$4802,$4091,$4803,$4000,$40C8,$4001,$40C9,$40CA,$40CC,$40CB,$40CD,$40CE,$40D0,$40CF,$40D1,$40D2,$40D4,$40D3,$40D5,$40D6,$40D8,$40D7,$40D9,$40DA,$40DC,$40DB,$40DD; 192
-		dc.w $40DE,$40E0,$40DF,$40E1,$40E2,$40E4,$40E3,$40E5,$40E6,$40E8,$40E7,$40E9,$40EA,$40EC,$40EB,$40ED,$40EE,$40F0,$40EF,$40F1,$40F2,$40F4,$40F3,$40F5,$4042,$40F6,$4043,$40F7,$4002,$40F8,$4003,$40F9,$40FA,$40FC,$40FB,$40FD,$40F2,$40FE,$40F3,$40FF,$4100,$4102,$4101,$4103,$4104,$4106,$4105,$4107,$4108,$410A,$4109,$410B,$410C,$410E,$410D,$410F,$4110,$4112,$4111,$4113,$4114,$4116,$4115,$4117; 256
-		dc.w $4118,$411A,$4119,$411B,$411C,$411E,$411D,$411F,$4120,$4122,$4121,$4123,$4124,$4126,$4125,$4127,$4128,$412A,$4129,$412B,$412C,$412E,$412D,$412F,$4130,$4132,$4131,$4133,$4134,$4136,$4135,$4137,$4936,$4138,$4937,$4139,$4000,$413A,$4001,$413B,$413C,$413E,$413D,$413F,$4140,$4142,$4141,$4143,$404C,$4144,$404D,$4145,$4146,$4148,$4147,$4149,$414A,$414C,$414B,$414D,$40FA,$414E,$40FB,$414F; 320
-		dc.w $4150,$4150,$4151,$4151,$4152,$4154,$4153,$4155,$4156,$4158,$4157,$4159,$C15A,$C15C,$C15B,$C15D,$C15E,$C160,$C15F,$C161,$4162,$4164,$4163,$4165,$4166,$4168,$4167,$4169,$416A,$416C,$416B,$416D,$416E,$4170,$416F,$4171,$4172,$4174,$4173,$4175,$4176,$4178,$4177,$4179,$4176,$4976,$4177,$4977,$417A,$417C,$417B,$417D,$417E,$497E,$417F,$497F,$4180,$4182,$4181,$4183,$4184,$4984,$4185,$4985; 384
-		dc.w $4186,$4188,$4187,$4189,$418A,$418C,$418B,$418D,$418E,$4190,$418F,$4191,$4192,$4194,$4193,$4195,$4176,$4976,$4177,$4977,$4196,$4996,$4197,$4997,$4198,$4998,$4199,$4999,$4198,$419A,$4199,$419B,$491E,$419C,$491F,$419D,$419E,$41A0,$419F,$41A1,$41A2,$41A4,$41A3,$41A5,$4974,$41A6,$4975,$41A7,$C1A8,$C1AA,$C1A9,$C1AB,$C1AC,$C1AE,$C1AD,$C1AF,$C1B0,$C1B2,$C1B1,$C1B3,$C1B4,$C1B6,$C1B5,$C1B7; 448
-		dc.w $C1B8,$C1BA,$C1B9,$C1BB,$C1BC,$C1BE,$C1BD,$C1BF,$417E,$41C0,$417F,$41C1,$4008,$41C2,$4009,$41C3,$41C4,$41C6,$41C5,$41C7,$41C8,$41CA,$41C9,$41CB,$40B6,$41CC,$40B7,$41CD,$41CE,$41D0,$41CF,$41D1,$4000,$41D2,$4001,$41D3,$40B6,$C1CC,$40B7,$C1CD,$C1CE,$41D0,$C1CF,$41D1,$C000,$C1D2,$C001,$C1D3,$41D4,$49D4,$41D5,$49D5,$41D6,$41D8,$41D7,$41D9,$41DA,$41DC,$41DB,$41DD,$41DE,$41E0,$41DF,$41E1; 512
-		dc.w $41E2,$41E2,$41E3,$41E3,$41E4,$41E6,$41E5,$41E7,$41E8,$41EA,$41E9,$41EB,$41EC,$41EE,$41ED,$41EF,$41F0,$41F2,$41F1,$41F3,$41F4,$4802,$41F5,$4803,$41F6,$41F8,$41F7,$41F9,$41E2,$41FA,$41E3,$41FB,$41FC,$41FC,$41FD,$41FD,$41FE,$4200,$41FF,$4201,$4202,$4204,$4203,$4205,$4206,$4802,$4207,$4803,$4208,$420A,$4209,$420B,$41D4,$420C,$41D5,$420D,$420E,$4210,$420F,$4211,$4212,$4214,$4213,$4215; 576
-		dc.w $4216,$4218,$4217,$4219,$421A,$421C,$421B,$421D,$421E,$4190,$421F,$4191,$4002,$4220,$4003,$4221,$4222,$4224,$4223,$4225,$4226,$41FC,$4227,$41FD,$4228,$422A,$4229,$422B,$422C,$4802,$422D,$4803,$422E,$4230,$422F,$4231,$41FC,$4232,$41FD,$4233,$4234,$4802,$4235,$4803,$4236,$49FC,$4237,$49FD,$4238,$423A,$4239,$423B,$423C,$4802,$423D,$4803,$4002,$423E,$4003,$423F,$4222,$4224,$4223,$4225; 640
-		dc.w $4226,$41FC,$4227,$41FD,$4240,$4242,$4241,$4243,$4244,$4246,$4245,$4247,$4248,$424A,$4249,$424B,$424C,$424E,$424D,$424F,$4030,$4250,$4031,$4251,$4252,$4A52,$4253,$4A53,$4254,$4254,$4255,$4255,$4256,$4A52,$4257,$4A53,$4258,$40A8,$4259,$40A9,$C13C,$C13E,$C13D,$C13F,$C140,$C142,$C141,$C143,$C146,$C148,$C147,$C149,$425A,$4802,$425B,$4803,$425C,$4802,$425D,$4803,$C162,$C164,$C163,$C165; 704
-		dc.w $C166,$C168,$C167,$C169,$4000,$425E,$4001,$425F,$4260,$4262,$4261,$4263,$4264,$4266,$4265,$4267,$4268,$426A,$4269,$426B,$426C,$4000,$426D,$4001,$426E,$4270,$426F,$4271,$4272,$4274,$4273,$4275,$4276,$4278,$4277,$4279,$427A,$427C,$427B,$427D,$427E,$4000,$427F,$4001,$4280,$4282,$4281,$4283,$4284,$4286,$4285,$4287,$4288,$428A,$4289,$428B,$428C,$4000,$428D,$4001,$428E,$4000,$428F,$4001; 768
-		dc.w $4000,$4290,$4001,$4291,$4292,$4294,$4293,$4295,$4296,$4298,$4297,$4299,$429A,$4000,$429B,$4001,$429C,$4000,$429D,$4001,$429E,$400A,$429F,$400B,$C000,$C25E,$C001,$C25F,$C260,$C262,$C261,$C263,$C264,$C266,$C265,$C267,$C268,$C26A,$C269,$C26B,$C26C,$C000,$C26D,$C001,$C26E,$C270,$C26F,$C271,$C272,$C274,$C273,$C275,$C276,$C278,$C277,$C279,$C27A,$C27C,$C27B,$C27D,$C27E,$C000,$C27F,$C001; 832
-		dc.w $C280,$C282,$C281,$C283,$C284,$C286,$C285,$C287,$C288,$C28A,$C289,$C28B,$C28C,$C000,$C28D,$C001,$C28E,$C000,$C28F,$C001,$C000,$C290,$C001,$C291,$C292,$C294,$C293,$C295,$C296,$C298,$C297,$C299,$C29A,$C000,$C29B,$C001,$C29C,$C000,$C29D,$C001,$C29E,$400A,$C29F,$400B,$49CA,$49C8,$49CB,$49C9,$42A0,$40CC,$42A1,$40CD,$4038,$41C2,$4039,$41C3,$41C8,$42A2,$41C9,$42A3,$42A4,$42A6,$42A5,$42A7; 896
-		dc.w $42A8,$42AA,$42A9,$42AB,$41A8,$41AA,$41A9,$41AB,$41AC,$41AE,$41AD,$41AF,$42AC,$42AC,$42AD,$42AD,$401C,$401E,$401D,$401F,$4020,$4022,$4021,$4023,$42AE,$41A0,$42AF,$41A1,$42B0,$42B2,$42B1,$42B3,$42B4,$42B6,$42B5,$42B7,$42B8,$42BA,$42B9,$42BB,$42BC,$4000,$42BD,$4001,$62BE,$62BE,$62BF,$62BF,$62C0,$62C2,$62C1,$62C3,$62C4,$62C6,$62C5,$62C7,$62C8,$62CA,$62C9,$62CB,$62CC,$62CE,$62CD,$62CF; 960
-		dc.w $62D0,$62D2,$62D1,$62D3,$62D4,$62D6,$62D5,$62D7,$62D8,$62DA,$62D9,$62DB,$62DC,$62DE,$62DD,$62DF,$62E0,$62BE,$62E1,$62BF,$62E2,$62E4,$62E3,$62E5,$62E6,$62E8,$62E7,$62E9,$62EA,$62EC,$62EB,$62ED,$62EE,$62F0,$62EF,$62F1,$42F2,$42F4,$42F3,$42F5,$42F6,$42F8,$42F7,$42F9,$42FA,$42FC,$42FB,$42FD,$42FE,$4300,$42FF,$4301,$4302,$4304,$4303,$4305,$4306,$4308,$4307,$4309,$430A,$430C,$430B,$430D; 1024
-		dc.w $430E,$4310,$430F,$4311,$4312,$4314,$4313,$4315,$4316,$4318,$4317,$4319,$431A,$431C,$431B,$431D,$431E,$4320,$431F,$4321,$4322,$4324,$4323,$4325,$4326,$4328,$4327,$4329,$432A,$432C,$432B,$432D,$432E,$4330,$432F,$4331,$4332,$4334,$4333,$4335,$4336,$4338,$4337,$4339,$433A,$433C,$433B,$433D,$433E,$4340,$433F,$4341,$4342,$4344,$4343,$4345,$4346,$4348,$4347,$4349,$434A,$434C,$434B,$434D; 1088
-		dc.w $434E,$4350,$434F,$4351,$4352,$4354,$4353,$4355,$4356,$4358,$4357,$4359,$435A,$435C,$435B,$435D,$435E,$4360,$435F,$4361,$4362,$4364,$4363,$4365,$4366,$4368,$4367,$4369,$436A,$436C,$436B,$436D,$436E,$4370,$436F,$4371,$4372,$4374,$4373,$4375,$4376,$4378,$4377,$4379,$437A,$437C,$437B,$437D,$437E,$4380,$437F,$4381,$4382,$4384,$4383,$4385,$4386,$4388,$4387,$4389,$438A,$438C,$438B,$438D; 1152
-		dc.w $438E,$4158,$438F,$4159,$4156,$4390,$4157,$4391,$4392,$4394,$4393,$4395,$4396,$4398,$4397,$4399,$5B98,$439A,$5B99,$439B,$439C,$439E,$439D,$439F,$63A0,$63A2,$63A1,$63A3,$63A4,$63A6,$63A5,$63A7,$63A8,$63AA,$63A9,$63AB,$63AC,$63AE,$63AD,$63AF,$43B0,$43B2,$43B1,$43B3,$43B4,$43B6,$43B5,$43B7,$43B8,$43BA,$43B9,$43BB,$43BC,$43BE,$43BD,$43BF,$43C0,$43C2,$43C1,$43C3,$43C4,$43C6,$43C5,$43C7; 1216
-		dc.w $43C8,$43CA,$43C9,$43CB,$43CC,$4190,$43CD,$4191,$43CE,$43D0,$43CF,$43D1,$43D2,$43D4,$43D3,$43D5,$43D6,$43D8,$43D7,$43D9,$492A,$412A,$492B,$412B,$4180,$4980,$4181,$4981,$C180,$C182,$C181,$C183,$4046,$4842,$4047,$4843,$C002,$C802,$C003,$C803,$C1A2,$C1A4,$C1A3,$C1A5,$C3DA,$C802,$C3DB,$C803,$C000,$C3DC,$C001,$C3DD,$C000,$C3DE,$C001,$C3DF,$C99C,$C11E,$C99D,$C11F,$C3E0,$C3E2,$C3E1,$C3E3; 1280
-		dc.w $4000,$43E4,$4001,$43E5,$42BE,$43E6,$42BF,$43E7,$43E8,$43EA,$43E9,$43EB,$4000,$43EC,$4001,$43ED,$43EE,$43F0,$43EF,$43F1,$43F2,$43F4,$43F3,$43F5,$43F6,$43F8,$43F7,$43F9,$43FA,$43FC,$43FB,$43FD,$43FE,$4400,$43FF,$4401,$8402,$8404,$8403,$8405,$8406,$8408,$8407,$8409,$840A,$840C,$840B,$840D,$640E,$6410,$640F,$6411,$6412,$6414,$6413,$6415,$433A,$4416,$433B,$4417,$42BE,$42BE,$42BF,$42BF; 1344
-		dc.w $4418,$441A,$4419,$441B,$441C,$441E,$441D,$441F,$4420,$4422,$4421,$4423,$4424,$42BE,$4425,$42BF,$4426,$4428,$4427,$4429,$442A,$442C,$442B,$442D,$C2F2,$C2F4,$C2F3,$C2F5,$C2F6,$C2F8,$C2F7,$C2F9,$C2FA,$C2FC,$C2FB,$C2FD,$C002,$C42E,$C003,$C42F,$C430,$C432,$C431,$C433, $40A, $40C, $40B,	$40D,$4434,$42BE,$4435,$42BF,$4436,$4438,$4437,$4439,$443A,$443C,$443B,$443D,$443E,$4440,$443F,$4441; 1408
-		dc.w $4442,$4444,$4443,$4445,$4446,$4448,$4447,$4449,$444A,$444C,$444B,$444D,$4C00,$4BFE,$4C01,$4BFF,$4BFC,$4BFA,$4BFD,$4BFB,$4C1A,$4C18,$4C1B,$4C19,$CC32,$CC30,$CC33,$CC31,$CC2E,$C802,$CC2F,$C803,$C44E,$C450,$C44F,$C451,$C452,$C454,$C453,$C455,$4456,$4458,$4457,$4459,$4000,$43DE,$4001,$43DF,$4000,$43DC,$4001,$43DD,$43DA,$4802,$43DB,$4803,$43E0,$43E2,$43E1,$43E3,$445A,$445C,$445B,$445D; 1472
-		dc.w $445E,$4460,$445F,$4461,$4462,$4464,$4463,$4465,$CC58,$CC56,$CC59,$CC57,$C99C,$C11E,$C99D,$C11F,$4004,$4006,$4005,$4007,$400C,$400E,$400D,$400F,$4010,$4012,$4011,$4013,$4014,$4016,$4015,$4017,$4018,$401A,$4019,$401B,$4002,$4802,$4003,$4803,$C91E,$C19C,$C91F,$C19D,$C002,$C802,$C003,$C803,$492A,$412A,$492B,$412B,$4180,$4980,$4181,$4981,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001; 1536
-		dc.w $4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001; 1600
-		dc.w $4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001; 1664
-		dc.w $4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001,$4000,$4000,$4001,$4001; 1728
-Nem_GHZ:	dc.b $84,$66,$80,  3,  1,$14,  5,$25,$10,$34,  7,$46,$2F,$55,$14,$66,$35,$73,  0,$81,  4,  4,$16,$2B,$28,$F6,$38,$F2,$82,  5,$12,$16,$32,$38,$F3,$78,$EB,$83,  4,  6,$16,$31,$38,$F1,$84,  7,$74,$85,  6,$27,$17,$6F,$38,$F5,$86,  7,$6E,$78,$F4,$87,  6,$36,$17,$72; 0
-					; DATA XREF: ROM:LevelArtPointerst
-					; ROM:0001C04Co ...
-		dc.b $88,  6,$33,$17,$70,$89,  6,$2E,$17,$76,$8A,  6,$26,$18,$F0,$8B,  6,$30,$17,$73,$8C,  6,$34,$18,$EF,$8D,  5,$16,$18,$EA,$8E,  5,$11,$18,$EE,$8F,  6,$2A,$17,$71,$FF,  0,  0,  0,  0,  0,  0,$F5,$F1,  0,$7A,  0,  0,  3,$D0,  1,$5E,$3B,$F9,  0,$3A,$DE,$67,$CF; 64
-		dc.b $54,$99,$66,$39,$DC,$B3,$2D,$C0,  4,  2,$F6,$45,$42,$CF,$87,$85,$D9,$E1,$9D,$C0, $F,$D1,$4D,$E7,$9C,$26,$38,$2D,$D4,$43,$9A,$CC,$66,  0,$6A,$8E,$CE,$80,$B3,$A3,$B2,$1F,$D7,$7E,$B6,$35,  0,  0,  0,  0,  3,$C5,$E3,$AA,$45,$62,$62,$6A,$89,$EE,$31,  0,  0,  0; 128
-		dc.b   0,$42,$2F,$18,$44,$D4,$B5,$51, $C,$56,$27,$F5,$DF,$BF,$8D,$40, $A,$64,  0,  0, $A,$64,$F5,$3D,$5A,$A5,$4B,$51,$A8,$C6,$A3,$E1,$3C,$C0, $F,$3F,$50,  0,  0,$7E,$8A,$DE,$B5,$42,$63,$82,$C6,$88,$6A,$59,$8C,$DC,$FF,$71,$84,$C0, $E,$B0,  0,  0,$75,$BE,$6F,$36; 192
-		dc.b $A9,$9A,$E6,$66,$38,$4D,$2E,$12,$CC,  1,$D6,  0,  0, $F,$D1,$67,$E7,$34,$33,$37,$2E,$14,$43,$32,$E6,$73,$EE,$FD,$EC,$6A,  0,$75,$BD,$4F,$6D,$52,$A5,$A8,$DB,$45,$A9,$74,  0,$20,$17,$B2,$2A,$16,$78,$F1,$D2,$D1,$B6,$80, $F,$D1,$55,$E7,$68,$54,$62,$BA,$51, $D; 256
-		dc.b $96,$A3,$50,  3,$54,$76,$74,  5,$9D,$1D,$90,$FE,$AA,$EE,$EB,$68,  0,$FF,$B8,  0,  0,$3F,$EE,$F6,$79,$B5,$49,$96,$C6,$D3,$C6,$A9,$FA,$8D,$40, $F,$F1,  0,  0,  0,$FE,$8A,$DF,$A2,$35,$42,$C7,$45,$8D,$10,$D4,$B6,$35,$77,$7E,$FE,$35,$52,$2F,$50,$85,$4F,$53,$C6; 320
-		dc.b $15,$2D,$46,$A7,$40,  0,$83,  7,$AD,$82,$B2,  3,$1A,$9B,$42,$C8,$F5,$3C,$44,$40,$56,  0,  2,$8A,$8C,$15,$80,$29,  6, $F,$A5,$BB,$BB,$F8,$80,$3A,$C0,  2,$9A,$3D,$42,$16,$FD,$11,$B4,$A1,$A4,$2A,$5B,$1B,$3A, $A,$A3,$FB,$DE,$E0,  7,$5D,$34,$A5,$4F,$53,$E8,$F5; 384
-		dc.b $52,$A7,$D0,$68,  2,$B0,$10,$E7,$C3, $C,$F9,$80,$3A,$C0,$1C,$B7,$F2,$DE,$3F,$EA,$3A,$C0,$1D,$60, $E,$B0,  7,$FD,$47,$FD,$47,$58,  3,$FE,$E0, $E,$B0,  0,$1F,$F5,$1D,$60, $E,$5B,$F9,$6F,  0,$75,$80,$17,$25,$C8,$7F,$D4,$75,$80,$3F,$69,$FB,$60,  3,$C5,$E3,$AA; 448
-		dc.b $45,$62,$63,$52,$C5,$6A,  0,$20,$17,$B2,$2A,$16, $F,$57,$75,$A3,$68,$D4,  4,$22,$F1,$84,$4D,$4B,$55,$10,$C5,$62,$62,  0,$D5,$1D,$9D,  1,$67,$47,$64,  7,$F5,$DF,$AD,$8D,$40,$3C,$5E,$3A,$A4,$56,$26,$35,$2C,$56,$A0,  2,  1,$7B,$22,$A1,$60,$E9,  6,$54,$FD,$77; 512
-		dc.b $EB,$7B,$84,$22,$F1,$84,$4D,$4B,$55,$10,$C5,$62,$62,  0,$D5,$1D,$9D,  1,$67,$47,$64,$10,$67,$4E,$EF,$DE,$F7,  7,$8B,$C7,$54,$8A,$C4,$C6,$A5,$8A,$D4,  0,$47,$67,$40,$59,$D1,$D9,  4,$19,$D0,$77,$7E,$F7,$B8,$3C,$5E,$3A,$A4,$56,$26,$35,$2C,$56,$A0,  2, $B,$D9; 576
-		dc.b $15, $B,  7,$48,$32,$A2,$B0,$BF,$BB,$F7,$BD,$C0,  0,  0,  0,  0,$2F,$8D,$22,$7B,$97,$B9,$50,$2D,$41,$59,$52,$A0,$80,$B1,$64,  5,  1,$67,$41,$50,$37,$52,$A0,$6E,$5A,$A9,$72,$F7,$78,$34,$D1,  1,  0,$BD,$91,$50,$B0,$74,$83,$2A,$2B,  0,  1,$BA,$15,$2E,$97,$D5; 640
-		dc.b $7C,$CB,$74,$E6,$EA,$A7,  0,$7F,$D4,  0,  0,$96,$B2,$9F,$CF,$7A,$CF,$49,$DE,$77,$9C,$CE,$BB,$FF,$4F,$23,$38,  3,$FE,$A0,  0,  0,$F5,$F3,$79,$E1,$3A,$CF,$7C,$F7,$CF,$36,$15,$4D,$9D,$B4,$B8,$20,  1,$18,$16,$28, $A,$2B,$41,$2F,$60,  5,$F1,$1A,$2D,$56,$BE,$A3; 704
-		dc.b $64,$6B,$54,$D5,$8A,$54,$51,$58,$42,$AA,$22,$A3,$16,  1,$6B,$76,  0,$D5,$7C,$45,$4B,$52,$C6,$F8,$DE,$91,$B3,$75,$46,$A0,$35,$47,$67,$40,$59,$D1,$D9,  4,$19,$D0,  1,$63,$11, $A,$96,$C6,$2F,$DF,$D5,$8C,$40,$47,$67,$40,$59,$D1,$D9,  4,$19,$D0,  1,$63,$11,$4B; 768
-		dc.b $18,$AD,$54,$D1,$7B,$FA,$9A,$A8,$84,  2,$F6,$45,$42,$C1,$D2, $C,$A8,$AC,  0,  6,$30,$A9,$74,$BE,$AB,$EC,$BA,$2C,$57,$F6,$8B,$60,  1,$F4,  0, $D,$52,$89,$44,$5F,$E3,$7E,$9E,  9,$44,$A2,$53,$77,$E9,$FF,$4D,$A5,$26,$A4,$C1,$7F,$4D,$B4,$CA,$81,$52,  8,$A9,  4; 832
-		dc.b $54,$17,$D5,$7A,$53,$6A,$A1,$FA,$7C,$8C,$AA,$59,$52,$50,$B2,$CB,$5E,$EE,$3D,$5A,$45,$D9,$D0,$16,$74,$76,$41,  6,$74,  0,$54,$74,$17,$CA,$D2,$8A,$D5,$4D,$29,$A2,$D4,$3B,$FA,$B8,$F7,$3B,$3A,  2,$CE,$8E,$C8,$20,$CE,$80, $B,$18,$8B,$E5,$54,$B4,$5B,$52,$34,$8A; 896
-		dc.b $D8,$77,$71,$EA,$EF,$17,$B2,$2A,$16, $E,$90,$65,$45,$60,  0,$31,$85,$4B,$A3,$CA,$C7,$25,$A9,$62,$BA, $A,$81,$EF,$EA,$D2,$AE,$E2,$80,$B3,$A3,$B2,  8,$33,$A0,  2,$C6,$22,$96,$31,$5A,$8F,$99,$8C,$AF,$8A,$D8, $E,$EE,$3D,$5D,$F7,$B2,$2A,$16, $E,$90,$65,$45,$60; 960
-		dc.b   0,$31,$85,$4B,$A5,$F5,$5F,$6C,$A3,$96,$86,$54,$A8,  3,$A7,$EB,$74,$AB,$BA, $C,$E8,$EC,$82, $C,$E8,  0,$B1,$88,$A5,$8C,$56,$AA,$68,$BE,$71,$CA,$C0, $E,$EE,$3D,$5A,$58, $D,$51,$D9,$D0,$16,$74,$76,$41,  6,$74,  0,$60,$62,$21,$52,$D4,$62,$F3,$47,$AB,$18,$80; 1024
-		dc.b $80,$5E,$C8,$A8,$58,$3A,$41,$95,$15,$80,  0,$C6,$15,$2C,$6F,$AA,$F9,$A3,$53,$46,$CB,$80,$48,$32,$A2,$B0,  0,$18,$C2,$A5,$D2,$FA,$AF,$B2,$E8,$B1,$16,$3D,$60, $F,$D6,$C7,$BE,$A8,$85,$67,$40,  5,$8C,$45,$2C,$62,$B5,$53,$4A,$68,$B5, $E,$B0,  4,$78,$E9,$68,$DB; 1088
-		dc.b $44,$83,$2A,$2B,  0,  1,$8C,$2A,$5D,$2F,$AA,$FB,$2E,$8B,$11,$60,$7A,$C0,$1F,$AD,$8F,$7D,$51,$56,$74,  0,$58,$C4,$42,$A5,$B1,$88,$EF,$35,  0,$3A,$C0,$1F,$AF,$D3,$BB,$A9,$58,  0, $C,$61,$52,$E9,$7D,$57,$D9,$74,$58,$D8,  0,$7A,$C0,$1D,$5D,$DD,$FC,$40,$16,$31; 1152
-		dc.b $14,$B1,$8A,$D5,$4D,$29,$A2,$D4,  0,$EB,  0,$71,$EF,$EE,$EA,  0,$3C,$61,$52,$E9,$7D,$57,$D9,$74,$58,$8B,  0, $F,$58,  3,$AB,$BB,$BF,$88,$15,$1D,$2F,$91,$95,$2C,$62,$B5,$53,$4A,$68,$B5,  0,  7,$58,  3,$8F,$7F,$77,$50,$B1,$88,$BE,$55,$4B,$45,$B5,$23,$48,$AD; 1216
-		dc.b $80,  0,$75,$80,$3A,$BB,$BB,$F8,$87,$8C,$2A,$5D,$1E,$56,$39,$2D,$4B,$15,$D0,$54,  0,  0,$F5,$80,$3D,$40, $F,$FF,$70,  0,  0,$7F,$DC,  1,$EB,  9,  0,$3F,$C4,  0,  0,  3,$FE,$20,  1,$E8,$72,$59,  8,$4F,$49,$E1,$3A,$A3,$65,$B4,$B6,$90,$84,$E2,$13,$80,  1,$6F; 1280
-		dc.b $E9,  0,$37,$ED,$FA,$5D,$80,  7,$FC,$5B,  9,$CC,$E6,$70,$F3,$99,$CC,$E0,$4E,$F2,$7F,$F1,$74,  0,$6D,$36,$D7,$73,$CE,$E3,$63,$15,$AA,$9A,$53,$45,$AB,$AC,  0,  0,$1D,$60,  9,$5A,$39,$69,$C4,$D5,$7D,$97,$45,$88,$B1,$EB,  0,  0,  7,$58,  3,$CF,$BA,$56,$BF,$4A; 1344
-		dc.b $68,$B5, $E,$B0,  0,  0,$7F,$48,$C9,$77,$3C,$B7,  5,$DC,$64,$BD,$25,$9F,$49,$46,$D0,$D1,$62,$2C, $F,$58,  0,  0,$3A,$DF,$74,$24,$B2,$3B,$A1,$2B,$F7,$2C,$8F,$E5,$25,$D0,  1,$D6,  0,  0, $F,$E9,$19,$2E,$E7,$96,$E0,$BB,$8C,$97,$A4,$BF,$29,$20,  4,$3A,$C0,  0; 1408
-		dc.b   1,$D6,$FB,$A1,$25,$91,$DD,  9,$5F,$B9,$64,$7F,$29,$2E,$80, $E,$B0,  0,$91,$90,$A4,$8C,$97,$71,$FD,$B4,$8E,$E9,$3C,$96,$40,$7E,$D0,  0,$FD,$60,  1,$B8,$EE,$14,$DC,$77,$2C,$8F,$ED,$A5,$D3,$74,$9F,$72,$EE,  1,$FF,$68,  0,$EB,$7D,$D0,$92,$C8,$EE,$84,$AF,$DC; 1472
-		dc.b $B2,$86,$E0,  1,$F4,  0,$7E,$D0,  0,$FF,$D2,$32,$5D,$CF,$2D,$C1,$77,$19,$43,$72,$C8,  1, $F,$40,  3,$FE,$D3,$71,$DC,$29,$B8,$EE,$59,$1F,$DB,$4B,$A6,$E9,$3E,$E5,$DC,  0,  0,$7A,  0,$3F,$68,$37,$42,$4B,$2B,$E5,$7F,$E9,$BA,$7E,$58,$CB,$75,$24,  0,  0,$1F,$40; 1536
-		dc.b   7,$8F,$A8,  0,  0,  0,  0,  8,$45,$E3,  8,$9A,$8C,$57,$B8,$D4,  0,  0,  0,  0,$BE,$2F,$1D,$52,$2B,$13,$1A,$96,$2B,$51,$E3,$FB,$EA,$A2,  0,  0,  0,  3,$C5,$E3,$AA,$45,$62,$63,$52,$C5,$6A,  7,$8F,$EF,$AA,$88,  0,  0,  0,$78,$BC,$75,$48,$AC,$4C,$6A,$58,$AD; 1600
-		dc.b $40,$1E,$3F,$BE,$AA,$20,  0,  0,$10,$8B,$C6,$11,$35,$2D,$54,$43,$15,$89,$88,$1A,$A7,$1F,$DF,$71,  0,  0,  4,$22,$F1,$84,$4D,$4B,$55,$10,$C5,$62,$62,  6,$A8,$38,$FE,$FB,$88,  0,  0,$22,$BD,$C6,$A5,$AA,$88,$62,$B1,$31,  3,$54,  3,$8F,$EF,$B8,$80,  0,$84,$5E; 1664
-		dc.b $30,$89,$A9,$6A,$A2,$18,$AC,$4C,$40,$D5,  0,$BD,$90,$F1,$FD,$75,$A3,$50,  0,$3C,$5E,$3A,$A4,$56,$26,$35,$2C,$56,$A0,  2,  1,$7B,$22,$A1,$67,$AB,$BA,$D1,$B4,$6A,$84,$5E,$30,$89,$A9,$6A,$A2,$18,$AC,$4C,$40,$D5,$1D,$9D,  1,$67,$47,$64,$10,$67,$40,$3B,$AC,$DD; 1728
-		dc.b $5F,$AE,$84,$4D,$4B,$55,$10,$C5,$62,$62,  6,$A8, $A,$2B,$51,$9D,$1D,$90,$41,$9D,  0,  6,$36,$C6,$C9,$13,$55,$10,$C5,$62,$62,  6,$A8,  5,$67,$F4,$68,$20,$CE,$80, $B,$18,$8B,$EC,$9F,$A3,$B2,$45, $C,$56,$26,$20,$6A,$80,$5E,$C8,$A8,$59,$D2, $C,$A8,$AC,  0,  6; 1792
-		dc.b $30,$A9,$74,$74,$8D,$91,$AD,$DC,  0,  0,  0,  0,$78,$9A,$96,$3A,$A4,$56,$26,$35,$2C,$5F,$8F,$EF,$AA,$88,  0,  0,  0,$78,$9A,$96,$3A,$A4,$56,$26,$35,$2C,$40,$82,$71,$FD,$F7,$10,  0,  0,$3C,$4D,$4B,$1D,$52,$2B,$13,$1A,$96,$20,$41,  0,$E3,$FB,$EE,$20,  0,$21; 1856
-		dc.b $17,$8C,$22,$6A,$31,$AB,$B8,$C4,$C6,$A5,$88,  2,  8,$EC,$E8, $B,$3D,$5D,$DD,$51,$E2,  0,$78,$9A,$96,$3A,$A4,$56,$26,$35,$2C,$40,$82,  1,$7B,$22,$A1,$60,$E9,  6,$54,$FD,$77,$EB,$7B,$83,$C4,$D4,$B1,$D5,$22,$B1,$31,$A9,$62,  4,$10,$3B,$3A,  2,$CE,$8E,$C8,$20; 1920
-		dc.b $CE,$83,$BB,$A9,$AC,$91,$31,$D5,$22,$B1,$31,$A9,$62,  4,$10,  0,$EC,$E8, $B,$3A,$3B,$20,$83,$3A,  8,$A3,$5B,$14,$35,$2C,$40,$10,$47,$67,$40,$5A,$F4,$3F,$A3,$45,$42,$C1,$D2, $C,$A8,$AC,  0,$BE,$BF,$14,  8,  5,$EC,$8A,$85,$83,$A4,$19,$53,$54, $A,$CE,$80, $B; 1984
-		dc.b $18,$8B,$F4,$4B,$7E,$8E,$B7,$67,$40,$59,$D1,$D9,  4,$19,$D0,  0,  3,$C6,$15,$2E,$97,$D5,$7D,$97,$45,$8A,$F7,$71,$EA,$4D,$1D,$9D,  1,$67,$47,$64,$10,$67,$40,  0,$A8,$E9,$7C,$8C,$A9,$63,$15,$AA,$9A,$53,$45,$AB,$4E,$A8,$E9,$57,$72,$3B,$20,$83,$3A,  0,$2C,$62; 2048
-		dc.b $29,$63,$15,$AA,$9A,$53,$45,$AB,$AC,  1,$C7,$BC,$C7,$AA,$A5,$D2,$FA,$AF,$B2,$E8,$B1,$5F,$E9,$55,$20,  0,  0,$75,$BE,$E8,$49,$64,$77,$42,$57,$EE,$C5,$1B,$7B,$4E,  0,  0,  0,  0,$14,$AA,$91,$78,$BD,$4B,$15,$8F,$10,  0,  0, $A,$54,$F1,$10,$8B,$C5,$EA,$84,$56; 2112
-		dc.b $26,$2E,$82,$35,$7E,$FB,$88,  0,$52,$AA,$45,$E2,$F5,$3C,$69,$17,$A8,$54,  2,$B0,$10,$E3,$DD,$68,$F1,$A5,$4F,$11,  8,$BC,$5E,$A8,$45,$62,$62,$E8,  0,$10,$60,$F5,$B0,$56,$40,$6A,$8B,$58,$B2,$3C,$5E,$A1,$50, $A,$C0,  0,$51,$51,$82,$B0,  5,$20,$C1,$EB,$F1,$AC; 2176
-		dc.b   8,$30,$7A,$D8,$2B,$20,  0,$A5,$11,$D8,$DA,$11,$84,$81,$B3,$E9,$7C,$61,$56,$89,$D4,$6A,$EE,$A2,$2A,$30,$56,  0,$A4,$18,  7,$43,$15,$D2,$9A,$2D,$46,$DA,$E5,$A6,$46,$54,$B1,$A8,$6B,$1A,$BB,$ED,$1B,$68,$12,$88,$EC,$6A,$86,$90,$90,$35,$3C,$6F,$D2,$16,$35,$2C; 2240
-		dc.b $40,$10,$EB,  0,$69,$6E,$EE,$FE,$28,$74,$58,$D2,$2B,$63,$56,$B9,$47,$23,$2A,$54,$6C,  0,  3,$5E,$B0,  7,$58,  3,$AC,  0,  0,$A6,$E3,$97,$4F,$D1,$6E,$90,$DC,$F2,$BF,$74,$25,$D2,$5F,$94,$90,  2,$1D,$60,  0,$BB,$96,$54,$92,$C8,$EE,$A4,$BF,$2C,$7F,$2C,$77,$53; 2304
-		dc.b $A1,$90,$10,$FD,$A0,$14,$91,$C8,$FE,$8B,$74,$84,$9F,$75,$F2,$86,$E3,$25,$DC,  0,$87,$A0,  3,$F6,$94,$92,$EE,$A6,$E5,$DC,$65,$49,$7E,$5B,$A7,$E5,$A5,$BA,$92,$3B,$80,  0,$6B,$E8,  0,$F4,  0,$7A,  0,  0,  3,$D1,$EC,$F8,$6A,$98,$2D,$8D,$B7,$69,$6D,$DC,$F7,$60; 2368
-		dc.b   0,$F4,  0,  0,  7,$E9,$B0,$FD,$B5,$A1,$81,$99,$74,$A2,$1B,$2E,  7, $F, $E,$7D,$5A,$58,  1,$E8,$F8,$3D,$B5,$4B,$2E,  7, $D,$16,$CB,$30,  1,  0,$BD,$91,$50,$B3,$E9,$D5,$1C,$33,$C2,$60,  7,$E9,$AD,$FB,$6C,$21,$63,$A2,$CD,$44,$38,$2D,$8D,$80,$1A,$A3,$B3,$A0; 2432
-		dc.b $2C,$E8,$EC,$87,$F5,$79,$F7,$5B,$40,  7,$ED,$AD,$FA,$63,$6D,$52,$CB,$81,$C3,$45,$B2,$CC,  0,$40,$2F,$64,$54,$2C,$1F,$4E,$A8,$E1,$9E,$13,  1, $B,$3D,$BF,$2C,$70,$DD,$36,$E3,$35,$10,$E0,$B6,$36,  0,$6A,$8E,$CE,$80,$B3,$A3,$B2,  3,$E1,$9F,$EA,$E6,$C0,  0,$5B; 2496
-		dc.b $FA,$40,  0,  0,$2D,$FD,$20,  2,$E4,$B2,$60,  7,$F8,$98,  0,  0,$1F,$E2,$60,  7,$97,$E9,$7A,  0,$F6,$86,$EC,$3F,$2C,$7F,$4C,$52,$CB,$81,$C3,$45,$B2,$CC,  0,$40,$2F,$64,$54,$2C,$1D,$20,$CA,$9F,$AD,$8F, $E,$62,$16,$7B,$43,  3,$32,$E9,$B9,$77,$1D,$C8,$70,$5B; 2560
-		dc.b $1B,  0,$35,$47,$67,$40,$59,$D1,$D9,  4,$19,$D0,$A7,$8D,$60,$20,$56, $A,$97,$B3,$A3,$3A,  4,$76,  0,$6B,$13,$51,$A8,$2C,$4D,$46,$D2,$EE,$FC,$B7,$E5,  0,$1E,$80,  0,  0,$F4,$10,$B3,$DA,$18,$19,$8D,$59,$71,$E9,$1E,$80, $A,$64,  0,  0, $A,$64,  0,$7F,$50,  7; 2624
-		dc.b $9F,$A8,  0,  0,$3C,$FD,$44,$2A,$7A,$A1,$31,$C0,$DB,$2B,$60,$93,$20,$7C,$1E,$D4,$DC,$96,$DC,$70,$DD,$84,$CB,$82,$E8,  0,$47,$67,$40,$59,$D1,$D9,  4,$19,$D0,$73,$E1,$DD,$D5, $C,$1F,  8,$58,$E8,$B3,$51, $E, $B,$63,$60,$35,$47,$67,$40,$59,$D1,$D9,  4,$19,$D0; 2688
-		dc.b  $E,$A8,$B7, $E,$76,$86,  6,$65,$D2,$88,$6C,$B8,$1C,  0,$D5,  1,$45,$6A,$33,$A3,$B2,  8,$33,$A0,  0,$E1,$9E,$31,$4B,$19,$A8,$87,  5,$B1,$B0,$1A,$A0,$15,$9F,$D1,$A0,$83,$3A,  0,$2C,$62,$2F,$B2,$1C,$73,$4C,$10,$D9,$70,$38,  1,$AA,  1,$7B,$22,$A1,$67,$48,$32; 2752
-		dc.b $A2,$B0,  0,$18,$C2,$A5,$D1,$F8,$E9,$55,$B4,$4A,$8C,$68,$86,$A5,$A8,$D4,  6,$A8,  5,$67,$F4,$68,$20,$CE,$80, $B,$18,$8B,$EC,$92,$C6,$E4,$99, $D,$4B,$31,$98, $D,$50, $B,$D9,$15, $B,$3A,$41,$95,$15,$80,  0,$C6,$15,$2E,$8F,$D3, $C,$FA,$18,$F5,  0,$3D,  0,  0; 2816
-		dc.b   1,$FB,$6C,$37,$4D,$B8,$E1,$AA,$60,$B6,$36,$99,$70,$7E,$FE,$AE,$73,$60,  0,$F4,  0,  0,$F6,$3A,$2E,$14,$DC,$98,$6E,$36,$36,$D1,$6C,  4,$13,$C3,$9F,$57,$78,  3,$D0,  0,$F8,$19,$96,$DA,$A5,$97,  3,$86,$8B,$60,$20,$80,$77,$F5,$73,$F0,  0,$7A,  8,$60,$F8,$42; 2880
-		dc.b $C7,$43,$84,$DC,$CD,$8D,$A6,$5C,  0,$10,$47,$67,$40,$59,$E6,$E7,$9C,$6D,$DE,  0,$FD,$B5,$B7,$69,$B8,$DB,$54,$B2,$E0,$70,$D1,$6C,  4,$10, $B,$D9,$15, $B,  7,$48,$32,$A7,$EB,$63,$C3,$98,$7C, $C,$CB,$6A,$6E,$4B,$6E,$38,$1C,$26,$5C,  0,$82,  7,$67,$40,$59,$D1; 2944
-		dc.b $D9,  4,$19,$D0,$73,$E0,$D1,$4B,$1C,$35,$4C,$16,$C6,$D3,$2E,  0,$41,  0, $E,$CE,$80,$B3,$A3,$B2,  8,$33,$A0,$B2,$34,$71,$43,$A2,$D8,  1,  4,$76,$74,  5,$AF,$43,$FA,$34,$54,$2C,$1D,$20,$CA,$8A,$C0, $A,$61,$C3,$BB,$A8,$E1,$46,$38, $A,$31,$C3,$F6,$CE,$81,  2; 3008
-		dc.b $2B,$5E,$86,$A0, $D,$4F,$A4,$3D,$42,$D4,$2F,$F3,$FD,$A0,  3,$D0,  0,$10,$20,$4B,$FF,$4B,$D3,$F6,$CE,$81,  2,$1F,$DA,$7E,$9F,$70,  3,$D0,  0,$29,$33,$D8,$43, $F,$D3,$1C,$37,$42,$68,$59,$70,$38,$3A, $B,$69,$D5,$CF,$C0,  1,$E9,$4D,$29,$67,$C1,$F4,$7B,$53,  7; 3072
-		dc.b $98,$4C,  2,$B0,$10,$F0,$E7,$1B,$77,$D3,$47,$C0,$42,$DF,$A6,$36,$DD, $D,$21,$82,$D8,$D9,$D0,  0,$20,$C1,$EB,$60,$AC,$80,$E9,$66,$89,$64,$7B,$3E,$83,$40,$15,$80,  0,$A2,$A3,  5,$60, $A,$41,$83,$E1,$37,$6E,$FE,$23,$A0,$E8,$3F,$AA,$A8,$10, $E,$80,$74,  3,$A4; 3136
-		dc.b $E3,$54,$1E,$5F,$B4,  0,$7F,$D4,  0,  0,$1F,$F5,  0,$79,$FA,$80,$F5,$42,$56,$C8,$FE,$88,$A5,$4B,$63,$68,$AD,$4B,$A0,  1,  0,$BD,$91,$50,$B0,$74,$83,$2A,$71,$B7,$EB,$B8,$88,$59,$EA,$85,$8C,$56,$32,$59,$19,$21,$A9,$6A,$36,  0,$6A,$8E,$CE,$80,$B3,$A3,$B2,  8; 3200
-		dc.b $33,$A7, $E,$7D,$BC,  0,$1D,$6F,$9B,$CD,$AA,$4C,$B9,$9C,$F0,$59,$96,$E0,  2,  1,$7B,$22,$A1,$67,$C2,$6C,$F0,$CF,  9,$B0,  0,$7E,$8B,$3F,$3C,$E1,$31,$B9,$6E,$A2,$19,$96,$63,$98,  3,$54,$76,$74,  5,$9D,$1D,$90,$FE,$AA,$EE,$FA,$A2,$7D,$35,$DB,$59,$FF,$4F,$FB; 3264
-		dc.b $43,$FA,$5F,$10,  0,  0,  0,$3C,$BF,$69,$E8,  7,$ED,$3F,$6F,$E3,$EA,  0,  0,  0,  5,$78,$FA,$EE,$DB,$24,$74,$DD,$B1,$4B,$D3,$71,$42,$9E,$B2,$9F,$F2,$DC,$95,$21,$3B,$ED,$25,$9F,$A2,$A3,$CE,  0,$D7,$77,$A8,  0,  0,$21,$BB,$D4,  0,  0,$10,$DD,$EA,  0,$84,$FF; 3328
-		dc.b $A2,$E8,  0,  0,  0,  0,  3,$F9,$FF,$AE,$43,$65,$AC,$C6,$A9,$7E,$FE,$20,  1,$54,$69,$5D,$51,$D5,$2A,$8C,$12,$CA,$95,$45,$6C,$E8,$A9,$63,$6B,$FF,$5B,$5B,$14,$95,$91,$E4,$52, $D,$25,$64,$85,$6A,$8B,$1B,$69,$D5,$DC,$94,$8E,$A9,$4A,$A9,$1D,$52,$91,$D5,$29,$17; 3392
-		dc.b $B5,$56,$87,$51,$42,$C8,$7F,$5A,$DA,$B4,$10,$5E,$8D,$7B,$6B,$1D,$2D,$1F,$D7,$9B,$6A,$C2,$DA,$B5,$B5,$61,$6D,$58,$59,$7D,$95,$A3,$57,$B7,$8A,$1C,$55,  0,$A5,$6C, $D,$BF,$5D,$76,$7C,$F5,$DD,$4D,$D4,$DC,$BF,$B6,$E9,$FA,$28,$6E,$A6,$EA,$6E,$A6,$E0,  6,$BD,$60; 3456
-		dc.b  $E,$31,$6D,$13,$A9,$8A,$7E,$B6,$F4,$AA,$B7,$62,$C9,  6,$83,$2B,$23,$B5,$66,$B8,$77,$C2,$B8,$77,$C1,$1F,$BC,$77,$80,  0,$EE,$B6,$9D,$5D,$CA,$D5,$82,$CE,$D5,$D1,$AB,$C4,$34,$1A,$B5,$68,$31,$45,$68,$21,$45,$65,$65,$AC,$B2,$F7,$AA,$16,$87,$79,$42,$CF,$DF,$5D; 3520
-		dc.b $3B,$C2,$7E,$97,$C4,$F4,$1D,  7,$41,$2F,$D3,$5F,$D0,$6E,$1B,$80,  2,$99,  0,$3C,$FF,$68,  0,$F4,  0,$6E,$1B,$86,$E1,$B9,$FC,$F6,$FD,$35,$E8,$10,$20,  0,$79,$FA,$80,  0,  3,$CF,$D4,  0,$FE,$A0,  0,  0,  0,  0,$30,$CF, $B,$A6,$BB,$3C,$11,$AB,$64,$62,$C8,$52; 3584
-		dc.b $45,$19, $B,$57,$FC,$34,$2D,$FC,$1C,$53,$C4,$A2,$D6,$B8,$A7,$E8,$FC,$9B,$D9,$95,$90,$E2,$71,$42,$DF,$C1,$C5,$31,$38,$D6,$D5,$B5,$78,$9C,$4E,$28,$7D,$95, $A,$7E,$8E,$BF,$D1,$FB,$62,$90,$C5,$50,$A4,$95,$BD,$8B,$57,$89,$C5, $B,$56,$D5,$E2,$8C,$51,$8A,$2A,$62; 3648
-		dc.b $71,$4C,$4F,$93,$7B,$31,$C5, $B,$14,$6A,$CB,$26,$2B,$8A,$31,$AD,$AB,$6A,$F1,$4C,$4E,$35,$B7,$F0,$58,$A7,$F0,$D3,$1F,$22,$C5,$3F,$46,$58,$B2,$FB,$32,$B1,$C7,$D9,$BC,$8B,$2F,$F0,$CB,$43,$C8,$FB,$7E,$8C,$A6,$25, $D,$66,$55,$B2,$63,$84,$CC,$99,$DC,$70,$9B,  4; 3712
-		dc.b $B9,$73,$33,$65,$C0,$E1,$35,$C9,$77,  3,$84,$D7,$70,$E7,$7E,$75,$F6,$5F,$DD,$76,$C2,$E9,$4D,$DB,$38,$36,$72,$32,$CC,$B1,$46,$32,$46,$45,$46,$42,$8C,$AC,$8C,$A9,$8A,$2F,$E8,$D0,$B1,$43,$24,$35,$E3,$5B,$23,$57,$89,$93,$70,$BB,  4,$BA,$6C, $F,$39,$AE,$C0,$F0; 3776
-		dc.b $CA,$63,$81,$E1,$72,$5D,$32,$F3,$E1,$74,$DD,$AB,$CE,$1D,$BF,$75, $C,$FB,$4D,$2B,$B0,$5B,$96,$57,$20,$29,  4,$28, $B,$16,$83,  2,$85, $B,$14,  5,$8B,$14,$2C, $A,$41,$8A,  2,$C5, $A,$16,$78,$BA,$16,$82,$2C,$69,$28,$A4,$50,$C8,$41,$8A,$16,  5,$8A,$41,  1,$42; 3840
-		dc.b $C5,$8B,  2,$D0,$42,$82,  9,  6,  5,$20,$C5,$23,  8,$9A,$95,$8B,$14,$2C,$86,$37,$D5,$28,$B4,$5A,$A0,$A8,$58,$A1,$40,$5A,$F6,  5, $A,$16,$28, $B,$16,$28,$58,$14,$83,$14,  5,$8A,$41,$9E,$2E,$85,$8A,$14,$58,$EB,$14,$8B,$19,  2,$C5,$8A,$16,  5, $A,$16,$28, $B; 3904
-		dc.b $41, $B,  8,$31,$62,$80,$A4,$10,$5E,$85,$8C,$A3,  8,$9A,$95,$8B,$14,$2C,$86,$37,$A6,$E9,$6C,$76,$33,$AA,  4,$6B,$DA,  8,$1D,$1D,$A0,$8D,$7B,$42,$B6,$A2,$41,$20,$C5,$95,$1A,  8,$59,$D9,$19,$D8,$B2,$32,$2A,$31,$45,$46,$D1,$24,$C9,  8,$D6,$CB,$26,$85,$6C,  0; 3968
-		dc.b $7A,$D8,$2B, $A,$32,$D6,$C0,$B1,$60,$EC,$5A, $C,$AD,$7B,$41,$9D,$8B,$5A,$3A,$49, $C,$8E,$8B,$A1,$92,$5F,$A2,$A5,$F2,$AD,$63,$AA,$45,$64,$65,$52,$C5,$64,  0,$40,$2F,$64,$54,$2C,$1D,$20,$CA,$8D,$26,$2C,$7B,$9E,$56,$5A,$CB,$69,  9,$42,$26,$A5,$95,$10,$B2,$C4; 4032
-		dc.b $C4,  1,$AA,$3B,$3A,  2,$CE,$8E,$C8,$20,$CE,$9D,$DF,$BD,$EE,  0,  0,  0,$D6,$57,$D5,$2B,$3C,$AC,$6C,$F5,$7E,$B1,$ED,$8D,$3A,$9B,$5B,$52,$35, $D,$53,$54,$D6,$5A,$B6,$A8, $F,$1B,$EA,$5E,$25,$A9,$54,$90,$DA,$FA,$F4,$FE,$8D,$FE,$2B,$8D,$91,$AD,$8F,$51,$AE,$A9; 4096
-		dc.b $37,$EB,$A4,$80,$6A,$8E,$CE,$80,$B3,$A3,$B2,$41,$9D,  0, $F,$A4,$2C,$B1,$BE,$D7,$D4,$B1,$5D,$17,$BF,$AB,$8A,$54,$35,$40,$2F,$64,$54,$2C,$1D, $B,$45,$B4,$AA,$36,$BE,$57,$E9,$23,$25,$8E,$E9,$FF,$4F,$2A,$A5,$D3,$F6,$E0, $E,$EE,$3D,$5D,$E2, $C, $B,$21,$40,$8A; 4160
-		dc.b $D1,$85,$57,$A3,$C7,$75,$A1,$54,$37,$5B,$5D,$D5,$65,$A6,$E8,$4F,$CA,$77,$FD,$BF,$ED,  0,$1D,$FD,$5C,$62,$51,$58,$B2,$5E,$DA,$41,$1E,$A5,$B3,$45,$72,$7D,$24,$B6,$DD,$1D,$D2,$BF,$75,$FB,$80,$10,$FD,$BF,$ED,$3F,$6E,  0,$FD,$A0,  1,$FD,  0,  0, $F,$DB,$BF,$ED; 4224
-		dc.b $FF,$68,  0,$7F,$DA,  0,$3D,  0,  0,  7,$FD,$BF,$E5,$3F,$2D,$CB,$78,  3,$25,$C8,  0,$BD,$60,  1,$4D,$CB,$25,$DD,$49,$43,$77,$4D,$D2,$FC,$B1,$FC,$B0,$5D,$C2,$FF,$DA,  0,$1F,$AC,  1,$B9,$77,$79,$AE,$E1,$4D,$D4,$F4,  0,$3F,$ED,  0,$1D,$60, $F,$3F,$DB,  0,$3D; 4288
-		dc.b   0,$1F,$B6,$F3,  0,$75,$80,  0,  3,$AC,  1,$92,$E4,  0,$5E,$B0,  0,  0,$75,$80,$32,$5C,$80, $B,$D6,  0,$7F,$DB,$80,$3F,$EA,  0,$F2,$F3,  0,$7A,  0,  0,$1F,$B7,$7D,$EB,$5F,$E5,  0,$19,$72,$AF,$F2,$80, $F,$40,  0,  1,$FF,$6F,$FB,$40,  5,$37,$AE,$F0,  7,$FD; 4352
-		dc.b $40,$19,$7A,$E4,  0,$EB,  0,$6F,$E5,$90,  1,$7F,$EA,  0,$F3,$F5,  0,$75,$80,$17,$25,$C8,  1,$D6,  0,  0, $E,$B0,  2,$E4,$B9,  0,$3A,$C0,  0,  1,$D6,  0,$5C,$97,$20,  7,$5E,$AD,$46,$A6,$D4,$DA,$FE,$4F,$29,$FF,$AD,$B0,$1A,$FA, $A,$F9,$6F,$D5,$8A,$43,$66,$BF; 4416
-		dc.b $68,$21,$92,$7E,$DB,$7B,$3C,$85,$24,$28,$8F,$FA,$6F,$E2,$AC,$85,$25,$4D,$DF,$E5,$40,  0,$D7,$FE,$A0,  0,  7,$98,$F5,  0,  0,  7,$58,  0, $E,$B0,  7,$58,$5C,$97,$20,  7,$58,  0, $E,$B0,  7,$58,$5C,$BF,$29,$F9,$6D,$52,$89,$44,$5F,$DB,$74,$FD,$2C,$12,$89,$44; 4480
-		dc.b $A2,  0,$35,$FF,$A8,  2,$35,$57,$D3,$9F,$42,$C7,$8A,$D4,$92,$AA,$F4,$BE,$C7,$FA,$3A,$27,$E8,$EF,$64,$B6,$2A,$D5,$9E,$AC,$6C,$5A,$1D,$40,$A6,$A9,$AC,$B5,$6D,$50,$6B,$54,$69,$2D,$6D,$2A,$AF,$B1,$B4,$9F,$F5,$95,$5F,$8D,$9D,$BA,$AF,$B0,  0,  0,  6,$BE,$3E,$50; 4544
-		dc.b $95,$25,$49,$5F,$23,$FC,$23,$2B,$E5,$49,$52,$50,$92,$CA,$12,$59,$42,$45,$A5,  9,$16,$79,$16,$5C,$8C,$99,$E4,$51,$E4,$52,$89,$AA,$78,$D6,$65,  9,$14,$94,$24,$51,$E4,$51,$72,$32,$47,$91,$67,$91,$6A,$35,$18,  0,  0,$1A,$C6,$AF,$DF,$71,  8,  0,$46,  5,$8A,  3; 4608
-		dc.b $A1,$8B,$68,$C5,$21,$18,$55,$BA,$DF,$96,$BF,$72,$CF,$A2,$FE,$D3,$69,$55,$2A,$48,  2,$97,$26,$6D,$73,$5C, $A,$41, $A,  2,$C5,$A0,$C0,$A1,$42,$C5,  1,$62,$C5, $B,  2,$90,$62,$80,$B1,$42,$85,$81,$42,$D0,$40,$64,$50,$A1,$90,$83,$14,$2C, $B,$14,$82,  2,$85,$8B; 4672
-		dc.b $16,  5,$A0,$85,  4,$12, $C, $A,$41,$8A,  2,$C5,$8A,$16,  6,$45,$8B,  8,$21,$62,$85,  1,$6B,$D8,$14,$28,$58,$A0,$2C,$58,$A1,$60,$52, $C,$50,$16,$29,  6,  5, $B,$14,$28,$20,$85,$8C,$81,$62,$C5, $B,  2,$85, $B,$14,  5,$A0,$85,$84,$18,$B1,$40,$52,  8,$2F,$42; 4736
-		dc.b $C6,$40,$B1,$62,$85,$85,$46,$2D,$16,$A8,$2A,$41, $A,  2,$C5,$A0,$D4,$45,$42,$85,$8A,  4,$F1,$4A,$9A,$D7,$C9,$51,$74,$62,$8B,$13,$39,$D8,$C9,$A4,$9B,$26,$CC, $A,$16,$82,  8,$CA,$A4,$B2,$69,$21,  6,$28,$5A,$88,$51,$8A,$41,$1D,$9D, $B,$16,$2C,$F1,$36,$56,$A9; 4800
-		dc.b $53,$72, $A,$8C,$93,$72,$B4,$E7,$6B,$F6,$4D,$8F,$46,$E8,$80,$B1,$62,$85,$86,$92,$B3,$54,$D1, $A,$85,$8A,$14,  5,$AF,$6A,$22,$A1,$42,$C5,  2,$78,$A5,$4D,$6B,$E4,$A8,$BA,$31,$45,$89,$9C,$EC,$64,$D2,$4D,$8E,$CC, $A,$16,$28,$50,$44,$D4,$96,$6D,$24, $B,$16,$28; 4864
-		dc.b $5A,$88,$6B,$28,$58,$A3,$B3,$B4,$10,$B3,$C4,$DA,$15,$31,$6D,$C8,$2A,$49,$1D,$C8,$B3,$9D,$AF,$D8,$EC,$9D,$1B,$A4,$81,$62,$C5, $B, $D,$8E,$C8,$50,$41, $B,$14,$28,$27,$69,$CC,$E6,$76,  5, $A,$16,$28, $B,$16,$28,$58,$14,$83,$14,$13,$B4,$E9,$39,$9D,$81,$42,$C5; 4928
-		dc.b  $A,  9,$CC,$E9,$3B,$4F,$20,$58,$B1,$42,$C2,$74,$9D,$27,$69,$D0,$16,$82,$16,$10,$62,$C5,  1,$48,$20,$59,$CC,$E9,$3B,$4F,$20,$58,$B1,$42,$C2,$73,$3B,$4E,$D3,$85,$48,$21,$41,$3B,$4E,$D3,$99,$D8,$14,$28,$58,$A0,$2C,$58,$A1,$60,$52, $C,$50,$4E,$D3,$A4,$E9,$3B; 4992
-		dc.b   2,$85,$A0,$82,$79,$4E,$93,$A4,$F2,$10,$62,$85,$84,$ED,$3A,$4E,$67,$40,$50,$B1,$62,$C0,$B4,$10,$A0,$82,$41,$84,$E9,$39,$9D,$A7,$40,$58,$B1,$42,$C0,$E0,$6E,$DB,$3D,$AE,  0,$75,$80,$3F,$6D,$25,$95,$F2,  2,$47,$D0,  1,$E3,$BF,  9,$86,$A9,$AA,$6B,$2D,$5B,$54; 5056
-		dc.b   0,  1,  8,$BC,$61,$12,$8B,$55,$10,$C5,$62,$53,$BF,$AB,$8C,$6A,  0,$75,$80,  0,$EB,  1,$EA,$84,$AD,$91,$FD,$11,$4A,$96,$C6,$C6,$36,$97,$54,$AA,  0,$75,$80,  0,$EB,  2,$16,$58,$9A,$B2,$36,$91,$92,$1A,$9E,$C6,$DF,$BE,$31,$2C,$78,$AD,$49,$2A,$AF,$4B,$EC,$7F; 5120
-		dc.b $A3,$A2,$7E,$8E,$F6,$4B,$62,$AD,$59,$EA,$C6,$C5,$A1,$D4,  0,$BE,$2E,$86,$30,$8D,$2A,$28,$62,$B1,$29,$1A,$BF,$7D,$C6,$5A,$DA,$55,$5F,$63,$69,$3F,$EB,$2A,$BF,$1B,$3B,$75,$5F,$60,  0,  1,$62,$16,$26,$26,$2B,$14,$31,$49,$B0,$AB,$98,$BD, $E, $B,$56,$A9,$32,$E0; 5184
-		dc.b $63,$52,$E0,  4,$10,$3B,$3A,  2,$CE,$8E,$C8,$20,$CE,$82,$33,$67,$2C,$EE,$AA,$20,  1,$55,$73,$60,$77,$CD,$CE,$62,$93,$A4,$F5,$CC,$70,$33,$54,$B8,$2C,$40,  8,  5,$EC,$8A,$85,$9E,$AE,$EB,$46,$D1,$A8,  1,  8,$BC,$61,$13,$52,$D5,$44,$31,$58,$98,$80,$35,$47,$67; 5248
-		dc.b $40,$59,$D1,$D9, $C,$6A,$9B,$39,$67,$35,$40,  1,$BC,$A4,$D5,$D4,$93,$A6,$13,$61,$D2,$6E,$87,$A6,$13,$61,$BD,$67,$49,$90,  0,$17,$79,$49,$93, $A,$92,$74,$C3,$C0,$CD,$D0,$F3,$99,$66,$9F,$A6,  9,$BA,$DD,$E0, $F,$40,$3C,$FF,$6C,  7,$FD,$47,$58,  3,$C7,$F6,$E0; 5312
-		dc.b  $F,$40,$3C,$FF,$6C,  7,$A8,$F5,$EB,  0,$7A,$F9,  0,$3D,  0,$FD,$B7,$98,  3,$D5,$FC,$FF,$6E,  0,$F2,$F5,  0,$7A,  0,$3C,$FF,$6C,  0,$FE,$BE,$54,$DE,  7,$AF,$90,  3,$D0,  0,$3F,$6D,$21,$FA,$21,$D7,$EA,$3F,$4A,$27,$F2,$F5,  0,$7A,  0,  0,$1F,$A2,$BF,$F4,$47; 5376
-		dc.b $F2,$9F,$96,$A6,$43,$7D,$37,$AF,$ED,  0,$1E,$80,  0,  0,$F4,$19, $C,$B7,$52,$C7,$F4,$80,  0,  0,  0,  0,$21,$69, $A,$5A,$40,  0,  0,  0,  1,$4B,$48,$43,$F6,$FE,$BF,$A7,$9B,$6F,$D2,$80,  0,  0,  0,$21,$69, $B,$F7,$FE,$DF,$7D,$3F,$4B,$9C,$FF,$A7,  0,  0,  0; 5440
-		dc.b   2,$16,$90,$3B,$CF,$E9,$F7,$AE,$C3,$5F,$D3,$CD,$B7,$E9,$40,  0,  0,$21,$69, $F,$D2,$AF,$29,$E1,$BF,$FA,$40, $F,$D2,$E7,$3F,$E9,$C0,  0,$42,$D2,  7,$94,$27,$E4,$BF,$A5,  2,$FE,$B1,$AC,$F7,$EF,$3F,$A7,$9B,$61,$AC,$A9,$65,$E4,$FB,$F2,$5E,$4F,$C8,  0,  3,$EF; 5504
-		dc.b $F3,$E5,$92,$EF,$7D,$E2,$FD,$D0,$FD,$BA,$1E,$57,$EC,$35,$EB,  2,$9B,$DF,$7B,$EF,$7D,$E2,$FD,$DF,$D2,$3B,$A1,$BB,$28,$7E,$5A,$FD,$DA,$F9,$7A,$8A,$6F,$7D,$EB,$FA,$2D,$BC,$D6,$7B,$F7,$BE,$57,$CA,$92,$BF,$F2,$D7,$EE,$A6,$ED,$7D,  0,$13,$C3,$F4,$9B,$A7,$BE,$54; 5568
-		dc.b $95,$FB,$A5,  9,$2F,$F1,$A4,  0,  0,$6B,$E8,  0,  0, $F,$4E,$54,$DF,$CA,$9B,$F7, $F,$D3,  0,$3A,$C0, $F,$FB,$40,  7,$A0,  0,$7E,$5B,$A1,$E5,$7F,$4D,$FC,$A9,$BF,$FA,$40,  7,$95,$46,$40,  0,  0,  0,  0,  5,$F6,$95,$2D,$20,  0,  0,  0,  0,  0,  0,  0,  0,  0; 5632
-		dc.b   0,$14,$B4,$8E,$FB,$E7,$BE,$D2,$FD,$28,  0,  1,$AC,$EF,$23,$3B,$D8,$CF,$49,$EF,$E5,$7C,$FF,$D2,$9C, $D,$7F,$4B,$9F,$2C,$A1,$63,$38,$A4,$F4,$9F,$CC,$EF,$BE,$70,  0,$14,$9F,$FA,$5B,$4A,$F9,$EF,$DF,$7C,$F7,$E5,$FD,$71,$AC,$F4,$9C,$FF, $B,$6C,$9E,$7A,$4E,$29; 5696
-		dc.b $3B,$C8,$CE,$F2,$33,$BC,$AF,$DD,$28,$7E,$8B,$F8,$CB,$2A,$4A,$92,$D6,$78,$74,$FD,$34,$E2,$12,$A6,$E7,$FD,$17,$F1,$96,$54,$95,$24,  0,$1A,$FA,  0,$2B,$C7,$7F,$20,  7,$58,  0,$5F,$FA,$55,$FD,$2C,$37,$D3,$AC,  1,$BF,$96,$FE,$40, $E,$B1,$4D,$F0,$FD,$2A,$FE,$94; 5760
-		dc.b $3C,$F4,$9E,$93,$AF,$9E,$DF,$A2,$84,$F4,$9E,$93,$D2,$5F,$A7,$F1,  0,$7A,  7,$F3,$FD,$B0,$1F,$F5, $F,$D6,$29,$CB,$D7,$92,$FE,$D3,$CC, $A,$65,$FA,$6E,$8B,$FC,$21, $D,$F0,$FD,$2A,$FE,$94,  1,$7F,$F0,$BF,$4E,$BC,$A7,$87,$20,$6D,$28,$7E,$8A,$A3,$FA,$25,$CA,$13; 5824
-		dc.b $E4,$F3,$DF,$BD,$72,$E5,$E7,$BC,  0,$FB,$DF,$7B,$F2,$7E,$4B,$2A,$58,  0,$FF,$A7,$9B,$6F,$D2,$81,$4D,$FE,$7B,$EF,$9E,$93,$99,$43,$79,$B0,  0,  0,  3,$EF,$36,$BE,$73,$67,$9C,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  5,$27,$D6,$70,  0,$D6,$7A,$4F,$7C,$A9,$63; 5888
-		dc.b $3D,$27,$A6,$C2,$93,$FF,  8,$CF,$49,$C6,$BB,$FF,$A4,$76,$14,$DB,$5E,$B0,$35,$9E,$93,$8A,$4F,$49,$E1,$D7,  9,$E1,$20,$B3,$C2,$47,$2D,$BF,$44,$77,$2C,$F0,$DC,$16,$7A,$7F,$4B,$F2,$D3,$BC,$85,$25,$4D,$D4,$DC,$29,$BB,$5F,$F3,  0,$32,$5F,$CB,$7E,$53,$59,$E9,$3D; 5952
-		dc.b $27,$5F,$3D,$BF,$45,  9,$E9,$3D,$27,$A4,$E0, $D,$7A,$C0,$1C,$B7,$E3,$58,  3,$D0,  0,  0,$1E,$9A,$EE,$A6,$EA,$6E,$5F,$E3,  0,$21,$E8,$35,$DD,$4D,$D4,$DD,$4D,$D4,$94,$27,$59,$42,$73,$B8,$FE,$8B,$6C,$B7,$42,$7A,$4F,$49,$F5,$DE,$9F,$A7,$7D,$D4,$94,$27,$59,$42; 6016
-		dc.b $73,$B8,$FE,$8B,$6C,$B7,$42,$7A,$4F,$49,$E9,$3D,$27,  2,$93,$FF,$4A,$7A,$6D,$4D,$A9,$3B,$FE,$8B,$6F,$D2,$8D,$67,$A4,$EB,$E7,$38,$A4,$E2,$93,$99,$3C,$E6,$CF,$38,  0,  0,  0,  0,$53,$60,$F2,$3B,  7,$B1,$D8,$52,$7F,$D1,  8,$6C,$2F,$DF,$FC,$20,$27,$D7,$AF,$59; 6080
-		dc.b $C0,$A4,$E0,$52,$75,$EB,$79,$C5,$27,$86,$E9,$72,$C9,$77,  9,$C4,$25, $F,$3F,$DB,$42,$40,$52,$40,$52,$54,$E9,$FE,$60,  5,$FF,$A2,$79,$2C,$E0,$7E,$DB,$CE,$12,$59,$C4,$25,$49,$42,$70,$B2,$84,$E2,$1F,$A2,$DB,$CD,$67,$14,$9E,$9B,$7F, $B,$78,$BF,$60,$BF,$C2,$D6; 6144
-		dc.b $70,$29,$B0,$A6,$C6,$42,$12,$D8,$D8,$3C,$E0,$42,$47,$94,$2C,$76,  3,$5F,$D1,  7,$9C,  1,$4D,$86,$BF,$C2,$59,$C0,$BF,$69,$7E,$DF,$79,$9C, $A,$7F,$4B,$F2,$CB,$38,$86,$E0,$1E,$70,$1F,$FC,$5B,$83,$CE,$B2, $B,$CB,$30,  4,$32,  0,  0,  5,$32,  0,$53,$F6,$F9,$FE; 6208
-		dc.b $94,  0,$BF,$D2,  0,  0,  2,$FF,$48,  0,$BB,$4F,$E4,  0,$FD,$17,$F1,$80,  0,  1,$FA,$2F,$E3,  0,$3F,$4F,$3A,$7E,$90,  1,$D6,  0,  0, $E,$B0,  7,$AA,$7E,$90,  1,$E8,  0,  0, $F,$41,$AE,$EA,$6E,$3F,$D6,  0,$2F,$A0,$D7,$75,$37, $A,$6E,$A6,$EA,$49,$FF,$4D,$E7; 6272
-		dc.b $B2,$EE,$84,$E1,$77,$42,$75,$DD, $E,$9F,$A7,$7D,$D4,$95,$24,$F3,$EE,$3E,$7B,$4B,$73,$CF,$49,$E9,$3D,$27,$14,$9E,$93,$EB,$D6,$35,$DA,$9B,$1D,$BF,$85,$BC,$4E,$35,$EB,$D7,$6A,$6D,$4D,$A9,$B5,$27,$A4,$E6,$CF,$39,$93,$CB,$5D,$80,$D7,$F4,$B2,$B5,$F3,$9B,$3C,$E6; 6336
-		dc.b $4F,$38,  0,  0,  0,  0,$6B,$EC,$DF,$BC,$BE,$C6,$AA,$55,$6B,$EA,$B5,$F5,$52,$AA,$54,$A9,$C4,$D4,$9C,$63, $A,$A2,  0,  0, $B,$FF,$9B,$DD,$6C,$68,$9A,$62,$5A,$16,$AD,$92,$F4,$29,$22,$98,$E4,$50,$C7,$4F,$66,$A3,$5F,$68,$33,$D8,$36,$B6, $D,$AD,$80,$5F,$D7,$7E; 6400
-		dc.b $BD,$25, $F,$63,$68,$57,$A7,$51,$AD,$7A,$97,$1A,$DD, $E,$58,$A2,$A4,$34,$8C,$10,$1D,$29,$A5,$11,$D9,$74,$A2,  0,$2F,$EA,$D2,$F9,$6B,$69,$6B,$6A,$85,$42,$A8,$71,$45,$A9,$E3,$C5,$2A,$A4,$6A,  0,  0,  6,$BD,$42,$11,$78,$C2,$26,$4B,$55,$10,$C5,$62,$58,  1,$AA; 6464
-		dc.b $3B,$3A,  2,$CE,$8E,$C8,$20,$CE,$9E,$1D,$B9,$F0,$1D,$60, $E,$B0,  0,$1D,$60, $F,$D3,$CF,$9F,$E9,$40,  0,  0,  0,  0,$1A,$8E,$4E,$95,$2D,$46,$AD,$AE,$9A,$7F, $D,$B3,$1D,$60, $E,$B0,  0,$1D,$60, $E,$DF,$B6,$FC,$A4,$22,$ED,  8,$9A,$96,$54,$43,$15,$89,$88,$1A; 6528
-		dc.b $A3,$B3,$A0,$2C,$E8,$EC,$82, $C,$E8,  1,$C1,$B3,$EE,$EA,$41,$32,$DA,$98,  3,$6F,$CB,  1,$7B,$2D,$67,$1B,$D8,  8,$83,$A7,$E5,$AC,$62, $E,$8F,$60,  0,$A7,$F4,$BF,$2C,$21,$23,$B8,$53,$75,$F2,$BE,$43,$5D,$D2,$FE,$B1,$DC,  5,$3D,$7C,$40,  0,  0,  0,  2,$FF,$D7; 6592
-		dc.b $C2,$55,$1A,$CC,$AA,$B5,$70,$97,$1F,$DF,  0,  0,  0,  0,  0,$FD,$70,$FD,$72,$FF,$78,  0,  0,  0,  0, $C,$B5,$D0, $D,$62,  0,$D6,$AA,$55,$4A,$A9,$55,$2A,$A4,$A9,$2B,$5F,$2B,$6B,$FA,$D3,$65,$D3,$F5,$A6,$C6,$C7,$FA,$3A, $F,$FF,$2D,$5D,$DD,$5A,$1A,$8D,$78,$A5; 6656
-		dc.b $4F,$5B,$6A,$80,  0,  5,$2D,$54,$3F,$5B,$1B,$1E,$A3,$DC,$85,$3F,$58,$52,$F6,$84,$BF,$5D,$6D,$3A,$AA,$1F,$CD,$EF,$2C,$F5,$D9,$31,$A5,$78,$D2,$BC,$69,$DD,$68,$71,$74,$AA,$FA,$A2,$3F,$5B,$52,$F5,$2E,$56,$86,$56,$5B,$19,$2D,$50,$92,$D9,$FF,$5F,$2F,$DE,$81,$FC; 6720
-		dc.b $DE,$FA,$57,$6D,$50,$A7,$F3,$74,$B6,$80,  0,  5,$2C,$2D,$4E,$A0,  5,$3F,$7A,$FF,$BD,  0,  0,  0,  0,$42,$AB,$F8,$A3,$D5,$5B,$C5,$2F,$8F,$8D,$3A,$A2,$62,$C6,$D4,$B4,$2A,$8B,$5A,$15,$2D,$A1,$52,$C6,$15,$52,$AA,$55,$4A,$B5,$F2,$1E,$D5,$25,$2B, $B,$FB,$C8,$68; 6784
-		dc.b $7F,$5A,$BA,$75,$42,$29,$6B,$E5,$AD,$80,  0, $A,$55,$4A,$8F,$B2,$D5,$7D,$7F,$AE,$1A,$26,$89,$A7,$B5,$8D,$8D,$80, $A,$D4,$6A,$55,$4A,$8E,$8F,$54,$34,$29,$55,$E9,$1A,$45,$63,$FB,$D5,$89,$60,$CB,$13,$FB,$EB,$2F,$EB,$9F,$CA,$AB,$1B,$43,$13,$65,$46,$7B,$24,$A0; 6848
-		dc.b $8B,$21,$7A,$6A,$D2,$A2,$6B,$23,$A5,$10,$E9,$4E,$A4,$79,$43,$C8,$27,$FC,$C0, $C,  1,$63,$5F,$7B,$24,$91,$7A,$90,$5F,$59,$FE, $A,$A0,  3,$59,$6B,$22,$D2,$C4,$A0,$2D,$5A,$A5,$19,$5A,$BB,$E5,$1F,$D7,$A2,$FE,$F4,$D9,$6C,$B6,$5B,$3F,$EF,$25,$EC,$F2,$1A,$A0,  0; 6912
-		dc.b $7B,$7F, $D,$6D,$5D,$F2,$EF,$EA,$4D,$74,$35,  5,$B7,$EB,$AA,$36,$8B,$2A,$5A,$2C,$7D,$8B,$1A,$DE,$B0,  0,$A2,$1A,$FF,$7E,$6A,$EE,$76,$EA,$16,$74,$85,$A1,$A7,$55,$76,$BF,$BE,$C1,$78,$8E,$22,$A9,$6B,$6A,$A5,$AD,$A1,$63,$FC,$D3,$63,$6F,$DE,$71,$C7,$2E,$E5,$EF; 6976
-		dc.b $1A, $D,  0,  0,  0,  5,$52,$A5,$8E,$4F,$FB,$ED,  0,$D0,$2E,$9F,$C2,$EE,  0, $D,$5A,$8D,$6A,$5A,$91,$A3,$6B,$6A,$46,$8D,$AD,$A9,$11,$4F,$DF,$6B,$1A,$46,$91,$BE,$2D,$7D,$8D,$AF,$6A,$47,$54,$A4,$52,$89,$4A,$A9,$17,$45,$48,$22,$C6,  8,$B1,$4A,$46,$DA,$E9,$FC; 7040
-		dc.b $19,$5A,$98,$80,$28,$94,$4A,$25,$12,$FA,$E0,$85,$2F,$8A,$5E,$94,$48,$D2,$34,$4D,$63, $F,$3F,$DE,$D1,$8B,$2E,$26,$36,$38,$F7,$58,$B1,$47,$62,$86,$2A,$D0,$45,$63,$C9,$23, $D,$96,$26,$CC,$B3,$42,$D1,$D8,$B3,$D9,$6E,$45,$B3,$2C,$D0,$B4,$55,$9E,$CB,$9C,$2C,$C5; 7104
-		dc.b $26,$85,$A2,$A8,$74,$EE,$69,$B0,$38,$23, $A,$47,$46,$BE,$47,$40,$CF,$94,$F7,  6,$7D,$93, $B,$BF,$46,$A8,$67,$BA,$FC,$27,$BD,$30,$33,$DD,  4,$3B,$EF,$C2,$75,$B9,$53,  3,$3B,$A1,$DE,$B6,$F0,$4A,$BF,$54,  0,  1,$FF,$E6,  0,  0,$3A,$6B,$64,$A5,$5A,$7F,$74,$DB; 7168
-		dc.b $56,$D0,$6A,$9A,$3E,$21,$74,$BD,  2,$E8,  6,$8A,$9A,$E9,$7E,$81,$74,$17,$A7,$7B,$E9,$EC,$3C,$B5,$B0,$A5,$85,$13,$5D,  5,$13,$5D,$28,$9A,$E9,$44,$D7,$4A,$58,$D5,$2F,$DF,$AC,$B4,$3D,$50,$B3,$26,$9D,$50,$B2,$A6,$8F,$10,$DA,$D9,$B5,$B0,$88,  0,  0,$3F,$5F,$1A; 7232
-		dc.b $5A,$2F,$D5,$21,$7E,$92,$1A,$DB,$56,$16,$BD,$8B,$5F,$66,$36,$BE,$C5,$A9,$13,$6A,$63,$4B,$1B,$52,$2D,$49,$F0,$DE,$B5,$74,$59,$A1,$54,$CA,$8F,$15,$C2,$F9,$FD,$9E,$33,$53,$BA,$6D,$63,$D0,  0,  0,  1,$BF,$C8,$A9,$81,$9D,$D0,$EF,$BF,  9,$E1,$FE,$79,$D7,$6D,$36; 7296
-		dc.b $94,$39,$24,$F9,$3D,$A5, $E,$87,$76,$9B,$B6,$28,  0,$15,$57,$32,$1D,$F3,$74,$C2,$6C,$12,$74,$DF,$84,$D8,$74,$3D,$13,$6B,$B3,$BB,$BE,$CA,$9A,$A6,$B1,$48,$21,$CB,$44,$BF,$4B,$68,$BA,$1D,$3A,$8A,$2A,$5A,$1A, $B,  0,  0,  0,$E8,$BF,$DC,$5D,  0,$1A,  0,  6,$80; 7360
-		dc.b  $D,  0,$D0,  3,$D2,$7A,$A7,$E8,$80,  0,$6A,$AE,$64,$3B,$E6,$E9,$84,$D8,$24,$E9,$BF,  9,$B0,$E8,$7A,$2A,$4C,$93,$80,  2,$D5,$5C,$C8,$77,$CD,$D3,  9,$B0,$49,$D3,$7E,$13,$61,$D0,$F4,$54,$99,$27,  0,  5,$AA,$B9,$90,$EF,$9B,$A6,$13,$60,$93,$A6,$FC,$26,$C3,$A1; 7424
-		dc.b $E8,$A9,$32,$4E,  0, $B,$52,$19,$90,$C6,$79,$BA,$78,$60,$85,$30,$E9,$E1,$CD,$26,$4C,$37,$F4,$FD,$70,$4D,$53,$59,$6A,$DA,$A0,  2,$FA,$9E,$22,$11,$78,$BA,$42,$2A,$86,$2E,$82,$35,$7E,$FB,$8C,$B5,$B4,$AA,$BE,$C6,$D2,$7F,$D6,$55,$7E,$36,$76,$EA,$BE,$C0,  0,  0; 7488
-		dc.b $31,$BF,$B8,$C5,$E3,$BA,$3B,$19,$8C,$C0,$A4,$10,$A0,$2C,$5A, $C, $A,$14,$2C,$50,$16,$2C,$50,$B0,$29,  6,$28, $B,$14,$28,$59,$E2,$FD, $B,$41, $A,$45,$67,$3B,$1D,$D1,$48,$F4,$33,$88,$31,$42,$C0,$B1,$48,$20,$28,$58,$B1,$60,$5A,  8,$50,$41,$20,$C0,$A1,$9C,$B1; 7552
-		dc.b $48,$C2,$26,$A5,$DD,  4,$2C,$86,$2B,$39,$E9,$56,$D1,$9E,$3B,$AA,$E8, $A,$16,$28,$50,$16,$BD,$81,$42,$85,$8A,  2,$C5,$8A,$16,  5,$20,$C5,  1,$62,$90,$67,$8B,$F4,$2C,$50,$A1,$48,$AE,$C7,$63,$D2,$29,$1E,$86,$70,$58,$B1,$42,$C0,$A1,$42,$C5,  1,$68,$21,$61,  6; 7616
-		dc.b $2C,$50,$14,$82, $B,$F7,$16,$32,$8C,$22,$6A,$5E,$90,$42,$C8,$62,$BB,$1E,$9C,$7F,$7D,$54,$47,$FC,$FF,$EF,$FF,$16,$2C,$58,$B2,$B1,$62,$C5,$80,$1F,$F3,$FF,$8F,$FD,$FA,$FF,$E2,$2A,$8C,$38,$AB,$1E,$2B,$52,$4A,$AB,$D2,$FB,$1F,$E8,$E8,$9F,$A3,$BD,$92,$D8,$AB,$56; 7680
-		dc.b $7A,$B1,$B1,$68,$75,  0,  0,$BE,$2E,$86,$30,$89,$43,$DD,$C6,$25,$8F,$15,$A9,$25,$55,$E9,$7D,$8F,$F4,$74,$4F,$D1,$DE,$C9,$6C,$55,$AB,$3D,$58,$D8,$B4,$3A,$80,$17,$C4,$D4,$15,$22,$B1,$31,$84,$5F,$8F,$EF,$AA,$8C,$B5,$B4,$AA,$BE,$C6,$D2,$7F,$D6,$55,$7E,$36,$76; 7744
-		dc.b $EA,$BE,$C0,  8,$44,$D4,$B1,$D5,$22,$B1,$31,$A9,$62,  4,$13,$8F,$EF,$B8,$F0,$EC,$F9,$C9,$A5,$83,$F8,$73,  2,$FF,$D4,$FE,$A1,$7F,$53,$C1,$B5,$C0,  0,  0,  2,$1C,$E6,$BF, $C,$B3,$BE,$EE,  0,$1C,$F5,$6C,$3C,$1F,$9F,$80,  0,$3F,$EA,$7F,$54,$BF,$A9,$F6,$E1, $F; 7808
-		dc.b $D5,$F0,  0,  7,$E1,$D9,$F8,$5C,$DA,$CC,  0,$3E,$18,$5F,$34,$9B,$3E,$D0,$FD,$47,$60,  0,  0,$1B,$B5,$6F,$D5,$BC,$DF,$AB,  0,  0,$35,$E7,$E0,$F8,$49,$A5,$9B,$F6,$E0,  0,  2,$1F,$A9,$E0,$7B,$63,$26,$CC,$F6,$F0,$E6,  0,  0,  0,$7F,$E2,  0,  0,  0,  0,  0,  0; 7872
-		dc.b   0,  0,  1,$4C,$5F,$F4,$77,$B1,$67,$C4,$A4,$18,$D6,$50,$FE,$8E,$B8,$32,$B1,$AE,$FF,$D1,$80,  0,  0,$7F,$8D,$7F,$A2,$C9, $F,$D3,$D6,$79,$14,$3B,$22,$D6,$6B,$E4,$8C,$50,$A6,$C5,$19, $A,$19,$6F,$E9,$EA,  0,$14,$68,$78,$A3,$16,$43,$59,$46,$43,$59,$DA,$1B,$14; 7936
-		dc.b $D8,$EC,$8B,$C9,$F6,$5F,$2D,$8D,$6F,$5C,$18,$2F,$F0,$CE,$3F,$F7,  2, $D,  6,$76,$2C,$8D,  4,$64,$29,$8A,$14,$E4,$51,$79,$14,$D8,$A6,$C6,$B8,$6C,$52,$1C,$8A,$41,$B6,$47,$62,$85, $B,$16,$76,$7F,$D1,$85,$C4,$FF,$9F,$A2,$FF, $C,$E2,$7C,$8F,$B7,$ED,$D1,$76,$35; 8000
-		dc.b $9D,$8E,$C5,$16,$BD,$8A,$1F,$D1,$9A,$C1,$6B,$F1,$76, $C,  0,$1A,$ED,$D3,$FA,$EC,$5A,$98,$D3,$1B,$F7,$57,$8B,$EC,$50,$B2,$D7,$C9, $E,$25,$17,$6A,$D7,$D8,$F2,$4F,$D1,$94,$A3,$14,$3B,$51,$2F,$65,$41,$7B,  5,$FE,$BF,$E5,  0,  0,  0,$C7,$C5,$51,$AB,$2D, $A,$D5; 8064
-		dc.b $8B,$6C,$50,$D6,$CB,$FB,$72,$8A,$97,$D6,$BB,$43,$62,$8B,$FA,$73,$D3,$7E,$5F,$A5,  0,  0,  0,  0,$30,$6A,$21,$FE,$9E,$DE,$CB,$8C,$FF,$A2,$29,$93,$B5,$74,$C5,$2F,$FD,$1D,$11,$95,$8B,$14,$87,$F4,$E0,$C0,  0,  0, $F,$3F,$E8,$BF,$4B,$D3,$68,$72,$35,$C1,$35,$48; 8128
-		dc.b $57,$2A,$CE,$C5,$31,$2C,$8B,$8A,$1C,$53,$62,$C9,$FA,$34,$87,$E8,$DD,$96,$BE,$45,$8B,$21,$D9,$D9, $F,$25,$64,$FD,$3A,$16,$43,$CA,$B6,$3E,$45,$18,$FF, $C,$FE,$D3,$97,$4D,$91,$AB,$63,$8A,$1A,$DA,$FF,$15,$AF,$13,$FA,$3D,$8A,$14,$62,$C9,$B1,$F2,$64,$3C,$93,$92; 8192
-		dc.b $2D,$7B,$1D,$8F,$F4,$79,$34,$2B,$28,$5B,$D8,$A3,$2F,$E8,$D3,$56, $C, $F,$F1,$FA,$4F,$D0,$B1,$C4,$7B,$1C,$55,$17,$15,$F6,$2C,$A8,$7F,$4E,$D5,$9D,$BC,$B6,$3B,$24,$3F,$4E,$50,$E2,$7F,$6E,$98,$94,$E4,$76,$42,$86,$BE,$49,$FC,$3A,$E9,$E3,$AB,  9,$FF,$C9,$B7,$B2; 8256
-		dc.b $D6,$7F,$4F,$59,$D9,$50,$EC,$76,$AD,$F6,$AC,$A1,$F2,$DB,$F4,$6F,$B4,$31,$35,$DF,$FA,$30,  0,  0,$74,$9F,$A7,$E9,$7F,$28,$50,$D7,$2F,$28,$35,$7B,$14,$A7,$2A,$D5, $D,$7B,$1A,$CA,$16,$4F,$DB,$C1,$BC,$B1,$5F,$10,  0,  0,$7E,$52,$7E,$9F,$A5,$94,$13,$63,$B2,$14; 8320
-		dc.b $5F,$D3,$A2,$EC,$76,$4D,$8A,$1E,$48,$6B,$E4,$B5,$96,$29,$B1,$AD,$50,$D7,$8A,$F8,$AB,  0,  0,  0,$B4,$BF,$C6,$85,$8E,$25,$91,$58,$E2,$9B,$23,$2B,$2E,$CA,$D0,$F6,$2D, $F,$10, $F,$E8,$D7,$15,$AC,$B5,$6C,$9B,$3E,$C9,$B2,$6D, $E,$45,$36,$6F,$6F,$D3,$A1,$42,$DE; 8384
-		dc.b $C5,$8B,$1F,$12,$C0,  0,  0,$A6,$34,$AF,$F4,$65,$8F,$2A,$D5,$97,$62,$8F,$B5,$78,$96,$29,$8A,$E2,$59,$71,$46,$BD,$92,$F6,$38,$80,  6,$AD, $F,$14,$62,$C8,$6B,$28,$5A,$4C,$9A,$B5,$74,$C5,$2F,$FD,$1D,$11,$95,$8B,$14,$87,$F4,$E0,$C0, $D,$5A, $C,$EC,$59,$1A,  8; 8448
-		dc.b $C8,$53,$14,$29,$C8,$A2,$F2,$29,$B6,$ED,$B7,$7B,$1D,$BD,$96,$B3,$FA,$7A,$CE,$CA,$87,$63,$B5,$6F,$B5,$65, $F,$96,$DF,$A3,$7D,$A1,$89,$AE,$FC,$61,$FC,$33,$89,$F2,$3E,$DF,$B7,$45,$D8,$D6,$76,$3B,$14,$5A,$F6,$28,$7F,$46,$6B,  8,$7F,$45,$BA,  9,$B1,$D9, $A,$2F; 8512
-		dc.b $E9,$D1,$76,$3B,$26,$C5, $F,$24,$35,$F2,$5A,$CB,$14,$D8,$D6,$A8,$6B,$C6,$1F,$A3,$56,$5F,$E1,$C3,$C8,$E2,$9F,$B7,$F6,$D8,$D6,$76,$5A,$D5, $E,$CB,$FA,$32,$87,$6A,$57,$BB,$26,$F2,$D8,$A3,$21,$43,$C9,$18,$A1,$AD,$6B,$3E,$C7,$91,$43,$B2,$43,$F4,$E8,$7F,$A3,$FF; 8576
-		dc.b $32,$C7,$C5,$51,$AB,$2D, $A,$D5,$8B,$6C,$50,$D6,$CB,$FB,$72,$8A,$97,$D6,$BB,$43,$62,$8B,$FA,$75,$43,$BB,$65,$DA,  9,$B1,$D9, $A,$2F,$E9,$D1,$76,$3B,$26,$C5, $F,$24,$35,$F2,$5A,$CB,$14,$D8,$D6,$A8,$6B,$C5,$7C,$55,$80,  5,$83,$51, $F,$F4,$F6,$F6,$5C,$77,$1A; 8640
-		dc.b $D7,$F4,$68,$58,$E2,$59,$15,$8E,$29,$B2,$32,$B2,$EC,$AD, $F,$62,$D0,$F1,  0,$FE,$8D,$71,$5A,$CB,$56,$C9,$B3,$EC,$9B,$26,$D0,$E4,$53,$66,$F6,$FD,$3A,$14,$2D,$EC,$58,$B1,$F1,$2C,  0,  0, $A,$63,$4A,$FF,$46,$58,$F2,$AD,$59,$76,$28,$FB,$57,$89,$62,$98,$AE,$25; 8704
-		dc.b $97,$14,$6B,$D9,$2F,$63,$88,  0,  0, $A,$4F,$FA,$4F,$D2,$F4,$4F,$D1,$F9,$31,$ED,$31,$45,$B8,$C8,$CC,$F2,$32,  0,$5F,$23,$27,$B8,$C8,$CC,$F7,$78,$6B,$E1,$83,$CC,$72, $F,$31,$C9,$19,$5B,$F5,$5B,$6E,$DF,$B7,$E5,$27,$FD,$39,$91,$92,$2C,$DD,$5F,$A2,$38,$19,$1B; 8768
-		dc.b $3B,$24,$80,$17,$B2,$49,$F0,$32,$36,$79,$BA,$A1,$FA,$AB,$F2,$36, $F,$91,$B3,$F8,$59,$7F,$45,$D0,$FE,$9A,$7D,$A7,$E8,$9F,$A3,$F2,$65,$65,$43,$9F,$6F,  8,$27,$E8,$8C,$D4,$94,$13,$2B,$F3,$B8,$E5,$7D,$DF,$AA,$17,$FE,$AB,  8,$5C,$7F,$44,$F2,$39,$3E,$47,  8,$5D; 8832
-		dc.b $FA,$A2,$8C,$AC,$A9,$B6,$ED,$FB,$7E,$52,$7E,$4B,$23,$24,$5D,$97,$F4,$4B,$37,$EB,$74,$5C, $F,$E8,$9A, $C,$9A,$A6,$4D,  6,$91,$B6,$8B,$84,$DD,$42,$1F,$AA,$B3,$FE,$88,$DA,$19,$19,$3C,$C7,$2B,$FC,$3A,$AF,$D9,$7F,$45,$D0,$FE,$9A,$7D,$A7,$E8,$9F,$A3,$F2,$65,$65; 8896
-		dc.b $40,$73,$ED,$E1,$82,$A7,$9A,  5,$4F,$34,$5C,$FB,$78,$60,$35,$E7,$44,$90,$79,$8A,$48,$DC,$FC,$D0,$DC,$B3,$14,$DB,$BE,$7E,$EE,$93,$F2,$59,$19,$22,$EC,$BF,$A2,  7,$C3,$F5,$BA,$2A,$63,$93,  5,$4C,$72,$65,$F0,$FD,$6E,$80,$CD,$75,$24,$C2,$92,$65,$D2,$13,$49,$E2; 8960
-		dc.b $70,$3B,$69,  9,$77,$4B,$BA,$51,  0,  0,  4,$38,$F7,$F1,$A5,$7D,$DE,$22,$BC,$97,$15,$C5,$6B,$C4,$62,$BE,$7F,$BC,$E3,$DC,  0,  0, $F,$DE, $E,$A5,$C5,$72,$7F,$1E,$F0,$BE,$35,$85,$F1,$AF,$F7,$FF,$BC,  0,  7,$EE,$E2,$17,$BB,$C9,$7C,$B2,$E3,$4C,$56,$B5,$FE,$9E; 9024
-		dc.b $4F,$8A,$F8,$D6,$16,$B7,$AF,$AB,$8F,$77,$10,  0,$EE,$EF,$A6,$3D,$EB,$5A,$E2,$F5,$AF,$52,$D6,$F5,$AE,$35,$AD,$6B,$88,$F2,$F1, $B,$8E,$58,$F1,$EF,$AD,$F8,$D2,$BF,$1E,$38,$F9,$8C,$72,$F2,$A7,$92,$E4,  7,$96,$35,$AF,$96,$2B,$6B,$F1,$3F,$AD,$AD,$64,$B2,$EA,$11; 9088
-		dc.b $D2,$D5,$69,$15,$95,$FC,$57,$C5,$F2,$5C,$78,$D6,$3F,$A6,$1F,$1A,$D7,$10,$B5,$AE,$2B,$5F,$8C,$11,$EB,$5A,$F1,$54,$85,$65, $A,$5A,$AB,$43,$4B,$19,$1E,$AD,  0,  0,  1,$4E,$3D,$F4,$C5,$7B,$D6,$BE,$FC,$7C,$86,$2B,$5E,$35,$85,$F1,$EE,$E3,$DF,$C4,  0,  0,$1D,$FD; 9152
-		dc.b $41,$F1,$AF,$BD,$71,$5A,$F8,$8C,$B1,$AC,$2D,$7E,$2B,$C7,$BF,$F7,$E0,  0,  0,$7E,$FE,$2B,$C6,$95,$F8,$F1,$C7,$CC,$63,$97,$95,$3C,$97,$25,$EA,$E3,$FB,$E0,  0,  0,$71,$EF,$1C,$57,$C5,$F2,$5C,$78,$D6,$3F,$A6,$1F,$1A,$F8,$FE,$F3,$A8,  0,$1F,$BB,$88,$5E,$EF,$2E; 9216
-		dc.b $39,$56,$17,$C5,$6B,$7C,$82,$E2,$BE,$23,$C5,$71,$FD,$E7,$EF,$C0,  3,$BB,$BE,$98,$F7,$AD,$6B,$8B,$D6,$BC,$42,$E4,$BE,$20,$2E,$21,$FC,$97,$BF,$2C,$57,$8D,$31,$5A,$D7,$FA,$79,$3E,$2B,$E3,$58,$5A,$DE,$B5,$C6,$BC,$45,$AA,$AF,$C5,$78,$E9,$1C,$8E,$96,$D9,$E2,$90; 9280
-		dc.b $DB,$8A,$B4,$C6,$7D,$8A,$33,$CF,$22,$D2,$4E,$3D,$4B,$5B,$D6,$B8,$D6,$B5,$AE,$23,$CB,$C4,$2E,$39,$62,$B8,$D7,$90,$C5,$6B,$5A,$F2,$5A,$AD,$AC,$BF,$7B,$55,$9F,$23,$1B,$42,$5B,$59,$18,$F1,$D2,$EA,$E5,$A0,$F1,$5A,$DF,$20,$B8,$AF,$88,$F1,$5C,$57,$FA,$62,$BC,$BF; 9344
-		dc.b $83, $A,$EA,$B0,$43,$D5,$DC,$F2,$3C,$97,$3A,$A4,$76,$9D,$66,$B7,$75,$AA,$B5,$41,$72,$5F,$10,$17,$10,$FE,$4B,$58,$16,$E3,$65,$CE,$A7,$EF,$86,$CF,$B1,$8C,$D6,$3F,$A2,$D1, $B,$44,$DA,$16,$8A,$46,$D2,$8D,$46,$55,$68,$F2,$84,$84,$A1,$C7,$B8,$2F,$1C,$6B,$A5,$7D; 9408
-		dc.b $4B,$93,$E3,$5E,$42,$D5,$57,$E2,$BC,$74,$8E,$47,$4B,$6C,$F1,$48,$6D,$C5,$5A,$63,$3E,$C5,$19,$E7,$95,$51,$D2,$A9,$19,$18,$E9,$C6,$5A,$F7,$C8,$D6,$FC,$42,$FF,$4C,$3E,$35,$AE,$21,$F1,$5A,$D6,$BC,$96,$AB,$6B,$2F,$DE,$D5,$67,$C8,$C6,$D0,$96,$D6,$46,$3D,$F5,$4D; 9472
-		dc.b $5B,$58,$63,$5A,$D6,$FE,$4B,$5B,$E2,$B8,$85,$FE,$9E,$5C,$6B,$C4,$2C,$8F,$1A,$DF,$95,$56,$E3,$B1,$DA,$1B,$1D,$AF,$E5,$23,$2D,$9F,$48,$48,$CB,$69,$77,$69,$C7,$48,$8F,$2C,$6B,$5C,$6B,$14,$AC,$2E,$2B,$5A,$F9,$2D,$56,$AC,$55,$6A,$B3,$5A,$C5,$2D,$54,$30,$B6,$92; 9536
-		dc.b $86,$88,$63,$92,$A6,$27,$F5,$B5,$26,$5A,$53,$CB,$1A,$D7,$CB,$15,$B5,$F8,$9F,$D6,$D6,$B2,$59,$75,  8,$E9,$4C,$A1,$28,$48,$4A,$1C,$7B,$82,$F1,$C6,$BA,$57,$D4,$B9,$2E,$4B,$96,$34,$AD,$71,$5A,$FC,$60,$8F,$5A,$D7,$8A,$A4,$2B,$28,$52,$D5,$5A,$1A,$5A,$16,$AB,$49; 9600
-		dc.b $18,$E9,$C6,$5A,$F7,$C8,$D6,$FC,$42,$FF,$4C,$3E,$35,$F1,$C7,$2A,$F8,$D3,$15,$AD,$7F,$A7,$93,$E2,$BE,$35,$85,$AD,$EB,$CB,$15,$AC,$78,$AD,$6F,$90,$5C,$57,$C4,$78,$AF,$8E,$4B,$92,$D6,$F5,$AE,$35,$AD,$6B,$88,$F2,$F1, $B,$8E,$58,$AF,$98,$7C,$97,$C4,  5,$C4,$3F; 9664
-		dc.b $92,$F9,$64,$16,$D5,$57,$E2,$BC,$74,$8E,$47,$4B,$6C,$F1,$48,$6D,$C5,$5A,$63,$3E,$C5,$19,$E7,$97,$E5,$B6,$8F,$B5,$D9,$A4,$D0,$99, $C,$DD,$B8,$4D,$71,$9B,$2E,$17,$4D,$72,$73,$5B,$A6,$BB,  5,$F0,$E7, $C,$F1,$E7,$9E,$13,$67,$D8,$E7,$BA,$7E,$91,$EA,$D3,$A0,$C5; 9728
-		dc.b $6B,$5A,$F2,$5A,$AD,$AC,$BF,$7B,$55,$9F,$23,$1B,$42,$5B,$59,$18,$E7,$84,$DD,$3B,$AD,$32,$4D,$83,$A6,$67,$87,$63,$99,$9B,$1E,$D0,$9B,$99,$CE,$E9,$B3,$BA,$63,$36,$49,$9D,$D3,$5D,$97,$3B,$A6,$C2,$EE,  6,$EE,$9B,$4F,$1F,$D6,$F4,$15,$E5,$FC,$18,$57,$55,$82,$1E; 9792
-		dc.b $AE,$E7,$91,$E4,$B9,$D5,$23,$B4,$EB,$D1,$AB,$64,$6C,$FC,$39,$C2,$EF, $E,$6B,$E0,$FC,$31,$C2,$6B,$8F, $E,$D8,$4D,$71,$ED,$9B,$CC,$D7,$66,$66,$5F,  3,$74,$DB,$BF,$99,$D3,$60,$B6,$E3,$65,$CE,$A7,$EF,$86,$CF,$B1,$8C,$D6,$3F,$A2,$D1, $B,$44,$DA,$16,$8A,$46,$D8; 9856
-		dc.b $74,$8C,$D8,$6E,$B3,$4D,$81,$BB,$19,$8E,  7,$86,$53,$1C, $F, $B,$92,$E9,$97,$9F, $B,$A6,$ED,$5E,$70,$ED,$FB,$A8,$67,$DA,$69,$5D,$83,$5D,$9C,$C9,$77,  8,$4A,$12,$12,$87,$1E,$E0,$BC,$71,$AE,$95,$F5,$2E,$4B,$D3,$6E,$91,$FD,$7E,$D9,$A4,$D0,$99, $C,$DD,$B8,$4D; 9920
-		dc.b $71,$9B,$2E,$17,$4D,$72,$73,$5B,$A6,$BB,  5,$F0,$E7, $C,$F1,$E7,$9E,$13,$67,$D8,$E7,$76,$78,$23,$23,$5D,$1D,$38,$CB,$5E,$F9,$1A,$DF,$88,$5F,$E9,$87,$C6,$BD,$BA,$6E,$FD,$6E,$93,$A4,$D8,$3A,$66,$78,$76,$39,$99,$B1,$ED,  9,$B9,$9C,$EE,$9B,$3B,$A6,$33,$64,$99; 9984
-		dc.b $DD,$35,$D9,$73,$BA,$6C,$2E,$E0,$6E,$CF,  9,$BC,$B3,  0,  0,  0,  1,$72,$DE,  0,$DE,$17,$2F,$50,  0, $B,$F9,$4D,$E0,  0,  0,  1,$FF,$29,$BC,  0,$17,$7F,$E5,$37,$80,  5,$2B,  0,  0,$BB,$FF,$69,$4F,$CA,$64,$BF,$94,  0,  0,$F9,  1,$4E,$55,$AF,$E5,$80,  3,$D7; 10048
-		dc.b $F6,$80,  0,  0,$A7,$E5,  3,$EF,  0,$3E,$FA,$FF,$2C,$17,$7F,$E5,$32, $F,$F9,$4D,$E0, $A,$56,  0,  0,  5,$FC,$A7,$E5,$BF,$28,$17,$F2,$99,  0,  0,$5D,$E0,  1,$BC,  0,$FB,$D7,$78,$7F,$50,$1F,$F2,$9B,$C0,  1,$7F,$28,$29,$58,  0,$2D,$61,$77,$FE,$5A,$BD,$E2,$95; 10112
-		dc.b $80,  0,$7F,$20,$17,$F2,$C1,$F7,$81,$4D,$EB,$5E,$F0,$BF,$96,  0,$2E,$40,  0,  0,$7D,$FF,$96,  3,$7F,$E5,$B7,$FE,$50, $E,$55,$87,$CB,$F6,$EF,$CB,$2F,$CA,  5,$AC,  1,$97,$E5,  6,$FA,$C0,$1F,$96,$FC,$A0,  0,$6F,$5F,$2F,$CA,$72,$DE,  0, $B,$58,  0,$53,$7F,$2F; 10176
-		dc.b $CA,$72, $B,$58,  0,  1,$58,$7A,$C0,  0,$52,$BE,$59,  0,  3,$FE,$5B,$20,  0, $F,$58,  0,$3D,$6B,$90,$14,$C8,  7,$E4,$1F,$7F,$20,  0, $F,$92,$E4,$37,$FE,$5A,$B0,$17,$7D,$60, $A,$C3,$F2,  0,  0,  3,$EF,$FC,$B5,$7B,$C0,$5A,$D7,$90,$7A,$D7,$F6,$E1,$F0,$CE,$E6; 10240
-		dc.b $FC,$A3,$61,$9A,$4D,  9,$90,$CD,$DB,$84,$D7,$19,$B2,$E1,$74,$D7,$27,$35,$BA,$6B,$B0,$5F, $E,$70,$CF,$1E,$79,$E1,$36,$7D,$8E,$77,$4D,$73,$57,$3D,$80,  1,$72,$5A,$E9,$C8,$67,$84,$DE,$CD,$32,$4D,$83,$A6,$67,$87,$63,$99,$9B,$1E,$D0,$9B,$99,$CE,$E9,$B3,$BA,$63; 10304
-		dc.b $36,$49,$9D,$D3,$5D,$97,$3B,$A6,$C2,$EE,  6,$EB,$47,$3F,$D1,$A6,$60,$3E,$41,$79,$64,  3,$E3,$FC,$1C,$FC,$39,$C2,$EF, $E,$6B,$E0,$FC,$31,$C2,$6B,$8F, $E,$D8,$4D,$71,$ED,$9B,$CC,$D7,$66,$66,$5F,  3,$74,$D1,$E9,$8D,$76,$88,$E4,  0,$C9,$79,  1,$76,$69,$9F,$6C; 10368
-		dc.b $66,$C0,$DD,$8C,$C7,  3,$C3,$29,$8E,  7,$85,$C9,$74,$CB,$CF,$85,$D3,$76,$AF,$38,$76,$FD,$D4,$33,$ED,$34,$AE,$C2,$7B,$77,$B6,$19,$CC,  0, $B,$5B,$D6,$B9,  5,$D2,$A8,$F4,$F6,$BB,$34,$9A,$13,$21,$9B,$B7,  9,$AE,$33,$65,$C2,$E9,$AE,$4E,$6B,$74,$D7,$60,$BE,$1C; 10432
-		dc.b $E1,$9E,$3C,$F3,$C2,$6C,$FB,$1C,$EE,$9A,$3F,$A4,$6C,  0,  1,$79, $E,$59, $C,$F0,$CF,$F4,$69,$9A,$4D,$83,$A6,$67,$87,$63,$99,$9B,$1E,$D0,$9B,$99,$CE,$E9,$B3,$BA,$63,$36,$49,$9D,$D3,$5D,$97,$3B,$A6,$C2,$EE,  6,$EC,$F0,$CD,$BF,$28,$99,$80,  0,$5C,$B9,  5,$F2; 10496
-		dc.b $C5,$33,$33,$73,$85,$C6,$6C,$B8,$1C,$26,$B9,$2E,$E0,$70,$9A,$EE,$1C,$EF,$CE,$BE,$CB,$FB,$AE,$D8,$5D,$29,$BB,$66,$66,$CF,  6,$EA,$B9,  0,  1,$F9,$3E,$41,$F0,$99,$33,$E7,$5C,$D8,$1B,$B1,$FD,$D2,$F3,$F0,$C7,$83,$F6,$E0,$6E,$9B,  3,$9F,$63,$74,$D8,$1C,$EE,$69; 10560
-		dc.b $A1,$35,$C7,$C1,$66,$C3,$3F,$E0,$E0,$17,$F2,$9B,$C0,  0,$2E,$FA,$F9,  0,  0,  1,$7D,$72,  0,  5,$FD,$A6,$40,$3D,$60,$3D,$60,$72,$C9,$79, $A,$79,$80,  0,  0,$6F,$C8,  5,$DE,$BC,$80,  1,$7F,$AA,  0,  0,  0,  6,$40,$53,$23,$C3, $B,$A6,$59,$B1,$AD,$96,$6E,$73; 10624
-		dc.b $67,$70,  0,  0,$29,$BC,  7,$DF,$C8, $C,$38,$61,$A4,$EA,$98,$D7,$72,$CD,$CE,$6C,$EE,$C8, $A,$7E,$50,  0,$29,$F9,$60,$BB,$C7,$98,$1B,$F9,$64,$17,$7E,$41,$FF,$29,$BC,$64,  2,$D6,$BC,$80, $B,$BF,$90,  1,$F7,$8A,$6F,$CB,$78,  0,$2F,$A8, $F,$BC, $A,$F7,$80,  6; 10688
-		dc.b $43,$F2,$95,$F2,$C8, $A,$64,$3F,$2D,$C9,$F2,$FD,$B8,$5C,$80,$7F,$30,  7,$ED,$C2,$E4,$B9,  5,$F3,$1B,$F2,  0, $F,$EA,$E4,  0,  0, $D,$EB,$BF,$20,$BB,$C7,$20,  6,$43,$21,$4E,$5B,$F2,  2,$99,$2F,$ED,$F2, $B,$96,$19,$CD,$76,$19,$AA,$16,$AD,$97,$14,$2C,$93,$5D; 10752
-		dc.b $5E,$28,$C5,$18,$A2,$A6,$27,$14,$C4,$F9,$37,$B3,$1C,$50,$B1,$46,$AC,$B2,$62,$B8,$A3,$1A,$DA,$B6,$AF,$14,$C4,$E3,$5B,$7F,  5,$8A,$7F, $D,$31,$F2,$2C,$53,$F4,$66,$4C,$8C,$52,$EC,$D0,$B5,$6C,$B8,$A1,$64,$5A,$F1,$46,$BB,  6,$28,$B5,$AE,$29,$FA,$3F,$26,$F6,$65; 10816
-		dc.b $64,$38,$9C,$50,$B7,$F0,$71,$4C,$4E,$35,$B5,$6D,$5E,$27,$13,$8A,$1F,$65,$42,$9F,$A3,$AF,$F4,$7E,$D8,$A4,$31,$3A,$55,$85,$D9,$DD,$CC, $F,$DB,$E4,  2,$E5,$BF,$90,$7C,$80,  1,$F2,$E4,$B9,  1,$FB,$75,$C8,$3E,$F0,$17,$96,$40,$3E,$5E,$B9,  0,  2,$FE,$DF,$20,$17; 10880
-		dc.b $97,$E5,$B2,  0,  7,$AD,$FF,$6E,$1F,$2E,$59,  0,  3,$EF,$5F,$5C,$82,$EF,$E4,$1F,$7F,$2C,$80,$5F,$DB,$BF,$9B,$D7,$C3,$C9,$7B,$42,$EC,$E8,$99,$9E,$DC, $E,$6B,$DB,$19,$8C,$D7,$66,$79,$CC,$53,$29,$8C,$D7,$67,$CF,$2B,$A6,$BB,$3B,$8F, $B,$B0,$9A,$EB,$74,$FD,$1E; 10944
-		dc.b $78,$66,  0,$1C,$97,$25,$FD,$D7,$F6,$72,$C7,$29,$B9,$CB,$1F,  6,$43,$77,  9,$8D,$D3,$70,$ED,$31,$9A,$EE,$19,$4C,$66,$B9,$79,$A5,$DC,$FC,$17, $B,$B9,$E3,$9C,$33,$3D,$B3,$9B, $C,$F0,$FD,$1A,$61,$35,$C1,$F3,$86,$57,$70,$BB,$9A,$E1,$23,$72,$F0,$39,$F3,$C7,$2F; 11008
-		dc.b  $A,$F1,$F2,$CB,$19,$21,$9B,$F5,$29,$2A,$F0,$86,$7E,$1C,$D7,$C1,$F8,$63,$84,$D7,$1E,$1D,$B0,$9A,$E3,$DB,$37,$99,$AE,$CC,$CC,$BE,  6,$E9,$AE,$6A,$FF,$29,$35,$C1,$F9,$2E,$77,$65,$35,$D9,$56,$B2,$C1,$5A,$5D,$A6,$3C,$31,$5F, $F,$E1,$21,$F6,$93,$67,$26,$97,$83; 11072
-		dc.b $21,$BB,$84,$C6,$E9,$B8,$76,$98,$CD,$77, $C,$A6,$33,$5C,$BC,$D2,$EE,$7E, $B,$85,$DC,$F1,$CE,$19,$9E,$D9,$CD,$86,$77,$27,$E8,$EE,$9A,$E0,$BE,$63,$78,$A7,$2F,$D4,$FE,$A3,$1F,$63,$5F,  4,$93,$5D,$FA,$83,$2A,$F0,$86,$7E,$1C,$D7,$C1,$F8,$63,$84,$D7,$1E,$1D,$B0; 11136
-		dc.b $9A,$E3,$DB,$37,$99,$AE,$CC,$CC,$BE,  6,$E9,$A3,$FA,$4C,$73,$C0, $F,$DB,$E4,$1F,$27,$CA,$9E,$5C,$2B,$CD,$6E,$6B,$8E,$19,$AD,$C9,$84,$C9,$E0,$BC,$FC,$31,$E0,$FD,$B8,$1B,$A6,$C0,$E7,$D8,$DD,$36,  7,$3B,$9A,$68,$4D,$71,$F0,$5F, $B,$AF,$9B,$87,$67,$CE,$4D,$2C; 11200
-		dc.b $1F,$C3,$9A,$CD,$AC,$C1,$7F,$53,$FA,$85,$FD,$4F,  6,$5C,$FB,$2E,  6,$6C,$AE,$7F, $C,  7,$87,$38,$67,$26,$96,$10,$E1,$D9,$FC,$30,$5E,$17,$34,$D8,$2F, $E,$C0,$3F,$87,$EA,$E1,$34,$B1,$97,$65,$FD,$47,$EA,$4E,$7A,$B6,$1E, $F,$CF,$C1,$FF,$51,$FA,$9F,$D4,$24,$9B; 11264
-		dc.b $F4,$59,$9B,$BC,$39,$CC, $F,$EA,$7F,$54,$BF,$A9,$F6,$E1, $F,$D5,$FE,$A3,  9,$9F,$86,$13,$67,$D8,$E7, $C,$F1,$E7,$76, $B,$E1,$CE,$E4,$E6,$B7,$4C,$66,$CB,$85,$D3,$19,$BB,$70,$9B,$B3,$70,$C0,$CD,$74,$AE,$E1,$84,$1B,$87,$EA,$57,$F5,$1F,$A9, $B,$36,$B3,$2F,$3F; 11328
-		dc.b   7,$C2,$4D,$2C,$DF,$B7, $B,$9F,  9,$BB,$1E,$17,$61,$35,$DC,$F2,$BA,$6B,$B3,$4C,$A6,$33,$5D,$9C,$D7,$66,$79,$CD, $E,$D8,$CC,$73,$3D,$B8,$1C,$D3,$3C, $E,$13,$5D,$9D,$D9,$B6,$72,$9A,$5F,$AA,$C6,$E3,$87,$EA,$B9,$AF,$83,$F0,$C7,  9,$AE,$3C,$3B,$61,$35,$C7,$B6; 11392
-		dc.b $6F,$33,$5D,$99,$99,$7C, $D,$D3,$49,$E6,$CB,$33,$DB,$39,$B0,$CF,$9E,$39,$C3,$9F,$82,$E1,$74,$D7,$2F,$34,$BA,$6B,$B8,$65,$31,$BA,$6E,$1D,$A6,$37,$4C,$70,$E0,$DD,$97, $E,$1F,$A9,$87,$39,$8E,  7,$86,$53,$1C, $F, $B,$92,$E9,$97,$9F, $B,$A6,$ED,$5E,$70,$ED,$FB; 11456
-		dc.b $A8,$67,$DA,$69,$5D,$82,$5D,$C1,$2E,$CE,$60,$2F,$8D,$5A,  0,  0,$78,$A1,$40,$28,$C0,$43,$8A,$14,$87,$EF,$FA,$80,  0,  1,$DE,  0,  0,$53,$1E,$F7,$E3,$DE,  0,  0,  1,$1A,$B4,  0,$68,  4,$22,$15,$9F,$BB,$8E,$80,  0,  0,  0,$52,$3A,$5F,$10,$17,$BE,$D7,$F7,$CB; 11520
-		dc.b $8A,$32,$3E,$22,$11,$40,$20,$D2,  1,$D8,$A1,$AA,$B1, $F,$13,$58,$74,$10,$C6, $D,$7B,$48,$CA,$3C,$74,  0,  6,$92,  0,$13,$BC,  7,$AF,$1B,$68,$53,$2C,$45,$F2,$28,$50,$A5,$34,$B4,$7B,$FF,$5A,  0,  0,  1,  8,$D5,$A0,  1,$E2,$8B,$A0,$10,$8F,$1E,$F0,  0,  0,  0; 11584
-		dc.b   0, $B,$1A,$BB,$C3,$C6,$AC,$B8,$E8,$20,$92,$C5,$7B,$84,$18,  5,$AE,$F9,$E6,$E3,$DF,$56,$8F,$90,$D6,$41,$77,$AC,$80,$87,$7A,$E9,$DD,$A5,$E8,$10,$E8,$25,$56,$85,$83,  5,$43,$DE,$FE, $B,$FA,$C0,$79, $A,$64,  0,$D6,$5F,$94,$DE,  2,$C8,$EE,$4D,$E0,$2C,$84,$8E; 11648
-		dc.b $C0,  1,$4C,$80,$17,$F4,$1A,$F4,  0,  1, $C,$80,$14,$C8,  0,$38,$FF,$30, $B,$E4,$C6,$C3,$10,$15,$21,$FB,$CF, $D,$2C,$1F,$90,$14,$C8,  8,$46,$AE,$FA,$32,$42,$32,$65,$D2,$F6,$D5,$1D,$1D,$1D,$2F,$6B,$FB,$E3,$A7,$EF,$7B,$E4,  0,  0,  3,$DD,$56,$96,$AB,$54, $B; 11712
-		dc.b $5B,$20,$29,$DD,$88,$83, $E,$7D,$DA,$75,$47,$59,$1D,$B2, $F,$B4,$85,$24,$35,$E3,$6D,$1D,$18, $A,$22,$A7,$78,$D0,$B2, $A,$69,$D5,$57,$EB,  0,$79,  0,  5,$23,$56,$80,$3C,$50,$B6,$97,$CA,$F4,$BE,$35,$2C,$AF,$AC,$A2,$A7,$86,$95,$4D,$71,$98,$EE,$5E,$97,$C9,$67; 11776
-		dc.b $33,$ED,$2A,$48,  0,$21,$DD,$AA,$54, $C,$74,$76,$7A,$A1,$67,$94,$10,$E8,$AC,$E8,$A8,$B3,$69,$6A,$B4,$B6,$96,$9C,  0,  0,  0, $B,$FB,$9E,$AD,$24,$9A,$B5,$8C,$6A,$62,$8B,$6A,$75,$78,$77,$DB,$45,$49,$EF,$94,$E0,$52,$40,  0,$29,$DE,$35,$48,$47,$42,$87,$BE,$F9; 11840
-		dc.b $31,$D2,$19,$F1,$D3,$3D,$23,$7A,$64,$67,$10,$9C,  0,$21,$EB,$FB,$7D,$5B,$FC,$5B,$A9,$B0,$A6,$CB,$FC,$2F,$D3,$3B, $A,$6C,$29,$B3,$A6,$5F,$B6,$E9,$39,$68,$4A,$F4,$94,$18,$A6,$BC,$B2,$FC,$A0,$F4,  3,$59,$7F,$5B,$69,$DF,$2B,$E5,$49,$51,$28,$9A,$FF,$D4,  1,$BF; 11904
-		dc.b $CF,$78,$C8,  5,$F3,$1F,$D2,  0,  0,$BD,$60, $D,$BF,$CB,$96,$B9,$6B,$93,$FE,$89,$7F,$44,$F9,$6B,$96,$B9,$6B,$20,  7,$58,  3,$AC,  1,$D6,  0,$96,$B9,$6B,$FE,$21,$FC,$2D,$72,$D7,$F4,$43,$25,$C8,  0,$BD,$60,  1,$AC,$F4,$9E,$93,$AF,$9E,$DF,$A2,$84,$F4,$9E,$93; 11968
-		dc.b $D2,$5B,$6F,$E5,$BF,$59,$E9,$B4,$AF,$9D,$7C,$E7,$A4,$F4,$DB,$F8,$46,$7A,$4E,  0,$D7,$AC,  1,$FF,$70,  7,$58,  0,$6B,$3F,$F4,$A7,$A4,$F4,$DB,$F4,$50,$9D,$F2,$9E,$93,$EB,$3F,$2D,$FC,$B5,$9E,$93,$D2,$75,$F3,$DB,$F4,$50,$9E,$93,$D2,$7A,$4E,  0,$D7,$AC,  1,$E5; 12032
-		dc.b $EA,$27,$13,$8F,$EB,$2B,  6,  2,$70,$27,  2,$7D,$C3,$56,  7,$F4,$7E,$A0,$B0,$1F,$D6,$59,$C0,$13,$80,  3,$7E,$98,  1,$7C,$E0,  1,$F9,$60,$28,$C0,  0,$37,  0,$3D,$7F,$47,$BA,$71,$38,$9C,$4E,$DF,$A6,$BE,$71,$38,$9C,  0,  0,  3,$C7,$D4,  1,$E8,  0,$9C,$4E,$27; 12096
-		dc.b $13,$8F,$DB,$3C,$E2,$71,$3A,$FB,$7E,$91,  1,$40,$3F,$AA,$BD,  0,$1D,  0,  1,$3F,$4A,  0,$F2,$6F,$D3,$80,$3A,$C0,  0, $F,$DB,$F9,$FA,$F9,$80,$25,$FA,$4F,$33,$B8,$6E,$1B,$9F,$CC,$FE,$9A,$50,$96,$E8,$4A,$12,$DD,  9,$42,$5B,$A1,$28,$49,$E4,$24,$B2,$BE,$46,$47; 12160
-		dc.b $F8,$50,$90,$93,$CA,$12,$84,$A1,$BB,$F4,$80, $F,$40,  6,$ED,$65,$BB,$59,$6E,$D6,$5B,$9F,$F4,$4B,$FA,$69,$3E,$E8,$49,$F7,$42,$4F,$BB,$DB,$F4,$7C,$80,$14,$DE,  5,$10,  0,  4,$E0, $D,$7A,  0,  0,  0,  0,  0,$1A,$A6,$A8,  0,  0,  0,  6,$A9,$7E,$32,$82,$33,$D7; 12224
-		dc.b $7A,$6B,$E5,$E2,  0,  3,$56,$A3,$5F,$8D,$E9,$7D,$77,$A6,$BD,$60, $F,$1F,$69,$51,$A8,$D7,$A3,$5E,$DF,$C2,$2D,$46,  0,  1,$AF,$58,  3,$CB,$C4,  0,  0,  3,$56,$A3,$51,$A8,$9F,$A2,$83,$51,$A8,$DA,$FE,$8F,$DA,$54,$6A,$35,$1B,$5F,$38,$35,$1A,$8D,$46,  0,$6B,$D6; 12288
-		dc.b   0,$F2,$F3,$3F,$A3,$76,$1A,$F5,$80,  0,$FD,$10,$97,$A7,$ED,$80,$1F,$B4,  0,$3F,$58,  0,  1,$BB,$5D,$D0,$FD,$A0,  1,$FF,$68,  0,$EB,  0,  0,  7,$5F,$ED,$BF,$44,$24,$3F,$68,  0,$7E,$B0,  0,  0,$75,$8F,$3F,$DB,  6,$9B,$9F,$55,$77,$27,$EB,$CF,$7A,$54,$B5,$5F; 12352
-		dc.b $8F,$7A,$2B,$1C,$98,$A2,$B1,$43,$18,$31,$43,$15,$63,$93,$14,$5C,$7B,$D2,$18, $C,$29,$81,$FD,$24,$F0,$C0,$74,$1F,$94,$9D,$2A,$5A,$9D,$3B,$B7,$76,$CD,$2C,$B9,$9C,$D3,$43,$65,$FD,$41,$EA,$3C,$16,$C7,$BA,$77,$42,$C6,$78,$21,$63,$3A,$D8,$F7,$4E,$FD,$47,$86,$BB; 12416
-		dc.b $53,$68,$7E,$A7,$A1,$DA,$9B,$53,$A3,$FE,$A6,$FD,$3A,$97,$F7,  7,$DA,$EB,$4F,$74,$7F,$5E,$7B,$D2,$15,$51,$BD,$97,$13,$54,$5F,$24,$BE,$B6,$8B,$E3,$6A,$D7,$F4,$68,  7,$E5,$27,$7E,$94,$C0,$FE,$52,$77,$E9,$4C,$1D,$2A,$5A,$9D,$3B,$B7,$76,$CD,$2C,$B9,$9C,$D3,$43; 12480
-		dc.b $65,$FD,$47,$54,$F9,$BE,$71,$DD,$FA,$8B,$ED,$3C,$33,$DD,$1B,$ED,$3E,$7B,$EF,$9F,$F5,  1,$7B, $B,$AF,$EC,$7A,$52,$E1,$D1,$F4,$EA,$5F,$DC,$7E,$E5,$2E,$4F,$4D,$DD,$DF,$C1,$39,$A7,$1B,$EE,$AF,$F5,$F0,$ED,$ED,$7F,$EA,$40,  0,  0,  0,$FE,$36,$D9,$9F,$E0,$9A,$B5; 12544
-		dc.b $A8,$FF,$7C,$21,$FE,$8A,$FF,$A4,$FF,$1B,$6C,$CE,$EE,$EA,$CD,$4B,$9A,$54,$B5,$42,$E4,$8D,$48,$FD,$93,$5E,$C0,$1F,$F8,$80,  5,$F1,$A8,$51,$1B,$41, $A,$B4,$54,$BD,$9F,$4A,$54,$59,$50,$E8,$A9,$7B,$41,$15,$20,$90,$B7,$7F,$F3,$40,  0,  0,  0,$D1,$6A,$D0,$41,$2C; 12608
-		dc.b $59,$34,$B4,$34,$5A,$ED,  4,$54,$3D,$5A,$7F,$34,  0,  0,  0,  0,$17,$BF,$54,$B2,$D4,$74,$48,$68,$C7,$4F,$D6,$9E,$F0,  0,  0,  0,$2F,$AB,$41,$46,$4B,$69,$65,$D1,$6B,$3D,$45, $A,$7E,$F7,$4F,$D6,$80,  0,  0,  0,$1F,$78,$5F,$CA,$6F,$E4,$17,$7F,$E5,$31,$AC,  0; 12672
-		dc.b $1F,$C7,$C9,$FC,$C7,$ED,$80,$1E,$80, $F,$5F,$11,$4C,$60,$98,$AF,$E8,$FF,$84,  0,$DC,$3F,$4D,$90,$C8,$7A,  0,$26,$BB,$36,$FD,$2E,$89,$36, $E,$99,$9E,$1D,$8E,$66,$6C,$7B,$42,$6E,$67,$3B,$A6,$CE,$E9,$8C,$D9,$26,$77,$4D,$76,$5C,$EE,$9B, $B,$B8,$1E,$D3,$61,$49; 12736
-		dc.b $9E,$65,$9B,$B7,  9,$AE,$33,$65,$C2,$E9,$AE,$4E,$6B,$74,$D7,$60,$BE,$1C,$E1,$9E,$3C,$F3,$C2,$6C,$FB,$1C,$D3,  9,$97,  9,$92,$E3,$C2,$EC,$26,$BB,$9E,$57,$4D,$76,$69,$94,$C6,$6B,$B3,$9A,$EC,$CF,$39,$A1,$DB,$19,$8E,$67,$B7,  3,$9A,$67,$81,$C2,$6B,$B3,$C7, $B; 12800
-		dc.b $9A,$57,$19,$60,$6E,$E0,$78,$1E,$1D,$8E,$66,$6C,$7B,$42,$6E,$67,$3B,$A6,$CE,$E9,$8C,$D9,$26,$77,$4D,$76,$5C,$EE,$9B, $B,$B8,$1B,$AD,$84,$DF,$B4,$B5,$F3,$A4,$FB,$3C,$FD,$17,$F2,$8A,$94,$9D,$1D,$16,$78,$6E,$DA,$75,$AE,$F4,$E1,$FA,$3A,$CE,$68,$66,$79,$96,$6E; 12864
-		dc.b $DC,$26,$B8,$CD,$97, $B,$A6,$B9,$39,$AD,$D3,$5D,$82,$F8,$73,$86,$78,$F3,$CF,  9,$B3,$EC,$73,$BA,$6B,$9A,$B9,$EC,$B2,$86,$E7,$94,$FA,$EF,$DC,$2F,$E8,$7C,$B0,$45,$E5,$DA,$69,$D2,$75,$69,$1E,$FB,$B1,$96,  6,$EE,  7,$81,$E1,$D8,$E6,$66,$C7,$B4,$26,$E6,$73,$BA; 12928
-		dc.b $6C,$EE,$98,$CD,$92,$67,$74,$D7,$65,$CE,$E9,$B0,$BB,$81,$BB,$3C,$26,$F2,$CC,  0,  0,  0,  0,$37,$FE,$53,$20,$17,$7D,$7F,$96,$C8,  0,$16,$B0,  5,$61,$EB,  0,  1,$4D,$F5,$E4,  2,$E4,  0,$14,$E5,$5E,$40,  0,$BC,$80,$A6,$5B,$F2,  0,  0,  7,$E5,$37,$80,  0,$7A; 12992
-		dc.b $D7,$78,$5F,$EA,$80,  0,  0,  0,  2,$FA,$80,$FF,$B7,$F2,$7F,$D2,$89,$C7,$A0,  0,  0,$3D,  0,$1E,$3E,$A3,$78,$DE,$D0,$FE,$37,$E9,$40,  0,  1,$E8,  0,$F5,$F1,  0, $F,$51,$E2,  0,  3,$D0,  1,$E7,$FB,$40,  0,  0,  5,$FC,$A6,$F0,$32,$7D,$E1,$72,$AC, $F,$31,$90; 13056
-		dc.b $15,$E4,$17,$2A,$C3,$E1,$9C,$7A,$7B,$5D,$9A,$4D,  9,$90,$CD,$DB,$84,$D7,$19,$B2,$E1,$74,$D7,$27,$35,$BA,$6B,$B0,$5F, $E,$70,$CF,$1E,$79,$E1,$36,$7D,$8E,$77,$4D,$54,$F8,$A5,$C3,$78,$A7,$28,$48,$3D,$61,$E6,$BA,$AE,$8D,$5E,$69,$36, $E,$99,$9E,$1D,$8E,$66,$6C; 13120
-		dc.b $7B,$42,$6E,$67,$3B,$A6,$CE,$E9,$8C,$D9,$26,$77,$4D,$76,$5C,$EE,$9B, $B,$B8,$1B,$B3,$C2,$6F,$2C,$C0,  2,$EC,$F0,$4E,$7E,$19,$DD,$35,$D9,$73,$BA,$6C,$2E,$E0,$6E,$F6,$74,$CD,$26,$84,$C8,$66,$ED,$C2,$6B,$8C,$D9,$70,$BA,$6B,$93,$9A,$DD,$35,$D8,$2F,$87,$38,$67; 13184
-		dc.b $8F,$3C,$F0,$9B,$3E,$C7,$3B,$A6,$C3,$CA,$E0,  0,$F2,$E7,$E1, $C,$F1,$E7,$9E,$13,$67,$D8,$E7,$EC,$F5,$CD,$83,$A6,$67,$87,$63,$99,$9B,$1E,$D0,$9B,$99,$CE,$E9,$B3,$BA,$63,$36,$49,$9D,$D3,$5D,$97,$3B,$A6,$C2,$EE,  6,$EC,$F0,$9B,$CB,$30,  0,$AF,$B7, $A,$F3,$3C; 13248
-		dc.b $3B,$1E,$17,$4D,$81,$C3,$34,$37,$4D,$81,$C3,$35,$99,$E6,$59,$BB,$70,$9A,$E3,$36,$5C,$2E,$9A,$E4,$E6,$B7,$4D,$76, $B,$E1,$CE,$19,$E3,$CF,$3C,$26,$CF,$B1,$CE,$E9,$B0,$F2,$B8,  0,$2B,$ED,$C2,$BB,$A6,$E1,$DA,$63,$74,$C7, $E, $D,$74,$D8,$19,$2F,$69,$60,$6E,$E0; 13312
-		dc.b $78,$1E,$1D,$8E,$66,$6C,$7B,$42,$6E,$67,$3B,$A6,$CE,$E9,$8C,$D9,$26,$77,$4D,$76,$5C,$EE,$9B, $B,$B8,$1B,$AD,$1C,$DB,$F2,$89,$98,$7D,$E0,$2F,$2C,$80,$7C,$B7,$AC,$E3,$59,$EF,$9C,$5F,$FA,$71,$AC,$AF,$E5,$F9,$4C,$80, $B,$38,$9E,$BA,$72,$14,$E5,$FA,$28,$4E,  4; 13376
-		dc.b $EB,$20,  3,$F4,$59,$DF,$A0,$5D,$96,$7B,$FF,$28,$35,$49,$EF,$DD,$B2,$FB,$2C,$8A,$1E,$18,$D7,$99,$CD, $C,$CB,$99,$99,$66,$ED,$C2,$6B,$8C,$D9,$70,$BA,$6B,$93,$9A,$DD,$35,$D8,$2F,$87,$38,$67,$8F,$3C,$F0,$9B,$3E,$C7,$3B,$A6,$C2,$BD,$FA,$53,$70,$D7,$75,$3A,  4; 13440
-		dc.b $35,$E1,$ED,$CB,$B4,$CA,$8A,$D2,$37,$67,$76,$32,$C0,$DD,$C0,$F0,$3C,$3B,$1C,$CC,$D8,$F6,$84,$DC,$CE,$77,$4D,$9D,$D3,$19,$B2,$4C,$EE,$9A,$EC,$B9,$DD,$36,$17,$70,$37,$4D,$76,$6D,$ED,$98,  3,$AC,  0,  0,$1D,$60,$53,$AC,  0,$BD,$60,  0,  0,$EB,  3,$CF,$F6,$DE; 13504
-		dc.b $3E,$A0,  0,  0,  0,  0,  6,$AD,$AB,  0,  0,  0,  1,$AB,$5F,$BF,$74,$1A,$77,$C6,$F6,$D7,$C7,$D4,  0,  6,$B3,$D2,$7B,$F7,$DE,$D7,$E3,$7B,$6B,$E8,  0,$F5,$FD,$1E,$EA,$4F,$49,$EF,$69,$EF,$9F,$F8,$C6,$7A,$4E,  0,  3,$5F,$40,  7,$ED,$FF,$68,  0,$FF,$A8,  3,$5D; 13568
-		dc.b $A9,$B4,$AF,$DA,$57,$ED,$25,$FD,$2C,$8F,$E8,$97,$67,$91,$D9,$E4,$76,$79,$2F,$9E,$DB,$E5,$4D,$A9,$B5,$36,$87,$E9,$7F,$84,$BB,$4A,$12,$3B,$4A,$12,$3B,$4A,$12,$59,$42,$54,$95,$25,$49,$5F,$23,$FC,$23,$2B,$E5,$49,$52,$50,$97,$E9,$37,$42,$40, $F,$40,  6,$23,$11; 13632
-		dc.b $BC,$6F,  0, $F,$1F,$50,  7,$A0,  0,  0,$37,$FF,$59,$58,$34,$E2,$75,$F5,$C7,$F2,$C0,$7A,$8F,$10,  0,  0,  0,  7,$8F,$A8,  3,$D3,$F4,$A2,$7C,$46,$20,  0,  0,$1E,$BE,$3E,$BE,$20,  0,  0,  0,  0,  7,$8F,$AB, $F,$D1,$FA,$80,  0,  0,  0,  0,  0; 13696
-Nem_GHZ2:	dc.b $81,$CD,$80,  3,  1,$14,  4,$25,$12,$34,  7,$46,$31,$56,$26,$66,$35,$73,  0,$81,  4,  5,$15,$11,$28,$F4,$37,$75,$82,  5,$14,$16,$2B,$77,$73,$83,  4,  6,$16,$2E,$38,$F7,$84,  7,$76,$17,$78,$85,  7,$6F,$16,$34,$86,  7,$71,$78,$F6,$87,  6,$36,$17,$6E,$88,  6; 0
-		dc.b $33,$17,$70,$89,  6,$2F,$17,$72,$8A,  6,$2A,$18,$F3,$8B,  6,$32,$17,$74,$8C,  6,$30,$18,$F2,$8D,  6,$27,$18,$F5,$8E,  5,$10,$18,$EF,$8F,  5,$16,$18,$EE,$FF,  0,  0,  0,$D6,$D8,$F7,$2B,$DA,$2F,  5,$C6,$1E,$F3,$7A,$C0,$C1,$8C,$F3,$4F,$2B,$41,$A7,$95,$92,$79; 64
-		dc.b $59,$21,$2B,$4D,$69,$AD,$35,$B5,$EA,$3D,  0,  0,$6A,$D3,$34,$F3,$4E,$9F,$CE,  0, $D,$7F,$5F,$2A,$58,$C4,$D2,$D3,$C5,$2D,$3C,$5E,$21,$3F,$79,$2C, $F,$EB,$53, $F,$59,$41,$67,$C6,$9A,$CE,  0,  0,$4D,$69,$AC,$7D,$12,$D8,$AD,$A6,$84,$D0,$9A,$18,$C1,$B1,$9C,$CF; 128
-		dc.b $8B,$4D, $D,$57,$5B,$77,$80,  0,$FD,$70,$FD,$70,$EF,$18,$2E, $B,$87,$A4,$E6,$73,$38,  1,$1A,$66,$9A,$D3,$58,$E0,$F6,$96,  5,$6D,$8A,$C2,$68,$24,$3F,$7A,$90,$2C,$1A,$50,$76,$33,$CD,$70,  2,$65,$99,$66,$54,$FE,$77,$EB,$C0,$1A,$D3,$5C,  0,$84,$CC,$7F,$5C,$FD; 192
-		dc.b $6D,$39,$9E,$57,$19,$D1,$59,$E7,$5A,$49,$52,$83,$15,$D5,$A9,$32,$EB,$43,$84,$CA,$70,$9B,$D5,$5E,$92,$EA,$14,$4C,$C5,$92,$E3,  9,$CD,$DD,$F3,$96,$2A,$EC,$54,$C1,$1A,$4A,$8C,$77,$2C,$25,$B2,$42,$4D,$FA,$40,  6,$B6,$9A,$D3,$5A,$6B,$4D,$69,$A9,$35,$27,$C6,$93; 256
-		dc.b $EB,$FA,$D3,$3A,$61,$FA,$D3,$39,$9C,$FF,$47,  0,  0, $C,  1,$63,$1F,$26,$5A,$2A,$7A,$A8,$C6,$27,$F8,$28,$A0, $D,$69,$AE,$1F,$EE,$4B,$77,$FA,$E0,$6C,$63,$72,$D9,$E2,$DA,$A8,  0,  1,$34,$F6,$97,$EB,$61,$39,$F5,$3D,$EA,$57,$F5,$85,$71,$69,$51,$1A,$25,$82,$34; 320
-		dc.b $51,$66,$64,$68,$E3,$48,$7E,$BD,$53,$F7,$A6,$74,$9D,$27,$49,$DF,$F7,$94,$F4,$7A, $D,$54,  0,$3F,$FC,$3F,$9B,$E4,$59,$E3,$3A,$DD,$34,$6E,$9A,$37,$4D,$DF,$3C,$BB,$9D,$6D,$8D,$A0,$3F,$5B,$64,$F5,$4A,$E7,$95,$73,$A4,$E6,$89,$69,$51,$27,$D6,$D3,$4F,$1C,$69,$E5; 384
-		dc.b $EA,$BA,$E0,$6C,$12,$7F,$D7,$58,$CF,  6,$45,$9E, $C,$7D, $B,$18,$BC,$40,  2,$65,$31,$FD,$F9,$B7,$7B,$C0, $D,$7F,$9B,$E5,$34,$67,$D5,$4A,$FF,$37,  9,$F0,  0,  0,$26,$9C,$4E,$27,$13,$BA,$CA,$79,$61,$EB,$19,$F1,$F2,$9C,$27,$70,$EE,$16,$A6,$B3,$DA,$9A,$CF,$29; 448
-		dc.b $CF,$F3,$4C,$E6,$7F,$DE,$77,$5D,$5F,$7A,$79, $C,  6,  0, $F,$DE,$BF,$EF,$40,$C7,$F7,$DA,$B6,$B3,$CD,  9,$9B,$59,$E6,$80,  0,  0,  0,  9,$FB,$E7,$59,$AD,$34,$1D,$51,$64,$A9,  9,$2A,$41,$66,$84,$FA,$D0,$CF,$35,$30,$3E,$B2,$9D,$97, $F,$59,$4E,$8B,$83,$C0,$36; 512
-		dc.b $B3,$B6,$B3,$9F,$DF,$7E,$BD,$52,$32,$52,$B8,$C1,$71,$59,$96,$13,$42,$65,$D6,$13,$2C,$D3,$C1,$FD,$68,$31,$C2,$83,$59,$F5,$69,$BB,$E7,$BB,$B4,$3B,$24,$F0,$D8,$B3,$CE,$97,$AA,$4E,$C9,$54,$A7,$82,$33,$CE,$99,$CA,$76,$2B,$54,$A7,$82,$2B,$CE,$A7,$29,$5B,$B2,$55; 576
-		dc.b $2B,$54,$8A,$F0,$4C,$B1,$DF,$E8,$F0,$AA,$6E,$FA,$B5,$87,$6C,$3F,$DC,$AC,$26,$86, $D,$8D, $E,  1,$9E,$BD,$F7,$86,$7D,$97,$2B,$FF,$46,$8A,$77,$DF,$8E,$5B,$F1,$5C,$8E,$FB,$E4,$A7,$4C,$72,$DE,$97,$A2,$E4,$77,$BA,$9D,$31,$CB,$7E,$2B,$91,$DE,$EA,$74,$C7,$2D,$F2; 640
-		dc.b $FF,$3E,$F4,$DB, $D,$A9,$2D,$CB,$BE,$B7,$9E,$92,$EC,$78,$E1,$C7,$62,$A0,  1,$68,$D4,$A7,$4A,$BB,$65,$56,$4B,$BD,$74,$CA,$AC,$BB,$1E,$D0,$F3,$CA,$AE,$E8,  0,  0,$7F,$F9,$80,  0, $E,$BA,$CE,$BA,$D8,$2E,$AB,$AC,$16,$4A,$6B,$C1,$71,$C2,$7C,$13,  3,$87,$A9,$54; 704
-		dc.b $59,$E5,$80,$9C,  0,  0,  6,  2,$7D,$5B,  1,$AA,$E0,$F7,  4,$C3,$15,  9,$80,$18,$22,$EB,$86,$38,  4,$C0,$62,$BA,$E0,$98,  0,$30,  0, $C,  0,$18,  1,$80,  0,$5A,$93,$4E,$6B,$7F,$DF,$60,  6,  0,$60,$7D,  7,$5D,$67,$13,$4E,$26,$5D,$70,$13,$2E,$B8,$4C,$BA,$E1; 768
-		dc.b $32,$EB,$84,$CD,  9,$F1,$62,$D8,$CE,$C6,$7C,$67,$2D,$34, $C,$F3,$5D,$34,$E6,$79,$A0,$D2,$ED,$BE,$DB,$EA,$50,  0,$36,$8D,$4A,$74,$AB,$B6,$55,$64,$BB,$D7,$4C,$AA,$CB,$B1,$EC,$8B,$52,$EF,  0,  4,$B4,$6A,$53,$A5,$5D,$B2,$AB,$25,$DE,$BA,$65,$56,$5D,$8F,$63,$E3; 832
-		dc.b $7F,$68,$87,$82,$42,$50,$48,$2E,$30,$4B,$1B,  9,$AC,$8C,$11,$71,$67,$56,$75,$16,$39,$A3,  9,$41,$33,$9A,  7,$37,$FD,$B6,$52,$D9,$F2, $F,$B4,$CC,$76, $C,$18,$27,$EC,$B7,$EC,$F7,$3E,$F5,$FC,$B6,$DB,$D3,$88,$FC,$B6,$DA,$26,$FF,$CB,$7E,$96,$5B,$D9,$7C,  7,$83; 896
-		dc.b $D8,$C2,$50,$9A,$C6,  6,  9,  2,$A1,$40, $A,$C0,$B1,$50,$55,$1A,$4A,  5,$9E,$D2,$B3,$DB,$1C,$25,$43,$81,$A7,$6A,$4E,$68,$70,$4E,$38,$F1,$C6,$8F,$C6,$54,  1,$FF,$6F,$FB,$41,$FF,$51,$FF,$5F,$FA,$F5,$FD,$A0,$12,$80,$48,$18,$18,$24,$15,$2C,$90,$4B,  5,  8,$C1; 960
-		dc.b $17,$16,$75,$67,$50,$A0,$6B,$64,$C0,$DA,$56,$4C,$12,$D5,$C2,$89,$63,$C5,$38,$9A,$4B,$8A,$51,$28,$9C,$65,$40,  1,$FD,$A7,$ED,$C7,$FD,$47,$FD,$7F,$EB,$FB,$4E,$A0,$18,$24,$1D,$61,$8C,$1E,  8,$A9,  4,$86,$AB,  7,$60,$8A,$55,$9D,$44,$99,$14,$AC,$B0,$48,$63,$3E; 1024
-		dc.b $38,$3D,$8E,$12,$80,$34,$9D,$37,$D0,  4,$D8, $D,$80,$9B,$FA,$A1,$3F,$AA,$13,$FA,$A9,$FC,$5E,$C9,$E2,$3D,$80,  0, $D,$60,$F0,$D5,$60,$90,$30,$B2,$41,$2C,  0,$57,$67,$50,$59,$D5,$D9,$44,$99,$D4,  1,$39,$80,$95,$92,$73,  1,$E4,$6C,  0,$E6,  0,$EB,$EE,  0,$94; 1088
-		dc.b $1E,$12,$81,$B2,$5A,$65,$30,$48,$18,  1,$AA,$81,$8B,$2A,$29,$60,$EB,$26,$45,$46,  0,  3,  9,$59,$30,$C6,$D8,$CE,$98,$24,$27,  0,$1E,$60, $E,$60, $F,$E9,$1A,$27,$17,$A7,$10,$9C,$4D,$25,$C5,$28,  0,$97,$B0,  1,$FF,$68,  0,$E6,$FC,$65,$44,$A1,$E3,$2A,$63,$C5; 1152
-		dc.b $29,$2E,$20,  3,$EC,  0,$FD,$AF,$B8,  0,  0,$1E,  6,$C9, $D,$56,  9,  3, $B,$24,  0,$92,$80,$1D,$9D,$41,$67,$57,$65,$12,$67,$51,$DF,$FB,$DE,$F0,  0,$12,$83,$C2,$50,$36,$30,$B7,$79,$81,$85,$92,  0,  9,$2B,$B3,$A8,$2D,$8A,$9F,$D1,$AA,$29,$60,$EB,$26,$45,$46; 1216
-		dc.b   0,$63,$DF,$FB,$DE,$F0,  3,$C1,$EC,$61,$28,$4D,$63,  3,  4,$81,$8C,$CA,  6,$AA,$EC,$EA, $B,$3A,$BB,$28,$93,$3A,$80,$27,$30,$12,$B2,$4E,$60,$FE,$FE,$AB,  0,  0,$94,  2,$40,$C0,$C1,$20,$A5,$6C,$90,$48, $D,$54, $C,$59,$51,$4B,  7,$59,$32,$2A,$30,  0,$18,$4A; 1280
-		dc.b $C9,$86,$36,$C6,$78,$CE,$AD,$3C,$18,  0,  0, $F,  3,$64,$86,$AB,  4,$81,$85,$92,  0,$49,$40,$EE,$FD,$F7,$70,  0,  9,$41,$E1,$28,$1B,$18,$5B,$BC,$C0,$C2,$C9,  0,  4,$95,$D9,$D4,$16,$7B,$77,$FA,$C3,$B8,  0,$F0,$36,$48,$6A,$B0,$48,$18,$59,$20,  4,$94, $C,$59; 1344
-		dc.b $51,$4B,  7,$59,$32,$2F,$EB,$BF,$5B,$DE,$1E,  6,$C9, $D,$56,  9,  3, $B,$24,  0,$92,$87,$67,$50,$59,$D5,$D9,$44,$99,$D4,  1,$39,$80,$C6,$96,$A6,  9,$3C,$D0,$9A,  9,$38,  0, $E,$60, $F,$5E,$FA,$61,$FA,$F4,$C3,$1B,$63,$3A,$60,$90,$4F,$E9,$5A,$80,  0,  0,$E6; 1408
-		dc.b $FC,$65,$44,$A1,$E3,$2A,$63,$C5,$28,$7C,$53,$B0,  3,$98,  0,  0,$3F,$A4,$68,$9C,$5E,$9C,$42,$71,$34,$4E,$D4,$F1,$40,  4,$B9,$80,  0,  3,$9B,$F1,$95,$12,$87,$8C,$A9,$8F,$1F,$2B,$4F,$D3, $A,$9D,$9D,$41,$67,$57,$65,$12,$67,$50,  0,$B1,$C3,$1A,$1A,$4D,$39,$82; 1472
-		dc.b $5A,$6C,$26,$C1,$2D,$87,$AC,$30,$B7,$7A,$BB,$28,$93,$3A,$80,$27,$30,$13,$4E,$60,$96,$9B,  9,$B0,$4B,$73,  0,$43,$BB,  9,$E1,$3E, $B,$26,$45,$46,  0,  3,  9,$59,$30,$C6,$D8,$CE,$98,$24,  4,$E0,$F3,  0,$7A,$F7,$F9,$77,  1,$63,$86,$34,$34,$9A,$73,  4,$B4,$D8; 1536
-		dc.b $4D,$82,$58,  0,$39,$80,$3A,$FB,$80,$1E,  6,$C9, $D,$56,  9,  3, $B,$24,  0,$92,$81,$8B,$2A,$29,$60,$EB,$26,$45,$D5,$42,$33,$A8,  2,$73,  1,$8B,$41,$BF,$5B,$DE,$1E,  6,$C9, $D,$56,  9,  3, $B,$24,  0,$92,$87,$67,$50,$59,$D5,$D9,$44,$99,$D4,  0,  3,$C2,$56; 1600
-		dc.b $4C,$31,$B6,$33,$A6,  9,  4,$EB,$74,$18,  0,  6,$30,$9A,  7,$BD,$3B,$D1,$42,$58,$23,$22,$D8,$28,$2C,$59,$41,$50,$59,$D4,$58,$1B,$E6,$B0,$37,$A5,$A6,$BD,$23,$E2,$7E,$CB,  0,  4,$A0,$F0,$94, $D,$92,$D3,$29,$82,$40,$C0, $D,$54, $C,$59,$51,$4B,  7,$59,$32,$2A; 1664
-		dc.b $30,  0,$1B,$E5,$64,$C3,$1B,$63,$55,$70,$A6,$FC,$2D,$BF,$89,$E2,$26,$E2,$78,$A5, $F,$ED,$A9,$DB,$8D,$1F,$8A,$71,  0,  0,$3D,$80,$1E,$C0, $F,$60,  0,  0,$7B,  0,$3D,$80,$1E,$C0,  0,  0,$F6,  0,$7B,  0,$3D,$80,  0,  1,$EC,  0,$7F,$DA,  0,$39,$80,  5, $D,  4; 1728
-		dc.b $D4,$34,$4E,$27,$F6,$D4,$3C,$68,$F4,$4A,  1,$FB,$40,  3,$F3,  0, $E,$27,$88,$9B,$89,$E2,$94,$3F,$B6,$A7,$6E,$34,$7E,$29,$C4,  7,$FD,$A0,  3,$9B,$F1,$95,$12,$87,$8C,$A9,$8F,$14,$A4,$B8,$80, $F,$B0,  3,$F6,$80,  7,$FE,$91,$A2,$71,$7A,$71,  9,$C4,$D2,$5C,$52; 1792
-		dc.b $80,  9,$7B,  0,$1F,$87,$6C,$B1,$C2,$6C,$12,$C3,$98,  0,  0,$3F,$A4,$68,$9C,$5E,$9C,$42,$71,$34,$4E,$D4,$F1,$40,  4,$B9,$80,  7,$13,$C4,$4D,$C4,$F1,$4A,$1F,$DB,$53,$B7,$1A,$3F,$14,$E2,  5,$7B,$A3,$E0,  1,$FF,$50,  0,  2,$9A,$D3,$7F,$EC,$B4,$4D,$F3,$6F,$7D; 1856
-		dc.b $EF,$BC,$EF,$4D,$3F,$4F,$43,$BC,  1,$FF,$50,  0,  0,$7E,$D7,$F6,$4F,$BE,$5B,$D3,$7E,$3B,$F1,$DF,$1E,$CB,$BD,$37,$80,$3D,$80,  0,  1,$EC,  0,$F6,  0,$7B,  0,  0,  3,$D8,  1,$EC,  0,$F6,  0,  0,  7,$B0,  3,$D8,  1,$EC,  0,  0, $F,$60,  3,$FE,$D0,  1,$CC,  1; 1920
-		dc.b $AD,$26,$E7,$40,$FF,$C2,$4A,$DF,$F4,$43,$5A,$D2,$9A,$D7,$8D,$78,$D6,$9F,$A2,$4F,$D1,$25,$78,$D7,$8D,$73,$50,  1,$AF,$30,  7,$30,  7,$30,  0,$1C,$C0,$1C,$C0,  0,$73,  0,  1,$CC,  1,$CC,  0,  7,$30,  0,$1C,$C0,$1C,$C0,  0,$73,  0,  1,$CC,  1,$CC,$6E,$D3,$76; 1984
-		dc.b $80, $E,$7A,$B4,$CD,$36,$D3,$6D,$2E,$27,$76,$3F,$E6,$4D,$E3,$78,$DE,$37,$FE,$5A,$6D,$E7,$F6,$9F,$96,$DF,$33,$15,$96,$CD,$8E,$D2,$53,$45,$FD,$B6,$8C,$F4,$13,$50,$4C,$AF,$FA,$6F,$E2,$A5,  4,$D4,$9B,$8F,$F9,$57,$5D,$37,$56,  0,$4E,$60,  0,$C1,$BF,$A4,$8C,$18; 2048
-		dc.b $30,$6A,$E6,$63,$D7,$F4,$60,  3,$CC,  0,  7,$30,  7,$31,$EF,$D4,  0,  6,$30,$9A,  7,$BD,$3B,$D1,$42,$58,$23,$22,$D8,$28,$2C,$59,$41,$50,$59,$D4,$58,$18,$4D,$60,$60,$96,$9A,  9,$1B,$A7,$65,$80,  2,$50,$78,$4A,  6,$C9,$69,$94,$C1,$20,$60,  6,$AA,  6,$2C,$A8; 2112
-		dc.b $A5,$83,$AC,$99,$15,$18,  0, $C,$25,$64,$C3,$1B,$63,$3A,$42,$86,$16,$A0,  3,$98,  0,  0,$39,$80,$12,$B4,$AC,  1,$CC,  0,  0,$1C,$C0,$1E,$96,$F7,$78,$1B,$25,$84,$12,  6,  2,$C2,$65,$11,$3F,$A3,$59,$33,$A8,$B0,$30,$9A,$C0,$C1,$2D,$34,$26,$82,$58,  1,$CC,  0; 2176
-		dc.b   0,$1C,$C0,$11,$BA,$76,$89,$86,$AB,  4,$81,$85,$92,  9,$60,  2,$BB,$4A,$25,$8B,$45,$18,  0, $C,$25,$64,$C3,$1B,$63,$3A,$60,$90,$9C,  0,$79,$80,  0,  3,$98,  3,$D2,$DE,$F0,$94, $D,$92,$D3,$29,$82,$40,$C0, $D,$54,$15,$46,$99,$9D,$5D,$94,$49,$9D,$40,$13,$98; 2240
-		dc.b   9,$A7,$30,$4B,$4D,$82,$7E,$CA,$15,$CE,  0,  0, $F,$E9,$1A,$27,$17,$A7,$10,$9C,$4D,$13,$7B,$69,$6F,$D1,$98,$6A,$B0,$48,$18,$59,$20,$96,  0,$2B,$B6,$B7,$2A,$29,$60,$EB,$26,$45,$46,  0,  3,  9,$59,$30,$C6,$D8,$CE,$98,$24,$13,$FA,$56,$A0,  0,  0,$39,$BF,$19; 2304
-		dc.b $51,$28,$78,$CA,$98,$F1,$FD,$11,$FC,$B5,$3B,  0,$39,$80,  0,  3,$98,  0,  0,$39,$80,  0,  3,$98,  1,$2B,$4A,$C0,$1C,$C0,  0,  1,$CC,  0,  0,$1C,$C0,  0,  1,$CC,  1,$FB,$40,  3,$FB,  0,  0,  3,$D8,  0,  0,$1E,$C0,  0,  0,$F6,  0,$7B,  0,$3D,$80,  0,  1,$EC; 2368
-		dc.b   0,  0, $F,$60,  0,  0,$7B,  0,$1B,$7F,$4F,$5B,$80,  7,$FD,$C0, $E,$30,$4E,$F2,$A0, $F,$F7,$28,  3,$AF,$EB,$B3,  0,$7F,$84,  0,$73,$3D,$FD,$CB,$98,  0,$FF,$B8,  3, $E,$BD,$F9,$98,$F7,$40,  0,$7F,$DC,$A0,$7E,$FB,$D0,$5E,  0,$FF,  8,$18,$FA,$1F,$5F,$DF,$CF; 2432
-		dc.b $D8,  1,$CC,  1,$5A,$56,  0,$4E,$60, $F,$7F,$DB,$80,$3D,$80,$1B,$B4,$BA,$20, $E,$60, $D,$DA,$6E,$D0,$7F,$D4,$73,  0,$73,  0,$73,  0,$7F,$D4,$7F,$D4,$73,  0,$75,$FD,$A8,  3,$D8, $F,$D9,$7E,$D8, $F,$FA,$8E,$60, $F,$DB,$FE,$D4,  0,  0,  0,  0,  6,$59,$E5,$7D; 2496
-		dc.b $57,$E7,$92,$B4,$59,$58,$B2,$95,$A1,$56,$52,$D1,$FE,$1A,$96,$FE, $D,$CB,$EE,$55,$22,$97,$2F,$E8,$FA,$B7,$A3,$23,$29,$B8,$C6,$B9,$37,$A1,$68,$DC,$6E,$52,$D1,$68,$DC,$AC,$55,$8A,$A2,$DC,$6E,$5B,$8F,$56,$F4,$63,$72,$9B,$8D,$16,$88,$D1,$B9,$6E,$37,$45,$A2,$D1; 2560
-		dc.b $B8,$DC,$6E,$53,$E8,$8A,$57,$F4,$71,$FD,$1F,$A5,$CB,$2B,$8A,$D6,$D4,$5A,$7E,$8D,$2E,$56,$31,$68,$B4,$6E,$5B,$8D,$D1,$6F,$E0,$B1,$5F,$E1,$AD,$DD,$4B,$15,$FD,$19,$62,$C9,$E8,$C8,$C6,$EF,$46,$EA,$59,$3F,$86,$5A,$5D,$4F,$A7,$E8,$CA,$DC,$54,$C4,$D2,$2C,$B7,$52; 2624
-		dc.b $2C,$AC,$8C,$55,$8D,$15,$95,$15,$94,$AB,$23,$2B,$22,$DC,$A9,$FA,$35,$2C,$54,$D1,$4C,$6E,$8B,$2B,$46,$EA,$70,$A2,$DF,$91,$CA,$AC,$96,$F4,$CC,$D5,$5F,  3,$95,$57,$AD,$FC, $E,$55,$5F,$C3,$A6,$39,$C7,$92,$7E,$EB,$96,$57,$D2,$AE,$59,$9A,$5C,$79,$67,$CA,$AC,$8F; 2688
-		dc.b $4A,$AF,$C8,$F0,$AE,$A3,$91,$E1,$7A,$DF,$52,$74,$E1,$7D,$5C,$A3,$9C,$B9,$7E,$EA,$59,$F2,$AA,$97,$E4,$B7,$F0,$5B,$F3,$AA,$6B,$9F,$F4,$78,$B1,$67,$B8,$AC,$98,$C4,$A9,$FD,$1C,$64,$C8,$C6,$38,$FF,$CE,$E4,$FE,$8B,$2C,$BF,$4F,$13,$B8,$A9,$D9,$52,$26,$3B,$95,$8A; 2752
-		dc.b $95,$D8,$AB,$29,$53,$4D,$3B,$7E,$D4,  0,$26,$69,$7B,$AB,$16,$53,$12,$A5,$A8,$DF,$B2,  2,$4D,$26,$76,$2C,$AD,$25,$65,$2B,$72,$95,$DC,$55,$37,$18,$95,$3C,$76,$3C,$53,$62,$BB,$1D,$95,$37,$3E,$C9,$D7,$63,$17,$8C,$98,$27,$F0,$CD,$D4,$D2,$BF,$D1,$A6,$C5,$65,$B8; 2816
-		dc.b $AC,$9B,$65,$76,$2A,$54,$B1,$67,$67,$FD,$18,$4B,$8F,$F9,$FB,$27,$F0,$CD,$C7,$A9,$F4,$FD,$BA,$A6,$C6,$27,$63,$B1,$54,$8E,$C5,$4F,$E8,$CC,$66,$ED,$B7,$8F,$D3,$F6,$62,$D3,$5D,$35,$D8,$F1,$8D,$CF,$B1,$52,$C9,$1D,$CA,$6E,$2A,$9B,$45,$23,$5E,$9B,$1B,$9D,$83,  0; 2880
-		dc.b   6,$BE,$FF,$A2,$DF,$FA,$32,$B3,$31,$53,$B4,$CB,$8B,$22,$8C,$58,$27,$6D,$BF,$A8,$AD,$12,$D2,$8A,$31,$6D,$8A,$98,$B2,$7E,$DC,$AA,$2E,$31,$4D,$A5,$B1,$54,$FD,$39,$ED,$A5,$7F,$A5,  0,$30,$69,$94,$FF,$4F,$6F,$44,$BB,$7F,$E8,$8A,$D6,$ED,$19,$AE,$5C,$7F,$47,$32; 2944
-		dc.b $B2,$31,$62,$B2,$FE,$9C,$99,$F7,$FE,$8B,$F4,$BD,$B6,$96,$E3,$19,$2E,$AB,$28,$D2,$27,$62,$B7,$16,$54,$B9,$4D,$CB,$B1,$65,$FD,$1A,$CB,$F4,$6E,$C9,$1D,$C5,$8B,$29,$D9,$D9,$4E,$E4,$65,$FD,$3A,$96,$53,$BA,$2C,$7A,$95,$63,$FC,$33,$FB,$4D,$DD,$B6,$56,$8B,$1B,$94; 3008
-		dc.b $C5,$B1,$F7,$48,$DC,$7F,$47,$B1,$52,$AC,$59,$76,$3D,$59,$4E,$E5,$DC,$BF,$B5,$A7,$1D,$94,$B1,$B8,$7A,$1B,$91,$52,$E4,$F4,$2C,$8A,$7F,$4E,$D1,$3B,$75,$D8,$EC,$B2,$D8,$F1,$F4,$FC,$B7,$F4,$77,$34,$A2,$54,$B7,$A1,$56,$4F,$D1,$AE,$AC,$18,$1A,$6F,$FD,$13,$4B,$F6; 3072
-		dc.b $EB,$71,$5D,$C7,$65,$2A,$63,$B9,$7F,$87,$19,$BD,$F5,$61,$BF,$FC,$9B,$7A,$24,$4F,$E9,$E2,$76,$45,$3B,$1D,$A2,$FB,$44,$A9,$EB,$B7,$E8,$DF,$69,$5C,$63,$DB,$7F,$6D,$38,$EE,$2A,$63,$4E,$B2,$68,$EC,$56,$6D,$D1,$45,$31,$D8,$C4,$A9,$65,$FD,$BC,$9B,$AE,$ED,$FD,$BF; 3136
-		dc.b $4C,$B2,$5D,$8E,$CA,$55,$3F,$4E,$A9,$B1,$D9,$76,$2A,$77,$29,$8E,$E4,$89,$62,$BB,$18,$A2,$98,$DD,$25,$4B,$8D,$CA,$58,$DC,$59,$51,$8D,$CB,$B2,$B2,$32,$6C,$8D,$2F,$42,$D2,$F7,  0,$FE,$8D,$2E,$48,$96,$8B,$2E,$CF,$B2,$EC,$BB,$4B,$71,$5D,$9B,$D3,$F4,$EA,$54,$B7; 3200
-		dc.b $A1,$62,$C7,$F8,$7A,$C7,$F4,$65,$8E,$E8,$A3,$26,$C5,$5F,$68,$DC,$58,$AD,$C9,$71,$64,$B9,$5B,$16,$57,$B7,$95,$B0,$B4,$D1,$EF,$F7,$11,$AD,$2E,$4B,$92,$37, $B,$93,$F6,$4F,$DD,$DE,$FE,$A9,$72,$56,$FE,$FE,$41,$3D,$E2,$13,$DE,$3F,$BF,$FD,$E0,  0,$3F,$7F,$70,$4E; 3264
-		dc.b $FE,$A9,$DF,$DD,$DE,  0,$1D,$FE,$53,$5D,$E4,$91,$4B,$93,$B9,$23,$E5,$DD,$35,$C9,$14,$FE,$9D,$6F,$72,$7B,$C4,$24,$5E,$35,$F5,$AD,$22,$F1,$4B,$A2,$91,$4B,$87,$5F,$70,$97,$57,$77,$77,$94,$5F,$BA,$68,$FB,$F7,$5D,$FB,$21,$75,$7D,$66,$EA,$95,$A5,$77,$7E,$F9,$FB; 3328
-		dc.b $93,$DD,$EB,$4B,$BB,$A2,$3F,$A6,$1E,$E8,$D7,$75,$77,$4D,$D6,$E8,$A7,$5B,$92,$7C,$6E,$3F,$AD,$8A,$51,$29,$EA,$21,$84,$FD,$D3,$F9,$5A,$79,$A2,$97,$24,$7D,$E4,$AF,$14,$8D,$C8,$B2,$89,$52,$B3,$DA,$79,$61,$39,$A1,$9E,$8D,$E5,$35,$C9,$E4,$91,$F2,$BB,$A8,$B9,$23; 3392
-		dc.b $74,$42,$7B,$FE,$CB,$CB,$B8,$5D,$1F,$24,$B9,$23,$DC,$2B,$BA,$21,$23,$EF,$37,$51,$EE,$91,$7A,$C2,$5C,$9E,$E3,$DD,$3D,$EB,$13,$56,$9E,$E0,$25,$C1,$FA,$A7,$5A,$C2,$4F,$68,$FB,$A7,$76,$10,$AC,$E1,$3E,$CF,  5,$96,$DD,$C8,$D5,$1D,$FB,$15,$67,$DF,$43,$71,$F2,$F5; 3456
-		dc.b $17,$24,$52,$35,$A5,$A7,$D6,$9F,$BD,$B4,$EF,$59,$84,$F2,$A6,$D3,$AB,$1F,$2B,$55,$71,$80,$8D,$7F,$C1,$94,$6D,$38,$53,$EB,$DE,$F4,$3B,$93,$3B,$50,$ED,$BD,$33,$B7,$AD,$A7,$86,  1,$27,$EE,$9D,$33,$B3,$F9,$4B,$67,$D8,$C2,$A9,$CF,$E8,$B0,$52,$D0,$33,$CA,$78,$2C; 3520
-		dc.b $27,$A4,$2C,$69,$6C,$1E,$92,$A0,$A4,$BB,$BB,$C2,$77,$5D,$19,$A3,$EA,$95,$A4,$FF,$AF,$C2,$18,$77,$E1,$DD,$4D,$7C,$A8,$62,$FD,$C1,$3F,$A6,$1E,$E8,$FB,$FE,$C8,$5D,$14,$8B,$F5,$48,$BD,$C9,$70,$4F,$E9,$D7,$1A,$D2,$23,$AD,$D1,$4B,$A2,$26,$88,$4B,$92,$29,$E5,$D4; 3584
-		dc.b $25, $F,$74,$5F,$75,$A7,$EE,$D8,$ED,$2D,$8E,$D8,$EE,$A1,$A6,$CF,$84,$A8,$69,$B2,$FA,$DB,$D6,$B8,$8B,$4F,$6C,$D2,$22,$69,$ED,$2C,$A7,$C2,$92,$C1,$4C,$2B,$45,$B8,$DF,$55,$EB, $F,$5C,$B3,$5A,$A5,$52,$9A,$B9,$70,$AA,$F3,$55,$7C,$2F,$AA,$F5,$E8,$97,$D5,$7E,$49; 3648
-		dc.b $E7,$D2,$59,$DD,$D3,$3C,$AA,$CF,$91,$CF,$D1,$E3,$56,$4E,$B9,$9E,$1C,$8E,$66,$AB,$B9,$4A,$AE,$87,$3B,$EA,$CE,$FA,$8D,$55,$AE,$77,$D5,$7D,$7D,$2F,$AB,$2B,$F8,$1E,$55,$65,$8F,$9F,$49,$5F,$E7,$D1,$3C,$DF,$85,$D9,$55,$79,$E1,$CB,$2A,$AF,$3C,$B3,$7A,$9A,$FC,$CD; 3712
-		dc.b $49,$E6,$6F,$A8,$E4,$6F,$E1,$7F,$9E,$46,$FB,$AA,$39,$1E,$15,$D4,$72,$3C,$2F,$5B,$EA,$4E,$9C,$2F,$AB,$94,$73,$97,$2F,$DD,$4B,$3E,$55,$52,$FC,$96,$FE, $B,$7E,$75,  0,  0,$4F,$1A,  7,$F1,$A0, $F,$5E,$80, $D,  2,$7E,$59,$34,  0,  0,  2,$78,$D0,  0,$13,$4F,$1A; 3776
-		dc.b   0,$9A,$78,$D2,$6F,$15,$A7,$80,  0, $F,$A2,$46,$B0,$F1,  0,  0,$9B,$9E,$B0,$37,$45,$3F,$2C,  0,$1F,$B5,$FD,$A0,$7F,$1A,  0,$26,$88,$7F,  2,$6D,  0, $F,$A4,$7F,$2C,$13,$44,$FC,$B0,  0,  4,$F1,$F9,$6F,  1,$3C,$56,  0,  1,$34,$13,$68,  0,$F1,$A0,  0,$26,$9E; 3840
-		dc.b $34, $F,$A0,  1,$F4,$4D,  2,$78,$88,$78,$80,  2,$44,$26,$9F,$96,$8E,$82,$68,$80,  0,$4F,$CB,$27,$80,$9F,$96,  0,$25,$60,$3C,$77,  0,$9F,$96, $F,$A0,$13,$69,$F9,$68,$EE,  0,  7,$D3,$F2,$C0,$69,$F9,$6D,$3C,  1,$BA,$21,$EB,$FD,$BB,$EE,$AF,$C0,$D1,$3C,  0,  2; 3904
-		dc.b $68,$9D,$7C,$6E,$D0,$27,$8F,$CB,$24,$40,$7A,$FC, $D,$22,  3,$C7,$75,$7A,  1,$10,  0,$9B,$4D,$DE,$37,  4,$88,  0,  1,$F9,$6A,$C0,  1,$FF,$2D,$58, $F,$10,$F1,  0,  1,$37,$50,$26,$88,  0,$3C,$52,$B0,$26,$AC,  7,$DC,$13,$48,$FE,$5A,$B0,$34,$88,  2,$21,$F4,$4A; 3968
-		dc.b $C0,  0,$25,$69,$58,  0,  0,  0,$D3,$F2,$D1,$D0,  4,$8A,$6E, $F,$14,$FD,$B8,$7A,$D3,$4F,$CB,  0,  2,$56,$91,$9B,$70,$D3,$FA,$40,$3D,$61,$37,$56,  3,$EE,$AD,$34,$1B,$80,$15,$A6,$E0,$3F,$2D,$E3,$F6,$40,  0,$91,$78,$A5,$61,$34,$4D,$2B,  0,  4,$DC,$37,$56,$1F; 4032
-		dc.b $70,  0,  7,$AF,$70,$7A,$F7,  0,  4,$DB,$9E,$B0,$FD,$6E,$5C,$CD,$5D,$25,$79,$AA,$BE,  7,$2A,$AF,$5B,$F8,$1C,$AA,$BF,$87,$4C,$73,$8F,$24,$FD,$D7,$2C,$AF,$A5,$5C,$B3,$2B,$4C,$EF,$8E,$66,$AC,$8D,$F7,$7E,$E9,$3A,$79,$DD,$C1,$F9,$70,$37,$D5,$91,$CF,$91,$BE,$AC; 4096
-		dc.b $8E,$77,$B5,$52,$AA,$F3,$E6,$95,$65,$9F,$F0,$72,  9,$E3,$40,  0, $F,$E3,$40,  0,$4F,$DA,$56,  2,$75,  0,  0,  3,$C4,  9,$A2,  6,$EA,$D3,$70,$9B,$F6,$5A,$56,  2,$68,$9B,$80,  1,$3F,$AA,  5,$60,$4D,$59,$E1,$95,$F5,$25,$57,$45,$92,$AE,$95,$67,$78,$13,$78,  0; 4160
-		dc.b   9,$A2,  3,$E9,$B8, $C,$B8,$65,$86,$F4,$5B,$A3,$7A,$55,$D2,$AC,$EF, $F,$A0,$FD,$90,$1A,$6E,$AC,$26,$95,$87,$F1,$A0,$AC,  4,$8A,$6E,  9,$FD,$50,  0,$4F,$DA,$80,$34,  9,$A6,$E0,  3,$E8,$26,$D3,$76,$81,$E3,$A0,  0,$56,$3C,$47,$75,$60,$4D,$58,$FC,$B6,$E7,$AF; 4224
-		dc.b $F6,$E1,$2B,$DD,$A5,$63,$F6,$43,$4A,$C0,  2,$BD,  0,$4F,$D9,  0,$3F,$6E,$13,$4D,$D5,$80,  0,  1,$34,$4D,$2B,  9,$A0,$DC,  0,$AC,$25,$F5,$67,$D3,$34,$52,$D1,$64,$B9,$4B,$2D,$57,$C6,$E5,$62,$AC,$55,$16,$E3,$72,$DC,$7A,$B7,$A3,$1B,$94,$B5,$59,$67,$CB,$CE,$F1; 4288
-		dc.b $BB,$4A,$C0,$9A,$B4,$FD,$BD,$61,$32,$E1,$D3,$3A,$D4,$B4,$59,$2E,$52,$CA,$91,$B9,$5A,$FC,$98,$AA,$45,$2E,$5F,$D1,$F5,$6F,$46,$46,$53,$71,$9E,$D7,$F9,$DF,$D0, $F,$DB,$D6,  2,$57,$A6,$E0,$F5,$80,  3,$D7,$B9,$2B,  3,$F6,$E9,$58,$7D,  0,$4D,$D5,$80,$F5,$E9,$E2; 4352
-		dc.b $B0,  0,$78,$BF,$ED,$C3,$FE,$DC,  0,$1F,$F6,$F5,$80,$95,$EE,  0,  9,$B4,$4F,$DA,$D6,$13,$4D,$C1,$F4,$DD,$58,  9,$FB,$77,$FD,$93,$C7,$87,$5F,$1E,$77,$44,  0,$37,$25,$69,$FB,$AF,$EC,$D7,$75,$69,$FB,$BA,$9B,$39,$97,$33,$CB,$81,$CD,$39,$5D,$51,$AA,$FC,$CF,$4A; 4416
-		dc.b $8A,$D7,$51,$AA,$FC,$FA,$57,$7D,$57,$E7,$79,$E1,$7E,$55,$5E,$D9,$1B,$F3,$6A,$AF,$65,$37,$F0,$A8,$DF,$57, $E,$55,$1A,$AF,$E1,$5D,$46,$AB,$D3,$A2,$DF,$D3,$CD,$32,$BF,$A5,$D9,$CB,$33,$CB,$3A,$B2,$CF,$2F,$D1,$AE,$55,$5E,$1F,$39,$57,$7F, $B,$FA,$26,$54,$37,$A7; 4480
-		dc.b   3,$9F,$4B,$AB,$F3,$8D,$DD,$6B,$BA,$8A,$6A,$FD,$4A,$D2,$39,$4B,$3F,$3E,$89,$E6,$FC,$2E,$CA,$AB,$CF, $E,$59,$55,$79,$E5,$9B,$D4,$D7,$E6,$6A,$4F,$33,$7D,$57,$B4,$7C,$55,$78,$7D,$C9,$9D,$F5,$D5,$7D,$71,$4A,$64,$8D,$4E,$55,$1E,$17,$27,$9F,$F0,$94,$FA,$72,$CB; 4544
-		dc.b $85,$FD,  2,$7E,$C8,$68,$26,$DD,$FA,$9F,$D4,$5D,$E8,$63,$C3,$F7,$BD,$39,  1,$FB,$7A,$C3,$D6,$F5,$CD,$D7,$84,$73,$4B,$DA,$F3,$96,$69,$7A,$E5,$52,$F9,$A7,$4F,$3B,$B8,$3F,$2E,  6,$FA,$B2,$39,$F2,$37,$D5,$91,$CE,$F6,$AA,$55,$5E,$7C,$D3,$CE,$FC,$6A,$E1,$C9,$F3; 4608
-		dc.b $A3,$53,$27,$F3,$E8,$95,$6B,$50,$4F,$D4,$FE,$A1,$3F,$53,$C1,$B5,$C8, $F,$3F,$D5,$CA,$AA,$5D,$4E,$49,$FA,$8F,$D4,$9C,$F5,$6C,$BC,$DF,$A5,$1A,$F7,$AA,$BB,$DF,$CF,$21,$E7,$D2,$59,$D1,$A9,$94,$B8,$72,$7F,$3C,$93,$85,$ED,$56,$49,$C3,$93,$FE,$A3,$F5,$3F,$A8,$5A; 4672
-		dc.b $37,$E8,$B3,$37,$F9,$F4,$A8,$1F,$D4,$FE,$A9,$3F,$53,$E9,$C2,$5F,$AB,$FD,$46,$55,$3F, $C,$AA,$CF,$91,$CE,$59,$DD,$D2,$FC,$93,$CF,$A5,$EB,$D1,$2F,$A8,$D5,$5F, $B,$EA,$35,$72,$E1,$57,$26,$E1,$91,$AA,$F3,$7F, $E,$95,$72,$3C,$2F,$CA,$AB,$FA,$57,$7D,$57,$E6,$B5; 4736
-		dc.b $D4,$6A,$BF,$3A,$AF,$CC,$F4,$AA,$5C,$AE,$A8,$E6,$79,$70,$39,$AE,$79,$1C,$AA,$BF,$85,$F5,$2D,$59,$66,$A0,$63, $B,$60,  0,  1,$E0,$A5,$40,$99,$80,$97,$72,$95,$3E,$5F,$BF,$F5,  0,  0,$2E,$F2,$7E,$EF,$28,$5B,  0,  6,  0,$4A,  1,$19,$FB,$FB,$B0,  2,$68,$61,$8C; 4800
-		dc.b   0,$4F,$29,$F1,$F2,$A7,$72,$B2,$BD,$C2,$50,$50,$24,$D4,  2,$CB,$46,$F2,$85,$80,  1,$A8,$A0,$63,$87,$E8,$ED,$87,$EB,$E2,$25,$EE,$62,$1D,$44,$AE,$93,$6A,$AD,$46,$B6,  0,$24,$6E,$9F,  2,$B5,$DC,$31,$A1,$52,$A5,$66,$C2,$78,$79,$7E,$B6,$50,$B6,  0,  7,$82,$A6; 4864
-		dc.b   0,$4A,$1D,$DE,$40,  0,$12,$16,$F2, $F, $B,$57,$DD,$80,$92,$D2,$E4,$EF,$12,$60,$12,$38,$E0,$DD,$C6,$8B,$32,$85,$38, $A,$5B,  2,$C1,$82,$29,$F2,$96,$FA,$AC,$9F,$AC,$7A,$C6,$B4,  9,$A2,$50,  7,$D0,$4D,$B8,$4D,$58,  3,$5A,$78,$D0,  4,$A1,$E2,$BA,  0,$94,$14; 4928
-		dc.b $3B,$63,$DA,$B1,$8F,$60,  0,$12,$AE,$55,$9A,$C0,$12,$AC,  0, $D,$60,$4D,$58,  0,$77,$7F,$30, $C,$68,$C6,$71,$70,  8,$B2,$C2,$8C,$5A,$D8,$4F,$26,$59,$42,$8C,$98,$62,$DA,$AB,$AB,$AB,$AE,$2D,$8F,$EF,$3D,$78,$79,  7,$DC,  4,$D5,$80,$94,$D6,$80,  0,  0,$3D,$F6; 4992
-		dc.b $C2,$7B,$6A,$A1,$22,$CA, $A,$F7,$DC,$24,$C3,$D0,$E1,$EB,$82,$B0,$13,$2A,$2F,$90,$C0,$B2,$89,$AF,$CF,$BB,$F5,$94,$D6,$87,$6A,$C3,$ED,$41,$35,  0,$4A,  1,$AD,  0,  2,$68,$5B,  0,$1E, $A,$5B, $C,$69,$8A,$E3, $B,$25,$31,$89,$54,$5B,$77,$D8,$D0,$DB,$15,$B0,$30; 5056
-		dc.b $C1,$D9,$ED,$29,$DE,$92,$53,$82,$33,$AA,$2A,$55,$9F,$77, $C,$33,$3C,$53,$B6,$34,$4D,$E7,$7E,$D4,$9A,$80, $D,$77,$EB,$BC,  0,  0,  0, $C,$7B,$DE,$D8,$51,$75,$69,$CC,$2C,$C5,$52,$79,$BD,$61,$6F,$29,$F0,  3,$C8,$6A,$B2,$86,  5,$4F,$96,$34,$63,$84,$A7,$B6,$57; 5120
-		dc.b $E1, $C,$24,$BB,$F1,$A6,$F0,$26,$A0,$13,$6F,$97,$6A,$F1,$5A,$CE,$F1,$2D,$E0,  0,  0,  0,$42,$C2,$65,$6C,  4,$AD,$82,$2E,$2C,$F8,$4D,$62,$C8,$A7,  4,$5C,$5A,$4A,$8B,$25,$94,$FE,$5F,$CD,  3,  4,$B6,  2,$4B,$39,$65,$C2,$79,$60,$91,$9E,$4A,$8A,$7D,$70,$FE,$68; 5184
-		dc.b   0,$27,$96,$AB,$3A,$58,$E0,$B2,$C1,$8E,$1F,$AD,$3E,$40,$63,$6C,  4,$CC,$B3,$E1,$3A,$60,$91,$3E,$A5,$4A,$FE,$F7, $F,$D6,$80,$1F,$40,$9E,$34,$DC,$13,$4F,$17,$2E,$66,$A7,$A9,$2A,$E5,$C2,$AB,$CD,$55,$F0,$BE,$AB,$D7,$A2,$5F,$55,$F9,$27,$9F,$49,$67,$77,$4C,$F2; 5248
-		dc.b $AB,$3E,$47,$3A,$1A,$AF,$E0,$73,$A6,$46,$FE,  7,$81,$E1,$C8,$E6,$6A,$BB,$94,$AA,$E8,$73,$BE,$AC,$EF,$A8,$D5,$5A,$E7,$7D,$57,$D7,$D2,$FA,$B2,$BF,$81,$BE,$7C,$AA,$FD,$A4,$F8,$EF,$5D,$FB,$3E,$FE,$C9,$E1,$16,$6D,$EA,$EA,$9B,$E5,$C7,$6D,$E9,$1C,$57,$85,$66,$85; 5312
-		dc.b $7D,$52,$92,$E2,$F4,$DF,$AE,$9C,$46,$3D,$8F,$5C,$95,$37,$72,$AB,$7A,$EF,$4E, $B,$DB,$79,$AC,  0,$34,$F1,$58,  9,$A4,$7F,$2D,$58,  0,$24,$40,$9B,$C2,$56,  2,$56,  0,$13,$6E,$8D,$60,  0,$9B,$80,$7F,$1B,$B4,$AC,  0,  4,$53,$40,$9F,$D5,$7F,$1A,  1,$5B,$E8,$12; 5376
-		dc.b $B8,$81,$FB,$21,$58,$11,$AC,$25,$71, $F,$5C,$6B,  9,$A0,$9B,$74,$A8,$1E,$21,$EB,$D2,$80,  1,$2B,$F3,$C9,$7A,$79,$E7,$7D,$57,$D7,$D2,$FA,$B2,$BF,$81,$BF,$3C,$AA,$EB,$98,  0,$75,$E9,$E7,$2C,$EE,$E9,$9E,$55,$67,$C8,$E7,$7D,$59,$75,$BC,  0,$23,$CB,$84,$73,$3C; 5440
-		dc.b $39,$1E,$17,$D5,$91,$CB,$38,$E7,$95,$4B,$55,$F9,$80,  4,$79,$70,$8D,$F5,$70,$E5,$51,$BE,$A3,$97,  6,$BE,$3D,$AD,$EB,$E6,  0,$4D,$E3,$7C,$66,$DC,$1F,$4A,$F6,$A0,$9B,$7E,$3B,$C6,$3F,$A7,$1A,$D3,$1A,$F4,$4A,$4B,$78,$1B,$D2,$80,  7,$EC,$9B,$DF,$B0,$4D,$93,$7E; 5504
-		dc.b $3E,  6,$AB,$BF,$1E,$3B,$27,$A2,$50,$A9,$E1,$5A,$2E,$F9,$F0,$9B,$88,$D7,$8C,$DD,$82,$98,$E5,$E9,$BB,$95,$48,$A9,$C9,$33,$56,$A8,$D4,$99,$9A,$92,$AE,$5C,$2A,$BC,$D5,$5F, $B,$EA,$BD,$7A,$25,$F5,$5F,$92,$79,$F4,$96,$77,$74,$CF,$2A,$B3,$E4,$78,$65,$53,$FE,$A3; 5568
-		dc.b $93,$E7,$46,$A6,$4F,$E7,$D0, $C,$7F,$53,$FA,$84,$FD,$4F,  6,$D7,$29,$74,$AB,$1C,$AB,$CF,$1B,$F8,  0,$73,$D5,$B2,$F3,$7E,$9E,$60,  0,$FF,$A9,$FD,$52,$7E,$A7,$D3,$84,$BF,$57,$C0,  0,$1F,$87,$27,$E1,$7B,$6B,$50,  0, $B,$F5,$6F,$D5,$BD,$5F,$AB,  0,$63,$E7,$96; 5632
-		dc.b $35,$51,$B3,$E5,$2F,$D4,$72,  0,  0,  0,$7E,$9E,$6F,$95,$1A,$99,$BF,$2E,  0,  0,$25,$FA,$9E,  7,$95,$D4,$6C,$CF,$2F,$3E,$84,  0; 5696
-
-Map128_GHZ:	incbin	"mappings/128x128/GHZ.bin"		; Unlike the other levels, these use Kid Chameleon's compression format... for some reason.
+Map16_GHZ:	incbin	"mappings/16x16/GHZ.bin"
+		even
+Nem_GHZ:	incbin	"art/nemesis/GHZ primary.bin"
+		even
+Nem_GHZ2:	incbin	"art/nemesis/GHZ secondary.bin"
+		even
+Map128_GHZ:
+	if convertGHZ=0
+		incbin	"mappings/128x128/GHZ.bin"
 		even
 		dc.b	$7F,  0, $B,$FA,  0,  0,  0,  0		; duplicate ending to Green Hill's chunk data
-
+	else
+		incbin	"mappings/128x128/GHZ_uncompressed.bin"
+		even
+	endif
 ; Remaining Sonic 1 leftovers
 S1Nem_TryAgain:	incbin	"art/nemesis/Remnant of TRY AGAIN text from Sonic 1.bin"
 		even

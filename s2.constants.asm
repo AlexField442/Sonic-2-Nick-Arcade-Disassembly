@@ -3,6 +3,12 @@
 ; Object Status Table offsets
 ; ---------------------------------------------------------------------------
 ; universally followed object conventions:
+			; DO NOT CHANGE "ID"! Some objects infer its usage by simply writing to (aX)
+			; rather than 0(aX), which does indeed effect compilation, so until I find a
+			; way to automate this (similar to the AS GitHub disassembly), best to keep
+			; this as-is.
+id:			equ 0			; object ID
+render_flags:		equ 1			; bitfield ; bit 7 = onscreen flag, bit 0 = x mirror, bit 1 = y mirror, bit 2 = coordinate system, bit 6 = render subobjects
 art_tile:		equ 2			; and 3 ; start of sprite's art
 mappings:		equ 4			; and 5 and 6 and 7
 x_pos:			equ 8			; and 9 ... some objects use $A and $B as well when extra precision is required (see ObjectMove) ... for screen-space objects this is called x_pixel instead
@@ -76,6 +82,8 @@ MusID_Boss:			equ ((MusPtr_Boss-MusicIndex)/4)+MusID__First		; $8C
 
 ; ---------------------------------------------------------------------------
 ; Main RAM
+Level_Layout:			equ $FFFF8000
+
 Decomp_Buffer:			equ $FFFFAA00
 
 Object_RAM:			equ $FFFFB000
@@ -90,6 +98,16 @@ Sonic_Pos_Record_Buf:		equ $FFFFE500
 Tails_Pos_Record_Buf:		equ $FFFFE600
 
 Ring_Positions:			equ $FFFFE800
+
+Camera_RAM:			equ $FFFFEE00
+Camera_X_pos:			equ Camera_RAM
+Camera_Y_pos:			equ Camera_RAM+4
+Camera_BG_X_pos:		equ Camera_RAM+8
+Camera_BG_Y_pos:		equ Camera_RAM+$C
+Camera_BG2_X_pos:		equ Camera_RAM+$10
+Camera_BG2_Y_pos:		equ Camera_RAM+$14
+Camera_BG3_X_pos:		equ Camera_RAM+$18
+Camera_BG3_Y_pos:		equ Camera_RAM+$1C
 
 Sonic_Pos_Record_Index:		equ $FFFFEED2
 
