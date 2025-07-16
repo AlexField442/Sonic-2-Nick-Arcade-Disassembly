@@ -9714,8 +9714,10 @@ loc_738E:
 		moveq	#2,d1
 
 LevelLayoutLoad2:
+	if convertGHZ=0
 		tst.b	(Current_Zone).w
 		beq.s	LevelLayoutLoad_GHZ
+	endif
 		move.w	(Current_ZoneAndAct).w,d0
 		lsl.b	#6,d0
 		lsr.w	#5,d0
@@ -40256,6 +40258,7 @@ Level_Index:	dc.w Level_GHZ1-Level_Index,Level_GHZBg-Level_Index,Level_Null-Leve
 		dc.w Level_CPZ1-Level_Index,Level_CPZBg-Level_Index,Level_Null-Level_Index
 		dc.w Level_CPZ1-Level_Index,Level_CPZBg-Level_Index,Level_Null-Level_Index
 
+	if convertGHZ=0
 Level_GHZ1:	incbin	"level/layout/GHZ_1.bin"
 		even
 Level_GHZ2:	incbin	"level/layout/GHZ_2.bin"
@@ -40264,6 +40267,16 @@ Level_GHZ3:	incbin	"level/layout/GHZ_3.bin"
 		even
 Level_GHZBg:	incbin	"level/layout/GHZ_BG.bin"
 		even
+	else
+Level_GHZ1:	incbin	"level/layout/GHZ_1_converted.bin"
+		even
+Level_GHZ2:	incbin	"level/layout/GHZ_2_converted.bin"
+		even
+Level_GHZ3:	incbin	"level/layout/GHZ_3_converted.bin"
+		even
+Level_GHZBg:	incbin	"level/layout/GHZ_BG_converted.bin"
+		even
+	endif
 Level_EHZ1:	incbin	"level/layout/EHZ_1.bin"
 		even
 Level_EHZ2:	incbin	"level/layout/EHZ_2.bin"
