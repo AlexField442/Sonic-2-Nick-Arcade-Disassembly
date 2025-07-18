@@ -34,6 +34,25 @@ angle:			equ $26			; angle about the z axis (360 degrees = 256)
 x_pixel:		equ x_pos		; and 1+x_pos ; x coordinate for objects using screen-space coordinate system
 y_pixel:		equ 2+x_pos		; and 3+x_pos ; y coordinate for objects using screen-space coordinate system
 
+; conventions mostly shared by Sonic and Tails (Obj01, Obj02, and Obj09).
+; Special Stage Sonic uses some different conventions
+inertia:		equ $14			; and $15 ; directionless representation of speed... not updated in the air
+flip_angle:		equ $27			; angle about the x axis (360 degrees = 256) (twist/tumble)
+flips_remaining:	equ $2C			; number of flip revolutions remaining
+flip_speed:		equ $2D			; number of flip revolutions per frame / 256
+move_lock:		equ $2E			; and $2F ; horizontal control lock, counts down to 0
+invulnerable_time:	equ $30			; and $31 ; time remaining until you stop blinking
+invincibility_time:	equ $32			; and $33 ; remaining
+speedshoes_time:	equ $34			; and $35 ; remaining
+next_tilt:		equ $36			; angle on ground in front of sprite
+tilt:			equ $37			; angle on ground
+stick_to_convex:	equ $38			; 0 for normal, 1 to make Sonic stick to convex surfaces like the rotating discs in Sonic 1 and 3
+spindash_flag:		equ $39			; 0 for normal, 1 for charging a spindash
+jumping:		equ $3C
+interact:		equ $3D			; RAM address of the last object Sonic stood on, minus $FFFFB000 and divided by $40
+top_solid_bit:		equ $3E			; the bit to check for top solidity (either $C or $E)
+lrb_solid_bit:		equ $3F			; the bit to check for left/right/bottom solidity (either $D or $F)
+
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; some variables and functions to help define those constants (redefined before a new set of IDs)
