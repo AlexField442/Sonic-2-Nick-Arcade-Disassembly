@@ -124,33 +124,45 @@ dynamic3:		equ 6
 		opt	ae+					; enable auto evens
 
 		rsset $FF0000|$FF000000
-				rs.b $8000
+				rs.b	$8000
 
-Level_Layout:			rs.b levelrowsize*levelrowcount	; level layout; each row is $80 bytes
-Level_Layout_End:		equ __rs
+Level_Layout:			rs.b	levelrowsize*levelrowcount	; level layout; each row is $80 bytes
+Level_Layout_End:		equ	__rs
 
-Block_Table:			rs.w $C00
-Block_Table_End:		equ __rs
+Block_Table:			rs.w	$C00
+Block_Table_End:		equ	__rs
 
-TempArray_LayerDef:		rs.b $200		; used by some layer deformation routines
-Decomp_Buffer:			rs.b $200		; used by Nemesis as a temporary buffer before it is uploaded to VRAM
+TempArray_LayerDef:		rs.b	$200		; used by some layer deformation routines
+Decomp_Buffer:			rs.b	$200		; used by Nemesis as a temporary buffer before it is uploaded to VRAM
 
-Sprite_Input_Table:		rs.b $400
-Sprite_Input_Table_End:		equ __rs
+Sprite_Input_Table:		rs.b	$400
+Sprite_Input_Table_End:		equ	__rs
 
-Object_RAM:			rs.b $2000
-Object_RAM_End:			equ __rs
+Object_RAM:			rs.b	$2000
+Object_RAM_End:			equ	__rs
 
-MainCharacter:			equ Object_RAM
-Sidekick:			equ Object_RAM+$40
+MainCharacter:			equ	Object_RAM
+Sidekick:			equ	Object_RAM+$40
+
+Primary_Collision:		rs.b	$600
+Secondary_Collision:		rs.b	$600
+
+VDP_Command_Buffer:		rs.w	7*$12		; stores 18 ($12) VDP commands to issue the next time ProcessDMAQueue is called
+VDP_Command_Buffer_Slot:	rs.l	1		; stores the address of the next open slot for a queued VDP command
+
+Sprite_Table_P2:		rs.b	$280		; Sprite Attribute Table buffer for the bottom split screen in 2-player mode
+				rs.b	$80		; unused, but SAT buffer can spill over into this area when there are too many sprites on-screen
+
+Horiz_Scroll_Buf:		rs.l	224		; total lines on the screen
+				rs.l	16		; unused, bug a bug/optimization in 'Deform_CPZ' in later builds causes these values to be overflowed into
+				rs.b	$40		; these are just unused
+Horiz_Scroll_Buf_End:		equ	__rs
+
+Sonic_Stat_Record_Buf:		rs.b	$100
+Sonic_Pos_Record_Buf:		rs.b	$100
+Tails_Pos_Record_Buf_OLD:	rs.b	$100
+Tails_Pos_Record_Buf:		rs.b	$100
 		popo						; restore options
-
-VDP_Command_Buffer:		equ $FFFFDC00
-VDP_Command_Buffer_Slot:	equ $FFFFDCFC
-
-Sonic_Stat_Record_Buf:		equ $FFFFE400
-Sonic_Pos_Record_Buf:		equ $FFFFE500
-Tails_Pos_Record_Buf:		equ $FFFFE600
 
 Ring_Positions:			equ $FFFFE800
 

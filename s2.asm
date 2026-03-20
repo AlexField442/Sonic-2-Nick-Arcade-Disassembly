@@ -23,15 +23,23 @@ align macro
 	cnop 0,\1
 	endm
 
+; tells the Z80 to stop, and waits for it to finish stopping (acquire bus)
 stopZ80 macro
 	move.w	#$100,(Z80_Bus_Request).l
 @loop:	btst	#0,(Z80_Bus_Request).l
 	bne.s	@loop
 	endm
 
+; tells the Z80 to start again
 startZ80 macro
 	move.w	#0,(Z80_Bus_Request).l
 	endm
+
+; we don't have bytesToLcnt or bytesToWcnt yet, so here's examples of when they are used
+; bytesToLcnt
+; #(XX>>2-YY>>2)-1
+; bytesToWcnt
+; #(XX>>1-YY>>1)-1
 
 StartOfRom:
 Vectors:	dc.l $FFFFFE00,EntryPoint,BusError,AddressError
@@ -575,8 +583,8 @@ loc_C66:
 		move.l	($FFFFF61E).w,($FFFFEEF0).w
 		lea	(VDP_control_port).l,a5
 		move.l	#$94019340,(a5)
-		move.l	#$96FC9500,(a5)
-		move.w	#$977F,(a5)
+		move.l	#(($9600|((((Sprite_Table)>>1)&$FF00)>>8))<<16)|($9500|(((Sprite_Table)>>1)&$FF)),(a5)
+		move.w	#$9700|(((((Sprite_Table)>>1)&$FF0000)>>16)&$7F),(a5)
 		move.w	#$7800,(a5)
 		move.w	#$83,(DMA_data_thunk).w
 		move.w	(DMA_data_thunk).w,(a5)
@@ -647,15 +655,15 @@ loc_D48:
 		move.w	#$8230,(VDP_control_port).l
 		lea	(VDP_control_port).l,a5
 		move.l	#$940193C0,(a5)
-		move.l	#$96F09500,(a5)
-		move.w	#$977F,(a5)
+		move.l	#(($9600|((((Horiz_Scroll_Buf)>>1)&$FF00)>>8))<<16)|($9500|(((Horiz_Scroll_Buf)>>1)&$FF)),(a5)
+		move.w	#$9700|(((((Horiz_Scroll_Buf)>>1)&$FF0000)>>16)&$7F),(a5)
 		move.w	#$7C00,(a5)
 		move.w	#$83,(DMA_data_thunk).w
 		move.w	(DMA_data_thunk).w,(a5)
 		lea	(VDP_control_port).l,a5
 		move.l	#$94019340,(a5)
-		move.l	#$96FC9500,(a5)
-		move.w	#$977F,(a5)
+		move.l	#(($9600|((((Sprite_Table)>>1)&$FF00)>>8))<<16)|($9500|(((Sprite_Table)>>1)&$FF)),(a5)
+		move.w	#$9700|(((((Sprite_Table)>>1)&$FF0000)>>16)&$7F),(a5)
 		move.w	#$7800,(a5)
 		move.w	#$83,(DMA_data_thunk).w
 		move.w	(DMA_data_thunk).w,(a5)
@@ -707,15 +715,15 @@ Vint_S1SS:
 		move.w	(DMA_data_thunk).w,(a5)
 		lea	(VDP_control_port).l,a5
 		move.l	#$94019340,(a5)
-		move.l	#$96FC9500,(a5)
-		move.w	#$977F,(a5)
+		move.l	#(($9600|((((Sprite_Table)>>1)&$FF00)>>8))<<16)|($9500|(((Sprite_Table)>>1)&$FF)),(a5)
+		move.w	#$9700|(((((Sprite_Table)>>1)&$FF0000)>>16)&$7F),(a5)
 		move.w	#$7800,(a5)
 		move.w	#$83,(DMA_data_thunk).w
 		move.w	(DMA_data_thunk).w,(a5)
 		lea	(VDP_control_port).l,a5
 		move.l	#$940193C0,(a5)
-		move.l	#$96F09500,(a5)
-		move.w	#$977F,(a5)
+		move.l	#(($9600|((((Horiz_Scroll_Buf)>>1)&$FF00)>>8))<<16)|($9500|(((Horiz_Scroll_Buf)>>1)&$FF)),(a5)
+		move.w	#$9700|(((((Horiz_Scroll_Buf)>>1)&$FF0000)>>16)&$7F),(a5)
 		move.w	#$7C00,(a5)
 		move.w	#$83,(DMA_data_thunk).w
 		move.w	(DMA_data_thunk).w,(a5)
@@ -758,15 +766,15 @@ loc_F08:
 		move.w	(Hint_counter_reserve).w,(a5)
 		lea	(VDP_control_port).l,a5
 		move.l	#$940193C0,(a5)
-		move.l	#$96F09500,(a5)
-		move.w	#$977F,(a5)
+		move.l	#(($9600|((((Horiz_Scroll_Buf)>>1)&$FF00)>>8))<<16)|($9500|(((Horiz_Scroll_Buf)>>1)&$FF)),(a5)
+		move.w	#$9700|(((((Horiz_Scroll_Buf)>>1)&$FF0000)>>16)&$7F),(a5)
 		move.w	#$7C00,(a5)
 		move.w	#$83,(DMA_data_thunk).w
 		move.w	(DMA_data_thunk).w,(a5)
 		lea	(VDP_control_port).l,a5
 		move.l	#$94019340,(a5)
-		move.l	#$96FC9500,(a5)
-		move.w	#$977F,(a5)
+		move.l	#(($9600|((((Sprite_Table)>>1)&$FF00)>>8))<<16)|($9500|(((Sprite_Table)>>1)&$FF)),(a5)
+		move.w	#$9700|(((((Sprite_Table)>>1)&$FF0000)>>16)&$7F),(a5)
 		move.w	#$7800,(a5)
 		move.w	#$83,(DMA_data_thunk).w
 		move.w	(DMA_data_thunk).w,(a5)
@@ -807,15 +815,15 @@ Vint_SSResults:
 		move.w	(DMA_data_thunk).w,(a5)
 		lea	(VDP_control_port).l,a5
 		move.l	#$94019340,(a5)
-		move.l	#$96FC9500,(a5)
-		move.w	#$977F,(a5)
+		move.l	#(($9600|((((Sprite_Table)>>1)&$FF00)>>8))<<16)|($9500|(((Sprite_Table)>>1)&$FF)),(a5)
+		move.w	#$9700|(((((Sprite_Table)>>1)&$FF0000)>>16)&$7F),(a5)
 		move.w	#$7800,(a5)
 		move.w	#$83,(DMA_data_thunk).w
 		move.w	(DMA_data_thunk).w,(a5)
 		lea	(VDP_control_port).l,a5
 		move.l	#$940193C0,(a5)
-		move.l	#$96F09500,(a5)
-		move.w	#$977F,(a5)
+		move.l	#(($9600|((((Horiz_Scroll_Buf)>>1)&$FF00)>>8))<<16)|($9500|(((Horiz_Scroll_Buf)>>1)&$FF)),(a5)
+		move.w	#$9700|(((((Horiz_Scroll_Buf)>>1)&$FF0000)>>16)&$7F),(a5)
 		move.w	#$7C00,(a5)
 		move.w	#$83,(DMA_data_thunk).w
 		move.w	(DMA_data_thunk).w,(a5)
@@ -857,15 +865,15 @@ loc_107E:
 loc_10A2:
 		lea	(VDP_control_port).l,a5
 		move.l	#$94019340,(a5)
-		move.l	#$96FC9500,(a5)
-		move.w	#$977F,(a5)
+		move.l	#(($9600|((((Sprite_Table)>>1)&$FF00)>>8))<<16)|($9500|(((Sprite_Table)>>1)&$FF)),(a5)
+		move.w	#$9700|(((((Sprite_Table)>>1)&$FF0000)>>16)&$7F),(a5)
 		move.w	#$7800,(a5)
 		move.w	#$83,(DMA_data_thunk).w
 		move.w	(DMA_data_thunk).w,(a5)
 		lea	(VDP_control_port).l,a5
 		move.l	#$940193C0,(a5)
-		move.l	#$96F09500,(a5)
-		move.w	#$977F,(a5)
+		move.l	#(($9600|((((Horiz_Scroll_Buf)>>1)&$FF00)>>8))<<16)|($9500|(((Horiz_Scroll_Buf)>>1)&$FF)),(a5)
+		move.w	#$9700|(((((Horiz_Scroll_Buf)>>1)&$FF0000)>>16)&$7F),(a5)
 		move.w	#$7C00,(a5)
 		move.w	#$83,(DMA_data_thunk).w
 		move.w	(DMA_data_thunk).w,(a5)
@@ -898,8 +906,8 @@ loc_110E:
 		move.l	($FFFFEEF0).w,(VDP_data_port).l
 		lea	(VDP_control_port).l,a5
 		move.l	#$94019340,(a5)
-		move.l	#$96EE9580,(a5)
-		move.w	#$977F,(a5)
+		move.l	#(($9600|((((Sprite_Table_P2)>>1)&$FF00)>>8))<<16)|($9500|(((Sprite_Table_P2)>>1)&$FF)),(a5)
+		move.w	#$9700|(((((Sprite_Table_P2)>>1)&$FF0000)>>16)&$7F),(a5)
 		move.w	#$7800,(a5)
 		move.w	#$83,(DMA_data_thunk).w
 		move.w	(DMA_data_thunk).w,(a5)
@@ -1105,9 +1113,9 @@ loc_1388:
 ClearScreen_ClearBuffer1:
 		move.l	d0,(a1)+
 		dbf	d1,ClearScreen_ClearBuffer1
-		lea	($FFFFE000).w,a1
+		lea	(Horiz_Scroll_Buf).w,a1
 		moveq	#0,d0
-		move.w	#$100,d1
+		move.w	#(Horiz_Scroll_Buf_End>>2-Horiz_Scroll_Buf>>2),d1
 
 ClearScreen_ClearBuffer2:
 		move.l	d0,(a1)+
@@ -4206,9 +4214,9 @@ Title_CheckLvlSel:			; CODE XREF: ROM:0000365Cj
 		beq.w	PlayLevel
 		moveq	#2,d0
 		bsr.w	PalLoad2
-		lea	($FFFFE000).w,a1
+		lea	(Horiz_Scroll_Buf).w,a1
 		moveq	#0,d0
-		move.w	#$DF,d1	; 'ß'
+		move.w	#(Horiz_Scroll_Buf_End>>2-Horiz_Scroll_Buf>>2)-1-32,d1	; 'ß'
 
 LevelSelect_ClearScroll:		; CODE XREF: ROM:000034B8j
 		move.l	d0,(a1)+
@@ -5720,12 +5728,12 @@ LoadCollisionIndexes:
 		moveq	#0,d0
 		move.b	(Current_Zone).w,d0
 		lsl.w	#2,d0
-		move.l	#$FFFFD000,($FFFFF796).w
+		move.l	#Primary_Collision,($FFFFF796).w
 		movea.l	ColP_Index(pc,d0.w),a1
-		lea	($FFFFD000).w,a2
+		lea	(Primary_Collision).w,a2
 		bsr.s	Col_Load
 		movea.l	ColS_Index(pc,d0.w),a1
-		lea	($FFFFD600).w,a2
+		lea	(Secondary_Collision).w,a2
 ; End of function LoadCollisionIndexes
 
 
@@ -6543,7 +6551,7 @@ loc_56B2:				; CODE XREF: S1SS_BgAnimate+6Ej
 		lea	(byte_5701).l,a2
 
 loc_56BC:				; CODE XREF: S1SS_BgAnimate+68j
-		lea	($FFFFE000).w,a1
+		lea	(Horiz_Scroll_Buf).w,a1
 		move.w	(Camera_BG3_X_pos).w,d0
 		neg.w	d0
 		swap	d0
@@ -6901,7 +6909,7 @@ loc_5AA4:				; CODE XREF: DeformBGLayer+4j
 		lea	($FFFFEE58).w,a3
 		lea	($FFFFEEB6).w,a4
 		lea	($FFFFEED4).w,a5
-		lea	($FFFFE700).w,a6
+		lea	(Tails_Pos_Record_Buf).w,a6
 		bsr.w	ScrollHorizontal
 		lea	($FFFFEE24).w,a1
 		lea	(Verti_block_crossed_flag_P2).w,a2
@@ -6946,7 +6954,7 @@ Deform_GHZ:				; DATA XREF: ROM:Deform_Indexo
 		asl.l	#7,d4
 		moveq	#0,d6
 		bsr.w	ScrollBlock5
-		lea	($FFFFE000).w,a1
+		lea	(Horiz_Scroll_Buf).w,a1
 		move.w	(Camera_Y_pos).w,d0
 		andi.w	#$7FF,d0
 		lsr.w	#5,d0
@@ -7050,7 +7058,7 @@ loc_5C5A:				; CODE XREF: ROM:00005B5Cj
 		asl.l	#7,d4
 		moveq	#0,d6
 		bsr.w	ScrollBlock5
-		lea	($FFFFE000).w,a1
+		lea	(Horiz_Scroll_Buf).w,a1
 		move.w	(Camera_Y_pos).w,d0
 		andi.w	#$7FF,d0
 		lsr.w	#5,d0
@@ -7263,7 +7271,7 @@ Deform_LZ:				; DATA XREF: ROM:Deform_Indexo
 		andi.w	#$FF,d2
 		add.w	(Camera_Y_pos).w,d3
 		andi.w	#$FF,d3
-		lea	($FFFFE000).w,a1
+		lea	(Horiz_Scroll_Buf).w,a1
 		move.w	#$DF,d1	; 'ß'
 		move.w	(Camera_X_pos).w,d0
 		neg.w	d0
@@ -7328,7 +7336,7 @@ Deform_CPZ:				; DATA XREF: ROM:Deform_Indexo
 		asl.l	#6,d5
 		bsr.w	ScrollBlock1
 		move.w	(Camera_BG_Y_pos).w,($FFFFF618).w
-		lea	($FFFFE000).w,a1
+		lea	(Horiz_Scroll_Buf).w,a1
 		move.w	#$DF,d1	; 'ß'
 		move.w	(Camera_X_pos).w,d0
 		neg.w	d0
@@ -7398,7 +7406,7 @@ Deform_TitleScreen:			; CODE XREF: ROM:00003404p
 
 loc_60B6:				; CODE XREF: Deform_TitleScreen+Ej
 		move.w	d0,(Camera_X_pos).w
-		lea	($FFFFE000).w,a1
+		lea	(Horiz_Scroll_Buf).w,a1
 		move.w	(Camera_X_pos).w,d2
 		neg.w	d2
 		moveq	#0,d0
@@ -7409,7 +7417,7 @@ Deform_EHZ:				; DATA XREF: ROM:Deform_Indexo
 		tst.w	(Two_player_mode).w
 		bne.w	loc_620E
 		move.w	(Camera_BG_Y_pos).w,($FFFFF618).w
-		lea	($FFFFE000).w,a1
+		lea	(Horiz_Scroll_Buf).w,a1
 		move.w	(Camera_X_pos).w,d0
 		neg.w	d0
 		move.w	d0,d2
@@ -7545,7 +7553,7 @@ loc_620E:				; CODE XREF: Deform_TitleScreen+28j
 loc_621C:				; CODE XREF: Deform_TitleScreen+172j
 		move.w	(Camera_BG_Y_pos).w,($FFFFF618).w
 		andi.l	#$FFFEFFFE,(Vscroll_Factor).w
-		lea	($FFFFE000).w,a1
+		lea	(Horiz_Scroll_Buf).w,a1
 		move.w	(Camera_X_pos).w,d0
 		move.w	#$A,d1
 		bsr.s	sub_6264
@@ -7647,7 +7655,7 @@ loc_62F6:				; CODE XREF: sub_6264+9Cj
 
 loc_6306:				; CODE XREF: ROM:000060A0j
 					; ROM:0000640Cj
-		lea	($FFFFE000).w,a1
+		lea	(Horiz_Scroll_Buf).w,a1
 		move.w	#$E,d1
 		move.w	(Camera_X_pos).w,d0
 		neg.w	d0
@@ -7769,7 +7777,7 @@ loc_63F2:				; CODE XREF: ROM:000063F4j
 
 Deform_HTZ:				; DATA XREF: ROM:Deform_Indexo
 		move.w	(Camera_BG_Y_pos).w,($FFFFF618).w
-		lea	($FFFFE000).w,a1
+		lea	(Horiz_Scroll_Buf).w,a1
 		move.w	(Camera_X_pos).w,d0
 		neg.w	d0
 		move.w	d0,d2
@@ -17962,7 +17970,7 @@ dword_D432:	dc.l 0
 
 loc_D442:				; CODE XREF: BuildSprites+41Cj
 					; BuildSprites+424j
-		lea	($FFFFDD00).w,a2
+		lea	(Sprite_Table_P2).w,a2
 		moveq	#0,d5
 		moveq	#0,d4
 		tst.b	(Level_started_flag).w
@@ -21989,7 +21997,7 @@ Sonic_RecordPos:
 Unused_RecordPos:
 		move.w	($FFFFEEE0).w,d0
 		subq.b	#4,d0
-		lea	(Tails_Pos_Record_Buf).w,a1
+		lea	(Tails_Pos_Record_Buf_OLD).w,a1
 		lea	(a1,d0.w),a2
 		move.w	x_pos(a0),d1
 		swap	d1
@@ -23065,10 +23073,10 @@ locret_104FA:
 
 ; Sonic_Floor:
 Sonic_DoLevelCollision:
-		move.l	#$FFFFD000,($FFFFF796).w
+		move.l	#Primary_Collision,($FFFFF796).w
 		cmpi.b	#$C,top_solid_bit(a0)
 		beq.s	loc_10514
-		move.l	#$FFFFD600,($FFFFF796).w
+		move.l	#Secondary_Collision,($FFFFF796).w
 
 loc_10514:
 		move.b	lrb_solid_bit(a0),d5
@@ -23958,7 +23966,7 @@ TailsC_04:
 
 loc_10E0C:
 		move.w	d1,(unk_F706).w
-		lea	(Tails_Pos_Record_Buf).w,a1
+		lea	(Tails_Pos_Record_Buf_OLD).w,a1
 		lsl.b	#2,d1
 		addq.b	#4,d1
 		move.w	($FFFFEEE0).w,d0
@@ -23995,7 +24003,7 @@ loc_10E40:				; CODE XREF: ROM:00010E3Cj
 
 RecordTailsMoves:			; CODE XREF: ROM:00010CDCp
 		move.w	($FFFFEED6).w,d0
-		lea	($FFFFE700).w,a1
+		lea	(Tails_Pos_Record_Buf).w,a1
 		lea	(a1,d0.w),a1
 		move.w	x_pos(a0),(a1)+
 		move.w	y_pos(a0),(a1)+
@@ -26207,7 +26215,7 @@ Obj38_Delete:
 		jmp	(DeleteObject).l
 ; ===========================================================================
 ; This code has some connection to Unused_RecordPos, as both use Tails'
-; position buffer for something
+; old position buffer for something
 
 Obj38_Stars:
 		tst.b	($FFFFFE2D).w	; is Sonic invincible?
@@ -26219,7 +26227,7 @@ Obj38_Stars:
 		lsl.b	#2,d1
 		addi.b	#4,d1
 		sub.b	d1,d0
-		lea	(Tails_Pos_Record_Buf).w,a1
+		lea	(Tails_Pos_Record_Buf_OLD).w,a1
 		lea	(a1,d0.w),a1
 		move.w	(a1)+,d0
 		andi.w	#$3FFF,d0
@@ -26378,10 +26386,10 @@ Map_obj08:	incbin	"mappings/sprite/obj08.bin"
 
 ; Sonic_AnglePos:
 AnglePos:
-		move.l	#$FFFFD000,($FFFFF796).w
+		move.l	#Primary_Collision,($FFFFF796).w
 		cmpi.b	#$C,top_solid_bit(a0)
 		beq.s	loc_12A14
-		move.l	#$FFFFD600,($FFFFF796).w
+		move.l	#Secondary_Collision,($FFFFF796).w
 
 loc_12A14:				; CODE XREF: AnglePos+Ej
 		move.b	top_solid_bit(a0),d5
@@ -27142,10 +27150,10 @@ loc_13074:
 
 ; Sonic_WalkSpeed:
 CalcRoomInFront:
-		move.l	#$FFFFD000,($FFFFF796).w
+		move.l	#Primary_Collision,($FFFFF796).w
 		cmpi.b	#$C,top_solid_bit(a0)
 		beq.s	loc_13094
-		move.l	#$FFFFD600,($FFFFF796).w
+		move.l	#Secondary_Collision,($FFFFF796).w
 
 loc_13094:				; CODE XREF: CalcRoomInFront+Ej
 		move.b	lrb_solid_bit(a0),d5
@@ -27208,10 +27216,10 @@ sub_13102:				; CODE XREF: Sonic_Jump+16p
 ; FUNCTION CHUNK AT 0001328E SIZE 00000060 BYTES
 ; FUNCTION CHUNK AT 00013408 SIZE 00000068 BYTES
 
-		move.l	#$FFFFD000,($FFFFF796).w
+		move.l	#Primary_Collision,($FFFFF796).w
 		cmpi.b	#$C,top_solid_bit(a0)
 		beq.s	loc_1311A
-		move.l	#$FFFFD600,($FFFFF796).w
+		move.l	#Secondary_Collision,($FFFFF796).w
 
 loc_1311A:				; CODE XREF: sub_13102+Ej
 		move.b	lrb_solid_bit(a0),d5
@@ -27228,10 +27236,10 @@ loc_1311A:				; CODE XREF: sub_13102+Ej
 
 loc_13146:				; CODE XREF: Sonic_DoLevelCollision:loc_1056Ap
 					; Sonic_DoLevelCollision+122p ...
-		move.l	#$FFFFD000,($FFFFF796).w
+		move.l	#Primary_Collision,($FFFFF796).w
 		cmpi.b	#$C,top_solid_bit(a0)
 		beq.s	loc_1315E
-		move.l	#$FFFFD600,($FFFFF796).w
+		move.l	#Secondary_Collision,($FFFFF796).w
 
 loc_1315E:				; CODE XREF: sub_13102+52j
 		move.b	top_solid_bit(a0),d5
@@ -27316,10 +27324,10 @@ ChkFloorEdge:
 		move.b	y_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d2
-		move.l	#$FFFFD000,($FFFFF796).w
+		move.l	#Primary_Collision,($FFFFF796).w
 		cmpi.b	#$C,top_solid_bit(a0)
 		beq.s	loc_1322E
-		move.l	#$FFFFD600,($FFFFF796).w
+		move.l	#Secondary_Collision,($FFFFF796).w
 
 loc_1322E:				; CODE XREF: ChkFloorEdge+20j
 		lea	($FFFFF768).w,a4
