@@ -10742,120 +10742,128 @@ loc_7B9C:				; DATA XREF: ROM:00007B58o
 
 DynResize_S1Ending:			; DATA XREF: ROM:DynResize_Indexo
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-;----------------------------------------------------
-; Object 11 - Bridge
-;----------------------------------------------------
 
-Obj11:					; DATA XREF: ROM:Obj_Indexo
-		btst	#6,render_flags(a0)
-		bne.w	loc_7BB8
+; ===========================================================================
+; ---------------------------------------------------------------------------
+; Object 11 - Bridge
+; ---------------------------------------------------------------------------
+; OST:
+bridge_child1:	equ $30		; pointer to first set of bridge segments
+bridge_child2:	equ $34		; pointer to second set of bridge segments, if applicable
+; ---------------------------------------------------------------------------
+; Sprite_7BA0: Obj11:
+Obj_Bridge:
+		btst	#6,render_flags(a0)	; is this a child sprite object?
+		bne.w	.drawChild		; if yes, branch
 		moveq	#0,d0
 		move.b	routine(a0),d0
-		move.w	Obj11_Index(pc,d0.w),d1
-		jmp	Obj11_Index(pc,d1.w)
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_7BB8:				; CODE XREF: ROM:00007BA6j
+		move.w	Bridge_Index(pc,d0.w),d1
+		jmp	Bridge_Index(pc,d1.w)
+; ===========================================================================
+; loc_7BB8:
+.drawChild:	; child sprite objects only need to be drawn
 		moveq	#3,d0
 		bra.w	DisplaySprite3
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-Obj11_Index:	dc.w loc_7BC6-Obj11_Index ; DATA XREF: ROM:Obj11_Indexo
-					; ROM:00007BC0o ...
-		dc.w loc_7CC8-Obj11_Index
-		dc.w loc_7D5A-Obj11_Index
-		dc.w loc_7D5E-Obj11_Index
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_7BC6:				; DATA XREF: ROM:Obj11_Indexo
+; ===========================================================================
+; off_7BBE: Obj11_Index:
+Bridge_Index:	dc.w Bridge_Init-Bridge_Index
+		dc.w Bridge_GHZEHZ-Bridge_Index
+		dc.w Bridge_Display-Bridge_Index
+		dc.w Bridge_HPZ-Bridge_Index
+; ===========================================================================
+; loc_7BC6:
+Bridge_Init:
 		addq.b	#2,routine(a0)
 		move.l	#Map_obj11_GHZ,mappings(a0)
 		move.w	#$44C6,art_tile(a0)
 		move.b	#3,priority(a0)
 		cmpi.b	#3,(Current_Zone).w
-		bne.s	loc_7BFA
+		bne.s	.notEHZ
 		move.l	#Map_obj11,mappings(a0)
 		move.w	#$43C6,art_tile(a0)
 		move.b	#3,priority(a0)
-
-loc_7BFA:				; CODE XREF: ROM:00007BE4j
+; loc_7BFA:
+.notEHZ:
 		cmpi.b	#4,(Current_Zone).w
-		bne.s	loc_7C14
+		bne.s	.notHPZ
 		addq.b	#4,routine(a0)
 		move.l	#Map_obj11_HPZ,mappings(a0)
 		move.w	#$6300,art_tile(a0)
-
-loc_7C14:				; CODE XREF: ROM:00007C00j
+; loc_7C14:
+.notHPZ:
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,render_flags(a0)
 		move.b	#$80,width_pixels(a0)
 		move.w	y_pos(a0),d2
 		move.w	d2,$3C(a0)
 		move.w	x_pos(a0),d3
-		lea	$28(a0),a2
+		lea	$28(a0),a2		; copy bridge subtype to a2
 		moveq	#0,d1
-		move.b	(a2),d1
+		move.b	(a2),d1			; d1 = subtype
 		move.w	d1,d0
 		lsr.w	#1,d0
-		lsl.w	#4,d0
-		sub.w	d0,d3
-		swap	d1
+		lsl.w	#4,d0			; (d0 div 2) * 16
+		sub.w	d0,d3			; x position of left half
+		swap	d1			; store subtype in high word for later
 		move.w	#8,d1
-		bsr.s	sub_7C76
+		bsr.s	Bridge_MakeSegments
 		move.w	$28(a1),d0
 		subq.w	#8,d0
-		move.w	d0,x_pos(a1)
-		move.l	a1,$30(a0)
-		swap	d1
+		move.w	d0,x_pos(a1)		; center of first subsprite object
+		move.l	a1,bridge_child1(a0)	; pointer to first subsprite object
+		swap	d1			; retrieve subtype
 		subq.w	#8,d1
 		bls.s	loc_7C74
+		; else, create a second subsprite object for the rest of the bridge
 		move.w	d1,d4
-		bsr.s	sub_7C76
-		move.l	a1,$34(a0)
+		bsr.s	Bridge_MakeSegments
+		move.l	a1,bridge_child2(a0)	; pointer to second subsprite object
 		move.w	d4,d0
 		add.w	d0,d0
 		add.w	d4,d0
 		move.w	$10(a1,d0.w),d0
 		subq.w	#8,d0
-		move.w	d0,x_pos(a1)
+		move.w	d0,x_pos(a1)		; center of second subsprite object
 
-loc_7C74:				; CODE XREF: ROM:00007C5Aj
-		bra.s	loc_7CC8
+loc_7C74:
+		bra.s	Bridge_GHZEHZ
 
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
+; ---------------------------------------------------------------------------
+; Subroutine to create individual bridge segments using subsprites
+; ---------------------------------------------------------------------------
 
+; ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
 
-sub_7C76:				; CODE XREF: ROM:00007C46p
-					; ROM:00007C5Ep
+; sub_7C76:
+Bridge_MakeSegments:
 		bsr.w	SingleObjLoad2
 		bne.s	locret_7CC6
-		move.b	id(a0),id(a1)
+		move.b	id(a0),id(a1)	; load Obj_Bridge
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		move.l	mappings(a0),mappings(a1)
 		move.w	art_tile(a0),art_tile(a1)
 		move.b	render_flags(a0),render_flags(a1)
 		bset	#6,render_flags(a1)
-		move.b	#$40,$E(a1) ; '@'
+		move.b	#$40,$E(a1)
 		move.b	d1,$F(a1)
 		subq.b	#1,d1
-		lea	$10(a1),a2
+		lea	$10(a1),a2	; starting address for subsprite data
 
-loc_7CB6:				; CODE XREF: sub_7C76+4Cj
+loc_7CB6:
 		move.w	d3,(a2)+
 		move.w	d2,(a2)+
 		move.w	#0,(a2)+
-		addi.w	#$10,d3
-		dbf	d1,loc_7CB6
+		addi.w	#$10,d3		; width of a log, x_pos for next log
+		dbf	d1,loc_7CB6	; repeat for d1 logs
 
-locret_7CC6:				; CODE XREF: sub_7C76+4j
+locret_7CC6:
 		rts
-; End of function sub_7C76
+; End of function Bridge_MakeSegments
 
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_7CC8:				; CODE XREF: ROM:loc_7C74j
-					; DATA XREF: ROM:00007BC0o
+; ===========================================================================
+; loc_7CC8:
+Bridge_GHZEHZ:
 		move.b	status(a0),d0
 		andi.b	#$18,d0
 		bne.s	loc_7CDE
@@ -10863,9 +10871,9 @@ loc_7CC8:				; CODE XREF: ROM:loc_7C74j
 		beq.s	loc_7D0A
 		subq.b	#4,$3E(a0)
 		bra.s	loc_7D06
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; ===========================================================================
 
-loc_7CDE:				; CODE XREF: ROM:00007CD0j
+loc_7CDE:
 		andi.b	#$10,d0
 		beq.s	loc_7CFA
 		move.b	$3F(a0),d0
@@ -10874,22 +10882,20 @@ loc_7CDE:				; CODE XREF: ROM:00007CD0j
 		bcc.s	loc_7CF6
 		addq.b	#1,$3F(a0)
 		bra.s	loc_7CFA
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; ===========================================================================
 
-loc_7CF6:				; CODE XREF: ROM:00007CEEj
+loc_7CF6:
 		subq.b	#1,$3F(a0)
 
-loc_7CFA:				; CODE XREF: ROM:00007CE2j
-					; ROM:00007CECj ...
-		cmpi.b	#$40,$3E(a0) ; '@'
+loc_7CFA:
+		cmpi.b	#$40,$3E(a0)
 		beq.s	loc_7D06
 		addq.b	#4,$3E(a0)
 
-loc_7D06:				; CODE XREF: ROM:00007CDCj
-					; ROM:00007D00j
-		bsr.w	sub_7F36
+loc_7D06:
+		bsr.w	Bridge_Depress
 
-loc_7D0A:				; CODE XREF: ROM:00007CD6j
+loc_7D0A:
 		moveq	#0,d1
 		move.b	$28(a0),d1
 		lsl.w	#3,d1
@@ -10899,39 +10905,41 @@ loc_7D0A:				; CODE XREF: ROM:00007CD6j
 		moveq	#8,d3
 		move.w	x_pos(a0),d4
 		bsr.w	sub_7DC0
-
-loc_7D22:				; CODE XREF: ROM:00007DBCj
-		tst.w	(Two_player_mode).w
-		beq.s	loc_7D2A
+; loc_7D22:
+Bridge_Unload:
+		tst.w	(Two_player_mode).w	; are we in two player mode?
+		beq.s	Bridge_ChkDel		; if not, branch
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_7D2A:				; CODE XREF: ROM:00007D26j
+; ---------------------------------------------------------------------------
+; loc_7D2A:
+Bridge_ChkDel:
 		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	($FFFFF7DA).w,d0
 		cmpi.w	#$280,d0
-		bhi.s	loc_7D3E
+		bhi.s	Bridge_DeleteChild
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_7D3E:				; CODE XREF: ROM:00007D3Aj
-		movea.l	$30(a0),a1
+; ---------------------------------------------------------------------------
+; loc_7D3E:
+Bridge_DeleteChild:
+		; delete first subsprite object
+		movea.l	bridge_child1(a0),a1	; a1=object
 		bsr.w	DeleteObject2
-		cmpi.b	#8,$28(a0)
-		bls.s	loc_7D56
-		movea.l	$34(a0),a1
+		cmpi.b	#8,$28(a0)		; does this bridge have more than 8 logs?
+		bls.s	Bridge_Delete		; if not, branch
+		; delete second subsprite object
+		movea.l	bridge_child2(a0),a1	; a1=object
 		bsr.w	DeleteObject2
-
-loc_7D56:				; CODE XREF: ROM:00007D4Cj
+; loc_7D56:
+Bridge_Delete:
 		bra.w	DeleteObject
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_7D5A:				; DATA XREF: ROM:00007BC2o
+; ===========================================================================
+; loc_7D5A:
+Bridge_Display:
 		bra.w	DisplaySprite
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_7D5E:				; DATA XREF: ROM:00007BC4o
+; ===========================================================================
+; loc_7D5E:
+Bridge_HPZ:
 		move.b	status(a0),d0
 		andi.b	#$18,d0
 		bne.s	loc_7D74
@@ -10963,7 +10971,7 @@ loc_7D90:				; CODE XREF: ROM:00007D78j
 
 loc_7D9C:				; CODE XREF: ROM:00007D72j
 					; ROM:00007D96j
-		bsr.w	sub_7F36
+		bsr.w	Bridge_Depress
 
 loc_7DA0:				; CODE XREF: ROM:00007D6Cj
 		moveq	#0,d1
@@ -10976,7 +10984,7 @@ loc_7DA0:				; CODE XREF: ROM:00007D6Cj
 		move.w	x_pos(a0),d4
 		bsr.w	sub_7DC0
 		bsr.w	sub_7E60
-		bra.w	loc_7D22
+		bra.w	Bridge_Unload
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
 
@@ -11021,10 +11029,10 @@ loc_7DFA:				; CODE XREF: sub_7DDA+Cj sub_7DDA+1Aj
 loc_7E08:				; CODE XREF: sub_7DDA+1Ej
 		lsr.w	#4,d0
 		move.b	d0,(a0,d5.w)
-		movea.l	$30(a0),a2
+		movea.l	bridge_child1(a0),a2
 		cmpi.w	#8,d0
 		bcs.s	loc_7E20
-		movea.l	$34(a0),a2
+		movea.l	bridge_child2(a0),a2
 		subi.w	#8,d0
 
 loc_7E20:				; CODE XREF: sub_7DDA+3Cj
@@ -11109,7 +11117,7 @@ loc_7EC0:				; CODE XREF: sub_7E60+5Aj
 		move.b	$3B(a0),d4
 
 loc_7ECE:				; CODE XREF: sub_7E60+68j
-		movea.l	$30(a0),a1
+		movea.l	bridge_child1(a0),a1
 		lea	$45(a1),a2
 		lea	$15(a1),a1
 		moveq	#0,d1
@@ -11164,7 +11172,7 @@ loc_7F1E:				; CODE XREF: sub_7E60+B6j
 		addq.w	#6,a1
 		cmpa.w	a2,a1
 		bne.s	loc_7F30
-		movea.l	$34(a0),a1
+		movea.l	bridge_child2(a0),a1
 		lea	$15(a1),a1
 
 loc_7F30:				; CODE XREF: sub_7E60+C6j
@@ -11172,12 +11180,14 @@ loc_7F30:				; CODE XREF: sub_7E60+C6j
 		rts
 ; End of function sub_7E60
 
+; ---------------------------------------------------------------------------
+; Subroutine to make the bridge push down where Sonic or Tails are standing
+; ---------------------------------------------------------------------------
 
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
+; ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
 
-
-sub_7F36:				; CODE XREF: ROM:loc_7D06p
-					; ROM:loc_7D9Cp
+; sub_7F36:
+Bridge_Depress:
 		move.b	$3E(a0),d0
 		bsr.w	CalcSine
 		move.w	d0,d4
@@ -11190,6 +11200,8 @@ sub_7F36:				; CODE XREF: ROM:loc_7D06p
 		move.w	d3,d2
 		add.w	d0,d3
 		moveq	#0,d5
+		; This "-$80" is here since Sonic 2 removed support for bridges
+		; with less than eight logs, not that it was used in Sonic 1.
 		lea	(Obj11_BendData-$80).l,a5
 		move.b	(a5,d3.w),d5
 
@@ -11197,11 +11209,11 @@ loc_7F64:
 		andi.w	#$F,d3
 		lsl.w	#4,d3
 		lea	(a4,d3.w),a3
-		movea.l	$30(a0),a1
+		movea.l	bridge_child1(a0),a1
 		lea	$42(a1),a2
 		lea	$12(a1),a1
 
-loc_7F7A:				; CODE XREF: sub_7F36:loc_7F9Aj
+loc_7F7A:
 		moveq	#0,d0
 		move.b	(a3)+,d0
 		addq.w	#1,d0
@@ -11213,10 +11225,10 @@ loc_7F7A:				; CODE XREF: sub_7F36:loc_7F9Aj
 		addq.w	#6,a1
 		cmpa.w	a2,a1
 		bne.s	loc_7F9A
-		movea.l	$34(a0),a1
+		movea.l	bridge_child2(a0),a1
 		lea	$12(a1),a1
 
-loc_7F9A:				; CODE XREF: sub_7F36+5Aj
+loc_7F9A:
 		dbf	d2,loc_7F7A
 		moveq	#0,d0
 		move.b	$28(a0),d0
@@ -11233,7 +11245,7 @@ loc_7F9A:				; CODE XREF: sub_7F36+5Aj
 		subq.w	#1,d2
 		bcs.s	locret_7FE4
 
-loc_7FC0:				; CODE XREF: sub_7F36:loc_7FE0j
+loc_7FC0:
 		moveq	#0,d0
 		move.b	-(a3),d0
 		addq.w	#1,d0
@@ -11245,44 +11257,51 @@ loc_7FC0:				; CODE XREF: sub_7F36:loc_7FE0j
 		addq.w	#6,a1
 		cmpa.w	a2,a1
 		bne.s	loc_7FE0
-		movea.l	$34(a0),a1
+		movea.l	bridge_child2(a0),a1
 		lea	$12(a1),a1
 
-loc_7FE0:				; CODE XREF: sub_7F36+A0j
+loc_7FE0:
 		dbf	d2,loc_7FC0
 
-locret_7FE4:				; CODE XREF: sub_7F36+7Aj sub_7F36+88j
+locret_7FE4:
 		rts
-; End of function sub_7F36
+; End of function Bridge_Depress
 
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-Obj11_BendData:	dc.b   2,  4,  6,  8,  8,  6,  4,  2,  0,  0,  0,  0,  0,  0,  0,  0; 0
-					; DATA XREF: sub_7F36+24t
-		dc.b   2,  4,  6,  8, $A,  8,  6,  4,  2,  0,  0,  0,  0,  0,  0,  0; 16
-		dc.b   2,  4,  6,  8, $A, $A,  8,  6,  4,  2,  0,  0,  0,  0,  0,  0; 32
-		dc.b   2,  4,  6,  8, $A, $C, $A,  8,  6,  4,  2,  0,  0,  0,  0,  0; 48
-		dc.b   2,  4,  6,  8, $A, $C, $C, $A,  8,  6,  4,  2,  0,  0,  0,  0; 64
-		dc.b   2,  4,  6,  8, $A, $C, $E, $C, $A,  8,  6,  4,  2,  0,  0,  0; 80
-		dc.b   2,  4,  6,  8, $A, $C, $E, $E, $C, $A,  8,  6,  4,  2,  0,  0; 96
-		dc.b   2,  4,  6,  8, $A, $C, $E,$10, $E, $C, $A,  8,  6,  4,  2,  0; 112
-		dc.b   2,  4,  6,  8, $A, $C, $E,$10,$10, $E, $C, $A,  8,  6,  4,  2; 128
-Obj11_BendData2:dc.b $FF,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 0
-					; DATA XREF: sub_7F36+Ao
-		dc.b $B5,$FF,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 16
-		dc.b $7E,$DB,$FF,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 32
-		dc.b $61,$B5,$EC,$FF,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 48
-		dc.b $4A,$93,$CD,$F3,$FF,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 64
-		dc.b $3E,$7E,$B0,$DB,$F6,$FF,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0; 80
-		dc.b $38,$6D,$9D,$C5,$E4,$F8,$FF,  0,  0,  0,  0,  0,  0,  0,  0,  0; 96
-		dc.b $31,$61,$8E,$B5,$D4,$EC,$FB,$FF,  0,  0,  0,  0,  0,  0,  0,  0; 112
-		dc.b $2B,$56,$7E,$A2,$C1,$DB,$EE,$FB,$FF,  0,  0,  0,  0,  0,  0,  0; 128
-		dc.b $25,$4A,$73,$93,$B0,$CD,$E1,$F3,$FC,$FF,  0,  0,  0,  0,  0,  0; 144
-		dc.b $1F,$44,$67,$88,$A7,$BD,$D4,$E7,$F4,$FD,$FF,  0,  0,  0,  0,  0; 160
-		dc.b $1F,$3E,$5C,$7E,$98,$B0,$C9,$DB,$EA,$F6,$FD,$FF,  0,  0,  0,  0; 176
-		dc.b $19,$38,$56,$73,$8E,$A7,$BD,$D1,$E1,$EE,$F8,$FE,$FF,  0,  0,  0; 192
-		dc.b $19,$38,$50,$6D,$83,$9D,$B0,$C5,$D8,$E4,$F1,$F8,$FE,$FF,  0,  0; 208
-		dc.b $19,$31,$4A,$67,$7E,$93,$A7,$BD,$CD,$DB,$E7,$F3,$F9,$FE,$FF,  0; 224
-		dc.b $19,$31,$4A,$61,$78,$8E,$A2,$B5,$C5,$D4,$E1,$EC,$F4,$FB,$FE,$FF; 240
+; ===========================================================================
+; seems to be bridge piece vertical position offset data
+; byte_7FE6:
+Obj11_BendData:
+		dc.b   2,  4,  6,  8,  8,  6,  4,  2,  0,  0,  0,  0,  0,  0,  0,  0	; 8 logs
+		dc.b   2,  4,  6,  8, $A,  8,  6,  4,  2,  0,  0,  0,  0,  0,  0,  0	; 9 logs
+		dc.b   2,  4,  6,  8, $A, $A,  8,  6,  4,  2,  0,  0,  0,  0,  0,  0	; 10 logs
+		dc.b   2,  4,  6,  8, $A, $C, $A,  8,  6,  4,  2,  0,  0,  0,  0,  0	; 11 logs
+		dc.b   2,  4,  6,  8, $A, $C, $C, $A,  8,  6,  4,  2,  0,  0,  0,  0	; 12 logs
+		dc.b   2,  4,  6,  8, $A, $C, $E, $C, $A,  8,  6,  4,  2,  0,  0,  0	; 13 logs
+		dc.b   2,  4,  6,  8, $A, $C, $E, $E, $C, $A,  8,  6,  4,  2,  0,  0	; 14 logs
+		dc.b   2,  4,  6,  8, $A, $C, $E,$10, $E, $C, $A,  8,  6,  4,  2,  0	; 15 logs
+		dc.b   2,  4,  6,  8, $A, $C, $E,$10,$10, $E, $C, $A,  8,  6,  4,  2	; 16 logs
+
+; something else important for bridge depression to work (phase? bridge size adjustment?)
+; byte_8066:
+Obj11_BendData2:
+		dc.b $FF,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
+		dc.b $B5,$FF,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
+		dc.b $7E,$DB,$FF,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
+		dc.b $61,$B5,$EC,$FF,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
+		dc.b $4A,$93,$CD,$F3,$FF,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
+		dc.b $3E,$7E,$B0,$DB,$F6,$FF,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
+		dc.b $38,$6D,$9D,$C5,$E4,$F8,$FF,  0,  0,  0,  0,  0,  0,  0,  0,  0
+		dc.b $31,$61,$8E,$B5,$D4,$EC,$FB,$FF,  0,  0,  0,  0,  0,  0,  0,  0
+		dc.b $2B,$56,$7E,$A2,$C1,$DB,$EE,$FB,$FF,  0,  0,  0,  0,  0,  0,  0
+		dc.b $25,$4A,$73,$93,$B0,$CD,$E1,$F3,$FC,$FF,  0,  0,  0,  0,  0,  0
+		dc.b $1F,$44,$67,$88,$A7,$BD,$D4,$E7,$F4,$FD,$FF,  0,  0,  0,  0,  0
+		dc.b $1F,$3E,$5C,$7E,$98,$B0,$C9,$DB,$EA,$F6,$FD,$FF,  0,  0,  0,  0
+		dc.b $19,$38,$56,$73,$8E,$A7,$BD,$D1,$E1,$EE,$F8,$FE,$FF,  0,  0,  0
+		dc.b $19,$38,$50,$6D,$83,$9D,$B0,$C5,$D8,$E4,$F1,$F8,$FE,$FF,  0,  0
+		dc.b $19,$31,$4A,$67,$7E,$93,$A7,$BD,$CD,$DB,$E7,$F3,$F9,$FE,$FF,  0
+		dc.b $19,$31,$4A,$61,$78,$8E,$A2,$B5,$C5,$D4,$E1,$EC,$F4,$FB,$FE,$FF
+		even
+
 ; ---------------------------------------------------------------------------
 ; Sprite mappings - GHZ bridge
 ; ---------------------------------------------------------------------------
@@ -11295,9 +11314,8 @@ Map_obj11_HPZ:	incbin	"mappings/sprite/obj11_HPZ.bin"
 ; Sprite mappings - EHZ bridge
 ; ---------------------------------------------------------------------------
 Map_obj11:	incbin	"mappings/sprite/obj11.bin"
-
-; ===========================================================================
 		nop
+
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Object 15 - swinging platforms
@@ -16975,7 +16993,7 @@ Obj_Index:
 		dc.l Obj05		; Tails' tails
 		dc.l Obj06		; Twisting spiral pathway in EHZ
 		dc.l ObjNull
-		dc.l Obj08		; Water splash in HPZ
+		dc.l Obj_WaterSplash	; Water splash in HPZ
 		dc.l Obj09		; (S1) Sonic in the Speical Stage
 		dc.l Obj0A		; Small bubbles from Sonic's face while underwater
 		dc.l Obj0B		; (S1) Pole that breaks in LZ
@@ -16984,7 +17002,7 @@ Obj_Index:
 		dc.l Obj0E		; Sonic and Tails from the title screen
 		dc.l Obj0F		; Mappings test?
 		dc.l Obj10		; (S1) Animation test in prototype, now blank
-		dc.l Obj11		; Bridges in GHZ, EHZ and HPZ
+		dc.l Obj_Bridge		; Bridges in GHZ, EHZ and HPZ
 		dc.l Obj12		; Emerald from Hidden Palace Zone
 		dc.l Obj13		; Waterfall from Hidden Palace Zone
 		dc.l Obj14		; Seesaw from Hill Top Zone
@@ -17023,7 +17041,7 @@ Obj_Index:
 		dc.l ObjNull
 		dc.l Obj36		; Vertical spikes
 		dc.l Obj37		; Scattering rings (generated when Sonic or Tails are hurt and has rings)
-		dc.l Obj38		; Shield
+		dc.l Obj_Barrier	; Shield and invincibility stars
 		dc.l Obj39		; Game Over/Time Over text
 		dc.l Obj3A		; (S1) End of level results screen
 		dc.l Obj3B		; (S1) Purple rock from GHZ
@@ -26154,27 +26172,30 @@ word_123B0:	dc.w 1			; DATA XREF: ROM:Map_Obj0A_Countdowno
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Object 38 - shield and invincibility stars
+;
+; Internal name: "baria"
 ; ---------------------------------------------------------------------------
-
-Obj38:
+; Obj38:
+Obj_Barrier:
 		moveq	#0,d0
 		move.b	routine(a0),d0
-		move.w	Obj38_Index(pc,d0.w),d1
-		jmp	Obj38_Index(pc,d1.w)
+		move.w	Barrier_Index(pc,d0.w),d1
+		jmp	Barrier_Index(pc,d1.w)
 ; ===========================================================================
-Obj38_Index:	dc.w Obj38_Init-Obj38_Index
-		dc.w Obj38_Shield-Obj38_Index
-		dc.w Obj38_Stars-Obj38_Index
+; Obj38_Index:
+Barrier_Index:	dc.w Barrier_Init-Barrier_Index
+		dc.w Barrier_Shield-Barrier_Index
+		dc.w Barrier_Stars-Barrier_Index
 ; ===========================================================================
-
-Obj38_Init:
+; Obj38_Init:
+Barrier_Init:
 		addq.b	#2,routine(a0)
-		move.l	#Map_obj38,mappings(a0)
+		move.l	#MapUnc_Barrier,mappings(a0)
 		move.b	#4,render_flags(a0)
 		move.b	#1,priority(a0)
 		move.b	#$18,width_pixels(a0)
-		tst.b	anim(a0)	; is this the shield?
-		bne.s	loc_1240C	; if not, branch
+		tst.b	anim(a0)		; is this the shield?
+		bne.s	loc_1240C		; if not, branch
 		move.w	#$4BE,art_tile(a0)
 		cmpi.b	#3,(Current_Zone).w	; is this Emerald Hill Zone?
 		bne.s	loc_12406		; if not, branch
@@ -26193,16 +26214,16 @@ loc_1240C:
 		move.b	#2,priority(a0)
 		rts
 ; ===========================================================================
-
-Obj38_Shield:
+; Obj38_Shield:
+Barrier_Shield:
 		tst.b	($FFFFFE2D).w	; is Sonic invincible?
 		bne.s	locret_1245A	; if yes, branch
 		tst.b	($FFFFFE2C).w	; does Sonic have a shield?
-		beq.s	Obj38_Delete	; if not, branch
+		beq.s	Barrier_Delete	; if not, branch
 		move.w	(MainCharacter+x_pos).w,x_pos(a0)
 		move.w	(MainCharacter+y_pos).w,y_pos(a0)
 		move.b	(MainCharacter+status).w,status(a0)
-		lea	(Ani_obj38).l,a1
+		lea	(Ani_Barrier).l,a1
 		jsr	(AnimateSprite).l
 		jmp	(DisplaySprite).l
 ; ---------------------------------------------------------------------------
@@ -26210,16 +26231,16 @@ Obj38_Shield:
 locret_1245A:
 		rts
 ; ===========================================================================
-; loc_1245C:
-Obj38_Delete:
+; loc_1245C: Obj38_Delete:
+Barrier_Delete:
 		jmp	(DeleteObject).l
 ; ===========================================================================
 ; This code has some connection to Unused_RecordPos, as both use Tails'
 ; old position buffer for something
-
-Obj38_Stars:
+; Obj38_Stars:
+Barrier_Stars:
 		tst.b	($FFFFFE2D).w	; is Sonic invincible?
-		beq.s	Obj38_Delete2	; if not, branch
+		beq.s	Barrier_Delete2	; if not, branch
 		move.w	($FFFFEEE0).w,d0
 		move.b	anim(a0),d1
 		subq.b	#1,d1
@@ -26240,30 +26261,33 @@ Obj38_Stars:
 		move.b	(MainCharacter+render_flags).w,render_flags(a0)
 		jmp	(DisplaySprite).l
 ; ===========================================================================
-; loc_124B2:
-Obj38_Delete2:
+; loc_124B2: Obj38_Delete2:
+Barrier_Delete2:
 		jmp	(DeleteObject).l
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Sonic	1 Object 4A - giant ring entry effect from prototype
+;
+; Internal name: "warp"
 ; ---------------------------------------------------------------------------
 ; OST:
 warp_vanishtime:	equ $30		; time for Sonic to vanish for
 ; ---------------------------------------------------------------------------
-
-S1Obj4A:
+; Sprite_124B6: S1Obj4A:
+Obj_Warp:
 		moveq	#0,d0
 		move.b	routine(a0),d0
-		move.w	S1Obj4A_Index(pc,d0.w),d1
-		jmp	S1Obj4A_Index(pc,d1.w)
+		move.w	Warp_Index(pc,d0.w),d1
+		jmp	Warp_Index(pc,d1.w)
 ; ===========================================================================
-S1Obj4A_Index:	dc.w S1Obj4A_Init-S1Obj4A_Index
-		dc.w S1Obj4A_RmvSonic-S1Obj4A_Index
-		dc.w S1Obj4A_LoadSonic-S1Obj4A_Index
+; S1Obj4A_Index:
+Warp_Index:	dc.w Warp_Init-Warp_Index
+		dc.w Warp_RmvSonic-Warp_Index
+		dc.w Warp_LoadSonic-Warp_Index
 ; ===========================================================================
-
-S1Obj4A_Init:
+; S1Obj4A_Init:
+Warp_Init:
 		tst.l	(Plc_Buffer).w	; are the pattern load cues empty?
 		beq.s	loc_124D4	; if yes, branch
 		rts
@@ -26271,19 +26295,19 @@ S1Obj4A_Init:
 
 loc_124D4:
 		addq.b	#2,routine(a0)
-		move.l	#Map_S1obj4A,mappings(a0)
+		move.l	#MapUnc_Warp,mappings(a0)
 		move.b	#4,render_flags(a0)
 		move.b	#1,priority(a0)
 		move.b	#$38,width_pixels(a0)
 		move.w	#$541,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.w	#60*2,warp_vanishtime(a0)	; set vanishing time to 2 seconds
-
-S1Obj4A_RmvSonic:
+; S1Obj4A_RmvSonic:
+Warp_RmvSonic:
 		move.w	(MainCharacter+x_pos).w,x_pos(a0)
 		move.w	(MainCharacter+y_pos).w,y_pos(a0)
 		move.b	(MainCharacter+status).w,status(a0)
-		lea	(Ani_S1obj4A).l,a1
+		lea	(Ani_Warp).l,a1
 		jsr	(AnimateSprite).l
 		cmpi.b	#2,mapping_frame(a0)
 		bne.s	loc_1253E
@@ -26296,8 +26320,8 @@ S1Obj4A_RmvSonic:
 loc_1253E:
 		jmp	(DisplaySprite).l
 ; ===========================================================================
-
-S1Obj4A_LoadSonic:
+; S1Obj4A_LoadSonic:
+Warp_LoadSonic:
 		subq.w	#1,warp_vanishtime(a0)	; subtract 1 from vanishing time
 		bne.s	locret_12556		; if there's any time left, branch
 		move.b	#1,(MainCharacter).w	; set Sonic's object ID to 1
@@ -26310,45 +26334,49 @@ locret_12556:
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Object 08 - water splash
+;
+; Internal name: "exit2"
 ; ---------------------------------------------------------------------------
-
-Obj08:					; DATA XREF: ROM:Obj_Indexo
+; Sprite_1255A: Obj08:
+Obj_WaterSplash:
 		moveq	#0,d0
 		move.b	routine(a0),d0
-		move.w	Obj08_Index(pc,d0.w),d1
-		jmp	Obj08_Index(pc,d1.w)
+		move.w	WaterSplash_Index(pc,d0.w),d1
+		jmp	WaterSplash_Index(pc,d1.w)
 ; ===========================================================================
-Obj08_Index:	dc.w Obj08_Init-Obj08_Index
-		dc.w Obj08_Display-Obj08_Index
-		dc.w Obj08_Delete-Obj08_Index
+; Obj08_Index:
+WaterSplash_Index:	dc.w WaterSplash_Init-WaterSplash_Index
+		dc.w WaterSplash_Display-WaterSplash_Index
+		dc.w WaterSplash_Delete-WaterSplash_Index
 ; ===========================================================================
-
-Obj08_Init:
+; Obj08_Init:
+WaterSplash_Init:
 		addq.b	#2,routine(a0)
-		move.l	#Map_obj08,mappings(a0)
+		move.l	#MapUnc_WaterSplash,mappings(a0)
 		ori.b	#4,render_flags(a0)
 		move.b	#1,priority(a0)
 		move.b	#$10,width_pixels(a0)
 		move.w	#$4259,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.w	(MainCharacter+x_pos).w,x_pos(a0)
-
-Obj08_Display:
+; Obj08_Display:
+WaterSplash_Display:
 		move.w	($FFFFF646).w,y_pos(a0)
-		lea	(Ani_obj08).l,a1
+		lea	(Ani_WaterSplash).l,a1
 		jsr	(AnimateSprite).l
 		jmp	(DisplaySprite).l
 ; ===========================================================================
-
-Obj08_Delete:
+; Obj08_Delete:
+WaterSplash_Delete:
 		jmp	(DeleteObject).l
 ; ===========================================================================
 ; animation script
-Ani_obj38:	dc.w byte_125C2-Ani_obj38
-		dc.w byte_125CE-Ani_obj38
-		dc.w byte_125D4-Ani_obj38
-		dc.w byte_125EE-Ani_obj38
-		dc.w byte_12608-Ani_obj38
+; Ani_obj38:
+Ani_Barrier:	dc.w byte_125C2-Ani_Barrier
+		dc.w byte_125CE-Ani_Barrier
+		dc.w byte_125D4-Ani_Barrier
+		dc.w byte_125EE-Ani_Barrier
+		dc.w byte_12608-Ani_Barrier
 byte_125C2:	dc.b   0,  5,  0,  5,  1,  5,  2,  5,  3,  5,  4,$FF
 byte_125CE:	dc.b   5,  4,  5,  6,  7,$FF
 byte_125D4:	dc.b   0,  4,  4,  0,  4,  4,  0,  5,  5,  0,  5,  5,  0,  6,  6,  0
@@ -26361,26 +26389,33 @@ byte_12608:	dc.b   0,  4,  0,  0,  4,  0,  0,  5,  0,  0,  5,  0,  0,  6,  0,  0
 ; ---------------------------------------------------------------------------
 ; sprite mappings
 ; ---------------------------------------------------------------------------
-Map_obj38:	incbin	"mappings/sprite/obj38.bin"
+; Map_obj38:
+MapUnc_Barrier:	incbin	"mappings/sprite/obj38.bin"
 
+; ===========================================================================
 ; animation script
-Ani_S1obj4A:	dc.w byte_1278C-Ani_S1obj4A
+; Ani_S1obj4A:
+Ani_Warp:	dc.w byte_1278C-Ani_Warp
 byte_1278C:	dc.b   5,  0,  1,  0,  1,  0,  7,  1,  7,  2,  7,  3,  7,  4,  7,  5
 		dc.b   7,  6,  7,$FC
 
 ; ---------------------------------------------------------------------------
 ; sprite mappings
 ; ---------------------------------------------------------------------------
-Map_S1obj4A:	incbin	"mappings/sprite/obj4A_S1.bin"
+; Map_S1obj4A:
+MapUnc_Warp:	incbin	"mappings/sprite/obj4A_S1.bin"
 
+; ===========================================================================
 ; animation script
-Ani_obj08:	dc.w byte_129C2-Ani_obj08
+; Ani_obj08:
+Ani_WaterSplash:	dc.w byte_129C2-Ani_WaterSplash
 byte_129C2:	dc.b   4,  0,  1,  2,$FC,  0
 
 ; ---------------------------------------------------------------------------
 ; sprite mappings
 ; ---------------------------------------------------------------------------
-Map_obj08:	incbin	"mappings/sprite/obj08.bin"
+; Map_obj08:
+MapUnc_WaterSplash:	incbin	"mappings/sprite/obj08.bin"
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
 
