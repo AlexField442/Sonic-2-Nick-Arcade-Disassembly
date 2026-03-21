@@ -15518,169 +15518,9 @@ word_B8A4:	dc.w 2			; DATA XREF: ROM:0000B87Co
 word_B8B6:	dc.w 2			; DATA XREF: ROM:0000B87Eo
 		dc.w $F40E,   $C,    6,$FFF0; 0
 		dc.w $F505,$101C,$100E,	 $10; 4
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-;----------------------------------------------------
-; Object 34 - leftover Sonic 1 title cards
-;----------------------------------------------------
 
-Obj34:					; DATA XREF: ROM:Obj_Indexo
-		moveq	#0,d0
-		move.b	routine(a0),d0
-		move.w	Obj34_Index(pc,d0.w),d1
-		jmp	Obj34_Index(pc,d1.w)
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-Obj34_Index:	dc.w Obj34_CheckLZ4-Obj34_Index; 0 ; DATA XREF:	ROM:Obj34_Indexo
-					; ROM:Obj34_Index+2o ...
-		dc.w Obj34_CheckPos-Obj34_Index; 1
-		dc.w Obj34_Wait-Obj34_Index; 2
-		dc.w Obj34_Wait-Obj34_Index; 3
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+		include	"_incObj/34 - Title Cards.asm"
 
-Obj34_CheckLZ4:				; DATA XREF: ROM:Obj34_Indexo
-		movea.l	a0,a1
-		moveq	#0,d0
-		move.b	(Current_Zone).w,d0
-		cmpi.w	#$103,(Current_ZoneAndAct).w
-		bne.s	Obj34_CheckFZ
-		moveq	#5,d0
-
-Obj34_CheckFZ:				; CODE XREF: ROM:0000B8ECj
-		move.w	d0,d2
-		cmpi.w	#$502,(Current_ZoneAndAct).w
-		bne.s	Obj34_CheckConfig
-		moveq	#6,d0
-		moveq	#$B,d2
-
-Obj34_CheckConfig:			; CODE XREF: ROM:0000B8F8j
-		lea	(Obj34_Config).l,a3
-		lsl.w	#4,d0
-		adda.w	d0,a3
-		lea	(Obj34_ItemData).l,a2
-		moveq	#3,d1
-
-Obj34_Loop:				; CODE XREF: ROM:0000B976j
-		move.b	#$34,id(a1) ; '4'
-		move.w	(a3),x_pixel(a1)
-		move.w	(a3)+,$32(a1)
-		move.w	(a3)+,$30(a1)
-		move.w	(a2)+,y_pixel(a1)
-		move.b	(a2)+,routine(a1)
-		move.b	(a2)+,d0
-		bne.s	Obj34_ActNumber
-		move.b	d2,d0
-
-Obj34_ActNumber:			; CODE XREF: ROM:0000B92Cj
-		cmpi.b	#7,d0
-		bne.s	Obj34_MakeSprite
-		add.b	(Current_Act).w,d0
-		cmpi.b	#3,(Current_Act).w
-		bne.s	Obj34_MakeSprite
-		subq.b	#1,d0
-
-Obj34_MakeSprite:			; CODE XREF: ROM:0000B934j
-					; ROM:0000B940j
-		move.b	d0,mapping_frame(a1)
-		move.l	#Map_Obj34,mappings(a1)
-		move.w	#$8580,art_tile(a1)
-		bsr.w	Adjust2PArtPointer2
-		move.b	#$78,width_pixels(a1) ; 'x'
-		move.b	#0,render_flags(a1)
-		move.b	#0,priority(a1)
-		move.w	#$3C,anim_frame_duration(a1) ; '<'
-		lea	$40(a1),a1
-		dbf	d1,Obj34_Loop
-
-Obj34_CheckPos:				; DATA XREF: ROM:Obj34_Indexo
-		moveq	#$10,d1
-		move.w	$30(a0),d0
-		cmp.w	x_pixel(a0),d0
-		beq.s	loc_B98E
-		bge.s	Obj34_Move
-		neg.w	d1
-
-Obj34_Move:				; CODE XREF: ROM:0000B986j
-		add.w	d1,x_pixel(a0)
-
-loc_B98E:				; CODE XREF: ROM:0000B984j
-		move.w	x_pixel(a0),d0
-		bmi.s	Obj34_NoDisplay
-		cmpi.w	#$200,d0
-		bcc.s	Obj34_NoDisplay
-		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-		bra.w	DisplaySprite
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-Obj34_NoDisplay:			; CODE XREF: ROM:0000B992j
-					; ROM:0000B998j
-		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-Obj34_Wait:				; DATA XREF: ROM:Obj34_Indexo
-		tst.w	anim_frame_duration(a0)
-		beq.s	Obj34_CheckPos2
-		subq.w	#1,anim_frame_duration(a0)
-		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-		bra.w	DisplaySprite
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-Obj34_CheckPos2:			; CODE XREF: ROM:0000B9A6j
-		tst.b	render_flags(a0)
-		bpl.s	Obj34_ChangeArt
-		moveq	#$20,d1	; ' '
-		move.w	$32(a0),d0
-		cmp.w	x_pixel(a0),d0
-		beq.s	Obj34_ChangeArt
-		bge.s	Obj34_Move2
-		neg.w	d1
-
-Obj34_Move2:				; CODE XREF: ROM:0000B9C4j
-		add.w	d1,x_pixel(a0)
-		move.w	x_pixel(a0),d0
-		bmi.s	Obj34_NoDisplay2
-		cmpi.w	#$200,d0
-		bcc.s	Obj34_NoDisplay2
-		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-		bra.w	DisplaySprite
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-Obj34_NoDisplay2:			; CODE XREF: ROM:0000B9D0j
-					; ROM:0000B9D6j
-		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-Obj34_ChangeArt:			; CODE XREF: ROM:0000B9B6j
-					; ROM:0000B9C2j
-		cmpi.b	#4,routine(a0)
-		bne.s	Obj34_Delete
-		moveq	#2,d0
-		jsr	(LoadPLC).l
-		moveq	#0,d0
-		move.b	(Current_Zone).w,d0
-		addi.w	#$15,d0
-		jsr	(LoadPLC).l
-
-Obj34_Delete:				; CODE XREF: ROM:0000B9E6j
-		bra.w	DeleteObject
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-Obj34_ItemData:	dc.w $D0		; DATA XREF: ROM:0000B908o
-		dc.b   2,  0		; 0
-		dc.w $E4
-		dc.b   2,  6		; 0
-		dc.w $EA
-		dc.b   2,  7		; 0
-		dc.w $E0
-		dc.b   2, $A		; 0
-Obj34_Config:	dc.w	 0, $120,$FEFC,	$13C, $414, $154, $214,	$154; 0
-					; DATA XREF: ROM:Obj34_CheckConfigo
-		dc.w	 0, $120,$FEF4,	$134, $40C, $14C, $20C,	$14C; 8
-		dc.w	 0, $120,$FEE0,	$120, $3F8, $138, $1F8,	$138; 16
-		dc.w	 0, $120,$FEFC,	$13C, $414, $154, $214,	$154; 24
-		dc.w	 0, $120,$FF04,	$144, $41C, $15C, $21C,	$15C; 32
-		dc.w	 0, $120,$FF04,	$144, $41C, $15C, $21C,	$15C; 40
-		dc.w	 0, $120,$FEE4,	$124, $3EC, $3EC, $1EC,	$12C; 48
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 ;----------------------------------------------------
 ; Object 39 - Game over	/ time over
@@ -16213,20 +16053,20 @@ loc_BFA6:				; DATA XREF: ROM:0000BF3Eo
 loc_BFBC:				; CODE XREF: ROM:0000BFB4j
 		bra.w	DisplaySprite
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-Map_Obj34:	dc.w word_BFD8-Map_Obj34 ; DATA	XREF: ROM:0000B948o
-					; ROM:Map_Obj34o ...
-		dc.w word_C022-Map_Obj34
-		dc.w word_C06C-Map_Obj34
-		dc.w word_C09E-Map_Obj34
-		dc.w word_C0E8-Map_Obj34
-		dc.w word_C13A-Map_Obj34
-		dc.w word_C18C-Map_Obj34
-		dc.w word_C1AE-Map_Obj34
-		dc.w word_C1C0-Map_Obj34
-		dc.w word_C1D2-Map_Obj34
-		dc.w word_C1E4-Map_Obj34
-		dc.w word_C24E-Map_Obj34
-word_BFD8:	dc.w 9			; DATA XREF: ROM:Map_Obj34o
+; Map_Obj34:
+MapUnc_TitleCard:	dc.w word_BFD8-MapUnc_TitleCard
+		dc.w word_C022-MapUnc_TitleCard
+		dc.w word_C06C-MapUnc_TitleCard
+		dc.w word_C09E-MapUnc_TitleCard
+		dc.w word_C0E8-MapUnc_TitleCard
+		dc.w word_C13A-MapUnc_TitleCard
+		dc.w word_C18C-MapUnc_TitleCard
+		dc.w word_C1AE-MapUnc_TitleCard
+		dc.w word_C1C0-MapUnc_TitleCard
+		dc.w word_C1D2-MapUnc_TitleCard
+		dc.w word_C1E4-MapUnc_TitleCard
+		dc.w word_C24E-MapUnc_TitleCard
+word_BFD8:	dc.w 9
 		dc.w $F805,  $18,   $C,$FFB4; 0
 		dc.w $F805,  $3A,  $1D,$FFC4; 4
 		dc.w $F805,  $10,    8,$FFD4; 8
@@ -17030,7 +16870,7 @@ Obj_Index:
 		dc.l ObjNull
 		dc.l ObjNull
 		dc.l ObjNull
-		dc.l Obj34		; (S1) Level title card
+		dc.l Obj_TitleCard	; (S1) Level title card
 		dc.l ObjNull
 		dc.l Obj36		; Vertical spikes
 		dc.l Obj37		; Scattering rings (generated when Sonic or Tails are hurt and has rings)
