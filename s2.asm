@@ -10746,6 +10746,8 @@ DynResize_S1Ending:			; DATA XREF: ROM:DynResize_Indexo
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Object 11 - Bridge
+;
+; Internal name: "hashi"
 ; ---------------------------------------------------------------------------
 ; OST:
 bridge_child1:	equ $30		; pointer to first set of bridge segments
@@ -10947,9 +10949,9 @@ Bridge_HPZ:
 		beq.s	loc_7DA0
 		subq.b	#4,$3E(a0)
 		bra.s	loc_7D9C
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; ===========================================================================
 
-loc_7D74:				; CODE XREF: ROM:00007D66j
+loc_7D74:
 		andi.b	#$10,d0
 		beq.s	loc_7D90
 		move.b	$3F(a0),d0
@@ -10958,22 +10960,20 @@ loc_7D74:				; CODE XREF: ROM:00007D66j
 		bcc.s	loc_7D8C
 		addq.b	#1,$3F(a0)
 		bra.s	loc_7D90
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; ===========================================================================
 
-loc_7D8C:				; CODE XREF: ROM:00007D84j
+loc_7D8C:
 		subq.b	#1,$3F(a0)
 
-loc_7D90:				; CODE XREF: ROM:00007D78j
-					; ROM:00007D82j ...
-		cmpi.b	#$40,$3E(a0) ; '@'
+loc_7D90:
+		cmpi.b	#$40,$3E(a0)
 		beq.s	loc_7D9C
 		addq.b	#4,$3E(a0)
 
-loc_7D9C:				; CODE XREF: ROM:00007D72j
-					; ROM:00007D96j
+loc_7D9C:
 		bsr.w	Bridge_Depress
 
-loc_7DA0:				; CODE XREF: ROM:00007D6Cj
+loc_7DA0:
 		moveq	#0,d1
 		move.b	$28(a0),d1
 		lsl.w	#3,d1
@@ -10986,27 +10986,21 @@ loc_7DA0:				; CODE XREF: ROM:00007D6Cj
 		bsr.w	sub_7E60
 		bra.w	Bridge_Unload
 
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 
 
-sub_7DC0:				; CODE XREF: ROM:00007D1Ep
-					; ROM:00007DB4p
+sub_7DC0:
 		lea	(Sidekick).w,a1
 		moveq	#4,d6
-		moveq	#$3B,d5	; ';'
+		moveq	#$3B,d5
 		movem.l	d1-d4,-(sp)
 		bsr.s	sub_7DDA
 		movem.l	(sp)+,d1-d4
 		lea	(MainCharacter).w,a1
 		subq.b	#1,d6
-		moveq	#$3F,d5	; '?'
-; End of function sub_7DC0
+		moveq	#$3F,d5
 
-
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-sub_7DDA:				; CODE XREF: sub_7DC0+Cp
+sub_7DDA:
 		btst	d6,status(a0)
 		beq.s	loc_7E3E
 		btst	#1,status(a1)
@@ -11019,14 +11013,14 @@ sub_7DDA:				; CODE XREF: sub_7DC0+Cp
 		cmp.w	d2,d0
 		bcs.s	loc_7E08
 
-loc_7DFA:				; CODE XREF: sub_7DDA+Cj sub_7DDA+1Aj
+loc_7DFA:
 		bclr	#3,status(a1)
 		bclr	d6,status(a0)
 		moveq	#0,d4
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; ===========================================================================
 
-loc_7E08:				; CODE XREF: sub_7DDA+1Ej
+loc_7E08:
 		lsr.w	#4,d0
 		move.b	d0,(a0,d5.w)
 		movea.l	bridge_child1(a0),a2
@@ -11035,7 +11029,7 @@ loc_7E08:				; CODE XREF: sub_7DDA+1Ej
 		movea.l	bridge_child2(a0),a2
 		subi.w	#8,d0
 
-loc_7E20:				; CODE XREF: sub_7DDA+3Cj
+loc_7E20:
 		add.w	d0,d0
 		move.w	d0,d1
 		add.w	d0,d0
@@ -11048,9 +11042,9 @@ loc_7E20:				; CODE XREF: sub_7DDA+3Cj
 		move.w	d0,y_pos(a1)
 		moveq	#0,d4
 		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; ===========================================================================
 
-loc_7E3E:				; CODE XREF: sub_7DDA+4j
+loc_7E3E:
 		move.w	d1,-(sp)
 		bsr.w	sub_F880
 		move.w	(sp)+,d1
@@ -11063,15 +11057,15 @@ loc_7E3E:				; CODE XREF: sub_7DDA+4j
 		lsr.w	#4,d0
 		move.b	d0,(a0,d5.w)
 
-locret_7E5E:				; CODE XREF: sub_7DDA+70j
+locret_7E5E:
 		rts
 ; End of function sub_7DDA
 
 
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 
 
-sub_7E60:				; CODE XREF: ROM:00007DB8p
+sub_7E60:
 		moveq	#0,d0
 		tst.w	(MainCharacter+x_vel).w
 		bne.s	loc_7E72
@@ -11079,9 +11073,9 @@ sub_7E60:				; CODE XREF: ROM:00007DB8p
 		andi.w	#$1C,d0
 		lsr.w	#1,d0
 
-loc_7E72:				; CODE XREF: sub_7E60+6j
+loc_7E72:
 		moveq	#0,d2
-		move.b	byte_7E9F(pc,d0.w),d2
+		move.b	byte_7E9E+1(pc,d0.w),d2
 		swap	d2
 		move.b	byte_7E9E(pc,d0.w),d2
 		moveq	#0,d0
@@ -11091,32 +11085,31 @@ loc_7E72:				; CODE XREF: sub_7E60+6j
 		andi.w	#$1C,d0
 		lsr.w	#1,d0
 
-loc_7E90:				; CODE XREF: sub_7E60+24j
+loc_7E90:
 		moveq	#0,d6
-		move.b	byte_7E9F(pc,d0.w),d6
+		move.b	byte_7E9E+1(pc,d0.w),d6
 		swap	d6
 		move.b	byte_7E9E(pc,d0.w),d6
 		bra.s	loc_7EAE
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-byte_7E9E:	dc.b 1
-byte_7E9F:	dc.b   2,  1,  2,  1,  2,  1,  2,  0,  1,  0,  0,  0,  0,  0,  1; 0
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; ===========================================================================
+byte_7E9E:	dc.b	1,  2,  1,  2,  1,  2,  1,  2,  0,  1,  0,  0,  0,  0,  0,  1
+; ===========================================================================
 
-loc_7EAE:				; CODE XREF: sub_7E60+3Cj
-		moveq	#$FFFFFFFE,d3
-		moveq	#$FFFFFFFE,d4
+loc_7EAE:
+		moveq	#-2,d3
+		moveq	#-2,d4
 		move.b	status(a0),d0
 		andi.b	#8,d0
 		beq.s	loc_7EC0
 		move.b	$3F(a0),d3
 
-loc_7EC0:				; CODE XREF: sub_7E60+5Aj
+loc_7EC0:
 		move.b	status(a0),d0
 		andi.b	#$10,d0
 		beq.s	loc_7ECE
 		move.b	$3B(a0),d4
 
-loc_7ECE:				; CODE XREF: sub_7E60+68j
+loc_7ECE:
 		movea.l	bridge_child1(a0),a1
 		lea	$45(a1),a2
 		lea	$15(a1),a1
@@ -11125,33 +11118,33 @@ loc_7ECE:				; CODE XREF: sub_7E60+68j
 		subq.b	#1,d1
 		moveq	#0,d5
 
-loc_7EE4:				; CODE XREF: sub_7E60:loc_7F30j
+loc_7EE4:
 		moveq	#0,d0
 		subq.w	#1,d3
 		cmp.b	d3,d5
 		bne.s	loc_7EEE
 		move.w	d2,d0
 
-loc_7EEE:				; CODE XREF: sub_7E60+8Aj
+loc_7EEE:
 		addq.w	#2,d3
 		cmp.b	d3,d5
 		bne.s	loc_7EF6
 		move.w	d2,d0
 
-loc_7EF6:				; CODE XREF: sub_7E60+92j
+loc_7EF6:
 		subq.w	#1,d3
 		subq.w	#1,d4
 		cmp.b	d4,d5
 		bne.s	loc_7F00
 		move.w	d6,d0
 
-loc_7F00:				; CODE XREF: sub_7E60+9Cj
+loc_7F00:
 		addq.w	#2,d4
 		cmp.b	d4,d5
 		bne.s	loc_7F08
 		move.w	d6,d0
 
-loc_7F08:				; CODE XREF: sub_7E60+A4j
+loc_7F08:
 		subq.w	#1,d4
 		cmp.b	d3,d5
 		bne.s	loc_7F14
@@ -11159,14 +11152,14 @@ loc_7F08:				; CODE XREF: sub_7E60+A4j
 		move.w	d2,d0
 		swap	d2
 
-loc_7F14:				; CODE XREF: sub_7E60+ACj
+loc_7F14:
 		cmp.b	d4,d5
 		bne.s	loc_7F1E
 		swap	d6
 		move.w	d6,d0
 		swap	d6
 
-loc_7F1E:				; CODE XREF: sub_7E60+B6j
+loc_7F1E:
 		move.b	d0,(a1)
 		addq.w	#1,d5
 		addq.w	#6,a1
@@ -11175,7 +11168,7 @@ loc_7F1E:				; CODE XREF: sub_7E60+B6j
 		movea.l	bridge_child2(a0),a1
 		lea	$15(a1),a1
 
-loc_7F30:				; CODE XREF: sub_7E60+C6j
+loc_7F30:
 		dbf	d1,loc_7EE4
 		rts
 ; End of function sub_7E60
