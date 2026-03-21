@@ -11677,154 +11677,8 @@ word_8648:	dc.w 4			; DATA XREF: ROM:000085D0o
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		nop
 
-Obj17:					; DATA XREF: ROM:Obj_Indexo
-		moveq	#0,d0
-		move.b	routine(a0),d0
-		move.w	Obj17_Index(pc,d0.w),d1
-		jmp	Obj17_Index(pc,d1.w)
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-Obj17_Index:	dc.w loc_8680-Obj17_Index ; DATA XREF: ROM:Obj17_Indexo
-					; ROM:0000867Co ...
-		dc.w loc_874A-Obj17_Index
-		dc.w loc_87AC-Obj17_Index
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+		include	"_incObj/17 - Spike Helix.asm"
 
-loc_8680:				; DATA XREF: ROM:Obj17_Indexo
-		addq.b	#2,routine(a0)
-		move.l	#Map_Obj17,mappings(a0)
-		move.w	#$4398,art_tile(a0)
-		bsr.w	Adjust2PArtPointer
-		move.b	#7,status(a0)
-		move.b	#4,render_flags(a0)
-		move.b	#3,priority(a0)
-		move.b	#8,width_pixels(a0)
-		move.w	y_pos(a0),d2
-		move.w	x_pos(a0),d3
-		move.b	id(a0),d4
-		lea	$28(a0),a2
-		moveq	#0,d1
-		move.b	(a2),d1
-		move.b	#0,(a2)+
-		move.w	d1,d0
-		lsr.w	#1,d0
-		lsl.w	#4,d0
-		sub.w	d0,d3
-		subq.b	#2,d1
-		bcs.s	loc_874A
-		moveq	#0,d6
-
-loc_86D4:				; CODE XREF: ROM:loc_8746j
-		bsr.w	AllocateObjectAfterCurrent
-		bne.s	loc_874A
-		addq.b	#1,$28(a0)
-		move.w	a1,d5
-		subi.w	#Object_RAM,d5
-		lsr.w	#6,d5
-		andi.w	#$7F,d5	; ''
-		move.b	d5,(a2)+
-		move.b	#4,routine(a1)
-		move.b	d4,id(a1)
-		move.w	d2,y_pos(a1)
-		move.w	d3,x_pos(a1)
-		move.l	mappings(a0),mappings(a1)
-		move.w	#$4398,art_tile(a1)
-		bsr.w	Adjust2PArtPointer2
-		move.b	#4,render_flags(a1)
-		move.b	#3,priority(a1)
-		move.b	#8,width_pixels(a1)
-		move.b	d6,$3E(a1)
-		addq.b	#1,d6
-		andi.b	#7,d6
-		addi.w	#$10,d3
-		cmp.w	x_pos(a0),d3
-		bne.s	loc_8746
-		move.b	d6,$3E(a0)
-		addq.b	#1,d6
-		andi.b	#7,d6
-		addi.w	#$10,d3
-		addq.b	#1,$28(a0)
-
-loc_8746:				; CODE XREF: ROM:00008732j
-		dbf	d1,loc_86D4
-
-loc_874A:				; CODE XREF: ROM:000086D0j
-					; ROM:000086D8j
-					; DATA XREF: ...
-		bsr.w	sub_878C
-		move.w	x_pos(a0),d0
-		andi.w	#$FF80,d0
-		sub.w	($FFFFF7DA).w,d0
-		cmpi.w	#$280,d0
-		bhi.w	loc_8766
-		bra.w	DisplaySprite
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_8766:				; CODE XREF: ROM:0000875Ej
-		moveq	#0,d2
-		lea	$28(a0),a2
-		move.b	(a2)+,d2
-		subq.b	#2,d2
-		bcs.s	loc_8788
-
-loc_8772:				; CODE XREF: ROM:00008784j
-		moveq	#0,d0
-		move.b	(a2)+,d0
-		lsl.w	#6,d0
-		addi.l	#Object_RAM,d0
-		movea.l	d0,a1
-		bsr.w	DeleteObject2
-		dbf	d2,loc_8772
-
-loc_8788:				; CODE XREF: ROM:00008770j
-		bra.w	DeleteObject
-
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-sub_878C:				; CODE XREF: ROM:loc_874Ap
-					; ROM:loc_87ACp
-		move.b	($FFFFFEC1).w,d0
-		move.b	#0,$20(a0)
-		add.b	$3E(a0),d0
-		andi.b	#7,d0
-		move.b	d0,mapping_frame(a0)
-		bne.s	locret_87AA
-		move.b	#$84,$20(a0)
-
-locret_87AA:				; CODE XREF: sub_878C+16j
-		rts
-; End of function sub_878C
-
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_87AC:				; DATA XREF: ROM:0000867Eo
-		bsr.w	sub_878C
-		bra.w	DisplaySprite
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-Map_Obj17:	dc.w word_87C4-Map_Obj17 ; DATA	XREF: ROM:00008684o
-					; ROM:Map_Obj17o ...
-		dc.w word_87CE-Map_Obj17
-		dc.w word_87D8-Map_Obj17
-		dc.w word_87E2-Map_Obj17
-		dc.w word_87EC-Map_Obj17
-		dc.w word_87F6-Map_Obj17
-		dc.w word_880A-Map_Obj17
-		dc.w word_8800-Map_Obj17
-word_87C4:	dc.w 1			; DATA XREF: ROM:Map_Obj17o
-		dc.w $F001,    0,    0,$FFFC; 0
-word_87CE:	dc.w 1			; DATA XREF: ROM:000087B6o
-		dc.w $F505,    2,    1,$FFF8; 0
-word_87D8:	dc.w 1			; DATA XREF: ROM:000087B8o
-		dc.w $F805,    6,    3,$FFF8; 0
-word_87E2:	dc.w 1			; DATA XREF: ROM:000087BAo
-		dc.w $FB05,   $A,    5,$FFF8; 0
-word_87EC:	dc.w 1			; DATA XREF: ROM:000087BCo
-		dc.w	 1,   $E,    7,$FFFC; 0
-word_87F6:	dc.w 1			; DATA XREF: ROM:000087BEo
-		dc.w  $400,  $10,    8,$FFFD; 0
-word_8800:	dc.w 1			; DATA XREF: ROM:000087C2o
-		dc.w $F400,  $11,    8,$FFFD; 0
-word_880A:	dc.w 0			; DATA XREF: ROM:000087C0o
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 Obj18:					; DATA XREF: ROM:Obj_Indexo
@@ -16841,7 +16695,7 @@ Obj_Index:
 		dc.l Obj14		; Seesaw from Hill Top Zone
 		dc.l Obj15		; Swinging platforms in GHZ, CPZ and EHZ
 		dc.l Obj16		; Diagonally moving lift from HTZ
-		dc.l Obj17		; (S1) GHZ rotating log helix spikes
+		dc.l Obj_SpikeHelix	; (S1) GHZ rotating log helix spikes
 		dc.l Obj18		; Stationary/moving platforms from GHZ and EHZ
 		dc.l Obj19		; Platform from CPZ
 		dc.l Obj1A		; Collapsing platform from GHZ and HPZ
