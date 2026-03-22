@@ -16673,7 +16673,7 @@ loc_CB74:
 ; This array contains the pointers to all the objects used in the game.
 ; ---------------------------------------------------------------------------
 Obj_Index:
-		dc.l Obj01		; Sonic
+		dc.l Obj_Sonic		; Sonic
 		dc.l Obj02		; Tails
 		dc.l Obj03		; Collision plane/layer switcher
 		dc.l Obj04		; Surface of the water
@@ -16688,7 +16688,7 @@ Obj_Index:
 		dc.l Obj0D		; End of level signpost
 		dc.l Obj0E		; Sonic and Tails from the title screen
 		dc.l Obj0F		; Mappings test?
-		dc.l Obj10		; (S1) Animation test in prototype, now blank
+		dc.l Obj_SonAniTest	; (S1) Sonic animation test object (removed)
 		dc.l Obj_Bridge		; Bridges in GHZ, EHZ and HPZ
 		dc.l Obj12		; Emerald from Hidden Palace Zone
 		dc.l Obj13		; Waterfall from Hidden Palace Zone
@@ -21500,29 +21500,32 @@ locret_F9FA:				; CODE XREF: sub_F9C8+1Ej
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Object 01 - Sonic
+;
+; Internal name: "play00"
 ; ---------------------------------------------------------------------------
-
-Obj01:
+; Sprite_F9FC: Obj01:
+Obj_Sonic:
 		tst.w	(Debug_placement_mode).w	; is debug mode being used?
-		beq.s	Obj01_Normal			; if not, branch
+		beq.s	Sonic_Normal			; if not, branch
 		jmp	(DebugMode).l
 ; ===========================================================================
-
-Obj01_Normal:
+; Obj01_Normal:
+Sonic_Normal:
 		moveq	#0,d0
 		move.b	routine(a0),d0
-		move.w	Obj01_Index(pc,d0.w),d1
-		jmp	Obj01_Index(pc,d1.w)
+		move.w	Sonic_Index(pc,d0.w),d1
+		jmp	Sonic_Index(pc,d1.w)
 ; ===========================================================================
-Obj01_Index:	dc.w Obj01_Init-Obj01_Index		; 0
-		dc.w Obj01_Control-Obj01_Index		; 2
-		dc.w Obj01_Hurt-Obj01_Index		; 4
-		dc.w Obj01_Dead-Obj01_Index		; 6
-		dc.w Obj01_ResetLevel-Obj01_Index	; 8
+; Obj01_Index:
+Sonic_Index:	dc.w Sonic_Init-Sonic_Index		; 0
+		dc.w Sonic_Control-Sonic_Index		; 2
+		dc.w Obj01_Hurt-Sonic_Index		; 4
+		dc.w Obj01_Dead-Sonic_Index		; 6
+		dc.w Obj01_ResetLevel-Sonic_Index	; 8
 ; ===========================================================================
-; Obj01_Main:
-Obj01_Init:
-		addq.b	#2,routine(a0)	; => Obj01_Control
+; Obj01_Main: Obj01_Init:
+Sonic_Init:
+		addq.b	#2,routine(a0)	; => Sonic_Control
 		move.b	#$13,y_radius(a0)	; this sets Sonic's collision height (2*pixels)
 		move.b	#9,x_radius(a0)
 		move.l	#Map_Sonic,mappings(a0)
@@ -21549,8 +21552,8 @@ loc_FA88:
 ; ---------------------------------------------------------------------------
 ; Normal state for Sonic
 ; ---------------------------------------------------------------------------
-
-Obj01_Control:
+; Obj01_Control:
+Sonic_Control:
 		tst.w	(Debug_mode_flag).w		; is debug cheat enabled?
 		beq.s	loc_FAB0			; if not, branch
 		btst	#4,($FFFFF605).w		; is button B pressed?
@@ -21559,6 +21562,7 @@ Obj01_Control:
 		clr.b	($FFFFF7CC).w			; unlock control
 		rts
 ; -----------------------------------------------------------------------
+
 loc_FAB0:
 		tst.b	($FFFFF7CC).w		; are controls locked?
 		bne.s	loc_FABC		; if yes, branch
@@ -21566,14 +21570,14 @@ loc_FAB0:
 
 loc_FABC:
 		btst	#0,($FFFFF7C8).w	; is Sonic interacting with another object that holds him in place or controls his movement somehow?
-		bne.s	Obj01_ControlsLock	; if yes, branch to skip Sonic's control
+		bne.s	Sonic_ControlsLock	; if yes, branch to skip Sonic's control
 		moveq	#0,d0
 		move.b	status(a0),d0
 		andi.w	#6,d0
-		move.w	Obj01_Modes(pc,d0.w),d1
-		jsr	Obj01_Modes(pc,d1.w)	; run Sonic's movement control code
-
-Obj01_ControlsLock:
+		move.w	Sonic_Modes(pc,d0.w),d1
+		jsr	Sonic_Modes(pc,d1.w)	; run Sonic's movement control code
+; Obj01_ControlsLock:
+Sonic_ControlsLock:
 		bsr.s	Sonic_Display
 		bsr.w	Sonic_RecordPos
 		bsr.w	Sonic_Water
@@ -21594,11 +21598,12 @@ loc_FAFE:
 loc_FB0E:
 		bra.w	LoadSonicDynPLC
 ; ===========================================================================
-; secondary states under state Obj01_Control
-Obj01_Modes:	dc.w Obj01_MdNormal-Obj01_Modes
-		dc.w Obj01_MdAir-Obj01_Modes
-		dc.w Obj01_MdRoll-Obj01_Modes
-		dc.w Obj01_MdJump-Obj01_Modes
+; secondary states under state Sonic_Control
+; Obj01_Modes:
+Sonic_Modes:	dc.w Obj01_MdNormal-Sonic_Modes
+		dc.w Obj01_MdAir-Sonic_Modes
+		dc.w Obj01_MdRoll-Sonic_Modes
+		dc.w Obj01_MdJump-Sonic_Modes
 
 MusicList_Sonic:dc.b MusID_GHZ
 		dc.b MusID_LZ
@@ -21614,12 +21619,12 @@ MusicList_Sonic:dc.b MusID_GHZ
 
 Sonic_Display:
 		move.w	invulnerable_time(a0),d0
-		beq.s	Obj01_Display
+		beq.s	.display
 		subq.w	#1,invulnerable_time(a0)
 		lsr.w	#3,d0
 		bcc.s	Obj01_ChkInvin
-; loc_FB2E:
-Obj01_Display:
+; loc_FB2E: Obj01_Display:
+.display:
 		jsr	(DisplaySprite).l
 ; loc_FB34:
 Obj01_ChkInvin:		; Checks if invincibility has expired and (should) disables it if it has
@@ -36748,13 +36753,8 @@ locret_1AA58:				; CODE XREF: OBj09_ChkItems2+B8j
 		rts
 ; End of function Obj09_ChkItems2
 
-; ===========================================================================
-; ---------------------------------------------------------------------------
-; Object 10 - Animation test in Sonic 1 prototype, now blank
-; ---------------------------------------------------------------------------
+		include	"_incObj/10 - Sonic Animation Test (blank).asm"
 
-Obj10:
-		rts
 ; ===========================================================================
 
 j_Adjust2PArtPointer_7:		; JmpTo
