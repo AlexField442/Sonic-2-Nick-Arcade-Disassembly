@@ -71,7 +71,7 @@ loc_71B5A:
 ; ===========================================================================
 ; loc_71B82:
 UpdateMusic:
-		lea	($FFF000).l,a6
+		lea	(Sound_Driver_RAM&$FFFFFF).l,a6
 		clr.b	$E(a6)
 		tst.b	StopMusic(a6)	; is music paused?
 		bne.w	loc_71E50	; if yes, branch

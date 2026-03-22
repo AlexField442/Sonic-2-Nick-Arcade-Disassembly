@@ -160,48 +160,141 @@ Horiz_Scroll_Buf_End:		equ	__rs
 
 Sonic_Stat_Record_Buf:		rs.b	$100
 Sonic_Pos_Record_Buf:		rs.b	$100
-Tails_Pos_Record_Buf_OLD:	rs.b	$100
+unk_E600:			rs.b	$100
 Tails_Pos_Record_Buf:		rs.b	$100
+
+Ring_Positions:			rs.b	$600
+Ring_Positions_End:		equ	__rs
+
+Camera_RAM:			equ	__rs
+Camera_X_pos:			rs.l	1
+Camera_Y_pos:			rs.l	1
+Camera_BG_X_pos:		rs.l	1
+Camera_BG_Y_pos:		rs.l	1
+Camera_BG2_X_pos:		rs.l	1
+Camera_BG2_Y_pos:		rs.l	1
+Camera_BG3_X_pos:		rs.l	1
+Camera_BG3_Y_pos:		rs.l	1
+
+Camera_X_pos_P2:		rs.l	1
+Camera_Y_pos_P2:		rs.l	1
+Camera_BG_X_pos_P2:		rs.l	1
+Camera_BG_Y_pos_P2:		rs.l	1
+Camera_BG2_X_pos_P2:		rs.l	1
+Camera_BG2_Y_pos_P2:		rs.l	1
+Camera_BG3_X_pos_P2:		rs.l	1
+Camera_BG3_Y_pos_P2:		rs.l	1
+
+Horiz_block_crossed_flag:	rs.b	1		; toggles between 0 and $10 when you cross a block boundary horizontally
+Verti_block_crossed_flag:	rs.b	1		; toggles between 0 and $10 when you cross a block boundary vertically
+Horiz_block_crossed_flag_BG:	rs.b	1		; toggles between 0 and $10 when background camera crosses a block boundary horizontally
+Verti_block_crossed_flag_BG:	rs.b	1		; toggles between 0 and $10 when background camera crosses a block boundary vertically
+Horiz_block_crossed_flag_BG2:	rs.b	1
+				rs.b	1		; $FFFFEE45 ; unused
+Horiz_block_crossed_flag_BG3:	rs.b	1
+				rs.b	1		; $FFFFEE47 ; unused
+
+Horiz_block_crossed_flag_P2:	rs.b	1
+Verti_block_crossed_flag_P2:	rs.b	1
+				rs.b	6		; $FFFFEE4A-$FFFFEE4F ; unused
+
+Scroll_flags:			rs.w	1		; bitfield ; bit 0 = redraw top row, bit 1 = redraw bottom row, bit 2 = redraw left-most column, bit 3 = redraw right-most column
+Scroll_flags_BG:		rs.w	1		; bitfield ; bits 0-3 as above, bit 4 = redraw top row (except leftmost block), bit 5 = redraw bottom row (except leftmost block), bits 6-7 = as bits 0-1
+Scroll_flags_BG2:		rs.w	1		; bitfield ; bit 0 = redraw left-most column, bit 1 = redraw right-most column
+Scroll_flags_BG3:		rs.w	1		; bitfield ; bits 0-3 as Scroll_flags_BG but using Y-dependent BG camera; bits 4-5 = bits 2-3; bits 6-7 = bits 2-3
+
+Scroll_flags_P2:		rs.w	1
+Scroll_flags_BG_P2:		rs.w	1
+Scroll_flags_BG2_P2:		rs.w	1
+Scroll_flags_BG3_P2:		rs.w	1
+
+Camera_RAM_copy:		rs.l	2		; copied over every V-int
+Camera_BG_copy:			rs.l	2		; copied over every V-int
+Camera_BG2_copy:		rs.l	2		; copied over every V-int
+Camera_BG3_copy:		rs.l	2		; copied over every V-int
+
+Camera_P2_copy:			rs.l	8		; copied over every V-int
+
+Scroll_flags_copy:		rs.w	1		; copied over every V-int
+Scroll_flags_BG_copy:		rs.w	1		; copied over every V-int
+Scroll_flags_BG2_copy:		rs.w	1		; copied over every V-int
+Scroll_flags_BG3_copy:		rs.w	1		; copied over every V-int
+
+Scroll_flags_copy_P2:		rs.w	1		; copied over every V-int
+Scroll_flags_BG_copy_P2:	rs.w	1		; copied over every V-int
+Scroll_flags_BG2_copy_P2:	rs.w	1		; copied over every V-int
+Scroll_flags_BG3_copy_P2:	rs.w	1		; copied over every V-int
+
+Camera_X_pos_diff:		rs.w	1		; (new X pos - old X pos) * 256
+Camera_Y_pos_diff:		rs.w	1		; (new Y pos - old Y pos) * 256
+
+				rs.b	2		; $FFFFEEB4-$FFFFEEB5 ; unused
+
+Camera_X_pos_diff_P2:		rs.w	1		; (new X pos - old X pos) * 256
+Camera_Y_pos_diff_P2:		rs.w	1		; (new Y pos - old Y pos) * 256
+
+				rs.b	6		; $FFFFEEBA-$FFFFEEBF ; unused
+
+Camera_Min_X_pos_target:	rs.w	1		; unused, except for one write in LevelSizeLoad
+Camera_Max_X_pos_target:	rs.w	1		; unused, written to alongside the above
+Camera_Min_Y_pos_target:	rs.w	1		; unused, except for one write in LevelSizeLoad
+Camera_Max_Y_pos_target:	rs.w	1
+
+Camera_Min_X_pos:		rs.w	1
+Camera_Max_X_pos:		rs.w	1
+Camera_Min_Y_pos:		rs.w	1
+Camera_Max_Y_pos:		rs.w	1
+
+Horiz_scroll_delay_val:		rs.w	1
+Sonic_Pos_Record_Index:		rs.w	1
+
+Horiz_scroll_delay_val_P2:	rs.w	1		; effectively unused as Tails writes to Sonic's value instead, oops
+Tails_Pos_Record_Index:		rs.w	1
+
+Camera_Y_pos_bias:		rs.w	1		; added to y position for lookup/lookdown, $60 is center
+				rs.b	2		; $FFFFEEDA-$FFFFEEDB ; unused
+
+Deform_lock:			rs.b	1		; set to 1 to stop all deformation
+				rs.b	1		; $FFFFEEDD ; unused
+Camera_Max_Y_Pos_Changing:	rs.b	1
+Dynamic_Resize_Routine:		rs.b	1
+unk_EEE0:			rs.w	1
+				rs.b	$E		; $FFFFEEE2-$FFFFEEEF ; unused
+Camera_X_pos_copy:		rs.l	1
+Camera_Y_pos_copy:		rs.l	1
+				rs.b	8		; $FFFFEEF8-$FFFFEEFF ; unused
+Block_cache:			rs.w	512/16*2	; width of plane in blocks, with each block getting two words.
+
+				rs.b	$80		; $FFFFEF80-$FFFFEFFF ; unused
+Sound_Driver_RAM:		rs.b	$600		; only $5C0 bytes are used, but it's allocated for $600
+
+Game_Mode:			rs.b	1
+				rs.b	1		; $FFFFF601 ; unused
+Ctrl_1_Logical:			rs.w	1
+Ctrl_1_Held_Logical:		equ	__rs-2
+Ctrl_1_Press_Logical:		equ	__rs-1
+Ctrl_1:				rs.w	1
+Ctrl_1_Held:			equ	__rs-2
+Ctrl_1_Press:			equ	__rs-1
+Ctrl_2:				rs.w	1
+Ctrl_2_Held:			equ	__rs-2
+Ctrl_2_Press:			equ	__rs-1
+				rs.b	4		; $FFFFF608-$FFFFF60B ; unused
+VDP_Reg1_val:			rs.w	1		; normal value of VDP register #1 when display is disabled
+				rs.b	6		; $FFFFF60E-$FFFFF613 ; unused
+Demo_Time_left:			rs.w	1
+
+Vscroll_Factor:			rs.l	1
+Vscroll_Factor_FG:		equ	__rs-4
+Vscroll_Factor_BG:		equ	__rs-2
+unk_F61A:			rs.l	1		; cleared twice, never used
+Vscroll_Factor_P2:		rs.l	1
+Vscroll_Factor_P2_FG:		equ	__rs-4
+Vscroll_Factor_P2_BG:		equ	__rs-2
+				rs.b	2		; $FFFFF622-$FFFFF623 ; unused
+Hint_counter_reserve:		rs.w	1		; must contain a VDP command word, preferably a write to register $0A. Executed every V-INT.
 		popo						; restore options
 
-Ring_Positions:			equ $FFFFE800
-
-Camera_RAM:			equ $FFFFEE00
-Camera_X_pos:			equ Camera_RAM
-Camera_Y_pos:			equ Camera_RAM+4
-Camera_BG_X_pos:		equ Camera_RAM+8
-Camera_BG_Y_pos:		equ Camera_RAM+$C
-Camera_BG2_X_pos:		equ Camera_RAM+$10
-Camera_BG2_Y_pos:		equ Camera_RAM+$14
-Camera_BG3_X_pos:		equ Camera_RAM+$18
-Camera_BG3_Y_pos:		equ Camera_RAM+$1C
-
-Horiz_block_crossed_flag:	equ Camera_RAM+$40
-Verti_block_crossed_flag:	equ Camera_RAM+$41
-Horiz_block_crossed_flag_BG:	equ Camera_RAM+$42
-Verti_block_crossed_flag_BG:	equ Camera_RAM+$43
-Horiz_block_crossed_flag_BG2:	equ Camera_RAM+$44
-Horiz_block_crossed_flag_BG3:	equ Camera_RAM+$46
-Horiz_block_crossed_flag_P2:	equ Camera_RAM+$48
-Verti_block_crossed_flag_P2:	equ Camera_RAM+$49
-
-Camera_Min_X_pos:		equ Camera_RAM+$C8
-Camera_Max_X_pos:		equ Camera_RAM+$CA
-Camera_Min_Y_pos:		equ Camera_RAM+$CC
-Camera_Max_Y_pos:		equ Camera_RAM+$CE
-
-Horiz_scroll_delay_val:		equ $FFFFEED0
-Sonic_Pos_Record_Index:		equ $FFFFEED2
-
-Game_Mode:			equ $FFFFF600
-
-VDP_Reg1_val:			equ $FFFFF60C
-
-Demo_Time_left:			equ $FFFFF614
-
-Vscroll_Factor:			equ $FFFFF616
-
-Hint_counter_reserve:		equ $FFFFF624
 Vint_routine:			equ $FFFFF62A
 DMA_data_thunk:			equ $FFFFF640
 Hint_flag:			equ $FFFFF644
