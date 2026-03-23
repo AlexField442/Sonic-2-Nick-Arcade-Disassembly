@@ -35,12 +35,6 @@ startZ80 macro
 	move.w	#0,(Z80_Bus_Request).l
 	endm
 
-; we don't have bytesToLcnt or bytesToWcnt yet, so here's examples of when they are used
-; bytesToLcnt
-; #(XX>>2-YY>>2)-1
-; bytesToWcnt
-; #(XX>>1-YY>>1)-1
-
 StartOfRom:
 Vectors:	dc.l $FFFFFE00,EntryPoint,BusError,AddressError
 		dc.l IllegalInstr,ZeroDivide,ChkInstr,TrapvInstr
@@ -792,7 +786,7 @@ loc_F08:
 ; loc_F88: VintSubE:
 Vint_UnusedE:
 		bsr.w	Do_ControllerPal
-		addq.b	#1,($FFFFF628).w
+		addq.b	#1,(VIntSubE_RunCount).w
 		move.b	#$E,(Vint_routine).w
 		rts
 ; >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -1115,7 +1109,7 @@ ClearScreen_ClearBuffer1:
 		dbf	d1,ClearScreen_ClearBuffer1
 		lea	(Horiz_Scroll_Buf).w,a1
 		moveq	#0,d0
-		move.w	#(Horiz_Scroll_Buf_End>>2-Horiz_Scroll_Buf>>2),d1
+		move.w	#(Horiz_Scroll_Buf_End-Horiz_Scroll_Buf)/4,d1
 
 ClearScreen_ClearBuffer2:
 		move.l	d0,(a1)+
@@ -1187,13 +1181,13 @@ PauseGame:
 		nop
 		tst.b	($FFFFFE12).w
 		beq.s	Unpause
-		tst.w	($FFFFF63A).w
+		tst.w	(Game_paused).w
 		bne.s	Pause_AlreadyPaused
 		btst	#7,(Ctrl_1_Press).w
 		beq.s	Pause_DoNothing
 
 Pause_AlreadyPaused:
-		move.w	#1,($FFFFF63A).w
+		move.w	#1,(Game_paused).w
 		move.b	#1,(Sound_Driver_RAM+StopMusic).w
 
 Pause_Loop:
@@ -1222,14 +1216,14 @@ Pause_Resume:
 		move.b	#$80,(Sound_Driver_RAM+StopMusic).w
 
 Unpause:
-		move.w	#0,($FFFFF63A).w
+		move.w	#0,(Game_paused).w
 
 Pause_DoNothing:
 		rts
 ; ===========================================================================
 ; loc_1472:
 Pause_SlowMo:
-		move.w	#1,($FFFFF63A).w
+		move.w	#1,(Game_paused).w
 		move.b	#$80,(Sound_Driver_RAM+StopMusic).w
 		rts
 ; End of function PauseGame
@@ -1686,7 +1680,7 @@ loc_16D4:
 RunPLC_RAM:
 		tst.l	(Plc_Buffer).w
 		beq.s	locret_1730
-		tst.w	(Plc_Buffer_Reg18).w
+		tst.w	(Plc_PatternsLeft).w
 		bne.s	locret_1730
 		movea.l	(Plc_Buffer).w,a0
 		lea	NemDec_WriteAndStay(pc),a3
@@ -1698,7 +1692,7 @@ RunPLC_RAM:
 
 loc_16FE:
 		andi.w	#$7FFF,d2
-		move.w	d2,(Plc_Buffer_Reg18).w
+		move.w	d2,(Plc_PatternsLeft).w
 		bsr.w	NemDecPrepare
 		move.b	(a0)+,d5
 		asl.w	#8,d5
@@ -1706,12 +1700,12 @@ loc_16FE:
 		moveq	#$10,d6
 		moveq	#0,d0
 		move.l	a0,(Plc_Buffer).w
-		move.l	a3,(Plc_Buffer_Reg0).w
-		move.l	d0,(Plc_Buffer_Reg4).w
-		move.l	d0,(Plc_Buffer_Reg8).w
-		move.l	d0,(Plc_Buffer_RegC).w
-		move.l	d5,(Plc_Buffer_Reg10).w
-		move.l	d6,(Plc_Buffer_Reg14).w
+		move.l	a3,(Plc_PtrNemCode).w
+		move.l	d0,(Plc_RepeatCount).w
+		move.l	d0,(Plc_PaletteIndex).w
+		move.l	d0,(Plc_PreviousRow).w
+		move.l	d5,(Plc_DataWord).w
+		move.l	d6,(Plc_ShiftValue).w
 
 locret_1730:
 		rts
@@ -1723,9 +1717,9 @@ locret_1730:
 
 ; sub_1732:
 ProcessDPLC:
-		tst.w	(Plc_Buffer_Reg18).w
+		tst.w	(Plc_PatternsLeft).w
 		beq.w	locret_17CA
-		move.w	#9,(Plc_Buffer_Reg1A).w
+		move.w	#9,(Plc_FramePatternsLeft).w
 		moveq	#0,d0
 		move.w	(Plc_Buffer+4).w,d0
 		addi.w	#$120,(Plc_Buffer+4).w
@@ -1736,9 +1730,9 @@ ProcessDPLC:
 
 ; loc_174E:
 ProcessDPLC2:
-		tst.w	(Plc_Buffer_Reg18).w
+		tst.w	(Plc_PatternsLeft).w
 		beq.s	locret_17CA
-		move.w	#3,(Plc_Buffer_Reg1A).w
+		move.w	#3,(Plc_FramePatternsLeft).w
 		moveq	#0,d0
 		move.w	(Plc_Buffer+4).w,d0
 		addi.w	#$60,(Plc_Buffer+4).w
@@ -1752,28 +1746,28 @@ ProcessDPLC_Main:
 		move.l	d0,(a4)
 		subq.w	#4,a4
 		movea.l	(Plc_Buffer).w,a0
-		movea.l	(Plc_Buffer_Reg0).w,a3
-		move.l	(Plc_Buffer_Reg4).w,d0
-		move.l	(Plc_Buffer_Reg8).w,d1
-		move.l	(Plc_Buffer_RegC).w,d2
-		move.l	(Plc_Buffer_Reg10).w,d5
-		move.l	(Plc_Buffer_Reg14).w,d6
+		movea.l	(Plc_PtrNemCode).w,a3
+		move.l	(Plc_RepeatCount).w,d0
+		move.l	(Plc_PaletteIndex).w,d1
+		move.l	(Plc_PreviousRow).w,d2
+		move.l	(Plc_DataWord).w,d5
+		move.l	(Plc_ShiftValue).w,d6
 		lea	(Decomp_Buffer).w,a1
 
 loc_179A:
 		movea.w	#8,a5
 		bsr.w	NemDec_WriteIter
-		subq.w	#1,(Plc_Buffer_Reg18).w
+		subq.w	#1,(Plc_PatternsLeft).w
 		beq.s	ProcessDPLC_Pop
-		subq.w	#1,(Plc_Buffer_Reg1A).w
+		subq.w	#1,(Plc_FramePatternsLeft).w
 		bne.s	loc_179A
 		move.l	a0,(Plc_Buffer).w
-		move.l	a3,(Plc_Buffer_Reg0).w
-		move.l	d0,(Plc_Buffer_Reg4).w
-		move.l	d1,(Plc_Buffer_Reg8).w
-		move.l	d2,(Plc_Buffer_RegC).w
-		move.l	d5,(Plc_Buffer_Reg10).w
-		move.l	d6,(Plc_Buffer_Reg14).w
+		move.l	a3,(Plc_PtrNemCode).w
+		move.l	d0,(Plc_RepeatCount).w
+		move.l	d1,(Plc_PaletteIndex).w
+		move.l	d2,(Plc_PreviousRow).w
+		move.l	d5,(Plc_DataWord).w
+		move.l	d6,(Plc_ShiftValue).w
 
 locret_17CA:
 		rts
@@ -2967,11 +2961,11 @@ PalCycle_GHZ:
 		lea	(Pal_GHZCyc).l,a0
 
 loc_1E7C:
-		subq.w	#1,($FFFFF634).w
+		subq.w	#1,(PalCycle_Timer).w
 		bpl.s	locret_1EA2
-		move.w	#5,($FFFFF634).w
-		move.w	($FFFFF632).w,d0
-		addq.w	#1,($FFFFF632).w
+		move.w	#5,(PalCycle_Timer).w
+		move.w	(PalCycle_Frame).w,d0
+		addq.w	#1,(PalCycle_Frame).w
 		andi.w	#3,d0
 		lsl.w	#3,d0
 		lea	($FFFFFB50).w,a1
@@ -2983,33 +2977,33 @@ locret_1EA2:
 ; ===========================================================================
 
 PalCycle_CPZ:
-		subq.w	#1,($FFFFF634).w
+		subq.w	#1,(PalCycle_Timer).w
 		bpl.s	locret_1F14
-		move.w	#7,($FFFFF634).w
+		move.w	#7,(PalCycle_Timer).w
 		lea	(Pal_CPZCyc1).l,a0
-		move.w	($FFFFF632).w,d0
-		addq.w	#6,($FFFFF632).w
-		cmpi.w	#$36,($FFFFF632).w
+		move.w	(PalCycle_Frame).w,d0
+		addq.w	#6,(PalCycle_Frame).w
+		cmpi.w	#$36,(PalCycle_Frame).w
 		bcs.s	loc_1ECC
-		move.w	#0,($FFFFF632).w
+		move.w	#0,(PalCycle_Frame).w
 
 loc_1ECC:
 		lea	($FFFFFB78).w,a1
 		move.l	(a0,d0.w),(a1)+
 		move.w	4(a0,d0.w),(a1)
 		lea	(Pal_CPZCyc2).l,a0
-		move.w	($FFFFF652).w,d0
-		addq.w	#2,($FFFFF652).w
-		cmpi.w	#$2A,($FFFFF652).w
+		move.w	(PalCycle_Frame2).w,d0
+		addq.w	#2,(PalCycle_Frame2).w
+		cmpi.w	#$2A,(PalCycle_Frame2).w
 		bcs.s	loc_1EF4
-		move.w	#0,($FFFFF652).w
+		move.w	#0,(PalCycle_Frame2).w
 
 loc_1EF4:
 		move.w	(a0,d0.w),($FFFFFB7E).w
 		lea	(Pal_CPZCyc3).l,a0
-		move.w	($FFFFF654).w,d0
-		addq.w	#2,($FFFFF654).w
-		andi.w	#$1E,($FFFFF654).w
+		move.w	(PalCycle_Frame3).w,d0
+		addq.w	#2,(PalCycle_Frame3).w
+		andi.w	#$1E,(PalCycle_Frame3).w
 		move.w	(a0,d0.w),($FFFFFB5E).w
 
 locret_1F14:
@@ -3017,14 +3011,14 @@ locret_1F14:
 ; ===========================================================================
 
 PalCycle_HPZ:
-		subq.w	#1,($FFFFF634).w
+		subq.w	#1,(PalCycle_Timer).w
 		bpl.s	locret_1F56
-		move.w	#4,($FFFFF634).w
+		move.w	#4,(PalCycle_Timer).w
 		lea	(Pal_HPZCyc1).l,a0
-		move.w	($FFFFF632).w,d0
-		subq.w	#2,($FFFFF632).w
+		move.w	(PalCycle_Frame).w,d0
+		subq.w	#2,(PalCycle_Frame).w
 		bcc.s	loc_1F38
-		move.w	#6,($FFFFF632).w
+		move.w	#6,(PalCycle_Frame).w
 
 loc_1F38:
 		lea	($FFFFFB72).w,a1
@@ -3041,11 +3035,11 @@ locret_1F56:
 
 PalCycle_EHZ:
 		lea	(Pal_EHZCyc).l,a0
-		subq.w	#1,($FFFFF634).w
+		subq.w	#1,(PalCycle_Timer).w
 		bpl.s	locret_1F84
-		move.w	#7,($FFFFF634).w
-		move.w	($FFFFF632).w,d0
-		addq.w	#1,($FFFFF632).w
+		move.w	#7,(PalCycle_Timer).w
+		move.w	(PalCycle_Frame).w,d0
+		addq.w	#1,(PalCycle_Frame).w
 		andi.w	#3,d0
 		lsl.w	#3,d0
 		move.l	(a0,d0.w),($FFFFFB26).w
@@ -3057,13 +3051,13 @@ locret_1F84:
 
 PalCycle_HTZ:
 		lea	(Pal_HTZCyc1).l,a0
-		subq.w	#1,($FFFFF634).w
+		subq.w	#1,(PalCycle_Timer).w
 		bpl.s	locret_1FB8
-		move.w	#0,($FFFFF634).w
-		move.w	($FFFFF632).w,d0
-		addq.w	#1,($FFFFF632).w
+		move.w	#0,(PalCycle_Timer).w
+		move.w	(PalCycle_Frame).w,d0
+		addq.w	#1,(PalCycle_Frame).w
 		andi.w	#$F,d0
-		move.b	Pal_HTZCyc2(pc,d0.w),($FFFFF635).w
+		move.b	Pal_HTZCyc2(pc,d0.w),(PalCycle_Timer+1).w
 		lsl.w	#3,d0
 		move.l	(a0,d0.w),($FFFFFB26).w
 		move.l	4(a0,d0.w),($FFFFFB3C).w
@@ -3091,15 +3085,15 @@ Pal_HPZCyc2:	incbin "art/palettes/HPZ Underwater Cycle.bin"
 
 ; Pal_FadeTo:
 Pal_FadeFromBlack:
-		move.w	#$3F,($FFFFF626).w
+		move.w	#$3F,(Palette_fade_range).w
 ; Pal_FadeTo2:
 Pal_FadeFromBlack2:
 		moveq	#0,d0
 		lea	($FFFFFB00).w,a0
-		move.b	($FFFFF626).w,d0
+		move.b	(Palette_fade_start).w,d0
 		adda.w	d0,a0
 		moveq	#0,d1
-		move.b	($FFFFF627).w,d0
+		move.b	(Palette_fade_length).w,d0
 
 loc_2162:
 		move.w	d1,(a0)+
@@ -3126,10 +3120,10 @@ Pal_FadeIn:
 		moveq	#0,d0
 		lea	($FFFFFB00).w,a0
 		lea	($FFFFFB80).w,a1
-		move.b	($FFFFF626).w,d0
+		move.b	(Palette_fade_start).w,d0
 		adda.w	d0,a0
 		adda.w	d0,a1
-		move.b	($FFFFF627).w,d0
+		move.b	(Palette_fade_length).w,d0
 
 loc_2198:
 		bsr.s	Pal_AddColor
@@ -3139,10 +3133,10 @@ loc_2198:
 		moveq	#0,d0
 		lea	($FFFFFA80).w,a0
 		lea	($FFFFFA00).w,a1
-		move.b	($FFFFF626).w,d0
+		move.b	(Palette_fade_start).w,d0
 		adda.w	d0,a0
 		adda.w	d0,a1
-		move.b	($FFFFF627).w,d0
+		move.b	(Palette_fade_length).w,d0
 
 loc_21BA:
 		bsr.s	Pal_AddColor
@@ -3200,7 +3194,7 @@ Pal_AddNone:
 
 ; Pal_FadeFrom:
 Pal_FadeToBlack:
-		move.w	#$3F,($FFFFF626).w
+		move.w	#$3F,(Palette_fade_range).w
 		move.w	#$15,d4
 
 loc_21F8:
@@ -3222,18 +3216,18 @@ loc_21F8:
 Pal_FadeOut:
 		moveq	#0,d0
 		lea	($FFFFFB00).w,a0
-		move.b	($FFFFF626).w,d0
+		move.b	(Palette_fade_start).w,d0
 		adda.w	d0,a0
-		move.b	($FFFFF627).w,d0
+		move.b	(Palette_fade_length).w,d0
 
 loc_221E:
 		bsr.s	Pal_DecColor
 		dbf	d0,loc_221E
 		moveq	#0,d0
 		lea	($FFFFFA80).w,a0
-		move.b	($FFFFF626).w,d0
+		move.b	(Palette_fade_start).w,d0
 		adda.w	d0,a0
-		move.b	($FFFFF627).w,d0
+		move.b	(Palette_fade_length).w,d0
 
 loc_2234:
 		bsr.s	Pal_DecColor
@@ -3285,13 +3279,13 @@ Pal_NoDec:
 
 
 Pal_MakeWhite:				; CODE XREF: ROM:00005166p
-		move.w	#$3F,($FFFFF626).w ; '?'
+		move.w	#$3F,(Palette_fade_range).w ; '?'
 		moveq	#0,d0
 		lea	($FFFFFB00).w,a0
-		move.b	($FFFFF626).w,d0
+		move.b	(Palette_fade_start).w,d0
 		adda.w	d0,a0
 		move.w	#$EEE,d1
-		move.b	($FFFFF627).w,d0
+		move.b	(Palette_fade_length).w,d0
 
 loc_2286:				; CODE XREF: Pal_MakeWhite+1Cj
 		move.w	d1,(a0)+
@@ -3315,10 +3309,10 @@ Pal_WhiteToBlack:			; CODE XREF: Pal_MakeWhite+2Ep
 		moveq	#0,d0
 		lea	($FFFFFB00).w,a0
 		lea	($FFFFFB80).w,a1
-		move.b	($FFFFF626).w,d0
+		move.b	(Palette_fade_start).w,d0
 		adda.w	d0,a0
 		adda.w	d0,a1
-		move.b	($FFFFF627).w,d0
+		move.b	(Palette_fade_length).w,d0
 
 loc_22BC:				; CODE XREF: Pal_WhiteToBlack+18j
 		bsr.s	Pal_DecColor2
@@ -3328,10 +3322,10 @@ loc_22BC:				; CODE XREF: Pal_WhiteToBlack+18j
 		moveq	#0,d0
 		lea	($FFFFFA80).w,a0
 		lea	($FFFFFA00).w,a1
-		move.b	($FFFFF626).w,d0
+		move.b	(Palette_fade_start).w,d0
 		adda.w	d0,a0
 		adda.w	d0,a1
-		move.b	($FFFFF627).w,d0
+		move.b	(Palette_fade_length).w,d0
 
 loc_22DE:				; CODE XREF: Pal_WhiteToBlack+3Aj
 		bsr.s	Pal_DecColor2
@@ -3388,7 +3382,7 @@ loc_2312:				; CODE XREF: Pal_DecColor2+6j
 
 Pal_MakeFlash:				; CODE XREF: ROM:00005024p
 					; ROM:000052CEp
-		move.w	#$3F,($FFFFF626).w ; '?'
+		move.w	#$3F,(Palette_fade_range).w ; '?'
 		move.w	#$15,d4
 
 loc_2320:				; CODE XREF: Pal_MakeFlash+1Aj
@@ -3408,9 +3402,9 @@ Pal_ToWhite:				; CODE XREF: Pal_MakeFlash+14p
 					; ROM:00005210p
 		moveq	#0,d0
 		lea	($FFFFFB00).w,a0
-		move.b	($FFFFF626).w,d0
+		move.b	(Palette_fade_start).w,d0
 		adda.w	d0,a0
-		move.b	($FFFFF627).w,d0
+		move.b	(Palette_fade_length).w,d0
 
 loc_2346:				; CODE XREF: Pal_ToWhite+12j
 		bsr.s	Pal_AddColor2
@@ -3419,9 +3413,9 @@ loc_2346:				; CODE XREF: Pal_ToWhite+12j
 
 loc_234E:
 		lea	($FFFFFA80).w,a0
-		move.b	($FFFFF626).w,d0
+		move.b	(Palette_fade_start).w,d0
 		adda.w	d0,a0
-		move.b	($FFFFF627).w,d0
+		move.b	(Palette_fade_length).w,d0
 
 loc_235C:				; CODE XREF: Pal_ToWhite+28j
 		bsr.s	Pal_AddColor2
@@ -3477,12 +3471,12 @@ loc_23A0:				; CODE XREF: Pal_AddColor2+6j
 
 
 PalCycle_Sega:				; CODE XREF: ROM:000031A0p
-		tst.b	($FFFFF635).w
+		tst.b	(PalCycle_Timer+1).w
 		bne.s	loc_2404
 		lea	($FFFFFB20).w,a1
 		lea	(Pal_Sega1).l,a0
 		moveq	#5,d1
-		move.w	($FFFFF632).w,d0
+		move.w	(PalCycle_Frame).w,d0
 
 loc_23BA:				; CODE XREF: PalCycle_Sega+1Ej
 		bpl.s	loc_23C4
@@ -3507,7 +3501,7 @@ loc_23CE:				; CODE XREF: PalCycle_Sega+26j
 loc_23D8:				; CODE XREF: PalCycle_Sega+2Ej
 		addq.w	#2,d0
 		dbf	d1,loc_23C4
-		move.w	($FFFFF632).w,d0
+		move.w	(PalCycle_Frame).w,d0
 		addq.w	#2,d0
 		move.w	d0,d2
 		andi.w	#$1E,d2
@@ -3517,20 +3511,20 @@ loc_23D8:				; CODE XREF: PalCycle_Sega+2Ej
 loc_23EE:				; CODE XREF: PalCycle_Sega+46j
 		cmpi.w	#$64,d0	; 'd'
 		blt.s	loc_23FC
-		move.w	#$401,($FFFFF634).w
+		move.w	#$401,(PalCycle_Timer).w
 		moveq	#$FFFFFFF4,d0
 
 loc_23FC:				; CODE XREF: PalCycle_Sega+4Ej
-		move.w	d0,($FFFFF632).w
+		move.w	d0,(PalCycle_Frame).w
 		moveq	#1,d0
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_2404:				; CODE XREF: PalCycle_Sega+4j
-		subq.b	#1,($FFFFF634).w
+		subq.b	#1,(PalCycle_Timer).w
 		bpl.s	loc_2456
-		move.b	#4,($FFFFF634).w
-		move.w	($FFFFF632).w,d0
+		move.b	#4,(PalCycle_Timer).w
+		move.w	(PalCycle_Frame).w,d0
 		addi.w	#$C,d0
 		cmpi.w	#$30,d0	; '0'
 		bcs.s	loc_2422
@@ -3539,7 +3533,7 @@ loc_2404:				; CODE XREF: PalCycle_Sega+4j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_2422:				; CODE XREF: PalCycle_Sega+78j
-		move.w	d0,($FFFFF632).w
+		move.w	d0,(PalCycle_Frame).w
 		lea	(Pal_Sega2).l,a0
 		lea	(a0,d0.w),a0
 		lea	($FFFFFB04).w,a1
@@ -3728,7 +3722,7 @@ loc_2C88:
 
 ; PseudoRandomNumber:
 RandomNumber:
-		move.l	($FFFFF636).w,d1
+		move.l	(RNG_seed).w,d1
 		bne.s	loc_2C9C
 		move.l	#$2A6D365A,d1
 
@@ -3749,7 +3743,7 @@ loc_2C9C:
 		move.w	d0,d1
 		swap	d1
 
-		move.l	d1,($FFFFF636).w
+		move.l	d1,(RNG_seed).w
 		rts
 ; End of function RandomNumber
 
@@ -3970,10 +3964,10 @@ SegaScreen:
 loc_316A:
 		moveq	#0,d0
 		bsr.w	PalLoad2
-		move.w	#-$A,($FFFFF632).w
-		move.w	#0,($FFFFF634).w
-		move.w	#0,($FFFFF662).w
-		move.w	#0,($FFFFF660).w
+		move.w	#-$A,(PalCycle_Frame).w
+		move.w	#0,(PalCycle_Timer).w
+		move.w	#0,(unk_F662).w
+		move.w	#0,(unk_F660).w
 		move.w	(VDP_Reg1_val).w,d0
 		ori.b	#$40,d0
 		move.w	d0,(VDP_control_port).l
@@ -4082,7 +4076,7 @@ loc_32C4:				; CODE XREF: ROM:000032C6j
 		move.w	#0,($FFFFFFF0).w
 		move.w	#0,($FFFFFFEA).w
 		move.w	#0,(Current_ZoneAndAct).w
-		move.w	#0,($FFFFF634).w
+		move.w	#0,(PalCycle_Timer).w
 		bsr.w	Pal_FadeToBlack
 		move	#$2700,sr
 		lea	($FFFF0000).l,a1
@@ -4216,7 +4210,7 @@ Title_CheckLvlSel:			; CODE XREF: ROM:0000365Cj
 		bsr.w	PalLoad2
 		lea	(Horiz_Scroll_Buf).w,a1
 		moveq	#0,d0
-		move.w	#(Horiz_Scroll_Buf_End>>2-Horiz_Scroll_Buf>>2)-1-32,d1	; 'ß'
+		move.w	#(Horiz_Scroll_Buf_End-Horiz_Scroll_Buf)/4-32-1,d1
 
 LevelSelect_ClearScroll:		; CODE XREF: ROM:000034B8j
 		move.l	d0,(a1)+
@@ -4771,9 +4765,9 @@ loc_3BC0:
 loc_3BD0:
 		move.l	d0,(a1)+
 		dbf	d1,loc_3BD0
-		lea	($FFFFF628).w,a1
+		lea	(MiscLevelVariables).w,a1
 		moveq	#0,d0
-		move.w	#$15,d1
+		move.w	#(MiscLevelVariables_End-MiscLevelVariables)/4-1,d1
 
 loc_3BE0:
 		move.l	d0,(a1)+
@@ -4824,12 +4818,12 @@ loc_3C56:
 		add.w	d0,d0
 		lea	(WaterHeight).l,a1
 		move.w	(a1,d0.w),d0
-		move.w	d0,($FFFFF646).w
-		move.w	d0,($FFFFF648).w
-		move.w	d0,($FFFFF64A).w
-		clr.b	($FFFFF64D).w
+		move.w	d0,(Water_Level_1).w
+		move.w	d0,(Water_Level_2).w
+		move.w	d0,(Water_Level_3).w
+		clr.b	(Water_routine).w
 		clr.b	(Water_fullscreen_flag).w
-		move.b	#1,($FFFFF64C).w
+		move.b	#1,(Water_on).w
 
 LevelInit_NoWater:
 		move.w	#$1E,($FFFFFE14).w
@@ -5003,7 +4997,7 @@ loc_3ECC:
 		move.b	#VintID_Level,(Vint_routine).w
 		bsr.w	WaitForVint
 		dbf	d1,loc_3ECC
-		move.w	#$202F,($FFFFF626).w
+		move.w	#$202F,(Palette_fade_range).w
 		bsr.w	Pal_FadeFromBlack2
 		tst.w	($FFFFFFF0).w
 		bmi.s	Level_ClrTitleCard
@@ -5086,7 +5080,7 @@ loc_3FB4:
 
 loc_3FCE:
 		move.w	#$3C,(Demo_Time_left).w
-		move.w	#$3F,($FFFFF626).w
+		move.w	#$3F,(Palette_fade_range).w
 		clr.w	($FFFFF794).w
 
 loc_3FDE:
@@ -5148,9 +5142,9 @@ loc_4058:				; CODE XREF: WaterEffects+Aj
 		moveq	#0,d0
 		move.b	($FFFFFE60).w,d0
 		lsr.w	#1,d0
-		add.w	($FFFFF648).w,d0
-		move.w	d0,($FFFFF646).w
-		move.w	($FFFFF646).w,d0
+		add.w	(Water_Level_2).w,d0
+		move.w	d0,(Water_Level_1).w
+		move.w	(Water_Level_1).w,d0
 		sub.w	(Camera_Y_pos).w,d0
 		bcc.s	loc_4086
 		tst.w	d0
@@ -5184,15 +5178,15 @@ DynamicWaterHeight:			; CODE XREF: WaterEffects+14p
 		move.w	DynWater_Index(pc,d0.w),d0
 		jsr	DynWater_Index(pc,d0.w)
 		moveq	#0,d1
-		move.b	($FFFFF64C).w,d1
-		move.w	($FFFFF64A).w,d0
-		sub.w	($FFFFF648).w,d0
+		move.b	(Water_on).w,d1
+		move.w	(Water_Level_3).w,d0
+		sub.w	(Water_Level_2).w,d0
 		beq.s	locret_40C6
 		bcc.s	loc_40C2
 		neg.w	d1
 
 loc_40C2:				; CODE XREF: DynamicWaterHeight+20j
-		add.w	d1,($FFFFF648).w
+		add.w	d1,(Water_Level_2).w
 
 locret_40C6:				; CODE XREF: DynamicWaterHeight+1Ej
 		rts
@@ -5211,16 +5205,16 @@ DynWater_HPZ1:
 		; the water level using the up/down buttons
 		btst	#0,(Ctrl_2_Held).w	; is up being held?
 		beq.s	loc_40E2		; if not, branch
-		tst.w	($FFFFF64A).w
+		tst.w	(Water_Level_3).w
 		beq.s	loc_40E2		; stop increasing water level if we've hit the limit
-		subq.w	#1,($FFFFF64A).w	; increase water level
+		subq.w	#1,(Water_Level_3).w	; increase water level
 
 loc_40E2:
 		btst	#1,(Ctrl_2_Held).w	; is down being held?
 		beq.s	locret_40F6		; if not, branch
-		cmpi.w	#$700,($FFFFF64A).w
+		cmpi.w	#$700,(Water_Level_3).w
 		beq.s	locret_40F6		; stop decreasing water level if we've hit the limit
-		addq.w	#1,($FFFFF64A).w	; decrease water level
+		addq.w	#1,(Water_Level_3).w	; decrease water level
 
 locret_40F6:
 		rts
@@ -5228,7 +5222,7 @@ locret_40F6:
 
 S1DynWater_LZ1:				; leftover from	Sonic 1
 		move.w	(Camera_X_pos).w,d0
-		move.b	($FFFFF64D).w,d2
+		move.b	(Water_routine).w,d2
 		bne.s	loc_4164
 		move.w	#$B8,d1	; '¸'
 		cmpi.w	#$600,d0
@@ -5246,13 +5240,13 @@ S1DynWater_LZ1:				; leftover from	Sonic 1
 		cmpi.w	#$1380,d0
 		bcs.s	loc_4148
 		move.w	#$3A8,d1
-		cmp.w	($FFFFF648).w,d1
+		cmp.w	(Water_Level_2).w,d1
 		bne.s	loc_4148
-		move.b	#1,($FFFFF64D).w
+		move.b	#1,(Water_routine).w
 
 loc_4148:				; CODE XREF: ROM:0000410Aj
 					; ROM:0000411Cj ...
-		move.w	d1,($FFFFF64A).w
+		move.w	d1,(Water_Level_3).w
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -5275,10 +5269,10 @@ loc_4164:				; CODE XREF: ROM:00004100j
 		cmpi.w	#$1300,d0
 		bcs.s	loc_4184
 		move.w	#$108,d1
-		move.b	#2,($FFFFF64D).w
+		move.b	#2,(Water_routine).w
 
 loc_4184:				; CODE XREF: ROM:00004178j
-		move.w	d1,($FFFFF64A).w
+		move.w	d1,(Water_Level_3).w
 
 locret_4188:				; CODE XREF: ROM:00004166j
 					; ROM:0000416Ej
@@ -5297,13 +5291,13 @@ DynWater_HPZ2:				; DATA XREF: ROM:DynWater_Indexo
 
 loc_41A6:				; CODE XREF: ROM:00004196j
 					; ROM:000041A0j
-		move.w	d1,($FFFFF64A).w
+		move.w	d1,(Water_Level_3).w
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 DynWater_HPZ3:				; DATA XREF: ROM:DynWater_Indexo
 		move.w	(Camera_X_pos).w,d0 ; in fact, this is a leftover from Sonic 1's LZ3
-		move.b	($FFFFF64D).w,d2
+		move.b	(Water_routine).w,d2
 		bne.s	loc_41F2
 		move.w	#$900,d1
 		cmpi.w	#$600,d0
@@ -5314,14 +5308,14 @@ DynWater_HPZ3:				; DATA XREF: ROM:DynWater_Indexo
 		bcc.s	loc_41E8
 		move.w	#$4C8,d1
 		move.b	#$4B,(Level_Layout+$206).w ; 'K'
-		move.b	#1,($FFFFF64D).w
+		move.b	#1,(Water_routine).w
 		move.w	#$B7,d0	; '·'
 		bsr.w	PlaySound_Special
 
 loc_41E8:				; CODE XREF: ROM:000041BEj
 					; ROM:000041C6j ...
-		move.w	d1,($FFFFF64A).w
-		move.w	d1,($FFFFF648).w
+		move.w	d1,(Water_Level_3).w
+		move.w	d1,(Water_Level_2).w
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -5334,7 +5328,7 @@ loc_41F2:				; CODE XREF: ROM:000041B4j
 		move.w	#$308,d1
 		cmpi.w	#$1400,d0
 		bcs.s	loc_4236
-		cmpi.w	#$508,($FFFFF64A).w
+		cmpi.w	#$508,(Water_Level_3).w
 		beq.s	loc_4222
 		cmpi.w	#$600,(MainCharacter+y_pos).w
 		bcc.s	loc_4222
@@ -5344,14 +5338,14 @@ loc_41F2:				; CODE XREF: ROM:000041B4j
 loc_4222:				; CODE XREF: ROM:00004210j
 					; ROM:00004218j
 		move.w	#$508,d1
-		move.w	d1,($FFFFF648).w
+		move.w	d1,(Water_Level_2).w
 		cmpi.w	#$1770,d0
 		bcs.s	loc_4236
-		move.b	#2,($FFFFF64D).w
+		move.b	#2,(Water_routine).w
 
 loc_4236:				; CODE XREF: ROM:000041FEj
 					; ROM:00004208j ...
-		move.w	d1,($FFFFF64A).w
+		move.w	d1,(Water_Level_3).w
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -5364,15 +5358,15 @@ loc_423C:				; CODE XREF: ROM:000041F4j
 		move.w	#$188,d1
 		cmpi.w	#$1AF0,d0
 		bcc.s	loc_425A
-		cmp.w	($FFFFF648).w,d1
+		cmp.w	(Water_Level_2).w,d1
 		bne.s	loc_4260
 
 loc_425A:				; CODE XREF: ROM:00004252j
-		move.b	#3,($FFFFF64D).w
+		move.b	#3,(Water_routine).w
 
 loc_4260:				; CODE XREF: ROM:00004248j
 					; ROM:00004258j
-		move.w	d1,($FFFFF64A).w
+		move.w	d1,(Water_Level_3).w
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -5385,24 +5379,24 @@ loc_4266:				; CODE XREF: ROM:0000423Ej
 		move.w	#$900,d1
 		cmpi.w	#$1BC0,d0
 		bcs.s	loc_4298
-		move.b	#4,($FFFFF64D).w
-		move.w	#$608,($FFFFF64A).w
-		move.w	#$7C0,($FFFFF648).w
+		move.b	#4,(Water_routine).w
+		move.w	#$608,(Water_Level_3).w
+		move.w	#$7C0,(Water_Level_2).w
 		move.b	#1,($FFFFF7E8).w
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_4298:				; CODE XREF: ROM:00004272j
 					; ROM:0000427Cj
-		move.w	d1,($FFFFF64A).w
-		move.w	d1,($FFFFF648).w
+		move.w	d1,(Water_Level_3).w
+		move.w	d1,(Water_Level_2).w
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_42A2:				; CODE XREF: ROM:00004268j
 		cmpi.w	#$1E00,d0
 		bcs.s	locret_42AE
-		move.w	#$128,($FFFFF64A).w
+		move.w	#$128,(Water_Level_3).w
 
 locret_42AE:				; CODE XREF: ROM:000042A6j
 		rts
@@ -5415,7 +5409,7 @@ DynWater_HPZ4:				; DATA XREF: ROM:DynWater_Indexo
 		move.w	#$4C8,d1
 
 loc_42C0:				; CODE XREF: ROM:000042BAj
-		move.w	d1,($FFFFF64A).w
+		move.w	d1,(Water_Level_3).w
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -6227,7 +6221,7 @@ loc_51A6:
 
 loc_51CA:
 		move.w	#$3C,(Demo_Time_left).w
-		move.w	#$3F,($FFFFF626).w
+		move.w	#$3F,(Palette_fade_range).w
 		clr.w	($FFFFF794).w
 
 loc_51DA:
@@ -6383,7 +6377,7 @@ loc_5360:				; CODE XREF: S1_SSBGLoad+6Ej
 
 PalCycle_S1SS:				; CODE XREF: ROM:00000E90p
 					; ROM:000050FCp
-		tst.w	($FFFFF63A).w
+		tst.w	(Game_paused).w
 		bne.s	locret_5424
 		subq.w	#1,($FFFFF79C).w
 		bpl.s	locret_5424
@@ -7279,7 +7273,7 @@ Deform_LZ:				; DATA XREF: ROM:Deform_Indexo
 		swap	d0
 		move.w	(Camera_BG_X_pos).w,d0
 		neg.w	d0
-		move.w	($FFFFF646).w,d4
+		move.w	(Water_Level_1).w,d4
 		move.w	(Camera_Y_pos).w,d5
 
 loc_5EC6:				; CODE XREF: ROM:00005ED2j
@@ -17285,7 +17279,7 @@ loc_D0FA:				; CODE XREF: BuildSprites+68j
 loc_D102:				; CODE XREF: BuildSprites+22j
 		lea	$80(a4),a4
 		dbf	d7,loc_D02C
-		move.b	d5,($FFFFF62C).w
+		move.b	d5,(Sprite_count).w
 		cmpi.b	#$50,d5	; 'P'
 		beq.s	loc_D11C
 		move.l	#0,(a2)
@@ -17654,7 +17648,7 @@ loc_D406:				; CODE XREF: BuildSprites+33Cj
 loc_D410:				; CODE XREF: BuildSprites+32Ej
 		lea	$80(a4),a4
 		dbf	d7,loc_D338
-		move.b	d5,($FFFFF62C).w
+		move.b	d5,(Sprite_count).w
 		cmpi.b	#$50,d5	; 'P'
 		bcc.s	loc_D42A
 		move.l	#0,(a2)
@@ -17776,7 +17770,7 @@ loc_D520:				; CODE XREF: BuildSprites+45Cj
 loc_D528:				; CODE XREF: BuildSprites+450j
 		lea	$80(a4),a4
 		dbf	d7,loc_D45A
-		move.b	d5,($FFFFF62C).w
+		move.b	d5,(Sprite_count).w
 		cmpi.b	#$50,d5	; 'P'
 		beq.s	loc_D542
 		move.l	#0,(a2)
@@ -18577,7 +18571,7 @@ byte_DB4C:	dc.b   0,  0,  1,  1	; 0
 RingsManager_Setup:
 		lea	(Ring_Positions).w,a1
 		moveq	#0,d0
-		move.w	#(Ring_Positions_End>>2-Ring_Positions>>2)-1,d1
+		move.w	#(Ring_Positions_End-Ring_Positions)/4-1,d1
 
 loc_DB66:
 		move.l	d0,(a1)+
@@ -21740,7 +21734,7 @@ locret_FC0A:
 ; ---------------------------------------------------------------------------
 ; loc_FC0E: Obj01_InLevelWithWater:
 Obj01_InWater:
-		move.w	($FFFFF646).w,d0
+		move.w	(Water_Level_1).w,d0
 		cmp.w	y_pos(a0),d0	; is Sonic above water?
 		bge.s	Obj01_OutWater	; if yes, branch
 
@@ -25521,7 +25515,7 @@ Obj0A_Animate:				; DATA XREF: ROM:00011E74o
 		jsr	(AnimateSprite).l
 
 Obj0A_ChkWater:				; DATA XREF: ROM:00011E76o
-		move.w	($FFFFF646).w,d0
+		move.w	(Water_Level_1).w,d0
 		cmp.w	y_pos(a0),d0
 		bcs.s	loc_11F0A
 		move.b	#6,routine(a0)
@@ -26053,7 +26047,7 @@ WaterSplash_Init:
 		move.w	(MainCharacter+x_pos).w,x_pos(a0)
 ; Obj08_Display:
 WaterSplash_Display:
-		move.w	($FFFFF646).w,y_pos(a0)
+		move.w	(Water_Level_1).w,y_pos(a0)
 		lea	(Ani_WaterSplash).l,a1
 		jsr	(AnimateSprite).l
 		jmp	(DisplaySprite).l
@@ -27454,8 +27448,8 @@ Lamppost_StoreInfo:			; CODE XREF: ROM:000135B6p
 		move.w	(Camera_BG2_Y_pos).w,($FFFFFE4A).w
 		move.w	(Camera_BG3_X_pos).w,($FFFFFE4C).w
 		move.w	(Camera_BG3_Y_pos).w,($FFFFFE4E).w
-		move.w	($FFFFF648).w,($FFFFFE50).w
-		move.b	($FFFFF64D).w,($FFFFFE52).w
+		move.w	(Water_Level_2).w,($FFFFFE50).w
+		move.b	(Water_routine).w,($FFFFFE52).w
 		move.b	(Water_fullscreen_flag).w,($FFFFFE53).w
 		rts
 ; End of function Lamppost_StoreInfo
@@ -27476,7 +27470,7 @@ Lamppost_LoadInfo:			; CODE XREF: LevelSizeLoad+180p
 		move.b	#$3B,($FFFFFE25).w ; ';'
 		subq.b	#1,($FFFFFE24).w
 		move.b	($FFFFFE3C).w,(Dynamic_Resize_Routine).w
-		move.b	($FFFFFE52).w,($FFFFF64D).w
+		move.b	($FFFFFE52).w,(Water_routine).w
 		move.w	($FFFFFE3E).w,(Camera_Max_Y_pos).w
 		move.w	($FFFFFE3E).w,(Camera_Max_Y_pos_target).w
 		move.w	($FFFFFE40).w,(Camera_X_pos).w
@@ -27489,8 +27483,8 @@ Lamppost_LoadInfo:			; CODE XREF: LevelSizeLoad+180p
 		move.w	($FFFFFE4E).w,(Camera_BG3_Y_pos).w
 		cmpi.b	#1,(Current_Zone).w
 		bne.s	loc_136F0
-		move.w	($FFFFFE50).w,($FFFFF648).w
-		move.b	($FFFFFE52).w,($FFFFF64D).w
+		move.w	($FFFFFE50).w,(Water_Level_2).w
+		move.b	($FFFFFE52).w,(Water_routine).w
 		move.b	($FFFFFE53).w,(Water_fullscreen_flag).w
 
 loc_136F0:				; CODE XREF: Lamppost_LoadInfo+84j
@@ -27786,7 +27780,7 @@ S1Obj64_Animate:			; DATA XREF: ROM:000139E0o
 
 S1Obj64_ChkWater:			; CODE XREF: ROM:00013A5Ej
 					; DATA XREF: ROM:000139E2o
-		move.w	($FFFFF646).w,d0
+		move.w	(Water_Level_1).w,d0
 		cmp.w	y_pos(a0),d0
 		bcs.s	loc_13A7E
 
@@ -27864,7 +27858,7 @@ S1Obj64_BblMaker:			; CODE XREF: ROM:00013A2Ej
 					; DATA XREF: ROM:000139E8o
 		tst.w	$36(a0)
 		bne.s	loc_13BA4
-		move.w	($FFFFF646).w,d0
+		move.w	(Water_Level_1).w,d0
 		cmp.w	y_pos(a0),d0
 		bcc.w	loc_13C50
 		tst.b	render_flags(a0)
@@ -27952,7 +27946,7 @@ loc_13C50:				; CODE XREF: ROM:00013B50j
 		sub.w	($FFFFF7DA).w,d0
 		cmpi.w	#$280,d0
 		bhi.w	DeleteObject
-		move.w	($FFFFF646).w,d0
+		move.w	(Water_Level_1).w,d0
 		cmp.w	y_pos(a0),d0
 		bcs.w	DisplaySprite
 		rts
@@ -28671,7 +28665,7 @@ loc_14532:				; DATA XREF: ROM:00014468o
 		movea.l	$38(a0),a1
 		move.b	#$12,mapping_frame(a0)
 		move.w	$34(a0),d0
-		move.w	($FFFFF646).w,d1
+		move.w	(Water_Level_1).w,d1
 		cmp.w	d0,d1
 		bcc.s	loc_1454A
 		move.w	d1,d0
@@ -29865,7 +29859,7 @@ Obj04_Init:				; DATA XREF: ROM:Obj04_Indexo
 		move.w	x_pos(a0),$30(a0)
 
 Obj04_Main:				; DATA XREF: ROM:000154E4o
-		move.w	($FFFFF646).w,d1
+		move.w	(Water_Level_1).w,d1
 		move.w	d1,y_pos(a0)
 		tst.b	$32(a0)
 		bne.s	loc_15530
@@ -29877,7 +29871,7 @@ Obj04_Main:				; DATA XREF: ROM:000154E4o
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_15530:				; CODE XREF: ROM:0001551Aj
-		tst.w	($FFFFF63A).w
+		tst.w	(Game_paused).w
 		bne.s	loc_15540
 		move.b	#0,$32(a0)
 		subq.b	#3,mapping_frame(a0)
@@ -30356,7 +30350,7 @@ loc_15C06:				; CODE XREF: ROM:00015BE8j
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_15C48:				; DATA XREF: ROM:00015B5Eo
-		move.w	#$390,($FFFFF646).w
+		move.w	#$390,(Water_Level_1).w
 		lea	(Ani_Obj52).l,a1
 		bsr.w	j_AnimateSprite_1
 		move.w	$3E(a0),d0
@@ -30365,7 +30359,7 @@ loc_15C48:				; DATA XREF: ROM:00015B5Eo
 		tst.l	$36(a0)
 		bpl.s	loc_15CA0
 		move.w	y_pos(a0),d0
-		cmp.w	($FFFFF646).w,d0
+		cmp.w	(Water_Level_1).w,d0
 		bgt.w	loc_15D90
 		move.b	#3,anim(a0)
 		bclr	#6,status(a0)
@@ -30381,7 +30375,7 @@ loc_15C48:				; DATA XREF: ROM:00015B5Eo
 
 loc_15CA0:				; CODE XREF: ROM:00015C68j
 		move.w	y_pos(a0),d0
-		cmp.w	($FFFFF646).w,d0
+		cmp.w	(Water_Level_1).w,d0
 		bgt.s	loc_15CB4
 		move.b	#1,anim(a0)
 		bra.w	loc_15D90
@@ -30674,7 +30668,7 @@ loc_15FDA:				; CODE XREF: ROM:00015F80j
 					; DATA XREF: ROM:00015F18o
 		lea	(Ani_Obj50).l,a1
 		bsr.w	j_AnimateSprite_3
-		move.w	#$39C,($FFFFF646).w
+		move.w	#$39C,(Water_Level_1).w
 		moveq	#0,d0
 		move.b	routine_secondary(a0),d0
 		move.w	Obj50_SubIndex(pc,d0.w),d1
@@ -30781,7 +30775,7 @@ locret_160F2:				; CODE XREF: sub_16078+16j
 
 sub_160F4:				; CODE XREF: ROM:00016072p
 		move.w	y_pos(a0),d0
-		cmp.w	($FFFFF646).w,d0
+		cmp.w	(Water_Level_1).w,d0
 		blt.s	locret_1611A
 		move.b	#2,routine_secondary(a0)
 		move.b	#0,anim(a0)
@@ -30868,7 +30862,7 @@ sub_161A6:				; CODE XREF: ROM:00016060p
 		move.w	y_pos(a0),d0
 		tst.b	$2C(a0)
 		bne.s	loc_161C4
-		cmp.w	($FFFFF646).w,d0
+		cmp.w	(Water_Level_1).w,d0
 		bgt.s	locret_161C2
 		subq.b	#2,routine_secondary(a0)
 		st	$2C(a0)
@@ -31185,7 +31179,7 @@ loc_1653E:				; DATA XREF: ROM:off_16532o
 loc_1659C:				; DATA XREF: ROM:00016534o
 		lea	Ani_Obj50(pc),a1
 		bsr.w	j_AnimateSprite_3
-		move.w	#$39C,($FFFFF646).w
+		move.w	#$39C,(Water_Level_1).w
 		moveq	#0,d0
 		move.b	routine_secondary(a0),d0
 		move.w	off_165BC(pc,d0.w),d1
@@ -35380,7 +35374,7 @@ loc_19C9A:				; CODE XREF: S1SS_ShowLayout+C6j
 		dbf	d6,loc_19C42
 		lea	$70(a0),a0
 		dbf	d7,loc_19C3E
-		move.b	d5,($FFFFF62C).w
+		move.b	d5,(Sprite_count).w
 		cmpi.b	#$50,d5	; 'P'
 		beq.s	loc_19CBA
 		move.l	#0,(a2)
@@ -37316,7 +37310,7 @@ loc_1B272:
 loc_1B286:
 		tst.b	($FFFFFE1E).w
 		beq.s	loc_1B2E2
-		tst.w	($FFFFF63A).w
+		tst.w	(Game_paused).w
 		bne.s	loc_1B2E2
 		lea	($FFFFFE22).w,a1
 		cmpi.l	#$93B3B,(a1)+	; if the timer has passed 9:59...
@@ -37393,7 +37387,7 @@ loc_1B340:				; CODE XREF: HudUpdate+FCj
 loc_1B354:				; CODE XREF: HudUpdate+FAj
 		move.l	#$5EC00003,d0
 		moveq	#0,d1
-		move.b	($FFFFF62C).w,d1
+		move.b	(Sprite_count).w,d1
 		bsr.w	HUD_Secs
 		tst.b	($FFFFFE1C).w
 		beq.s	loc_1B372

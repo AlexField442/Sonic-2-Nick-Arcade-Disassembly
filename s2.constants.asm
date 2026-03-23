@@ -293,26 +293,62 @@ Vscroll_Factor_P2_FG:		equ	__rs-4
 Vscroll_Factor_P2_BG:		equ	__rs-2
 				rs.b	2		; $FFFFF622-$FFFFF623 ; unused
 Hint_counter_reserve:		rs.w	1		; must contain a VDP command word, preferably a write to register $0A. Executed every V-INT.
+Palette_fade_range:		rs.w	1		; range affected by the palette fading routines
+Palette_fade_start:		equ	__rs-2		; offset from the start of the palette to tell what range of the palette will be affected in the palette fading routines
+Palette_fade_length:		equ	__rs-1		; number of entries to change in the palette fading routines
+
+MiscLevelVariables:		equ	__rs
+VIntSubE_RunCount:		rs.b	1		; only used by unused vertical interrupts
+				rs.b	1		; $FFFFF629 ; unused
+Vint_routine:			rs.b	1		; routine counter for V-int
+				rs.b	1		; $FFFFF62B ; unused
+Sprite_count:			rs.b	1		; the number of sprites drawn in the current frame
+				rs.b	5		; $FFFFF62D-$FFFFF631 ; unused
+PalCycle_Frame:			rs.w	1		; ColorID loaded in PalCycle
+PalCycle_Timer:			rs.w	1		; number of frames until next PalCycle call
+RNG_seed:			rs.l	1		; used for random number generation
+Game_paused:			rs.w	1
+				rs.b	4		; $FFFFF63C-$FFFFF63F ; unused
+DMA_data_thunk:			rs.w	1		; used as a RAM holder for the final DMA command word. Data will NOT be preserved across V-INTs, so consider this space reserved.
+				rs.w	1		; $FFFFF642-$FFFFF643 ; seems unused
+Hint_flag:			rs.w	1		; unless this is 1, H-int won't run
+
+Water_Level_1:			rs.w	1
+Water_Level_2:			rs.w	1
+Water_Level_3:			rs.w	1
+Water_on:			rs.b	1		; is set based on Water_flag
+Water_routine:			rs.b	1
+Water_fullscreen_flag:		rs.b	1		; was "Water_move"
+Do_Updates_in_H_int:		rs.b	1
+
+				rs.b	2		; $FFFFF650-$FFFFF651 ; unused
+PalCycle_Frame2:		rs.w	1
+PalCycle_Frame3:		rs.w	1
+				rs.b	$A		; $FFFFF656-$FFFFF65F ; unused
+
+unk_F660:			rs.w	1		; cleared once on the Sega screen, never used
+unk_F662:			rs.w	1		; cleared once on the Sega screen, never used
+				rs.b	$1C		; $FFFFF664-$FFFFF67F ; unused
+MiscLevelVariables_End:		equ	__rs
+
+Plc_Buffer:			rs.b	6*16		; Pattern load queue (each entry is 6 bytes)
+Plc_Buffer_Only_End:		equ	__rs
+
+Plc_PtrNemCode:			rs.l	1		; pointer for nemesis decompression code
+Plc_RepeatCount:		rs.l	1	
+Plc_PaletteIndex:		rs.l	1	
+Plc_PreviousRow:		rs.l	1	
+Plc_DataWord:			rs.l	1	
+Plc_ShiftValue:			rs.l	1	
+Plc_PatternsLeft:		rs.w	1		; amount of current entry remaining to decompress
+Plc_FramePatternsLeft:		rs.w	1	
+				rs.b	4		; unused, but makes up part of Plc_Buffer
+Plc_Buffer_End:
+
+Misc_Variables:			equ	__rs
+unk_F700:			rs.w	1
 		popo						; restore options
 
-Vint_routine:			equ $FFFFF62A
-DMA_data_thunk:			equ $FFFFF640
-Hint_flag:			equ $FFFFF644
-Water_fullscreen_flag:		equ $FFFFF64E
-Do_Updates_in_H_int:		equ $FFFFF64F
-
-Plc_Buffer:			equ $FFFFF680
-
-Plc_Buffer_Reg0:		equ $FFFFF6E0
-Plc_Buffer_Reg4:		equ $FFFFF6E4
-Plc_Buffer_Reg8:		equ $FFFFF6E8
-Plc_Buffer_RegC:		equ $FFFFF6EC
-Plc_Buffer_Reg10:		equ $FFFFF6F0
-Plc_Buffer_Reg14:		equ $FFFFF6F4
-Plc_Buffer_Reg18:		equ $FFFFF6F8
-Plc_Buffer_Reg1A:		equ $FFFFF6FA
-
-unk_F700:			equ $FFFFF700
 Tails_control_counter:		equ $FFFFF702
 unk_F706:			equ $FFFFF706
 Tails_CPU_routine:		equ $FFFFF708
