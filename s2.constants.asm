@@ -106,6 +106,9 @@ MusID_Boss:			equ ((MusPtr_Boss-MusicIndex)/4)+MusID__First		; $8C
 levelrowsize:		equ 128		; maximum width of a level layout in chunks
 levelrowcount:		equ 32		; maximum height of a level layout in chunks
 
+; PALETTES
+palette_line_size:	equ $10*2	; 16 word entries
+
 ; REDRAWING ROUTINES:
 ; This ia used by stages that employ a more advanced redraw routine, basing it
 ; off the various background positions other than just BG1; this is to stop tiles
@@ -441,20 +444,104 @@ Button_TriggerArray:		rs.b	$10		; 16 bytes flag array, #subtype byte set when bu
 Anim_Counters:			rs.b	$10
 Misc_Variables_End:		equ	__rs
 
-Sprite_Table:			rs.b	$280		; Sprite Attribute Table buffer
-				rs.b	$80		; unused, but SAT buffer can spill over into this area when there are too many sprites on-screen
+Sprite_Table:			rs.b	$200		; Sprite Attribute Table buffer
+							; actually $280 bytes, but the last $80 are overwritten by Underwater_target_palette
+
+Underwater_target_palette:		rs.b	palette_line_size	; this is used by the screen-fading subroutines.
+Underwater_target_palette_line2:	rs.b	palette_line_size	; while Underwater_palette contains the blacked-out palette caused by the fading,
+Underwater_target_palette_line3:	rs.b	palette_line_size	; Underwater_target_palette will contain the palette the screen will ultimately fade in to.
+Underwater_target_palette_line4:	rs.b	palette_line_size
+
+Underwater_palette:		rs.b	palette_line_size	; main palette for underwater parts of the screen
+Underwater_palette_line2:	rs.b	palette_line_size
+Underwater_palette_line3:	rs.b	palette_line_size
+Underwater_palette_line4:	rs.b	palette_line_size
+
+Normal_palette:			rs.b	palette_line_size	; main palette for non-underwater parts of the screen
+Normal_palette_line2:		rs.b	palette_line_size
+Normal_palette_line3:		rs.b	palette_line_size
+Normal_palette_line4:		rs.b	palette_line_size
+
+Target_palette:			rs.b	palette_line_size	; this is used by the screen-fading subroutines.
+Target_palette_line2:		rs.b	palette_line_size	; while Normal_palette contains the blacked-out palette caused by the fading,
+Target_palette_line3:		rs.b	palette_line_size	; Target_palette will contain the palette the screen will ultimately fade in to.
+Target_palette_line4:		rs.b	palette_line_size
+
+Object_Respawn_Table:		rs.w	1
+Obj_respawn_data:		rs.b	$BE
+Obj_respawn_data_End:		equ	__rs
+				rs.b	$140		; Stack; the first $BE bytes are cleared by ObjectsManager_Init, with possibly disastrous consequences. At least $A0 bytes are needed.
+System_Stack:			equ	__rs
+
+CrossResetRAM:			equ	__rs		; RAM in this region will not be cleared after a soft reset.
+				rs.w	1		; used by the 68000 to determine the stack location
+
+Level_Inactive_flag:		rs.w	1
+Level_frame_counter:		rs.w	1
+Debug_object:			rs.b	1
+				rs.b	1		; $FFFFFE07 ; unused
+Debug_placement_mode:		rs.w	1
+Debug_Accel_Timer:		rs.b	1
+Debug_Speed:			rs.b	1
+Vint_runcount:			rs.l	1
+
+Current_ZoneAndAct:		rs.w	1
+Current_Zone:			equ	__rs-2		; 1 byte
+Current_Act:			equ	__rs-1		; 1 byte
+Life_count:			rs.b	1
+				rs.b	1		; $FFFFFE13 ; unused
+Air_left:			rs.w	1
+Current_SpecialStage:		rs.b	1
+				rs.b	1		; $FFFFFE17 ; unused
+Continue_count:			rs.b	1
+				rs.b	1		; $FFFFFE19 ; unused
+Time_Over_flag:			rs.b	1
+Extra_life_flags:		rs.b	1
+
+; If set, the respective HUD element will be updated.
+Update_HUD_lives:		rs.b	1
+Update_HUD_rings:		rs.b	1
+Update_HUD_timer:		rs.b	1
+Update_HUD_score:		rs.b	1
+
+Ring_count:			rs.w	1
+Timer:				rs.l	1
+Timer_minute:			equ	__rs-3
+Timer_second:			equ	__rs-2
+Timer_frame:			equ	__rs-1
+Score:				rs.l	1
+				rs.b	2		; $FFFFFE2A-$FFFFFE2B ; unused
+Shield_flag:			rs.b	1
+Invincibility_flag:		rs.b	1
+Speedshoes_flag:		rs.b	1
+unk_FE2F:			rs.b	1		; cleared, never used
+
+Last_star_pole_hit:		rs.b	1
+Saved_Last_star_pole_hit:	rs.b	1
+Saved_x_pos:			rs.w	1
+Saved_y_pos:			rs.w	1
+Saved_Ring_count:		rs.w	1
+Saved_Timer:			rs.l	1
+Saved_Dynamic_Resize_Routine:	rs.b	1
+				rs.b	1	; $FFFFFE3D ; unused
+Saved_Camera_Max_Y_pos:		rs.w	1
+Saved_Camera_X_pos:		rs.w	1
+Saved_Camera_Y_pos:		rs.w	1
+Saved_Camera_BG_X_pos:		rs.w	1
+Saved_Camera_BG_Y_pos:		rs.w	1
+Saved_Camera_BG2_X_pos:		rs.w	1
+Saved_Camera_BG2_Y_pos:		rs.w	1
+Saved_Camera_BG3_X_pos:		rs.w	1
+Saved_Camera_BG3_Y_pos:		rs.w	1
+Saved_Water_Level:		rs.w	1
+Saved_Water_routine:		rs.b	1
+Saved_Water_move:		rs.b	1
+Saved_Extra_life_flags:		rs.b	1
+				rs.b	2	; $FFFFFE55-$FFFFFE56 ; unused
+
+Emerald_count:			rs.b	1
+Emeralds_array:			rs.b	6
 		popo						; restore options
-
-Debug_object:			equ $FFFFFE06
-Debug_placement_mode:		equ $FFFFFE08
-Debug_Accel_Timer:		equ $FFFFFE0A
-Debug_Speed:			equ $FFFFFE0B
-
-Vint_runcount:			equ $FFFFFE0C
-
-Current_ZoneAndAct:		equ $FFFFFE10
-Current_Zone:			equ $FFFFFE10
-Current_Act:			equ $FFFFFE11
 
 Two_player_mode:		equ $FFFFFFE8
 
