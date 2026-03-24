@@ -439,6 +439,7 @@ TailsTails_LastLoadedDPLC:	rs.b	1		; mapping frame number when Tails' tails last
 
 Button_TriggerArray:		rs.b	$10		; 16 bytes flag array, #subtype byte set when button/vine of respective subtype activated
 Anim_Counters:			rs.b	$10
+Misc_Variables_End:		equ	__rs
 
 Sprite_Table:			rs.b	$280		; Sprite Attribute Table buffer
 				rs.b	$80		; unused, but SAT buffer can spill over into this area when there are too many sprites on-screen

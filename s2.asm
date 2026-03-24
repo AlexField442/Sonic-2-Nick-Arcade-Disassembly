@@ -4033,7 +4033,7 @@ loc_3240:				; CODE XREF: ROM:00003242j
 		dbf	d1,loc_3240
 		lea	(Misc_Variables).w,a1
 		moveq	#0,d0
-		move.w	#$3F,d1	; '?'
+		move.w	#(Misc_Variables_End-Misc_Variables)/4-1,d1	; '?'
 
 loc_3250:				; CODE XREF: ROM:00003252j
 		move.l	d0,(a1)+
@@ -4774,7 +4774,7 @@ loc_3BE0:
 		dbf	d1,loc_3BE0
 		lea	(Misc_Variables).w,a1
 		moveq	#0,d0
-		move.w	#$3F,d1
+		move.w	#(Misc_Variables_End-Misc_Variables)/4-1,d1
 
 loc_3BF0:
 		move.l	d0,(a1)+
@@ -6139,7 +6139,7 @@ loc_509C:
 		dbf	d1,loc_509C
 		lea	(Misc_Variables).w,a1
 		moveq	#0,d0
-		move.w	#$3F,d1
+		move.w	#(Misc_Variables_End-Misc_Variables)/4-1,d1
 
 loc_50AC:
 		move.l	d0,(a1)+
