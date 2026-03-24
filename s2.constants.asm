@@ -347,41 +347,102 @@ Plc_Buffer_End:
 
 Misc_Variables:			equ	__rs
 unk_F700:			rs.w	1
+
+; extra variables for the second player (CPU)
+Tails_control_counter:		rs.w	1		; how long until the CPU takes control
+Tails_respawn_counter:		rs.w	1
+unk_F706:			rs.w	1
+Tails_CPU_routine:		rs.w	1
+				rs.b	6		; $FFFFF70A-$FFFFF70F ; unused
+
+Rings_manager_routine:		rs.b	1
+Level_started_flag:		rs.b	1
+Ring_start_addr:		rs.w	1
+Ring_end_addr:			rs.w	1
+Ring_start_addr_P2:		rs.w	1
+Ring_end_addr_P2:		rs.w	1
+				rs.b	6		; $FFFFF71A-$FFFFF71F ; unused
+
+Screen_redraw_flag:		rs.b	1		; if whole screen needs to redraw, used by unused CPZ scrolling routine
+CPZ_UnkScroll_Timer:		rs.b	1
+				rs.b	$E		; $FFFFF722-$FFFFF72F ; unused
+Water_flag:			rs.b	1
+				rs.b	$F		; $FFFFF731-$FFFFF73F ; unused
+Demo_button_index_2P:		rs.w	1		; index into button press demo data, for player 2
+Demo_press_counter_2P:		rs.b	1		; index into button press demo data, for player 2
+				rs.b	$1D		; $FFFFF743-$FFFFF75F ; unused
+
+Sonic_top_speed:		rs.w	1
+Sonic_acceleration:		rs.w	1
+Sonic_deceleration:		rs.w	1
+Sonic_LastLoadedDPLC:		rs.b	1		; mapping frame number when Sonic last had his tiles requested to be transferred from ROM to VRAM. can be set to a dummy value like -1 to force a refresh DMA.
+				rs.b	1		; $FFFFF767 ; unused
+Primary_Angle:			rs.b	1
+				rs.b	1		; $FFFFF769 ; unused
+Secondary_Angle:		rs.b	1
+				rs.b	1		; $FFFFF76B ; unused
+Obj_placement_routine:		rs.b	1
+				rs.b	1		; $FFFFF76D ; unused
+Camera_X_pos_last:		rs.w	1		; Camera_X_pos_coarse from the previous frame
+
+Obj_load_addr_right:		rs.l	1		; contains the address of the next object to load when moving right
+Obj_load_addr_left:		rs.l	1		; contains the address of the next object to load when moving left
+Obj_load_addr_right_P2:		rs.l	1
+Obj_load_addr_left_P2:		rs.l	1
+
+Object_RAM_block_indices:	rs.b	6		; seems to be an array of horizontal chunk positions, used for object position range checks
+SS_rotation_angle:		equ	__rs-6		; 2 bytes
+SS_rotation_speed:		equ	__rs-4		; 2 bytes
+Player_1_loaded_object_blocks:	rs.b	3
+Player_2_loaded_object_blocks:	rs.b	3
+
+Camera_X_pos_last_P2:		rs.w	1
+Obj_respawn_index_P2:		rs.w	1		; respawn table indices of the next objects when moving left or right for the second player
+
+Demo_button_index:		rs.w	1		; index into button press demo data, for player 1
+Demo_press_counter:		rs.b	1		; frames remaining until next button press, for player 1
+				rs.b	1		; $FFFFF793 ; unused
+PalChangeSpeed:			rs.w	1
+Collision_addr:			rs.l	1
+SS_palette_number:		rs.w	1		; current palette cycle in the Special Stage
+SS_palette_time:		rs.w	1		; stores time until next palette cycle
+SS_palette_index:		rs.w	1		; index into palette cycle 2, not sure if this is actually used
+SS_BGAnim:			rs.w	1		; current background animation in the Special Stage
+				rs.b	5		; $FFFFF7A2-$FFFFF7A6 ; unused
+Boss_defeated_flag:		rs.b	1
+				rs.b	2		; $FFFFF7A8-$FFFFF7A9 ; unused
+Lock_screen:			rs.b	1
+				rs.b	$12		; $FFFFF7AB-$FFFFF7BD ; unused
+BigRingGraphics:		rs.w	1
+				rs.b	7		; $FFFFF7C0-$FFFFF7C6 ; unused
+WindTunnel_flag:		rs.b	1
+Player_override_flag:		rs.b	1
+WindTunnel_holding_flag:	rs.b	1
+Sliding_flag:			rs.b	1
+				rs.b	1		; $FFFFF7CB ; unused
+Control_Locked:			rs.b	1
+EnterSS_flag:			rs.b	1
+				rs.b	2		; $FFFFF7CE-$FFFFF7CF ; unused
+Chain_Bonus_counter:		rs.w	1		; counts up when you destroy things that give points, resets when you touch the ground
+Bonus_Countdown_1:		rs.w	1		; level results time bonus
+Bonus_Countdown_2:		rs.w	1		; level results ring bonus
+Update_Bonus_score:		rs.b	1
+				rs.b	1		; $FFFFF7D7 ; unused
+
+Camera_X_pos_disposition:	rs.w	1		; this is used for the underwater ripple effect, removed from final
+Camera_X_pos_coarse:		rs.w	1		; (Camera_X_pos - 128) / 256
+Camera_X_pos_coarse_P2:		rs.w	1
+
+
+Tails_LastLoadedDPLC:		rs.b	1		; mapping frame number when Tails last had his tiles requested to be transferred from ROM to VRAM. can be set to a dummy value like -1 to force a refresh DMA.
+TailsTails_LastLoadedDPLC:	rs.b	1		; mapping frame number when Tails' tails last had their tiles requested to be transferred from ROM to VRAM. can be set to a dummy value like -1 to force a refresh DMA.
+
+Button_TriggerArray:		rs.b	$10		; 16 bytes flag array, #subtype byte set when button/vine of respective subtype activated
+Anim_Counters:			rs.b	$10
+
+Sprite_Table:			rs.b	$280		; Sprite Attribute Table buffer
+				rs.b	$80		; unused, but SAT buffer can spill over into this area when there are too many sprites on-screen
 		popo						; restore options
-
-Tails_control_counter:		equ $FFFFF702
-unk_F706:			equ $FFFFF706
-Tails_CPU_routine:		equ $FFFFF708
-
-Rings_manager_routine:		equ $FFFFF710
-Level_started_flag:		equ $FFFFF711
-Ring_start_addr:		equ $FFFFF712
-Ring_end_addr:			equ $FFFFF714
-Ring_start_addr_P2:		equ $FFFFF716
-Ring_end_addr_P2:		equ $FFFFF718
-
-Water_flag:			equ $FFFFF730
-
-Sonic_top_speed:		equ $FFFFF760
-Sonic_acceleration:		equ $FFFFF762
-Sonic_deceleration:		equ $FFFFF764
-Sonic_LastLoadedDPLC:		equ $FFFFF766
-
-Obj_placement_routine:		equ $FFFFF76C
-Camera_X_pos_last:		equ $FFFFF76E
-Obj_load_addr_right:		equ $FFFFF770
-Obj_load_addr_left:		equ $FFFFF774
-Obj_load_addr_2:		equ $FFFFF778
-Obj_load_addr_3:		equ $FFFFF77C
-
-Camera_X_pos_last_P2:		equ $FFFFF78C
-
-Tails_LastLoadedDPLC:		equ $FFFFF7DE
-TailsTails_LastLoadedDPLC:	equ $FFFFF7DF
-
-Anim_Counters:			equ $FFFFF7F0
-
-Sprite_Table:			equ $FFFFF800
 
 Debug_object:			equ $FFFFFE06
 Debug_placement_mode:		equ $FFFFFE08
