@@ -127,7 +127,9 @@ dynamic3:		equ 6
 		opt	ae+					; enable auto evens
 
 		rsset $FF0000|$FF000000
-				rs.b	$8000
+RAM_Start:			equ	__rs
+Chunk_Table:			rs.b	$8000
+Chunk_Table_End:
 
 Level_Layout:			rs.b	levelrowsize*levelrowcount	; level layout; each row is $80 bytes
 Level_Layout_End:		equ	__rs

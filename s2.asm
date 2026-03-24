@@ -67,7 +67,7 @@ Checksum:
 ; dword_1A4
 ROMEndLoc:
 		dc.l $7FFFF		; End address of ROM (leftover from Sonic 1)
-		dc.l $FF0000		; Start address of RAM
+		dc.l RAM_Start&$FFFFFF	; Start address of RAM
 		dc.l $FFFFFF		; End address of RAM
 		dc.l $20202020		; Backup RAM ID
 		dc.l $20202020		; Backup RAM start address
@@ -225,7 +225,7 @@ loc_350:
 		move.l	#'init',($FFFFFFFC).w
 
 GameInit:
-		lea	($FF0000).l,a6
+		lea	(RAM_Start&$FFFFFF).l,a6
 		moveq	#0,d7
 		move.w	#$3F7F,d6
 
@@ -3938,16 +3938,16 @@ SegaScreen:
 		move.l	#$40000000,(VDP_control_port).l
 		lea	(Nem_SegaLogo).l,a0
 		bsr.w	NemDec
-		lea	($FFFF0000).l,a1
+		lea	(Chunk_Table).l,a1
 		lea	(Eni_SegaLogo).l,a0
 		move.w	#0,d0
 		bsr.w	EniDec
-		lea	($FFFF0000).l,a1
+		lea	(Chunk_Table).l,a1
 		move.l	#$65100003,d0
 		moveq	#$17,d1
 		moveq	#7,d2
 		bsr.w	PlaneMapToVRAM_H40
-		lea	($FFFF0180).l,a1
+		lea	(Chunk_Table+$180).l,a1
 		move.l	#$40000003,d0
 		moveq	#$27,d1
 		moveq	#$1B,d2
@@ -3955,7 +3955,7 @@ SegaScreen:
 		tst.b	($FFFFFFF8).w	; is console Japanese?
 		bmi.s	loc_316A	; if not, branch
 		; hide 'TM' symbol
-		lea	($FFFF0A40).l,a1
+		lea	(Chunk_Table+$A40).l,a1
 		move.l	#$453A0003,d0
 		moveq	#2,d1
 		moveq	#1,d2
@@ -4079,31 +4079,31 @@ loc_32C4:				; CODE XREF: ROM:000032C6j
 		move.w	#0,(PalCycle_Timer).w
 		bsr.w	Pal_FadeToBlack
 		move	#$2700,sr
-		lea	($FFFF0000).l,a1
+		lea	(Chunk_Table).l,a1
 		lea	(Eni_TitleMap).l,a0
 		move.w	#0,d0
 		bsr.w	EniDec
-		lea	($FFFF0000).l,a1
+		lea	(Chunk_Table).l,a1
 		move.l	#$40000003,d0
 		moveq	#$27,d1	; '''
 		moveq	#$1B,d2
 		bsr.w	PlaneMapToVRAM_H40
-		lea	($FFFF0000).l,a1
+		lea	(Chunk_Table).l,a1
 		lea	(Eni_TitleBg1).l,a0
 		move.w	#0,d0
 
 loc_3330:
 		bsr.w	EniDec
-		lea	($FFFF0000).l,a1
+		lea	(Chunk_Table).l,a1
 		move.l	#$60000003,d0
 		moveq	#$1F,d1
 		moveq	#$1B,d2
 		bsr.w	PlaneMapToVRAM_H40
-		lea	($FFFF0000).l,a1
+		lea	(Chunk_Table).l,a1
 		lea	(Eni_TitleBg2).l,a0
 		move.w	#0,d0
 		bsr.w	EniDec
-		lea	($FFFF0000).l,a1
+		lea	(Chunk_Table).l,a1
 		move.l	#$60400003,d0
 		moveq	#$1F,d1
 		moveq	#$1B,d2
@@ -4581,7 +4581,7 @@ LevelSelect_Text:	incbin	"mappings/misc/Level select text.bin"
 ; fly and works without needing extended RAM.
 ; UnknownSub_1:
 ConvertChunkFlags:
-		lea	($FFFF0000).l,a1
+		lea	(Chunk_Table).l,a1
 		move.w	#$2EC-1,d2
 ; loc_3A3A:
 .loopPerBlock:
@@ -4599,7 +4599,7 @@ ConvertChunkFlags:
 UnknownSub_2:
 		lea	(ConvertedChunksLoc).l,a1
 		lea	(ConvertedChunksLoc+8*8*2).l,a2
-		lea	($FFFF0000).l,a3
+		lea	(Chunk_Table).l,a3
 		move.w	#$3F,d1	; '?'
 
 loc_3A68:				; CODE XREF: ROM:00003A70j
@@ -4607,7 +4607,7 @@ loc_3A68:				; CODE XREF: ROM:00003A70j
 		bsr.w	UnknownSub_4
 		dbf	d1,loc_3A68
 		lea	(ConvertedChunksLoc).l,a1
-		lea	($00FF0000).l,a2
+		lea	(Chunk_Table&$FFFFFF).l,a2
 		move.w	#$3F,d1	; '?'
 
 loc_3A84:				; CODE XREF: ROM:00003A88j
@@ -4623,7 +4623,7 @@ loc_3A90:				; CODE XREF: ROM:00003A92j
 
 UnknownSub_3:
 		lea	(ConvertedChunksLoc).l,a1
-		lea	($FFFF0000).l,a3
+		lea	(Chunk_Table).l,a3
 		moveq	#$1F,d0
 
 loc_3AA6:				; CODE XREF: ROM:00003AA8j
@@ -4635,7 +4635,7 @@ loc_3AA6:				; CODE XREF: ROM:00003AA8j
 
 loc_3AB8:				; CODE XREF: ROM:00003AD8j
 					; ROM:00003AF4j
-		lea	($FFFF0000).l,a3
+		lea	(Chunk_Table).l,a3
 		move.w	d7,d6
 
 loc_3AC0:				; CODE XREF: ROM:00003AE6j
@@ -6307,11 +6307,11 @@ loc_52DC:				; CODE XREF: ROM:000051B4j
 
 
 S1_SSBGLoad:				; CODE XREF: ROM:00005088p
-		lea	($FFFF0000).l,a1
+		lea	(Chunk_Table).l,a1
 		move.w	#$4051,d0
 		bsr.w	EniDec
 		move.l	#$50000001,d3
-		lea	($FFFF0080).l,a2
+		lea	(Chunk_Table+$80).l,a2
 		moveq	#6,d7
 
 loc_5302:				; CODE XREF: S1_SSBGLoad+7Ej
@@ -6332,7 +6332,7 @@ loc_5312:				; CODE XREF: S1_SSBGLoad+56j
 		bne.s	loc_5326
 		cmpi.w	#6,d7
 		bne.s	loc_5336
-		lea	($FFFF0000).l,a1
+		lea	(Chunk_Table).l,a1
 
 loc_5326:				; CODE XREF: S1_SSBGLoad+32j
 		movem.l	d0-d4,-(sp)
@@ -6356,15 +6356,15 @@ loc_5336:				; CODE XREF: S1_SSBGLoad+38j
 loc_5360:				; CODE XREF: S1_SSBGLoad+6Ej
 		adda.w	#$80,a2	; '€'
 		dbf	d7,loc_5302
-		lea	($FFFF0000).l,a1
+		lea	(Chunk_Table).l,a1
 		move.w	#$4000,d0
 		bsr.w	EniDec
-		lea	($FFFF0000).l,a1
+		lea	(Chunk_Table).l,a1
 		move.l	#$40000003,d0
 		moveq	#$3F,d1	; '?'
 		moveq	#$1F,d2
 		bsr.w	PlaneMapToVRAM_H40
-		lea	($FFFF0000).l,a1
+		lea	(Chunk_Table).l,a1
 		move.l	#$50000003,d0
 		moveq	#$3F,d1	; '?'
 		moveq	#$3F,d2	; '?'
@@ -9676,7 +9676,7 @@ loc_72C2:
 		moveq	#0,d2
 		move.w	(a0)+,d0
 		lea	(a0,d0.w),a1
-		lea	($FFFF0000).l,a2
+		lea	(Chunk_Table).l,a2
 		lea	(Level_Layout).w,a3
 ; loc_732C:
 .chameleonChunks:
@@ -9689,8 +9689,8 @@ loc_72C2:
 ; loc_7338:
 .uncompressedChunks:
 	endif
-		lea	($FFFF0000).l,a1
-		move.w	#$3FFF,d0
+		lea	(Chunk_Table).l,a1
+		move.w	#(Chunk_Table_End-Chunk_Table)/4-1,d0
 ; loc_7342:
 .uncompressedLoop3:
 		move.w	(a0)+,(a1)+
@@ -9859,7 +9859,7 @@ loc_7456:
 LevelLayout_Convert:			; leftover level layout	converting function (from raw to the way it's stored in the game)
 		lea	($FE0000).l,a1
 		lea	($FE0080).l,a2
-		lea	($FFFF0000).l,a3
+		lea	(Chunk_Table).l,a3
 		move.w	#$3F,d1	; '?'
 
 loc_747A:				; CODE XREF: ROM:00007482j
@@ -9867,7 +9867,7 @@ loc_747A:				; CODE XREF: ROM:00007482j
 		bsr.w	sub_750C
 		dbf	d1,loc_747A
 		lea	($FE0000).l,a1
-		lea	($FF0000).l,a2
+		lea	(Chunk_Table).l,a2
 		move.w	#$3F,d1	; '?'
 
 loc_7496:				; CODE XREF: ROM:0000749Aj
@@ -9881,7 +9881,7 @@ loc_74A2:				; CODE XREF: ROM:000074A4j
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		lea	($FE0000).l,a1
-		lea	($FFFF0000).l,a3
+		lea	(Chunk_Table).l,a3
 		moveq	#$1F,d0
 
 loc_74B8:				; CODE XREF: ROM:000074BAj
@@ -9893,7 +9893,7 @@ loc_74B8:				; CODE XREF: ROM:000074BAj
 
 loc_74CA:				; CODE XREF: ROM:000074EAj
 					; ROM:00007506j
-		lea	($FFFF0000).l,a3
+		lea	(Chunk_Table).l,a3
 		move.w	d7,d6
 
 loc_74D2:				; CODE XREF: ROM:000074F8j
@@ -35325,7 +35325,7 @@ loc_19BF2:				; CODE XREF: S1SS_ShowLayout+82j
 		addi.w	#$18,d3
 		dbf	d7,loc_19BD0
 		move.w	(sp)+,d5
-		lea	($FFFF0000).l,a0
+		lea	(Chunk_Table).l,a0
 		moveq	#0,d0
 		move.w	(Camera_Y_pos).w,d0
 		divu.w	#$18,d0
@@ -35753,7 +35753,7 @@ loc_1A0E8:				; CODE XREF: S1SS_Load+1Ej
 		lea	($FFFF4000).l,a1
 		move.w	#0,d0
 		jsr	(EniDec).l
-		lea	($FFFF0000).l,a1
+		lea	(Chunk_Table).l,a1
 		move.w	#$FFF,d0
 
 loc_1A114:				; CODE XREF: S1SS_Load+68j
@@ -36401,7 +36401,7 @@ loc_1A70C:				; CODE XREF: Obj09_Fall+60j
 
 sub_1A720:				; CODE XREF: Obj09_Move+78p
 					; Obj09_Fall+34p ...
-		lea	($FFFF0000).l,a1
+		lea	(Chunk_Table).l,a1
 		moveq	#0,d4
 		swap	d2
 		move.w	d2,d4
@@ -36462,7 +36462,7 @@ loc_1A77E:				; CODE XREF: sub_1A768+Cj
 
 
 Obj09_ChkItems:				; CODE XREF: ROM:Obj09_Displayp
-		lea	($FFFF0000).l,a1
+		lea	(Chunk_Table).l,a1
 		moveq	#0,d4
 		move.w	y_pos(a0),d4
 		addi.w	#$50,d4	; 'P'
@@ -37049,9 +37049,9 @@ ShiftCPZBackground:
 		bpl.s	.endEffect
 		move.b	#7,(CPZ_UnkScroll_Timer).w
 		move.b	#1,(Screen_redraw_flag).w
-		lea	($FFFF0000+($EA*$80)).l,a1
+		lea	(Chunk_Table+($EA*$80)).l,a1
 		bsr.s	sub_1AC58
-		lea	($FFFF0000+($FA*$80)).l,a1
+		lea	(Chunk_Table+($FA*$80)).l,a1
 
 sub_1AC58:
 		move.w	#8-1,d1
