@@ -30,6 +30,7 @@ status:			equ $22			; note: exact meaning depends on the object... for Sonic/Tai
 routine:		equ $24
 routine_secondary:	equ $25
 angle:			equ $26			; angle about the z axis (360 degrees = 256)
+subtype:		equ $28
 
 x_pixel:		equ x_pos		; and 1+x_pos ; x coordinate for objects using screen-space coordinate system
 y_pixel:		equ 2+x_pos		; and 3+x_pos ; y coordinate for objects using screen-space coordinate system

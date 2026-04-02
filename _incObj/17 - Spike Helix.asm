@@ -32,7 +32,7 @@ SpikeHelix_Init:
 		move.w	y_pos(a0),d2
 		move.w	x_pos(a0),d3
 		move.b	id(a0),d4
-		lea	$28(a0),a2
+		lea	subtype(a0),a2
 		moveq	#0,d1
 		move.b	(a2),d1			; move helix length to d1
 		move.b	#0,(a2)+
@@ -47,7 +47,7 @@ SpikeHelix_Init:
 SpikeHelix_MakeHelix:
 		bsr.w	AllocateObjectAfterCurrent
 		bne.s	SpikeHelix_Main
-		addq.b	#1,$28(a0)
+		addq.b	#1,subtype(a0)
 		move.w	a1,d5
 		subi.w	#Object_RAM,d5
 		lsr.w	#6,d5
@@ -74,7 +74,7 @@ SpikeHelix_MakeHelix:
 		addq.b	#1,d6
 		andi.b	#7,d6
 		addi.w	#$10,d3
-		addq.b	#1,$28(a0)
+		addq.b	#1,subtype(a0)
 
 loc_8746:
 		dbf	d1,SpikeHelix_MakeHelix	; repeat d1 times (helix length)
@@ -91,7 +91,7 @@ SpikeHelix_Main:
 ; loc_8766:
 SpikeHelix_DeleteAll:
 		moveq	#0,d2
-		lea	$28(a0),a2
+		lea	subtype(a0),a2
 		move.b	(a2)+,d2		; d2 = helix length
 		subq.b	#2,d2
 		bcs.s	SpikeHelix_Delete
