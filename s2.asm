@@ -13,10 +13,6 @@
 
 	include	"s2.constants.asm"
 
-convertGHZ = 0
-; This converts Green Hill's data to be compatible with the regular Nick Arcade
-; level format, allowing it to be edited in SonLVL
-
 ; ---------------------------------------------------------------------------
 ; Macros
 align macro
@@ -6635,6 +6631,9 @@ LevelSizeArray:
 		dc.w	 0,  $3FFF,     0,	$720		; CPZ4
 		dc.w	 0,  $29A0,     0,	$320		; EHZ1
 		dc.w	 0,  $2940,     0,	$420		; EHZ2
+		; This level size fits perfectly with Hill Top, implying that
+		; it used to occupy Emerald Hill 3 and 4 before overwriting
+		; Sonic 1's Scrap Brain Zone
 		dc.w	 0,  $25C0,     0,	$720		; EHZ3
 		dc.w	 0,  $3FFF,     0,	$720		; EHZ4
 		dc.w	 0,  $3FFF,     0,	$720		; HPZ1
@@ -9662,7 +9661,6 @@ loc_72C2:
 ; loc_72F4:
 .loadChunks:
 		movea.l	(a2)+,a0
-	if convertGHZ=0
 		cmpi.b	#2,(Current_Zone).w
 		beq.s	.uncompressedChunks
 		cmpi.b	#3,(Current_Zone).w
@@ -9688,7 +9686,6 @@ loc_72C2:
 ; ---------------------------------------------------------------------------
 ; loc_7338:
 .uncompressedChunks:
-	endif
 		lea	(Chunk_Table).l,a1
 		move.w	#(Chunk_Table_End-Chunk_Table)/4-1,d0
 ; loc_7342:
@@ -9756,10 +9753,8 @@ loc_738E:
 		moveq	#2,d1
 
 LevelLayoutLoad2:
-	if convertGHZ=0
 		tst.b	(Current_Zone).w
 		beq.s	LevelLayoutLoad_GHZ
-	endif
 		move.w	(Current_ZoneAndAct).w,d0
 		lsl.b	#6,d0
 		lsr.w	#5,d0
@@ -9867,7 +9862,7 @@ loc_747A:				; CODE XREF: ROM:00007482j
 		bsr.w	sub_750C
 		dbf	d1,loc_747A
 		lea	($FE0000).l,a1
-		lea	(Chunk_Table).l,a2
+		lea	(Chunk_Table&$FFFFFF).l,a2
 		move.w	#$3F,d1	; '?'
 
 loc_7496:				; CODE XREF: ROM:0000749Aj
@@ -40015,7 +40010,6 @@ Level_Index:	dc.w Level_GHZ1-Level_Index,Level_GHZBg-Level_Index,Level_Null-Leve
 		dc.w Level_CPZ1-Level_Index,Level_CPZBg-Level_Index,Level_Null-Level_Index
 		dc.w Level_CPZ1-Level_Index,Level_CPZBg-Level_Index,Level_Null-Level_Index
 
-	if convertGHZ=0
 Level_GHZ1:	incbin	"level/layout/GHZ_1.bin"
 		even
 Level_GHZ2:	incbin	"level/layout/GHZ_2.bin"
@@ -40024,16 +40018,6 @@ Level_GHZ3:	incbin	"level/layout/GHZ_3.bin"
 		even
 Level_GHZBg:	incbin	"level/layout/GHZ_BG.bin"
 		even
-	else
-Level_GHZ1:	incbin	"level/layout/GHZ_1_converted.bin"
-		even
-Level_GHZ2:	incbin	"level/layout/GHZ_2_converted.bin"
-		even
-Level_GHZ3:	incbin	"level/layout/GHZ_3_converted.bin"
-		even
-Level_GHZBg:	incbin	"level/layout/GHZ_BG_converted.bin"
-		even
-	endif
 Level_EHZ1:	incbin	"level/layout/EHZ_1.bin"
 		even
 Level_EHZ2:	incbin	"level/layout/EHZ_2.bin"
@@ -41998,15 +41982,10 @@ Nem_GHZ:	incbin	"art/nemesis/GHZ primary.bin"
 		even
 Nem_GHZ2:	incbin	"art/nemesis/GHZ secondary.bin"
 		even
-Map128_GHZ:
-	if convertGHZ=0
-		incbin	"mappings/128x128/GHZ.bin"
+Map128_GHZ:	incbin	"mappings/128x128/GHZ.bin"
 		even
 		dc.b	$7F,  0, $B,$FA,  0,  0,  0,  0		; duplicate ending to Green Hill's chunk data
-	else
-		incbin	"mappings/128x128/GHZ_uncompressed.bin"
-		even
-	endif
+
 ; Remaining Sonic 1 leftovers
 S1Nem_TryAgain:	incbin	"art/nemesis/Remnant of TRY AGAIN text from Sonic 1.bin"
 		even
