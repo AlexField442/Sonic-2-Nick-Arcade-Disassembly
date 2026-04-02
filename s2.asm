@@ -40024,6 +40024,8 @@ Level_EHZ2:	incbin	"level/layout/EHZ_2.bin"
 		even
 Level_EHZBg:	incbin	"level/layout/EHZ_BG.bin"
 		even
+; Hill Top's level-specific data is grouped with Emerald Hill, again,
+; likely since it used to be EHZ3/4 before overwriting SBZ.
 Level_HTZ1:	incbin	"level/layout/HTZ_1.bin"
 		even
 Level_HTZ2:	incbin	"level/layout/HTZ_2.bin"
