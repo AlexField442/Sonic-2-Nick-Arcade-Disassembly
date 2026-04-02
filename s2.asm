@@ -8131,7 +8131,7 @@ DynResize_EHZ2_01:			; DATA XREF: ROM:DynResize_EHZ2_Indexo
 		bsr.w	AllocateObject
 		bne.s	loc_7946
 		move.b	#$55,(a1) ; 'U'
-		move.b	#$81,$28(a1)
+		move.b	#$81,subtype(a1)
 		move.w	#$29D0,x_pos(a1)
 		move.w	#$426,y_pos(a1)
 
@@ -8520,7 +8520,7 @@ Bridge_Init:
 		move.w	y_pos(a0),d2
 		move.w	d2,$3C(a0)
 		move.w	x_pos(a0),d3
-		lea	$28(a0),a2		; copy bridge subtype to a2
+		lea	subtype(a0),a2		; copy bridge subtype to a2
 		moveq	#0,d1
 		move.b	(a2),d1			; d1 = subtype
 		move.w	d1,d0
@@ -8530,7 +8530,7 @@ Bridge_Init:
 		swap	d1			; store subtype in high word for later
 		move.w	#8,d1
 		bsr.s	Bridge_MakeSegments
-		move.w	$28(a1),d0
+		move.w	subtype(a1),d0
 		subq.w	#8,d0
 		move.w	d0,x_pos(a1)		; center of first subsprite object
 		move.l	a1,bridge_child1(a0)	; pointer to first subsprite object
@@ -8620,7 +8620,7 @@ loc_7D06:
 
 loc_7D0A:
 		moveq	#0,d1
-		move.b	$28(a0),d1
+		move.b	subtype(a0),d1
 		lsl.w	#3,d1
 		move.w	d1,d2
 		addq.w	#8,d1
@@ -8648,7 +8648,7 @@ Bridge_DeleteChild:
 		; delete first subsprite object
 		movea.l	bridge_child1(a0),a1	; a1=object
 		bsr.w	DeleteObject2
-		cmpi.b	#8,$28(a0)		; does this bridge have more than 8 logs?
+		cmpi.b	#8,subtype(a0)		; does this bridge have more than 8 logs?
 		bls.s	Bridge_Delete		; if not, branch
 		; delete second subsprite object
 		movea.l	bridge_child2(a0),a1	; a1=object
@@ -8696,7 +8696,7 @@ loc_7D9C:
 
 loc_7DA0:
 		moveq	#0,d1
-		move.b	$28(a0),d1
+		move.b	subtype(a0),d1
 		lsl.w	#3,d1
 		move.w	d1,d2
 		addq.w	#8,d1
@@ -8835,7 +8835,7 @@ loc_7ECE:
 		lea	$45(a1),a2
 		lea	$15(a1),a1
 		moveq	#0,d1
-		move.b	$28(a0),d1
+		move.b	subtype(a0),d1
 		subq.b	#1,d1
 		moveq	#0,d5
 
@@ -8907,7 +8907,7 @@ Bridge_Depress:
 		move.w	d0,d4
 		lea	(Obj11_BendData2).l,a4
 		moveq	#0,d0
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		lsl.w	#4,d0
 		moveq	#0,d3
 		move.b	$3F(a0),d3
@@ -8945,7 +8945,7 @@ loc_7F7A:
 loc_7F9A:
 		dbf	d2,loc_7F7A
 		moveq	#0,d0
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		moveq	#0,d3
 		move.b	$3F(a0),d3
 		addq.b	#1,d3
@@ -9078,7 +9078,7 @@ loc_8284:				; CODE XREF: ROM:0000825Ej
 		bsr.w	Adjust2PArtPointer
 		move.b	#$20,width_pixels(a0) ; ' '
 		move.b	#$10,y_radius(a0)
-		lea	$28(a0),a2
+		lea	subtype(a0),a2
 		move.b	(a2),d0
 		lsl.w	#4,d0
 		move.b	d0,$3C(a0)
@@ -9089,7 +9089,7 @@ loc_8284:				; CODE XREF: ROM:0000825Ej
 loc_82BE:				; CODE XREF: ROM:0000828Aj
 		move.b	id(a0),d4
 		moveq	#0,d1
-		lea	$28(a0),a2
+		lea	subtype(a0),a2
 		move.b	(a2),d1
 		move.w	d1,-(sp)
 		andi.w	#$F,d1
@@ -9108,7 +9108,7 @@ loc_82F0:				; CODE XREF: ROM:000082E8j
 					; ROM:loc_8358j
 		bsr.w	AllocateObjectAfterCurrent
 		bne.s	loc_835C
-		addq.b	#1,$28(a0)
+		addq.b	#1,subtype(a0)
 		move.w	a1,d5
 		subi.w	#Object_RAM,d5
 		lsr.w	#6,d5
@@ -9219,7 +9219,7 @@ loc_842E:				; CODE XREF: ROM:0001921Ap
 		bsr.w	CalcSine
 		move.w	$38(a0),d2
 		move.w	$3A(a0),d3
-		lea	$28(a0),a2
+		lea	subtype(a0),a2
 		moveq	#0,d6
 		move.b	(a2)+,d6
 
@@ -9259,7 +9259,7 @@ loc_8472:				; CODE XREF: sub_83D2:loc_83E6j
 		add.w	d3,d5
 		move.w	d4,y_pos(a0)
 		move.w	d5,x_pos(a0)
-		lea	$28(a0),a2
+		lea	subtype(a0),a2
 		moveq	#0,d6
 		move.b	(a2)+,d6
 		adda.w	d6,a2
@@ -9313,7 +9313,7 @@ loc_84EE:				; CODE XREF: ROM:000083C6j
 
 loc_8506:				; CODE XREF: ROM:000084FEj
 		moveq	#0,d2
-		lea	$28(a0),a2
+		lea	subtype(a0),a2
 		move.b	(a2)+,d2
 
 loc_850E:				; CODE XREF: ROM:00008520j
@@ -9423,7 +9423,7 @@ Obj18_Conf:	dc.w $2000
 loc_882C:				; DATA XREF: ROM:Obj18_Indexo
 		addq.b	#2,routine(a0)
 		moveq	#0,d0
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		lsr.w	#3,d0
 		andi.w	#$1E,d0
 		lea	Obj18_Conf(pc,d0.w),a2
@@ -9448,7 +9448,7 @@ loc_8874:				; CODE XREF: ROM:00008864j
 		move.w	y_pos(a0),$34(a0)
 		move.w	x_pos(a0),$32(a0)
 		move.w	#$80,angle(a0) ; '€'
-		andi.b	#$F,$28(a0)
+		andi.b	#$F,subtype(a0)
 
 loc_88A2:				; DATA XREF: ROM:0000881Co
 		move.b	status(a0),d0
@@ -9523,7 +9523,7 @@ sub_890C:				; CODE XREF: ROM:000088CCp
 sub_8926:				; CODE XREF: ROM:000088C8p
 					; ROM:loc_88E0p
 		moveq	#0,d0
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		andi.w	#$F,d0
 		add.w	d0,d0
 		move.w	off_893A(pc,d0.w),d1
@@ -9625,7 +9625,7 @@ loc_89DC:				; CODE XREF: ROM:000089CAj
 		subq.w	#1,$3A(a0)
 		bne.s	locret_89DA
 		move.w	#$20,$3A(a0) ; ' '
-		addq.b	#1,$28(a0)
+		addq.b	#1,subtype(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -9671,7 +9671,7 @@ loc_8A5C:				; DATA XREF: ROM:00008948o
 		bne.s	loc_8A7C
 		lea	(Button_TriggerArray).w,a2
 		moveq	#0,d0
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		lsr.w	#4,d0
 		tst.b	(a2,d0.w)
 		beq.s	locret_8A7A
@@ -9685,7 +9685,7 @@ locret_8A7A:				; CODE XREF: ROM:00008A72j
 loc_8A7C:				; CODE XREF: ROM:00008A60j
 		subq.w	#1,$3A(a0)
 		bne.s	locret_8A7A
-		addq.b	#1,$28(a0)
+		addq.b	#1,subtype(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -9695,7 +9695,7 @@ loc_8A88:				; DATA XREF: ROM:0000894Ao
 		subi.w	#$200,d0
 		cmp.w	$2C(a0),d0
 		bne.s	locret_8A9E
-		clr.b	$28(a0)
+		clr.b	subtype(a0)
 
 locret_8A9E:				; CODE XREF: ROM:00008A98j
 		rts
@@ -9797,7 +9797,7 @@ loc_8C58:				; DATA XREF: ROM:Obj1A_Indexo
 		ori.b	#4,render_flags(a0)
 		move.b	#4,priority(a0)
 		move.b	#7,$38(a0)
-		move.b	$28(a0),mapping_frame(a0)
+		move.b	subtype(a0),mapping_frame(a0)
 		cmpi.b	#4,(Current_Zone).w
 		bne.s	loc_8CB0
 		move.l	#Map_Obj1A_HPZ,mappings(a0)
@@ -9988,7 +9988,7 @@ loc_8E2E:				; CODE XREF: ROM:00008DEEj
 
 loc_8E3E:				; CODE XREF: ROM:00008DBEj
 		lea	(byte_8F17).l,a4
-		btst	#0,$28(a0)
+		btst	#0,subtype(a0)
 		beq.s	loc_8E52
 		lea	(byte_8F1F).l,a4
 
@@ -10275,7 +10275,7 @@ Obj1C_Conf:	dc.l Map_obj11_HPZ
 
 loc_93F4:				; DATA XREF: ROM:Obj1C_Indexo
 		addq.b	#2,routine(a0)
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		andi.w	#$F,d0
 		mulu.w	#$A,d0
 		lea	Obj1C_Conf(pc,d0.w),a1
@@ -10287,7 +10287,7 @@ loc_93F4:				; DATA XREF: ROM:Obj1C_Indexo
 		move.b	(a1)+,width_pixels(a0)
 		move.b	(a1)+,priority(a0)
 		move.b	(a1)+,$20(a0)
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		andi.w	#$F0,d0	; 'ğ'
 		beq.s	loc_9442
 		addq.b	#2,routine(a0)
@@ -10533,7 +10533,7 @@ loc_96E4:				; CODE XREF: ROM:000096D8j
 loc_971E:				; CODE XREF: ROM:00009716j
 		add.w	d0,x_pos(a1)
 		addi.w	#$C,y_pos(a1)
-		move.b	$28(a0),$28(a1)
+		move.b	subtype(a0),subtype(a1)
 
 loc_972E:				; CODE XREF: ROM:000096EEj
 		bra.s	loc_96E0
@@ -10565,7 +10565,7 @@ loc_9742:				; DATA XREF: ROM:S1Obj20_Indexo
 		move.b	#$87,$20(a0)
 		move.b	#8,width_pixels(a0)
 		moveq	#0,d0
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		mulu.w	#$3C,d0	; '<'
 		move.w	d0,$30(a0)
 		move.b	#4,mapping_frame(a0)
@@ -10875,10 +10875,10 @@ word_9B7C:	dc.w  $5A5, $5A5, $5A5,	$553, $553, $573, $573,	$585, $593, $565, $5B
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_9B92:				; DATA XREF: ROM:off_9AB6o
-		tst.b	$28(a0)
+		tst.b	subtype(a0)
 		beq.w	loc_9C00
 		moveq	#0,d0
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		add.w	d0,d0
 		move.b	d0,routine(a0)
 		subi.w	#$14,d0
@@ -10997,7 +10997,7 @@ loc_9D12:				; CODE XREF: ROM:00009E60j
 
 loc_9D3C:				; CODE XREF: ROM:00009D20j
 					; ROM:00009D30j
-		tst.b	$28(a0)
+		tst.b	subtype(a0)
 		bne.s	loc_9DB2
 		tst.b	render_flags(a0)
 		bpl.w	DeleteObject
@@ -11015,9 +11015,9 @@ loc_9D4E:				; CODE XREF: ROM:00009E06j
 		bpl.s	loc_9D8A
 		add.w	d1,y_pos(a0)
 		move.w	$34(a0),y_vel(a0)
-		tst.b	$28(a0)
+		tst.b	subtype(a0)
 		beq.s	loc_9D8A
-		cmpi.b	#$A,$28(a0)
+		cmpi.b	#$A,subtype(a0)
 		beq.s	loc_9D8A
 		neg.w	x_vel(a0)
 		bchg	#0,render_flags(a0)
@@ -11031,7 +11031,7 @@ loc_9D8A:				; CODE XREF: ROM:00009D5Cj
 		andi.b	#1,mapping_frame(a0)
 
 loc_9DA0:				; CODE XREF: ROM:00009D8Ej
-		tst.b	$28(a0)
+		tst.b	subtype(a0)
 		bne.s	loc_9DB2
 		tst.b	render_flags(a0)
 		bpl.w	DeleteObject
@@ -11722,7 +11722,7 @@ Obj23_Init:
 		move.b	#3,priority(a0)
 		move.b	#8,width_pixels(a0)
 		andi.b	#3,status(a0)
-		tst.b	$28(a0)		; was the object created by a Newtron?
+		tst.b	subtype(a0)	; was the object created by a Newtron?
 		beq.s	Obj23_Animate	; if not, branch
 
 		move.b	#8,routine(a0)
@@ -12348,7 +12348,7 @@ loc_AE70:				; DATA XREF: ROM:Obj26_Indexo
 
 loc_AECA:				; CODE XREF: ROM:0000AEBAj
 		move.b	#$46,$20(a0) ; 'F'
-		move.b	$28(a0),anim(a0)
+		move.b	subtype(a0),anim(a0)
 
 loc_AED6:				; DATA XREF: ROM:0000AE68o
 		move.b	routine_secondary(a0),d0
@@ -13050,7 +13050,7 @@ loc_B7F0:				; DATA XREF: ROM:Obj2C_Indexo
 		move.b	#4,priority(a0)
 		move.b	#$10,width_pixels(a0)
 		moveq	#0,d0
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		lsl.w	#6,d0
 		subq.w	#1,d0
 		move.w	d0,$30(a0)
@@ -13937,8 +13937,8 @@ loc_C682:				; DATA XREF: ROM:Obj36_Indexo
 		bsr.w	Adjust2PArtPointer
 		ori.b	#4,render_flags(a0)
 		move.b	#4,priority(a0)
-		move.b	$28(a0),d0
-		andi.b	#$F,$28(a0)
+		move.b	subtype(a0),d0
+		andi.b	#$F,subtype(a0)
 		andi.w	#$F0,d0	; 'ğ'
 		lea	Obj36_Conf(pc),a1
 		lsr.w	#3,d0
@@ -14025,7 +14025,7 @@ loc_C770:				; CODE XREF: ROM:0000C76Aj
 
 sub_C788:				; CODE XREF: ROM:loc_C6CEp
 		moveq	#0,d0
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		add.w	d0,d0
 		move.w	off_C798(pc,d0.w),d1
 		jmp	off_C798(pc,d1.w)
@@ -14173,7 +14173,7 @@ loc_C8DC:				; DATA XREF: ROM:Obj3C_Indexo
 		move.b	#4,render_flags(a0)
 		move.b	#$10,width_pixels(a0)
 		move.b	#4,priority(a0)
-		move.b	$28(a0),mapping_frame(a0)
+		move.b	subtype(a0),mapping_frame(a0)
 
 loc_C90A:				; DATA XREF: ROM:0000C8D8o
 		move.w	(MainCharacter+x_vel).w,$30(a0)
@@ -14384,7 +14384,7 @@ loc_E22A:
 		ori.b	#4,render_flags(a0)
 		move.b	#$10,width_pixels(a0)
 		move.b	#4,priority(a0)
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		lsr.w	#3,d0
 		andi.w	#$E,d0
 		move.w	Obj41_Init_Subtypes(pc,d0.w),d0
@@ -14435,7 +14435,7 @@ Obj41_Init_DiagonallyDown:
 		bset	#1,status(a0)
 ; loc_E2D0:
 Obj41_Init_Common:
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		andi.w	#2,d0
 		move.w	Obj41_Strengths(pc,d0.w),$30(a0)
 		btst	#1,d0
@@ -14493,7 +14493,7 @@ sub_E34E:
 		bclr	#3,status(a1)
 		move.b	#$10,anim(a1)
 		move.b	#2,routine(a1)
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		bpl.s	loc_E382
 		move.w	#0,x_vel(a1)
 
@@ -14604,7 +14604,7 @@ loc_E4A2:
 		move.b	#0,anim(a1)
 
 loc_E4BC:
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		bpl.s	loc_E4C8
 		move.w	#0,y_vel(a1)
 
@@ -14758,7 +14758,7 @@ sub_E64E:
 		subq.w	#8,y_pos(a1)
 		move.w	$30(a0),y_vel(a1)
 		neg.w	y_vel(a1)
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		bpl.s	loc_E66E
 		move.w	#0,x_vel(a1)
 
@@ -14870,7 +14870,7 @@ loc_E79A:
 		bclr	#3,status(a1)
 		move.b	#$10,anim(a1)
 		move.b	#2,routine(a1)
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		btst	#0,d0
 		beq.s	loc_E7F6
 		move.w	#1,inertia(a1)
@@ -14957,7 +14957,7 @@ loc_E8AC:
 		bset	#1,status(a1)
 		bclr	#3,status(a1)
 		move.b	#2,routine(a1)
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		btst	#0,d0
 		beq.s	loc_E902
 		move.w	#1,inertia(a1)
@@ -15177,7 +15177,7 @@ loc_EC3E:
 		bcc.s	locret_EC6A
 		addq.b	#2,routine_secondary(a0)
 		move.b	#1,anim(a0)
-		tst.b	$28(a0)
+		tst.b	subtype(a0)
 		beq.s	locret_EC6A
 		move.w	#$249B,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
@@ -15280,7 +15280,7 @@ Obj42_FireMissile:
 loc_ED5C:
 		add.w	d0,x_pos(a1)
 		move.b	status(a0),status(a1)
-		move.b	#1,$28(a1)
+		move.b	#1,subtype(a1)
 
 locret_ED6C:
 		rts
@@ -15330,7 +15330,7 @@ Obj44_Init:
 		ori.b	#4,render_flags(a0)
 		move.b	#8,width_pixels(a0)
 		move.b	#6,priority(a0)
-		move.b	$28(a0),mapping_frame(a0)
+		move.b	subtype(a0),mapping_frame(a0)
 		bclr	#4,mapping_frame(a0)
 		beq.s	Obj44_Main
 		addq.b	#2,routine(a0)
@@ -15684,451 +15684,8 @@ byte_F38F:	dc.b   1,  3,  6,  3,  6,  4,  6,  4
 ; ---------------------------------------------------------------------------
 Map_obj40:	incbin	"mappings/sprite/obj40.bin"
 
-
-
-
-; ===========================================================================
-; ---------------------------------------------------------------------------
-; Solid object subroutines (includes spikes, blocks, rocks etc)
-; These check collision of Sonic/Tails with objects on the screen
-;
-; input variables:
-; d1 = object width
-; d2 = object height / 2 (when jumping)
-; d3 = object height / 2 (when walking)
-; d4 = object x-axis position
-;
-; address registers:
-; a0 = the object to check collision with
-; a1 = sonic or tails (set inside these subroutines)
-; ---------------------------------------------------------------------------
-
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-
-
-SolidObject:
-		lea	(MainCharacter).w,a1	; a1=character
-		moveq	#3,d6
-		movem.l	d1-d4,-(sp)	; store input registers
-		bsr.s	sub_F456	; first collision check with Sonic
-		movem.l	(sp)+,d1-d4	; restore input registers
-		lea	(Sidekick).w,a1	; a1=character ; now check collision with Tails
-		tst.b	render_flags(a1)
-		bpl.w	locret_F490	; return if not Tails
-		addq.b	#1,d6
-
-sub_F456:
-		btst	d6,status(a0)
-		beq.w	SolidObject_OnScreenTest
-		move.w	d1,d2
-		add.w	d2,d2
-		btst	#1,status(a1)
-		bne.s	loc_F47A
-		move.w	x_pos(a1),d0
-		sub.w	x_pos(a0),d0
-		add.w	d1,d0
-		bmi.s	loc_F47A
-		cmp.w	d2,d0
-		bcs.s	loc_F488
-
-loc_F47A:
-		bclr	#3,status(a1)
-		bclr	d6,status(a0)
-		moveq	#0,d4
-		rts
-; ---------------------------------------------------------------------------
-loc_F488:
-		move.w	d4,d2
-		bsr.w	MvSonicOnPtfm
-		moveq	#0,d4
-
-locret_F490:
-		rts
-; End of function SolidObject
-
-; ===========================================================================
-; alternate function to check for collision even if off-screen, unused
-; in this build...
-; SolidObject_Always:
-		lea	(MainCharacter).w,a1	; a1=character
-		moveq	#3,d6
-		movem.l	d1-d4,-(sp)
-		bsr.s	SolidObject_Always_SingleCharacter
-		movem.l	(sp)+,d1-d4
-		lea	(Sidekick).w,a1	; a1=character
-		addq.b	#1,d6
-; loc_F4A8:
-SolidObject_Always_SingleCharacter:
-		btst	d6,status(a0)
-		beq.w	SolidObject_cont
-		move.w	d1,d2
-		add.w	d2,d2
-		btst	#1,status(a1)
-		bne.s	loc_F4CC
-		move.w	x_pos(a1),d0
-		sub.w	x_pos(a0),d0
-		add.w	d1,d0
-		bmi.s	loc_F4CC
-		cmp.w	d2,d0
-		bcs.s	loc_F4DA
-
-loc_F4CC:
-		bclr	#3,status(a1)
-		bclr	d6,status(a0)
-		moveq	#0,d4
-		rts
-; ---------------------------------------------------------------------------
-
-loc_F4DA:
-		move.w	d4,d2
-		bsr.w	MvSonicOnPtfm
-		moveq	#0,d4
-		rts
-; End of function SolidObject_Always
-
-; ===========================================================================
-; ---------------------------------------------------------------------------
-; Subroutine to collide Sonic/Tails with the top of a sloped
-; solid like diagonal springs; unused in this build...
-;
-; input variables:
-; d1 = object width
-; d2 = object height / 2 (when jumping)
-; d3 = object height / 2 (when walking)
-; d4 = object x-axis position
-;
-; address registers:
-; a0 = the object to check collision with
-; a1 = sonic or tails (set inside these subroutines)
-; a2 = height data for slope
-; ---------------------------------------------------------------------------
-		lea	(MainCharacter).w,a1	; a1=character
-		moveq	#3,d6
-		movem.l	d1-d4,-(sp)
-		bsr.s	SlopedSolid_SingleCharacter
-		movem.l	(sp)+,d1-d4
-		lea	(Sidekick).w,a1	; a1=character
-		addq.b	#1,d6
-; loc_F4FA:
-SlopedSolid_SingleCharacter:
-		btst	d6,status(a0)
-		beq.w	SlopedSolid_cont
-		move.w	d1,d2
-		add.w	d2,d2
-		btst	#1,status(a1)
-		bne.s	loc_F51E
-		move.w	x_pos(a1),d0
-		sub.w	x_pos(a0),d0
-		add.w	d1,d0
-		bmi.s	loc_F51E
-		cmp.w	d2,d0
-		bcs.s	loc_F52C
-
-loc_F51E:
-		bclr	#3,status(a1)
-		bclr	d6,status(a0)
-		moveq	#0,d4
-		rts
-; ---------------------------------------------------------------------------
-
-loc_F52C:
-		move.w	d4,d2
-		bsr.w	sub_F748
-		moveq	#0,d4
-		rts
-; ---------------------------------------------------------------------------
-; loc_F536:
-SlopedSolid_cont:
-		move.w	x_pos(a1),d0
-		sub.w	x_pos(a0),d0
-		add.w	d1,d0
-		bmi.w	SolidObject_TestClearPush
-		move.w	d1,d3
-		add.w	d3,d3
-		cmp.w	d3,d0
-		bhi.w	SolidObject_TestClearPush
-		move.w	d0,d5
-		btst	#0,render_flags(a0)
-		beq.s	loc_F55C
-		not.w	d5
-		add.w	d3,d5
-
-loc_F55C:
-		lsr.w	#1,d5
-		move.b	(a2,d5.w),d3
-		sub.b	(a2),d3
-		ext.w	d3
-		move.w	y_pos(a0),d5
-		sub.w	d3,d5
-		move.b	y_radius(a1),d3
-		ext.w	d3
-		add.w	d3,d2
-		move.w	y_pos(a1),d3
-		sub.w	d5,d3
-		addq.w	#4,d3
-		add.w	d2,d3
-		bmi.w	SolidObject_TestClearPush
-		move.w	d2,d4
-		add.w	d4,d4
-		cmp.w	d4,d3
-		bcc.w	SolidObject_TestClearPush
-		bra.w	SolidObject_ChkBounds
-; ===========================================================================
-; loc_F590:
-SolidObject_OnScreenTest:
-		tst.b	render_flags(a0)
-		bpl.w	SolidObject_TestClearPush
-; loc_F598:
-SolidObject_cont:
-		; We now perform the x portion of a bounding box check.  To do this, we assume a
-		; coordinate system where the x origin is at the object's left edge.
-		move.w	x_pos(a1),d0	; load Sonic's x position...
-		sub.w	x_pos(a0),d0	; ... and calculate his x position relative to the object
-		add.w	d1,d0		; assume object's left edge is at (0,0).  This is also Sonic's distance to the object's left edge.
-		bmi.w	SolidObject_TestClearPush	; branch, if Sonic is outside the object's left edge
-		move.w	d1,d3
-		add.w	d3,d3		; calculate object's width
-		cmp.w	d3,d0
-		bhi.w	SolidObject_TestClearPush	; branch, if Sonic is outside the object's right edge
-		; We now perform the y portion of a bounding box check.  To do this, we assume a
-		; coordinate system where the y origin is at the highest y position relative to the object
-		; at which Sonic would still collide with it.  This point is
-		;   y_pos(object) - width(object)/2 - y_radius(Sonic) - 4,
-		; where object is stored in (a0), Sonic in (a1), and height(object)/2 in d2.  This way
-		; of doing it causes the object's hitbox to be vertically off-center by -4 pixels.
-		move.b	y_radius(a1),d3	; load Sonic's y radius
-		ext.w	d3
-		add.w	d3,d2		; calculate maximum distance for a top collision
-		move.w	y_pos(a1),d3	; load Sonic's y position
-		sub.w	y_pos(a0),d3	; ... and calculate his y position relative to the object
-		addq.w	#4,d3		; assume a slightly lower position for Sonic
-		add.w	d2,d3		; assume the highest position where Sonic would still be colliding with the object to be (0,0)
-		bmi.w	SolidObject_TestClearPush	; branch, if Sonic is above this point
-		move.w	d2,d4
-		add.w	d4,d4		; calculate minimum distance for a bottom collision
-		cmp.w	d4,d3
-		bcc.w	SolidObject_TestClearPush	; branch, if Sonic is below this point
-; loc_F5D2:
-SolidObject_ChkBounds:
-		tst.b	(Player_override_flag).w
-		bmi.w	SolidObject_TestClearPush	; branch, if object collisions are disabled for Sonic
-		cmpi.b	#6,routine(a1)			; is Sonic dead?
-		bcc.w	loc_F680			; if yes, branch
-		tst.w	(Debug_placement_mode).w
-		bne.w	loc_F680			; branch, if in Debug Mode
-
-		move.w	d0,d5
-		cmp.w	d0,d1
-		bcc.s	loc_F5FA	; branch, if Sonic is to the object's left
-		add.w	d1,d1
-		sub.w	d1,d0
-		move.w	d0,d5		; calculate Sonic's distance to the object's right edge...
-		neg.w	d5		; ... and calculate the absolute value
-
-loc_F5FA:
-		move.w	d3,d1
-		cmp.w	d3,d2
-		bcc.s	loc_F608
-		subq.w	#4,d3
-		sub.w	d4,d3
-		move.w	d3,d1
-		neg.w	d1
-
-loc_F608:
-		cmp.w	d1,d5
-		bhi.w	loc_F684	; branch, if horizontal distance is greater than vertical distance
-
-		cmpi.w	#4,d1
-		bls.s	loc_F65A
-		tst.w	d0
-		beq.s	loc_F634
-		bmi.s	loc_F622
-		tst.w	x_vel(a1)
-		bmi.s	loc_F634
-		bra.s	loc_F628
-; ===========================================================================
-
-loc_F622:
-		tst.w	x_vel(a1)
-		bpl.s	loc_F634
-
-loc_F628:
-		move.w	#0,inertia(a1)
-		move.w	#0,x_vel(a1)
-
-loc_F634:
-		sub.w	d0,x_pos(a1)
-		btst	#1,status(a1)
-		bne.s	loc_F65A
-		move.l	d6,d4
-		addq.b	#2,d4	; Character is pushing, not standing
-		bset	d4,status(a0)
-		bset	#5,status(a1)
-		move.w	d6,d4
-		addi.b	#$D,d4
-		bset	d4,d6	; This sets bits 0 (Sonic) or 1 (Tails) of high word of d6
-		moveq	#1,d4
-		rts
-; ===========================================================================
-
-loc_F65A:
-		bsr.s	sub_F678
-		move.w	d6,d4
-		addi.b	#$D,d4
-		bset	d4,d6	; This sets bits 0 (Sonic) or 1 (Tails) of high word of d6
-		moveq	#1,d4
-		rts
-; ===========================================================================
-; loc_F668:
-SolidObject_TestClearPush:
-		move.l	d6,d4
-		addq.b	#2,d4
-		btst	d4,status(a0)
-		beq.s	loc_F680
-		move.w	#1,anim(a1)
-
-sub_F678:
-		move.l	d6,d4
-		addq.b	#2,d4
-		bclr	d4,status(a0)
-
-loc_F680:
-		moveq	#0,d4
-		rts
-; ===========================================================================
-
-loc_F684:
-		tst.w	d3
-		bmi.s	loc_F690
-		cmpi.w	#$10,d3
-		bcs.s	loc_F6D2
-		bra.s	SolidObject_TestClearPush
-; ===========================================================================
-
-loc_F690:
-		tst.w	y_vel(a1)
-		beq.s	loc_F6B2
-		bpl.s	loc_F6A6
-		tst.w	d3
-		bpl.s	loc_F6A6
-		sub.w	d3,y_pos(a1)
-		move.w	#0,y_vel(a1)
-
-loc_F6A6:
-		move.w	d6,d4
-		addi.b	#$F,d4
-		bset	d4,d6	; This sets bits 2 (Sonic) or 3 (Tails) of high word of d6
-		moveq	#-2,d4
-		rts
-; ===========================================================================
-
-loc_F6B2:
-		btst	#1,status(a1)
-		bne.s	loc_F6A6
-		move.l	a0,-(sp)
-		movea.l	a1,a0
-		jsr	(KillSonic).l
-		movea.l	(sp)+,a0	; load obj address
-		move.w	d6,d4
-		addi.b	#$F,d4
-		bset	d4,d6	; This sets bits 2 (Sonic) or 3 (Tails) of high word of d6
-		moveq	#-2,d4
-		rts
-; ===========================================================================
-
-loc_F6D2:
-		subq.w	#4,d3
-		moveq	#0,d1
-		move.b	width_pixels(a0),d1
-		move.w	d1,d2
-		add.w	d2,d2
-		add.w	x_pos(a1),d1
-		sub.w	x_pos(a0),d1
-		bmi.s	loc_F70A
-		cmp.w	d2,d1
-		bcc.s	loc_F70A
-		tst.w	y_vel(a1)
-		bmi.s	loc_F70A
-		sub.w	d3,y_pos(a1)
-		subq.w	#1,y_pos(a1)
-		bsr.w	RideObject_SetRide
-		move.w	d6,d4
-		addi.b	#$11,d4
-		bset	d4,d6	; This sets bits 4 (Sonic) or 5 (Tails) of high word of d6
-		moveq	#-1,d4
-		rts
-; ===========================================================================
-
-loc_F70A:
-		moveq	#0,d4
-		rts
-; ===========================================================================
-; ---------------------------------------------------------------------------
-; Subroutine to change Sonic's position with a platform
-; ---------------------------------------------------------------------------
-
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-
-; sub_F70E:
-MvSonicOnPtfm:
-		move.w	y_pos(a0),d0
-		sub.w	d3,d0
-		bra.s	loc_F71E
-; ===========================================================================
-		; a couple lines of unused/leftover/dead code from Sonic 1 ; a0=object
-		move.w	y_pos(a0),d0
-		subi.w	#9,d0
-
-loc_F71E:
-		tst.b	(Player_override_flag).w
-		bmi.s	locret_F746
-		cmpi.b	#6,routine(a1)
-		bcc.s	locret_F746
-		tst.w	(Debug_placement_mode).w
-		bne.s	locret_F746
-		moveq	#0,d1
-		move.b	y_radius(a1),d1
-		sub.w	d1,d0
-		move.w	d0,y_pos(a1)
-		sub.w	x_pos(a0),d2
-		sub.w	d2,x_pos(a1)
-
-locret_F746:
-		rts
-; End of function MvSonicOnPtfm
-
-
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-sub_F748:				; CODE XREF: sub_F456+D8p sub_F7F2+34p
-		btst	#3,status(a1)
-		beq.s	locret_F788
-		move.w	x_pos(a1),d0
-		sub.w	x_pos(a0),d0
-		add.w	d1,d0
-		lsr.w	#1,d0
-		btst	#0,render_flags(a0)
-		beq.s	loc_F768
-		not.w	d0
-		add.w	d1,d0
-
-loc_F768:				; CODE XREF: sub_F748+1Aj
-		move.b	(a2,d0.w),d1
-		ext.w	d1
-		move.w	y_pos(a0),d0
-		sub.w	d1,d0
-		moveq	#0,d1
-		move.b	y_radius(a1),d1
-		sub.w	d1,d0
-		move.w	d0,y_pos(a1)
-		sub.w	x_pos(a0),d2
-		sub.w	d2,x_pos(a1)
-
-locret_F788:				; CODE XREF: sub_F748+6j
-		rts
-; End of function sub_F748
-
+		include	"_incObj/sub SolidObject.asm"
+		include	"_incObj/sub MvSonicOnPtfm.asm"
 		include	"_incObj/sub PlatformObject.asm"
 
 ; ===========================================================================
@@ -20134,7 +19691,7 @@ Obj0A_Init:				; DATA XREF: ROM:Obj0A_Indexo
 		move.b	#$84,render_flags(a0)
 		move.b	#$10,width_pixels(a0)
 		move.b	#1,priority(a0)
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		bpl.s	loc_11ECC
 		addq.b	#8,routine(a0)
 		move.l	#Map_Obj0A_Countdown,mappings(a0)
@@ -20385,7 +19942,7 @@ loc_1220C:				; CODE XREF: ROM:loc_121FAj
 loc_12242:				; CODE XREF: ROM:00012238j
 		add.w	d0,x_pos(a1)
 		move.w	(MainCharacter+y_pos).w,y_pos(a1)
-		move.b	#6,$28(a1)
+		move.b	#6,subtype(a1)
 		tst.w	$2C(a0)
 		beq.w	loc_1228E
 		andi.w	#7,$3A(a0)
@@ -20398,7 +19955,7 @@ loc_12242:				; CODE XREF: ROM:00012238j
 		move.w	(Level_frame_counter).w,d0
 		andi.b	#3,d0
 		bne.s	loc_122D2
-		move.b	#$E,$28(a1)
+		move.b	#$E,subtype(a1)
 		bra.s	loc_122D2
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -20412,7 +19969,7 @@ loc_1228E:				; CODE XREF: ROM:00012256j
 		bne.s	loc_122BA
 		bset	#6,$36(a0)
 		bne.s	loc_122D2
-		move.b	d2,$28(a1)
+		move.b	d2,subtype(a1)
 		move.w	#$1C,$38(a1)
 
 loc_122BA:				; CODE XREF: ROM:000122A6j
@@ -20420,7 +19977,7 @@ loc_122BA:				; CODE XREF: ROM:000122A6j
 		bne.s	loc_122D2
 		bset	#6,$36(a0)
 		bne.s	loc_122D2
-		move.b	d2,$28(a1)
+		move.b	d2,subtype(a1)
 		move.w	#$1C,$38(a1)
 
 loc_122D2:				; CODE XREF: ROM:00012284j
@@ -22003,7 +21560,7 @@ Obj79_Init:				; DATA XREF: ROM:Obj79_Indexo
 		bne.s	loc_13536
 		move.b	(Last_star_pole_hit).w,d1
 		andi.b	#$7F,d1	; ''
-		move.b	$28(a0),d2
+		move.b	subtype(a0),d2
 		andi.b	#$7F,d2	; ''
 		cmp.b	d2,d1
 		bcs.s	Obj79_Main
@@ -22022,7 +21579,7 @@ Obj79_Main:				; CODE XREF: ROM:00013534j
 		bmi.w	locret_135CA
 		move.b	(Last_star_pole_hit).w,d1
 		andi.b	#$7F,d1	; ''
-		move.b	$28(a0),d2
+		move.b	subtype(a0),d2
 		andi.b	#$7F,d2	; ''
 		cmp.b	d2,d1
 		bcs.s	Obj79_HitLamp
@@ -22071,7 +21628,7 @@ Obj79_AfterHit:				; DATA XREF: ROM:000134E0o
 
 
 Lamppost_StoreInfo:			; CODE XREF: ROM:000135B6p
-		move.b	$28(a0),(Last_star_pole_hit).w
+		move.b	subtype(a0),(Last_star_pole_hit).w
 		move.b	(Last_star_pole_hit).w,(Saved_Last_star_pole_hit).w
 		move.w	x_pos(a0),(Saved_x_pos).w
 		move.w	y_pos(a0),(Saved_y_pos).w
@@ -22200,12 +21757,12 @@ Obj7D_Main:				; DATA XREF: ROM:Obj7D_Indexo
 		ori.b	#4,render_flags(a0)
 		move.b	#0,priority(a0)
 		move.b	#$10,width_pixels(a0)
-		move.b	$28(a0),mapping_frame(a0)
+		move.b	subtype(a0),mapping_frame(a0)
 		move.w	#$77,$30(a0) ; 'w'
 		move.w	#$C9,d0	; 'É'
 		jsr	(PlaySound_Special).l
 		moveq	#0,d0
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		add.w	d0,d0
 		move.w	Obj7D_Points(pc,d0.w),d0
 		jsr	(AddPoints).l
@@ -22394,7 +21951,7 @@ S1Obj64_Init:				; DATA XREF: ROM:S1Obj64_Indexo
 		move.b	#$84,render_flags(a0)
 		move.b	#$10,width_pixels(a0)
 		move.b	#1,priority(a0)
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		bpl.s	loc_13A32
 		addq.b	#8,routine(a0)
 		andi.w	#$7F,d0	; ''
@@ -22547,7 +22104,7 @@ loc_13BAC:				; CODE XREF: ROM:loc_13BA2j
 		moveq	#0,d0
 		move.b	$34(a0),d0
 		movea.l	$3C(a0),a2
-		move.b	(a2,d0.w),$28(a1)
+		move.b	(a2,d0.w),subtype(a1)
 		btst	#7,$36(a0)
 		beq.s	loc_13C28
 		jsr	(RandomNumber).l
@@ -22555,14 +22112,14 @@ loc_13BAC:				; CODE XREF: ROM:loc_13BA2j
 		bne.s	loc_13C14
 		bset	#6,$36(a0)
 		bne.s	loc_13C28
-		move.b	#2,$28(a1)
+		move.b	#2,subtype(a1)
 
 loc_13C14:				; CODE XREF: ROM:00013C04j
 		tst.b	$34(a0)
 		bne.s	loc_13C28
 		bset	#6,$36(a0)
 		bne.s	loc_13C28
-		move.b	#2,$28(a1)
+		move.b	#2,subtype(a1)
 
 loc_13C28:				; CODE XREF: ROM:00013BBEj
 					; ROM:00013BF8j ...
@@ -22746,7 +22303,7 @@ Obj03_Init:				; DATA XREF: ROM:Obj03_Indexo
 		move.b	#4,render_flags(a0)
 		move.b	#$10,width_pixels(a0)
 		move.b	#5,priority(a0)
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		btst	#2,d0
 		beq.s	loc_13EA4
 		addq.b	#2,routine(a0)
@@ -22805,7 +22362,7 @@ loc_13F10:				; CODE XREF: ROM:00013EEEj
 		tst.w	d5
 		bpl.w	loc_13FA8
 		swap	d0
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		bpl.s	loc_13F26
 		btst	#1,status(a1)
 		bne.s	loc_13FA2
@@ -22906,7 +22463,7 @@ loc_14012:				; CODE XREF: ROM:00013FF0j
 		tst.w	d5
 		bpl.w	loc_140AA
 		swap	d0
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		bpl.s	loc_14028
 		btst	#1,status(a1)
 		bne.s	loc_140A4
@@ -23004,7 +22561,7 @@ loc_141C8:				; DATA XREF: ROM:Obj0B_Indexo
 		move.b	#$10,width_pixels(a0)
 		move.b	#4,priority(a0)
 		moveq	#0,d0
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		andi.w	#$F0,d0	; 'ğ'
 		addi.w	#$10,d0
 		move.w	d0,d1
@@ -23012,7 +22569,7 @@ loc_141C8:				; DATA XREF: ROM:Obj0B_Indexo
 		move.w	d0,$30(a0)
 		move.w	d0,$32(a0)
 		moveq	#0,d0
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		andi.w	#$F,d0
 		addq.w	#1,d0
 		lsl.w	#4,d0
@@ -23107,7 +22664,7 @@ Obj0C_Init:				; DATA XREF: ROM:Obj0C_Indexo
 		subi.w	#$10,d0
 		move.w	d0,$3A(a0)
 		moveq	#0,d0
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		andi.w	#$F0,d0	; 'ğ'
 		addi.w	#$10,d0
 		move.w	d0,d1
@@ -23115,7 +22672,7 @@ Obj0C_Init:				; DATA XREF: ROM:Obj0C_Indexo
 		move.w	d0,$30(a0)
 		move.w	d0,$32(a0)
 		moveq	#0,d0
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		andi.w	#$F,d0
 		move.b	d0,$3E(a0)
 		move.b	d0,$3F(a0)
@@ -23258,7 +22815,7 @@ loc_1446C:				; DATA XREF: ROM:Obj13_Indexo
 		move.l	a1,$38(a0)
 		move.w	y_pos(a0),$34(a0)
 		move.w	y_pos(a0),$36(a0)
-		cmpi.b	#$10,$28(a0)
+		cmpi.b	#$10,subtype(a0)
 		bcs.s	loc_14518
 		bsr.s	sub_144D4
 		move.l	a1,$3C(a0)
@@ -23293,7 +22850,7 @@ locret_14516:				; CODE XREF: sub_144D4+6j
 loc_14518:				; CODE XREF: ROM:000144BEj
 					; ROM:000144D2j
 		moveq	#0,d1
-		move.b	$28(a0),d1
+		move.b	subtype(a0),d1
 		move.w	$34(a0),d0
 		subi.w	#$78,d0	; 'x'
 		lsl.w	#4,d1
@@ -23323,7 +22880,7 @@ loc_1454A:				; CODE XREF: ROM:00014546j
 
 loc_14564:				; CODE XREF: ROM:00014560j
 		move.b	d0,mapping_frame(a1)
-		cmpi.b	#$10,$28(a0)
+		cmpi.b	#$10,subtype(a0)
 		bcs.s	loc_14584
 		movea.l	$3C(a0),a1
 		subi.w	#$F,d1
@@ -23752,7 +23309,7 @@ loc_14CD2:				; DATA XREF: ROM:Obj14_Indexo
 		move.b	#4,priority(a0)
 		move.b	#$30,width_pixels(a0) ; '0'
 		move.w	x_pos(a0),$30(a0)
-		tst.b	$28(a0)
+		tst.b	subtype(a0)
 		bne.s	loc_14D2C
 		bsr.w	AllocateObjectAfterCurrent
 		bne.s	loc_14D2C
@@ -24127,7 +23684,7 @@ Obj19_Init:				; DATA XREF: ROM:Obj19_Indexo
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,render_flags(a0)
 		moveq	#0,d0
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		lsr.w	#3,d0
 		andi.w	#$1E,d0
 		lea	Obj19_WidthArray(pc,d0.w),a2
@@ -24136,7 +23693,7 @@ Obj19_Init:				; DATA XREF: ROM:Obj19_Indexo
 		move.b	#4,priority(a0)
 		move.w	x_pos(a0),$30(a0)
 		move.w	y_pos(a0),$32(a0)
-		andi.b	#$F,$28(a0)
+		andi.b	#$F,subtype(a0)
 
 Obj19_Main:				; DATA XREF: ROM:000152C8o
 		move.w	x_pos(a0),-(sp)
@@ -24158,7 +23715,7 @@ Obj19_Main:				; DATA XREF: ROM:000152C8o
 
 Obj19_Modes:				; CODE XREF: ROM:00015324p
 		moveq	#0,d0
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		andi.w	#$F,d0
 		add.w	d0,d0
 		move.w	Obj19_SubIndex(pc,d0.w),d1
@@ -24204,7 +23761,7 @@ loc_1539C:				; DATA XREF: ROM:00015368o
 		move.b	status(a0),d0
 		andi.b	#$18,d0
 		beq.s	locret_153AA
-		addq.b	#1,$28(a0)
+		addq.b	#1,subtype(a0)
 
 locret_153AA:				; CODE XREF: ROM:000153A4j
 		rts
@@ -24222,7 +23779,7 @@ loc_153AC:				; DATA XREF: ROM:0001536Ao
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_153C6:				; CODE XREF: ROM:000153B8j
-		clr.b	$28(a0)
+		clr.b	subtype(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -24238,7 +23795,7 @@ loc_153CC:				; DATA XREF: ROM:0001536Eo
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_153E6:				; CODE XREF: ROM:000153D8j
-		addq.b	#1,$28(a0)
+		addq.b	#1,subtype(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -24250,7 +23807,7 @@ loc_153EC:				; DATA XREF: ROM:00015370o
 		bpl.w	locret_1540C
 		add.w	d1,y_pos(a0)
 		clr.w	y_vel(a0)
-		clr.b	$28(a0)
+		clr.b	subtype(a0)
 
 locret_1540C:				; CODE XREF: ROM:000153FCj
 		rts
@@ -24259,7 +23816,7 @@ locret_1540C:				; CODE XREF: ROM:000153FCj
 loc_1540E:				; DATA XREF: ROM:00015372o
 		tst.b	(Button_TriggerArray+2).w
 		beq.s	loc_15418
-		subq.b	#3,$28(a0)
+		subq.b	#3,subtype(a0)
 
 loc_15418:				; CODE XREF: ROM:00015412j
 		addq.l	#6,sp
@@ -24327,7 +23884,7 @@ loc_15492:				; CODE XREF: ROM:0001546Aj
 
 loc_154A2:				; CODE XREF: ROM:0001549Aj
 		clr.w	$36(a0)
-		subq.b	#1,$28(a0)
+		subq.b	#1,subtype(a0)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 Map_Obj19:	dc.w word_154AE-Map_Obj19 ; DATA XREF: ROM:000152D8o
@@ -24694,7 +24251,7 @@ Obj52_Init:				; DATA XREF: ROM:Obj52_Indexo
 		move.b	#4,priority(a0)
 		move.b	#$10,width_pixels(a0)
 		moveq	#0,d0
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		move.b	d0,d1
 		andi.w	#$F0,d1	; 'ğ'
 		add.w	d1,d1
@@ -25030,7 +24587,7 @@ Obj50_Init:				; DATA XREF: ROM:Obj50_Indexo
 		move.b	#4,priority(a0)
 		move.b	#$10,width_pixels(a0)
 		move.w	#$FF00,x_vel(a0)
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		move.b	d0,d1
 		andi.w	#$F0,d1	; 'ğ'
 		lsl.w	#4,d1
@@ -25560,7 +25117,7 @@ loc_1653E:				; DATA XREF: ROM:off_16532o
 		move.b	#4,priority(a0)
 		move.b	#$10,width_pixels(a0)
 		move.b	#6,anim(a0)
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		andi.w	#$F,d0
 		move.w	d0,d1
 		lsl.w	#5,d1
@@ -27932,7 +27489,7 @@ Obj55_Init:
 		addq.b	#2,routine(a0)
 		move.w	x_pos(a0),$30(a0)
 		move.w	y_pos(a0),$38(a0)
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		cmpi.b	#$81,d0
 		bne.s	loc_18230
 		addi.w	#$60,art_tile(a0)
@@ -27953,13 +27510,13 @@ loc_18230:
 		addq.b	#4,routine(a1)
 		move.b	#1,anim(a1)
 		move.b	render_flags(a0),render_flags(a1)
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		cmpi.b	#$81,d0
 		bne.s	loc_18294
 		addi.w	#$60,art_tile(a1)
 
 loc_18294:
-		tst.b	$28(a0)
+		tst.b	subtype(a0)
 		bmi.s	loc_182E8
 		jsr	(AllocateObjectAfterCurrent).l
 		bne.s	loc_182E8
@@ -27981,7 +27538,7 @@ loc_182C0:
 		move.b	render_flags(a0),render_flags(a1)
 
 loc_182E8:
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		andi.w	#$7F,d0
 		add.w	d0,d0
 		add.w	d0,d0
@@ -27993,7 +27550,7 @@ dword_182FA:	dc.l 0
 ; ===========================================================================
 
 loc_18302:
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		andi.w	#$7F,d0
 		add.w	d0,d0
 		add.w	d0,d0
@@ -28703,7 +28260,7 @@ Obj48_Init:				; DATA XREF: ROM:Obj48_Indexo
 		move.l	#Map_BossItems,mappings(a0)
 		move.w	#$46C,art_tile(a0)
 		bsr.w	j_Adjust2PArtPointer_5
-		lea	$28(a0),a2
+		lea	subtype(a0),a2
 		move.b	#0,(a2)+
 		moveq	#5,d1
 		movea.l	a0,a1
@@ -28721,7 +28278,7 @@ loc_1912E:				; CODE XREF: ROM:00019190j
 		move.w	#$380,art_tile(a1)
 		bsr.w	j_Adjust2PArtPointer2_1
 		move.b	#1,mapping_frame(a1)
-		addq.b	#1,$28(a0)
+		addq.b	#1,subtype(a0)
 
 loc_1916A:				; CODE XREF: ROM:0001912Cj
 		move.w	a1,d5
@@ -28750,7 +28307,7 @@ Obj48_PosData:	dc.b   0,$10,$20,$30,$40,$60; 0	; DATA XREF: ROM:Obj48_Maint
 
 Obj48_Main:				; DATA XREF: ROM:000190F6o
 		lea	Obj48_PosData(pc),a3
-		lea	$28(a0),a2
+		lea	subtype(a0),a2
 		moveq	#0,d6
 		move.b	(a2)+,d6
 
@@ -29020,7 +28577,7 @@ Obj3E_Init:				; DATA XREF: ROM:Obj3E_Indexo
 		move.b	#4,render_flags(a0)
 		move.w	y_pos(a0),$30(a0)
 		moveq	#0,d0
-		move.b	$28(a0),d0
+		move.b	subtype(a0),d0
 		lsl.w	#2,d0
 		lea	Obj3E_Var(pc,d0.w),a1
 		move.b	(a1)+,routine(a0)
@@ -32452,7 +32009,7 @@ Debug_SpawnObject:
 		moveq	#0,d0
 		move.b	(Debug_object).w,d0
 		lsl.w	#3,d0
-		move.b	4(a2,d0.w),$28(a1)
+		move.b	4(a2,d0.w),subtype(a1)
 		rts
 ; ===========================================================================
 ; loc_1BC70:
@@ -32501,7 +32058,7 @@ LoadDebugObjectSprite:
 		move.l	(a2,d0.w),mappings(a0)
 		move.w	6(a2,d0.w),art_tile(a0)
 		move.b	5(a2,d0.w),mapping_frame(a0)
-		;move.b	4(a2,d0.w),$28(a0)		; this is useless since we already loaded it earlier
+		;move.b	4(a2,d0.w),subtype(a0)		; this is useless since we already loaded it earlier
 		bsr.w	j_Adjust2PArtPointer_1
 		rts
 ; End of function Debug_ShowItem

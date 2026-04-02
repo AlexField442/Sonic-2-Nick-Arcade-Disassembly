@@ -98,7 +98,7 @@ loc_F816:
 
 loc_F824:
 		move.w	d4,d2
-		bsr.w	sub_F748
+		bsr.w	MvSonicOnSlope
 		moveq	#0,d4
 		rts
 ; End of function SlopedPlatform
