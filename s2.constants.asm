@@ -26,7 +26,10 @@ anim_frame:		equ $1B
 anim:			equ $1C
 prev_anim:		equ $1D
 anim_frame_duration:	equ $1E
+collision_flags:	equ $20
+collision_property:	equ $21
 status:			equ $22			; note: exact meaning depends on the object... for Sonic/Tails: bit 0: left-facing. bit 1: in-air. bit 2: spinning. bit 3: on-object. bit 4: roll-jumping. bit 5: pushing. bit 6: underwater.
+respawn_index:		equ $23
 routine:		equ $24
 routine_secondary:	equ $25
 angle:			equ $26			; angle about the z axis (360 degrees = 256)

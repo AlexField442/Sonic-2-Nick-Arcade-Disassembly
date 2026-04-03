@@ -113,12 +113,12 @@ SpikeHelix_Delete:
 ; sub_878C:
 SpikeHelix_RotateSpike:
 		move.b	($FFFFFEC1).w,d0	; get synchronised frame value
-		move.b	#0,$20(a0)		; make object harmless
+		move.b	#0,collision_flags(a0)	; make object harmless
 		add.b	spikehelix_frame(a0),d0	; add initial frame
 		andi.b	#7,d0
 		move.b	d0,mapping_frame(a0)	; change current frame
 		bne.s	locret_87AA		; if it isn't frame 0, branch
-		move.b	#$84,$20(a0)		; make object harmful
+		move.b	#$84,collision_flags(a0)	; make object harmful
 
 locret_87AA:
 		rts

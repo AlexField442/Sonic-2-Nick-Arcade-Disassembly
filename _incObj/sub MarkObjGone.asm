@@ -22,7 +22,7 @@ loc_CE64:
 loc_CE7C:
 		lea	(Object_Respawn_Table).w,a2
 		moveq	#0,d0
-		move.b	$23(a0),d0
+		move.b	respawn_index(a0),d0
 		beq.s	loc_CE8E
 		bclr	#7,2(a2,d0.w)
 
@@ -49,7 +49,7 @@ loc_CE9A:
 loc_CEB0:
 		lea	(Object_Respawn_Table).w,a2
 		moveq	#0,d0
-		move.b	$23(a0),d0
+		move.b	respawn_index(a0),d0
 		beq.s	loc_CEC2
 		bclr	#7,2(a2,d0.w)
 
@@ -72,7 +72,7 @@ MarkObjGone_P1:
 loc_CEE4:
 		lea	(Object_Respawn_Table).w,a2
 		moveq	#0,d0
-		move.b	$23(a0),d0
+		move.b	respawn_index(a0),d0
 		beq.s	loc_CEF6
 		bclr	#7,2(a2,d0.w)
 
@@ -101,7 +101,7 @@ loc_CF14:
 loc_CF24:
 		lea	(Object_Respawn_Table).w,a2
 		moveq	#0,d0
-		move.b	$23(a0),d0
+		move.b	respawn_index(a0),d0
 		beq.s	loc_CF36
 		bclr	#7,2(a2,d0.w)
 

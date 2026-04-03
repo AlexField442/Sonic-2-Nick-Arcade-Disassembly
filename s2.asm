@@ -10,31 +10,12 @@
 ; Target Assembler: 680x0 Assembler in MRI compatible mode
 ; This file should be compiled with "as	-M"
 
-		opt	l.					; . is the local label symbol
-		opt	ae-					; automatic evens disabled by defaultz
-		opt	an+					; allow Intel/Zilog-style number suffixes (used in the Z80 code and definitions)
-		opt	ws+					; allow statements to contain white-spaces
-		opt	w+					; print warnings
-
-	include	"s2.constants.asm"
+		include "s2.macrosetup.asm"
+		include	"s2.constants.asm"
+		include	"s2.macros.asm"
 
 ; ---------------------------------------------------------------------------
 ; Macros
-align macro
-	cnop 0,\1
-	endm
-
-; tells the Z80 to stop, and waits for it to finish stopping (acquire bus)
-stopZ80 macro
-	move.w	#$100,(Z80_Bus_Request).l
-.loop:	btst	#0,(Z80_Bus_Request).l
-	bne.s	.loop
-	endm
-
-; tells the Z80 to start again
-startZ80 macro
-	move.w	#0,(Z80_Bus_Request).l
-	endm
 
 StartOfRom:
 Vectors:	dc.l System_Stack,EntryPoint,BusError,AddressError
@@ -9068,7 +9049,7 @@ loc_821E:				; DATA XREF: ROM:Obj15_Indexo
 		bsr.w	Adjust2PArtPointer
 		move.b	#$20,width_pixels(a0) ; ' '
 		move.b	#$10,y_radius(a0)
-		move.b	#$99,$20(a0)
+		move.b	#$99,collision_flags(a0)
 
 loc_8284:				; CODE XREF: ROM:0000825Ej
 		cmpi.b	#2,(Current_Zone).w
@@ -9142,7 +9123,7 @@ loc_835C:				; CODE XREF: ROM:000082F4j
 		bsr.w	Adjust2PArtPointer
 		move.b	#1,mapping_frame(a0)
 		move.b	#2,priority(a0)
-		move.b	#$81,$20(a0)
+		move.b	#$81,collision_flags(a0)
 
 loc_8388:				; CODE XREF: ROM:000082BAj
 					; ROM:00008362j
@@ -10286,7 +10267,7 @@ loc_93F4:				; DATA XREF: ROM:Obj1C_Indexo
 		move.b	(a1)+,mapping_frame(a0)
 		move.b	(a1)+,width_pixels(a0)
 		move.b	(a1)+,priority(a0)
-		move.b	(a1)+,$20(a0)
+		move.b	(a1)+,collision_flags(a0)
 		move.b	subtype(a0),d0
 		andi.w	#$F0,d0	; 'ğ'
 		beq.s	loc_9442
@@ -10483,7 +10464,7 @@ loc_966E:				; DATA XREF: ROM:S1Obj_1E_Indexo
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,render_flags(a0)
 		move.b	#4,priority(a0)
-		move.b	#5,$20(a0)
+		move.b	#5,collision_flags(a0)
 		move.b	#$C,width_pixels(a0)
 		bsr.w	ObjectMoveAndFall
 		jsr	(ObjHitFloor).l
@@ -10562,7 +10543,7 @@ loc_9742:				; DATA XREF: ROM:S1Obj20_Indexo
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,render_flags(a0)
 		move.b	#3,priority(a0)
-		move.b	#$87,$20(a0)
+		move.b	#$87,collision_flags(a0)
 		move.b	#8,width_pixels(a0)
 		moveq	#0,d0
 		move.b	subtype(a0),d0
@@ -10639,7 +10620,7 @@ loc_981A:				; DATA XREF: ROM:Obj24_Indexo
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,render_flags(a0)
 		move.b	#1,priority(a0)
-		move.b	#0,$20(a0)
+		move.b	#0,collision_flags(a0)
 		move.b	#$C,width_pixels(a0)
 		move.b	#9,anim_frame_duration(a0)
 		move.b	#0,mapping_frame(a0)
@@ -10690,7 +10671,7 @@ loc_98B2:				; CODE XREF: ROM:00009898j
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,render_flags(a0)
 		move.b	#1,priority(a0)
-		move.b	#0,$20(a0)
+		move.b	#0,collision_flags(a0)
 		move.b	#$C,width_pixels(a0)
 		move.b	#7,anim_frame_duration(a0)
 		move.b	#0,mapping_frame(a0)
@@ -10732,7 +10713,7 @@ loc_9926:				; DATA XREF: ROM:Obj3F_Indexo
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,render_flags(a0)
 		move.b	#1,priority(a0)
-		move.b	#0,$20(a0)
+		move.b	#0,collision_flags(a0)
 		move.b	#$C,width_pixels(a0)
 		move.b	#7,anim_frame_duration(a0)
 		move.b	#0,mapping_frame(a0)
@@ -11363,7 +11344,7 @@ Obj1F_Init:
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,render_flags(a0)
 		move.b	#3,priority(a0)
-		move.b	#6,$20(a0)
+		move.b	#6,collision_flags(a0)
 		move.b	#$15,width_pixels(a0)
 		bsr.w	ObjectMoveAndFall
 		jsr	(ObjHitFloor).l
@@ -11526,7 +11507,7 @@ Obj1F_BallInit:
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,render_flags(a0)
 		move.b	#3,priority(a0)
-		move.b	#$87,$20(a0)
+		move.b	#$87,collision_flags(a0)
 		move.b	#8,width_pixels(a0)
 		move.w	#$FC00,y_vel(a0)
 		move.b	#7,anim(a0)
@@ -11592,7 +11573,7 @@ Obj22_Init:
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,render_flags(a0)
 		move.b	#3,priority(a0)
-		move.b	#8,$20(a0)
+		move.b	#8,collision_flags(a0)
 		move.b	#$18,width_pixels(a0)
 ; loc_A44A:
 Obj22_Main:
@@ -11726,7 +11707,7 @@ Obj23_Init:
 		beq.s	Obj23_Animate	; if not, branch
 
 		move.b	#8,routine(a0)
-		move.b	#$87,$20(a0)
+		move.b	#$87,collision_flags(a0)
 		move.b	#1,anim(a0)
 		bra.s	Obj23_Animate2
 ; ===========================================================================
@@ -11759,7 +11740,7 @@ Obj23_ChkDel:
 Obj23_Move:
 		btst	#7,status(a0)	; has the missile collided with the level? (flag never set)
 		bne.s	Obj23_Explode	; if yes, branch
-		move.b	#$87,$20(a0)
+		move.b	#$87,collision_flags(a0)
 		move.b	#1,anim(a0)
 		bsr.w	ObjectMove
 		lea	(Ani_obj23).l,a1
@@ -11867,9 +11848,9 @@ loc_A832:				; CODE XREF: ROM:0000A828j
 		bsr.w	Adjust2PArtPointer2
 		move.b	#4,render_flags(a1)
 		move.b	#2,priority(a1)
-		move.b	#$47,$20(a1) ; 'G'
+		move.b	#$47,collision_flags(a1) ; 'G'
 		move.b	#8,width_pixels(a1)
-		move.b	$23(a0),$23(a1)
+		move.b	respawn_index(a0),respawn_index(a1)
 		move.b	d1,$34(a1)
 		addq.w	#1,d1
 		add.w	d5,d2
@@ -11890,12 +11871,12 @@ loc_A88A:				; CODE XREF: ROM:0000A830j
 
 loc_A8A6:				; DATA XREF: ROM:0000A7F6o
 		addq.b	#2,routine(a0)
-		move.b	#0,$20(a0)
+		move.b	#0,collision_flags(a0)
 		move.b	#1,priority(a0)
 		bsr.w	sub_A8DE
 		lea	(Object_Respawn_Table).w,a2
 		moveq	#0,d0
-		move.b	$23(a0),d0
+		move.b	respawn_index(a0),d0
 		move.b	$34(a0),d1
 		bset	d1,2(a2,d0.w)
 
@@ -11985,7 +11966,7 @@ loc_A956:				; CODE XREF: ROM:0000A94Cj
 		bsr.w	Adjust2PArtPointer2
 		move.b	#4,render_flags(a1)
 		move.b	#3,priority(a1)
-		move.b	#$47,$20(a1) ; 'G'
+		move.b	#$47,collision_flags(a1) ; 'G'
 		move.b	#8,width_pixels(a1)
 		move.b	#$FF,($FFFFFEC6).w
 		tst.w	d4
@@ -12050,7 +12031,7 @@ loc_AA34:				; CODE XREF: ROM:0000AA0Aj
 
 loc_AA4C:				; DATA XREF: ROM:0000A930o
 		addq.b	#2,routine(a0)
-		move.b	#0,$20(a0)
+		move.b	#0,collision_flags(a0)
 		move.b	#1,priority(a0)
 		bsr.w	sub_A8DE
 
@@ -12100,7 +12081,7 @@ loc_AA88:				; DATA XREF: ROM:S1Obj4B_Indexo
 loc_AAC0:				; CODE XREF: ROM:0000AABCj
 		addq.b	#2,routine(a0)
 		move.b	#2,priority(a0)
-		move.b	#$52,$20(a0) ; 'R'
+		move.b	#$52,collision_flags(a0) ; 'R'
 		move.w	#$C40,(BigRingGraphics).w
 
 loc_AAD6:				; CODE XREF: ROM:0000AAAAj
@@ -12117,7 +12098,7 @@ loc_AAD6:				; CODE XREF: ROM:0000AAAAj
 
 loc_AAF4:				; DATA XREF: ROM:0000AA84o
 		subq.b	#2,routine(a0)
-		move.b	#0,$20(a0)
+		move.b	#0,collision_flags(a0)
 		bsr.w	AllocateObject
 		bne.w	loc_AB2C
 		move.b	#$7C,id(a1) ; '|'
@@ -12337,7 +12318,7 @@ loc_AE70:				; DATA XREF: ROM:Obj26_Indexo
 		move.b	#$F,width_pixels(a0)
 		lea	(Object_Respawn_Table).w,a2
 		moveq	#0,d0
-		move.b	$23(a0),d0
+		move.b	respawn_index(a0),d0
 		bclr	#7,2(a2,d0.w)
 		btst	#0,2(a2,d0.w)
 		beq.s	loc_AECA
@@ -12347,7 +12328,7 @@ loc_AE70:				; DATA XREF: ROM:Obj26_Indexo
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_AECA:				; CODE XREF: ROM:0000AEBAj
-		move.b	#$46,$20(a0) ; 'F'
+		move.b	#$46,collision_flags(a0) ; 'F'
 		move.b	subtype(a0),anim(a0)
 
 loc_AED6:				; DATA XREF: ROM:0000AE68o
@@ -12455,7 +12436,7 @@ loc_AFC4:				; DATA XREF: ROM:0000AE6Eo
 
 loc_AFDC:				; DATA XREF: ROM:0000AE6Ao
 		addq.b	#2,routine(a0)
-		move.b	#0,$20(a0)
+		move.b	#0,collision_flags(a0)
 		bsr.w	AllocateObject
 		bne.s	loc_B004
 		move.b	#$2E,id(a1) ; '.'
@@ -12474,7 +12455,7 @@ loc_B004:				; CODE XREF: ROM:0000AFEAj
 loc_B020:				; CODE XREF: ROM:0000B008j
 		lea	(Object_Respawn_Table).w,a2
 		moveq	#0,d0
-		move.b	$23(a0),d0
+		move.b	respawn_index(a0),d0
 		bset	#0,2(a2,d0.w)
 		move.b	#$A,anim(a0)
 		bra.w	DisplaySprite
@@ -12980,7 +12961,7 @@ loc_B72E:				; DATA XREF: ROM:Obj2B_Indexo
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,render_flags(a0)
 		move.b	#4,priority(a0)
-		move.b	#9,$20(a0)
+		move.b	#9,collision_flags(a0)
 		move.b	#$10,width_pixels(a0)
 		move.w	#$F900,y_vel(a0)
 		move.w	y_pos(a0),$30(a0)
@@ -13046,7 +13027,7 @@ loc_B7F0:				; DATA XREF: ROM:Obj2C_Indexo
 		move.w	#$2486,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		ori.b	#4,render_flags(a0)
-		move.b	#$A,$20(a0)
+		move.b	#$A,collision_flags(a0)
 		move.b	#4,priority(a0)
 		move.b	#$10,width_pixels(a0)
 		moveq	#0,d0
@@ -15205,7 +15186,7 @@ locret_EC8A:
 Obj42_Fall:
 		cmpi.b	#1,mapping_frame(a0)
 		bne.s	loc_EC9A
-		move.b	#$C,$20(a0)
+		move.b	#$C,collision_flags(a0)
 
 loc_EC9A:
 		bsr.w	ObjectMoveAndFall
@@ -15221,7 +15202,7 @@ loc_EC9A:
 		addq.b	#1,anim(a0)
 
 loc_ECC6:
-		move.b	#$D,$20(a0)
+		move.b	#$D,collision_flags(a0)
 		move.w	#$200,x_vel(a0)
 		btst	#0,status(a0)
 		bne.s	locret_ECDE
@@ -15256,7 +15237,7 @@ Obj42_Move:
 Obj42_Type02:
 		cmpi.b	#1,mapping_frame(a0)
 		bne.s	Obj42_FireMissile
-		move.b	#$C,$20(a0)
+		move.b	#$C,collision_flags(a0)
 ; loc_ED14:
 Obj42_FireMissile:
 		cmpi.b	#2,mapping_frame(a0)
@@ -15582,7 +15563,7 @@ Obj40_Init:
 		bne.s	Obj40_Smoke
 		move.b	#$E,y_radius(a0)
 		move.b	#8,x_radius(a0)
-		move.b	#$C,$20(a0)
+		move.b	#$C,collision_flags(a0)
 		bsr.w	ObjectMoveAndFall
 		jsr	(ObjHitFloor).l
 		tst.w	d1
@@ -21554,7 +21535,7 @@ Obj79_Init:				; DATA XREF: ROM:Obj79_Indexo
 		move.b	#5,priority(a0)
 		lea	(Object_Respawn_Table).w,a2
 		moveq	#0,d0
-		move.b	$23(a0),d0
+		move.b	respawn_index(a0),d0
 		bclr	#7,2(a2,d0.w)
 		btst	#0,2(a2,d0.w)
 		bne.s	loc_13536
@@ -21585,7 +21566,7 @@ Obj79_Main:				; CODE XREF: ROM:00013534j
 		bcs.s	Obj79_HitLamp
 		lea	(Object_Respawn_Table).w,a2
 		moveq	#0,d0
-		move.b	$23(a0),d0
+		move.b	respawn_index(a0),d0
 		bset	#0,2(a2,d0.w)
 		move.b	#4,routine(a0)
 		bra.w	locret_135CA
@@ -21608,7 +21589,7 @@ Obj79_HitLamp:				; CODE XREF: ROM:00013566j
 		bsr.w	Lamppost_StoreInfo
 		lea	(Object_Respawn_Table).w,a2
 		moveq	#0,d0
-		move.b	$23(a0),d0
+		move.b	respawn_index(a0),d0
 		bset	#0,2(a2,d0.w)
 
 locret_135CA:				; CODE XREF: ROM:00013548j
@@ -21832,24 +21813,24 @@ S1Obj47_Init:				; DATA XREF: ROM:S1Obj47_Indexo
 		move.b	#4,render_flags(a0)
 		move.b	#$10,width_pixels(a0)
 		move.b	#1,priority(a0)
-		move.b	#$D7,$20(a0)
+		move.b	#$D7,collision_flags(a0)
 
 S1Obj47_Main:				; DATA XREF: ROM:00013884o
-		move.b	$21(a0),d0
+		move.b	collision_property(a0),d0
 		beq.w	loc_13976
 		lea	(MainCharacter).w,a1
-		bclr	#0,$21(a0)
+		bclr	#0,collision_property(a0)
 		beq.s	loc_138CA
 		bsr.s	S1Obj47_Bump
 
 loc_138CA:				; CODE XREF: ROM:000138C6j
 		lea	(Sidekick).w,a1
-		bclr	#1,$21(a0)
+		bclr	#1,collision_property(a0)
 		beq.s	loc_138D8
 		bsr.s	S1Obj47_Bump
 
 loc_138D8:				; CODE XREF: ROM:000138D4j
-		clr.b	$21(a0)
+		clr.b	collision_property(a0)
 		bra.w	loc_13976
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
@@ -21878,7 +21859,7 @@ S1Obj47_Bump:				; CODE XREF: ROM:000138C8p
 		jsr	(PlaySound_Special).l
 		lea	(Object_Respawn_Table).w,a2
 		moveq	#0,d0
-		move.b	$23(a0),d0
+		move.b	respawn_index(a0),d0
 		beq.s	loc_1394E
 		cmpi.b	#$8A,2(a2,d0.w)
 		bcc.s	locret_13974
@@ -23458,7 +23439,7 @@ loc_14E3C:				; DATA XREF: ROM:00014CCCo
 		bsr.w	Adjust2PArtPointer
 		ori.b	#4,render_flags(a0)
 		move.b	#4,priority(a0)
-		move.b	#$8B,$20(a0)
+		move.b	#$8B,collision_flags(a0)
 		move.b	#$C,width_pixels(a0)
 		move.w	x_pos(a0),$30(a0)
 		addi.w	#$28,x_pos(a0) ; '('
@@ -24034,7 +24015,7 @@ Obj4D_Init:				; DATA XREF: ROM:Obj4D_Indexo
 		move.l	#Map_Obj4D,mappings(a0)
 		move.w	#$23C4,art_tile(a0)
 		ori.b	#4,render_flags(a0)
-		move.b	#$A,$20(a0)
+		move.b	#$A,collision_flags(a0)
 		move.b	#4,priority(a0)
 		move.b	#$18,width_pixels(a0)
 		move.b	#$10,y_radius(a0)
@@ -24247,7 +24228,7 @@ Obj52_Init:				; DATA XREF: ROM:Obj52_Indexo
 		move.l	#Map_Obj52,mappings(a0)
 		move.w	#$2530,art_tile(a0)
 		ori.b	#4,render_flags(a0)
-		move.b	#$A,$20(a0)
+		move.b	#$A,collision_flags(a0)
 		move.b	#4,priority(a0)
 		move.b	#$10,width_pixels(a0)
 		moveq	#0,d0
@@ -24447,7 +24428,7 @@ Obj4F_Init:
 		move.b	#$10,width_pixels(a0)
 		move.b	#$10,y_radius(a0)
 		move.b	#6,x_radius(a0)
-		move.b	#$C,$20(a0)
+		move.b	#$C,collision_flags(a0)
 		bsr.w	j_ObjectMoveAndFall_1
 		jsr	(ObjHitFloor).l
 		tst.w	d1
@@ -24481,7 +24462,7 @@ Obj4F_Main:
 loc_15E3E:
 		lea	(Object_Respawn_Table).w,a2
 		moveq	#0,d0
-		move.b	$23(a0),d0
+		move.b	respawn_index(a0),d0
 		beq.s	loc_15E50
 		bclr	#7,2(a2,d0.w)
 
@@ -24583,7 +24564,7 @@ Obj50_Init:				; DATA XREF: ROM:Obj50_Indexo
 		move.l	#Map_Obj50,mappings(a0)
 		move.w	#$2570,art_tile(a0)
 		ori.b	#4,render_flags(a0)
-		move.b	#$A,$20(a0)
+		move.b	#$A,collision_flags(a0)
 		move.b	#4,priority(a0)
 		move.b	#$10,width_pixels(a0)
 		move.w	#$FF00,x_vel(a0)
@@ -24703,7 +24684,7 @@ loc_16086:				; CODE XREF: sub_16078+Aj
 		move.w	#$24E0,art_tile(a1)
 		ori.b	#4,render_flags(a1)
 		move.b	#3,priority(a1)
-		move.b	#$E5,$20(a1)
+		move.b	#$E5,collision_flags(a1)
 		move.b	#2,anim(a1)
 		move.w	#$C,d0
 		move.w	#$10,d1
@@ -24846,7 +24827,7 @@ sub_161D8:				; CODE XREF: ROM:00015FF8p
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		move.b	status(a0),status(a1)
-		move.b	$23(a0),$23(a1)
+		move.b	respawn_index(a0),respawn_index(a1)
 		move.b	render_flags(a0),render_flags(a1)
 		btst	#0,status(a1)
 		beq.s	loc_16208
@@ -24882,7 +24863,7 @@ sub_16228:				; CODE XREF: ROM:00016216p
 		move.w	d0,y_vel(a0)
 
 loc_16242:				; CODE XREF: sub_16228+8j
-		subi.b	#1,$21(a0)
+		subi.b	#1,collision_property(a0)
 		beq.w	loc_1676E
 		rts
 ; End of function sub_16228
@@ -24957,7 +24938,7 @@ locret_162FA:				; CODE XREF: sub_162DE+4j
 
 loc_162FC:				; CODE XREF: ROM:loc_16030p
 					; ROM:loc_165C0p
-		tst.b	$21(a0)
+		tst.b	collision_property(a0)
 		beq.w	locret_1639E
 		moveq	#2,d3
 
@@ -24974,7 +24955,7 @@ loc_16306:				; CODE XREF: ROM:loc_16378j
 		move.b	#3,priority(a1)
 		move.w	#$FF00,y_vel(a1)
 		move.b	#4,anim(a1)
-		move.b	#$78,$21(a1) ; 'x'
+		move.b	#$78,collision_property(a1) ; 'x'
 		cmpi.w	#1,d3
 		beq.s	loc_16372
 		blt.s	loc_16364
@@ -25113,7 +25094,7 @@ loc_1653E:				; DATA XREF: ROM:off_16532o
 		move.l	#Map_Obj50,mappings(a0)
 		move.w	#$2570,art_tile(a0)
 		ori.b	#4,render_flags(a0)
-		move.b	#$A,$20(a0)
+		move.b	#$A,collision_flags(a0)
 		move.b	#4,priority(a0)
 		move.b	#$10,width_pixels(a0)
 		move.b	#6,anim(a0)
@@ -25254,7 +25235,7 @@ loc_1669E:				; CODE XREF: ROM:0001660Ej
 		ori.b	#4,render_flags(a1)
 		move.b	#3,priority(a1)
 		move.b	#2,anim(a1)
-		move.b	#$E5,$20(a1)
+		move.b	#$E5,collision_flags(a1)
 		move.w	#$C,d0
 		move.w	#$10,d1
 		move.w	#$FD00,d2
@@ -25405,7 +25386,7 @@ Obj4B_Init:
 		move.w	#$3E6,art_tile(a0)
 		bsr.w	j_Adjust2PArtPointer_2
 		ori.b	#4,render_flags(a0)
-		move.b	#$A,$20(a0)
+		move.b	#$A,collision_flags(a0)
 		move.b	#4,priority(a0)
 		move.b	#$10,width_pixels(a0)
 		move.b	#$10,y_radius(a0)
@@ -25544,7 +25525,7 @@ Obj4B_ShootProjectile:
 		move.w	#$3E6,art_tile(a1)
 		bsr.w	j_Adjust2PArtPointer2
 		move.b	#4,priority(a1)
-		move.b	#$98,$20(a1)
+		move.b	#$98,collision_flags(a1)
 		move.b	#$10,width_pixels(a1)
 		move.b	status(a0),status(a1)
 		move.b	render_flags(a0),render_flags(a1)
@@ -25642,7 +25623,7 @@ loc_16ADE:				; DATA XREF: ROM:Obj4A_Indexo
 		move.l	#Map_Obj4A,mappings(a0)
 		move.w	#$238A,art_tile(a0)
 		ori.b	#4,render_flags(a0)
-		move.b	#$A,$20(a0)
+		move.b	#$A,collision_flags(a0)
 		move.b	#4,priority(a0)
 		move.b	#$10,width_pixels(a0)
 		move.b	#$10,y_radius(a0)
@@ -25850,7 +25831,7 @@ Obj4C_Init:				; DATA XREF: ROM:Obj4C_Indexo
 		move.l	#Map_Obj4C,mappings(a0)
 		move.w	#$2530,art_tile(a0)
 		ori.b	#4,render_flags(a0)
-		move.b	#$A,$20(a0)
+		move.b	#$A,collision_flags(a0)
 		move.b	#4,priority(a0)
 		move.b	#$10,width_pixels(a0)
 		move.b	#$10,y_radius(a0)
@@ -26218,7 +26199,7 @@ Obj4E_Init:				; DATA XREF: ROM:Obj4E_Indexo
 		move.l	#Map_Obj4E,mappings(a0)
 		move.w	#$2300,art_tile(a0)
 		ori.b	#4,render_flags(a0)
-		move.b	#$A,$20(a0)
+		move.b	#$A,collision_flags(a0)
 		move.b	#4,priority(a0)
 		move.b	#$10,width_pixels(a0)
 		move.b	#$10,y_radius(a0)
@@ -26436,7 +26417,7 @@ Obj53_Init:
 		bsr.w	j_Adjust2PArtPointer
 		move.b	#4,render_flags(a0)
 		move.b	#4,priority(a0)
-		move.b	#9,$20(a0)
+		move.b	#9,collision_flags(a0)
 		move.b	#$10,width_pixels(a0)
 		move.w	#$FC00,y_vel(a0)
 		move.w	y_pos(a0),$30(a0)
@@ -26515,7 +26496,7 @@ Obj54_Init:
 		move.w	#$402,art_tile(a0)
 		bsr.w	j_Adjust2PArtPointer_3
 		ori.b	#4,render_flags(a0)
-		move.b	#$A,$20(a0)
+		move.b	#$A,collision_flags(a0)
 		move.b	#4,priority(a0)
 		move.b	#$10,width_pixels(a0)
 		move.b	#$10,y_radius(a0)
@@ -26751,7 +26732,7 @@ off_17892:	dc.w loc_1789E-off_17892; 0 ; DATA XREF: ROM:off_17892o
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_1789E:				; DATA XREF: ROM:off_17892o
-		move.b	#0,$20(a0)
+		move.b	#0,collision_flags(a0)
 		cmpi.w	#$29D0,x_pos(a0)
 		ble.s	loc_178B6
 		subi.w	#1,x_pos(a0)
@@ -26794,7 +26775,7 @@ loc_178FC:				; DATA XREF: ROM:000178D4o
 		bpl.w	loc_181A8
 		move.w	#$FE00,x_vel(a0)
 		addq.b	#2,routine_secondary(a0)
-		move.b	#$F,$20(a0)
+		move.b	#$F,collision_flags(a0)
 		bset	#1,$2D(a0)
 		bra.w	loc_181A8
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -26932,7 +26913,7 @@ sub_17A8C:				; CODE XREF: ROM:loc_17920p
 		bcc.s	locret_17AD2
 		tst.b	status(a0)
 		bmi.s	loc_17AD4
-		tst.b	$20(a0)
+		tst.b	collision_flags(a0)
 		bne.s	locret_17AD2
 		tst.b	$3E(a0)
 		bne.s	loc_17AB6
@@ -26951,7 +26932,7 @@ loc_17AC4:				; CODE XREF: sub_17A8C+32j
 		move.w	d0,(a1)
 		subq.b	#1,$3E(a0)
 		bne.s	locret_17AD2
-		move.b	#$F,$20(a0)
+		move.b	#$F,collision_flags(a0)
 
 locret_17AD2:				; CODE XREF: sub_17A8C+6j
 					; sub_17A8C+12j ...
@@ -27154,7 +27135,7 @@ loc_17CE4:				; DATA XREF: ROM:00017B02o
 		bsr.w	sub_17D6A
 		btst	#1,$2D(a1)
 		beq.w	loc_181A8
-		move.b	#$8B,$20(a0)
+		move.b	#$8B,collision_flags(a0)
 		move.w	x_pos(a1),x_pos(a0)
 		move.w	y_pos(a1),y_pos(a0)
 		move.b	status(a1),status(a0)
@@ -27188,7 +27169,7 @@ loc_17D58:				; CODE XREF: ROM:00017D54j
 
 
 sub_17D6A:				; CODE XREF: ROM:00017CF8p
-		cmpi.b	#1,$21(a1)
+		cmpi.b	#1,collision_property(a1)
 		beq.s	loc_17D74
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -27484,8 +27465,8 @@ Obj55_Init:
 		ori.b	#4,render_flags(a0)
 		move.b	#$20,width_pixels(a0)
 		move.b	#3,priority(a0)
-		move.b	#$F,$20(a0)
-		move.b	#8,$21(a0)
+		move.b	#$F,collision_flags(a0)
+		move.b	#8,collision_property(a0)
 		addq.b	#2,routine(a0)
 		move.w	x_pos(a0),$30(a0)
 		move.w	y_pos(a0),$38(a0)
@@ -27666,7 +27647,7 @@ Obj56_Init:				; DATA XREF: ROM:Obj56_Indexo
 		move.w	#$5A0,art_tile(a0)
 		move.b	#4,render_flags(a0)
 		move.b	#1,priority(a0)
-		move.b	#0,$20(a0)
+		move.b	#0,collision_flags(a0)
 		move.b	#$C,width_pixels(a0)
 		move.b	#7,anim_frame_duration(a0)
 		move.b	#0,mapping_frame(a0)
@@ -27873,8 +27854,8 @@ loc_18D2A:				; CODE XREF: ROM:00018D20j
 loc_18D70:				; CODE XREF: ROM:00018D28j
 		move.w	x_pos(a0),$30(a0)
 		move.w	y_pos(a0),$38(a0)
-		move.b	#$F,$20(a0)
-		move.b	#8,$21(a0)
+		move.b	#$F,collision_flags(a0)
+		move.b	#8,collision_property(a0)
 
 Obj3D_ShipMain:				; DATA XREF: ROM:00018D0Co
 		moveq	#0,d0
@@ -27920,7 +27901,7 @@ loc_18DE4:				; CODE XREF: ROM:00018DD8j
 		bcc.s	locret_18E48
 		tst.b	status(a0)
 		bmi.s	loc_18E4A
-		tst.b	$20(a0)
+		tst.b	collision_flags(a0)
 		bne.s	locret_18E48
 		tst.b	$3E(a0)
 		bne.s	loc_18E2C
@@ -27939,7 +27920,7 @@ loc_18E3A:				; CODE XREF: ROM:00018E34j
 		move.w	d0,(a1)
 		subq.b	#1,$3E(a0)
 		bne.s	locret_18E48
-		move.b	#$F,$20(a0)
+		move.b	#$F,collision_flags(a0)
 
 locret_18E48:				; CODE XREF: ROM:00018E08j
 					; ROM:00018E14j ...
@@ -28168,7 +28149,7 @@ loc_19040:				; CODE XREF: ROM:00019034j
 
 loc_19048:				; CODE XREF: ROM:0001903Cj
 					; ROM:00019042j
-		tst.b	$20(a1)
+		tst.b	collision_flags(a1)
 		bne.s	loc_19052
 		moveq	#5,d1
 		bra.s	loc_1905C
@@ -28299,7 +28280,7 @@ loc_19194:				; CODE XREF: ROM:00019134j
 		bsr.w	j_Adjust2PArtPointer2_1
 		move.b	#1,mapping_frame(a1)
 		move.b	#5,priority(a1)
-		move.b	#$81,$20(a1)
+		move.b	#$81,collision_flags(a1)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 Obj48_PosData:	dc.b   0,$10,$20,$30,$40,$60; 0	; DATA XREF: ROM:Obj48_Maint
@@ -28398,7 +28379,7 @@ loc_1929A:				; CODE XREF: ROM:00019296j
 		movea.l	$34(a0),a1
 		tst.b	status(a1)
 		bpl.s	loc_192C2
-		move.b	#0,$20(a0)
+		move.b	#0,collision_flags(a0)
 		bsr.w	BossDefeated
 		subq.b	#1,$3C(a0)
 		bpl.s	loc_192C2
@@ -28586,8 +28567,8 @@ Obj3E_Init:				; DATA XREF: ROM:Obj3E_Indexo
 		move.b	(a1)+,mapping_frame(a0)
 		cmpi.w	#8,d0
 		bne.s	locret_1957C
-		move.b	#6,$20(a0)
-		move.b	#8,$21(a0)
+		move.b	#6,collision_flags(a0)
+		move.b	#8,collision_property(a0)
 
 locret_1957C:				; CODE XREF: ROM:0001956Ej
 		rts
@@ -28819,7 +28800,7 @@ loc_19812:				; CODE XREF: TouchResponse+22j
 		move.w	#$5F,d6	; '_'
 
 loc_19820:				; CODE XREF: TouchResponse+42j
-		move.b	$20(a1),d0
+		move.b	collision_flags(a1),d0
 		bne.s	Touch_Height
 
 loc_19826:				; CODE XREF: TouchResponse+B0j
@@ -28907,14 +28888,14 @@ loc_198BA:				; CODE XREF: TouchResponse+C6j
 		bhi.w	loc_19826
 
 loc_198C0:				; CODE XREF: TouchResponse+CCj
-		move.b	$20(a1),d1
+		move.b	collision_flags(a1),d1
 		andi.b	#$C0,d1
 		beq.w	loc_1993A
 		cmpi.b	#$C0,d1
 		beq.w	Touch_Special
 		tst.b	d1
 		bmi.w	loc_199F2
-		move.b	$20(a1),d0
+		move.b	collision_flags(a1),d0
 		andi.b	#$3F,d0	; '?'
 		cmpi.b	#6,d0
 		beq.s	loc_198FA
@@ -28967,14 +28948,14 @@ loc_1993A:				; CODE XREF: TouchResponse+E0j
 
 loc_19952:				; CODE XREF: TouchResponse+156j
 					; TouchResponse+15Ej
-		tst.b	$21(a1)
+		tst.b	collision_property(a1)
 		beq.s	Touch_KillEnemy
 		neg.w	x_vel(a0)
 		neg.w	y_vel(a0)
 		asr	x_vel(a0)
 		asr	y_vel(a0)
-		move.b	#0,$20(a1)
-		subq.b	#1,$21(a1)
+		move.b	#0,collision_flags(a1)
+		subq.b	#1,collision_property(a1)
 		bne.s	locret_1997A
 		bset	#7,status(a1)
 
@@ -29139,7 +29120,7 @@ Kill_NoDeath:				; CODE XREF: KillSonic+4j
 ; START	OF FUNCTION CHUNK FOR TouchResponse
 
 Touch_Special:				; CODE XREF: TouchResponse+E8j
-		move.b	$20(a1),d1
+		move.b	collision_flags(a1),d1
 		andi.b	#$3F,d1	; '?'
 		cmpi.b	#$B,d1
 		beq.s	Touch_Caterkiller
@@ -29191,15 +29172,15 @@ Touch_D7:				; CODE XREF: TouchResponse+332j
 		move.w	a0,d1
 		subi.w	#Object_RAM,d1
 		beq.s	loc_19B66
-		addq.b	#1,$21(a1)
+		addq.b	#1,collision_property(a1)
 
 loc_19B66:				; CODE XREF: TouchResponse+378j
-		addq.b	#1,$21(a1)
+		addq.b	#1,collision_property(a1)
 		rts
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 Touch_E1:				; CODE XREF: TouchResponse+338j
-		addq.b	#1,$21(a1)
+		addq.b	#1,collision_property(a1)
 		rts
 ; END OF FUNCTION CHUNK	FOR TouchResponse
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
