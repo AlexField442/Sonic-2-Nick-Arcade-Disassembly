@@ -253,73 +253,73 @@ ChecksumFailed_Loop:
 ; ---------------------------------------------------------------------------
 
 BusError:
-		move.b	#2,($FFFFFC44).w
+		move.b	#2,(Object_Respawn_Table+$44).w
 		bra.s	ErrorMsg_TwoAddresses
 ; ---------------------------------------------------------------------------
 
 AddressError:
-		move.b	#4,($FFFFFC44).w
+		move.b	#4,(Object_Respawn_Table+$44).w
 		bra.s	ErrorMsg_TwoAddresses
 ; ---------------------------------------------------------------------------
 
 IllegalInstr:
-		move.b	#6,($FFFFFC44).w
+		move.b	#6,(Object_Respawn_Table+$44).w
 		addq.l	#2,2(sp)
 		bra.s	ErrorMessage
 ; ---------------------------------------------------------------------------
 
 ZeroDivide:
-		move.b	#8,($FFFFFC44).w
+		move.b	#8,(Object_Respawn_Table+$44).w
 		bra.s	ErrorMessage
 ; ---------------------------------------------------------------------------
 
 ChkInstr:
-		move.b	#$A,($FFFFFC44).w
+		move.b	#$A,(Object_Respawn_Table+$44).w
 		bra.s	ErrorMessage
 ; ---------------------------------------------------------------------------
 
 TrapvInstr:
-		move.b	#$C,($FFFFFC44).w
+		move.b	#$C,(Object_Respawn_Table+$44).w
 		bra.s	ErrorMessage
 ; ---------------------------------------------------------------------------
 
 PrivilegeViol:
-		move.b	#$E,($FFFFFC44).w
+		move.b	#$E,(Object_Respawn_Table+$44).w
 		bra.s	ErrorMessage
 ; ---------------------------------------------------------------------------
 
 Trace:
-		move.b	#$10,($FFFFFC44).w
+		move.b	#$10,(Object_Respawn_Table+$44).w
 		bra.s	ErrorMessage
 ; ---------------------------------------------------------------------------
 
 Line1010Emu:
-		move.b	#$12,($FFFFFC44).w
+		move.b	#$12,(Object_Respawn_Table+$44).w
 		addq.l	#2,2(sp)
 		bra.s	ErrorMessage
 ; ---------------------------------------------------------------------------
 
 Line1111Emu:
-		move.b	#$14,($FFFFFC44).w
+		move.b	#$14,(Object_Respawn_Table+$44).w
 		addq.l	#2,2(sp)
 		bra.s	ErrorMessage
 ; ---------------------------------------------------------------------------
 
 ErrorExcept:
-		move.b	#0,($FFFFFC44).w
+		move.b	#0,(Object_Respawn_Table+$44).w
 		bra.s	ErrorMessage
 ; ---------------------------------------------------------------------------
 
 ErrorMsg_TwoAddresses:
 		move	#$2700,sr		; disable interrupts
 		addq.w	#2,sp
-		move.l	(sp)+,($FFFFFC40).w
+		move.l	(sp)+,(Object_Respawn_Table+$40).w
 		addq.w	#2,sp
 		movem.l	d0-a7,(Object_Respawn_Table).w
 		bsr.w	ShowErrorMsg
 		move.l	2(sp),d0
 		bsr.w	ShowErrAddress
-		move.l	($FFFFFC40).w,d0
+		move.l	(Object_Respawn_Table+$40).w,d0
 		bsr.w	ShowErrAddress
 		bra.s	ErrorMsg_Wait
 ; ===========================================================================
@@ -350,7 +350,7 @@ Error_LoadGfx:
 		move.w	(a0)+,(a6)
 		dbf	d1,Error_LoadGfx
 		moveq	#0,d0
-		move.b	($FFFFFC44).w,d0
+		move.b	(Object_Respawn_Table+$44).w,d0
 
 loc_4A6:
 		move.w	ErrorText(pc,d0.w),d0
@@ -1983,7 +1983,7 @@ LevelSelect_PlayEnding:
 ; loc_355A:
 LevelSelect_PlayCredits:
 		move.b	#GameModeID_S1Credits,(Game_Mode).w
-		move.b	#$91,d0
+		move.b	#MusID_Credits,d0
 		bsr.w	PlaySound_Special
 		move.w	#0,($FFFFFFF4).w
 		rts
@@ -3970,7 +3970,7 @@ loc_5214:
 		move.w	(Ring_count).w,d0
 		mulu.w	#$A,d0
 		move.w	d0,(Bonus_Countdown_2).w
-		move.w	#$8E,d0
+		move.w	#MusID_ActClear,d0
 		jsr	(PlaySound_Special).l
 		lea	(Object_RAM).w,a1
 		moveq	#0,d0
@@ -13368,7 +13368,7 @@ loc_BD1E:				; CODE XREF: ROM:0000BD02j
 		bne.w	DeleteObject
 		addq.b	#2,routine(a0)
 		clr.b	(Control_Locked).w
-		move.w	#$8D,d0	; ''
+		move.w	#MusID_FZ,d0	; ''
 		jmp	(PlaySound).l
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		addq.w	#2,(Camera_Max_X_pos).w
@@ -15494,7 +15494,7 @@ loc_F140:
 		move.w	(Ring_count).w,d0
 		mulu.w	#$A,d0
 		move.w	d0,(Bonus_Countdown_2).w
-		move.w	#$8E,d0
+		move.w	#MusID_ActClear,d0
 		jsr	(PlaySound_Special).l
 
 locret_F15E:
@@ -17285,7 +17285,7 @@ Sonic_GameOver:
 		clr.b	(Time_Over_flag).w
 
 loc_10876:
-		move.w	#$8F,d0
+		move.w	#MusID_GameOver,d0
 		jsr	(PlaySound).l
 		moveq	#3,d0
 		jmp	(LoadPLC).l
@@ -19838,7 +19838,7 @@ Obj0A_Countdown:			; CODE XREF: ROM:00011EC8j
 		cmpi.w	#$C,d0
 		bhi.s	loc_12170
 		bne.s	loc_12152
-		move.w	#$92,d0	; '’'
+		move.w	#MusID_Drowning,d0	; '’'
 		jsr	(PlaySound).l
 
 loc_12152:				; CODE XREF: ROM:00012146j
@@ -23256,388 +23256,23 @@ Obj06_PlayerDeltaYArray:dc.b  $20, $20,	$20, $20, $20, $20, $20, $20, $20, $20,	
 		dc.b  $20, $20,	$20, $20, $20, $20, $20, $20, $20, $20,	$20, $20, $20, $20, $20, $20; 400
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		nop
-;----------------------------------------------------
-; Object 14 - HTZ see-saw
-;----------------------------------------------------
 
-Obj14:					; DATA XREF: ROM:Obj_Indexo
-		moveq	#0,d0
-		move.b	routine(a0),d0
-		move.w	Obj14_Index(pc,d0.w),d1
-		jsr	Obj14_Index(pc,d1.w)
-		move.w	$30(a0),d0
-		andi.w	#$FF80,d0
-		sub.w	(Camera_X_pos_coarse).w,d0
-		cmpi.w	#$280,d0
-		bhi.w	DeleteObject
-		bra.w	DisplaySprite
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-Obj14_Index:	dc.w loc_14CD2-Obj14_Index ; DATA XREF:	ROM:Obj14_Indexo
-					; ROM:00014CC8o ...
-		dc.w loc_14D40-Obj14_Index
-		dc.w locret_14DF2-Obj14_Index
-		dc.w loc_14E3C-Obj14_Index
-		dc.w loc_14E9C-Obj14_Index
-		dc.w loc_14F30-Obj14_Index
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+		include	"_incObj/14 - Seesaw.asm"
 
-loc_14CD2:				; DATA XREF: ROM:Obj14_Indexo
-		addq.b	#2,routine(a0)
-		move.l	#Map_obj14,mappings(a0)
-		move.w	#$3CE,art_tile(a0)
-		bsr.w	Adjust2PArtPointer
-		ori.b	#4,render_flags(a0)
-		move.b	#4,priority(a0)
-		move.b	#$30,width_pixels(a0) ; '0'
-		move.w	x_pos(a0),$30(a0)
-		tst.b	subtype(a0)
-		bne.s	loc_14D2C
-		bsr.w	AllocateObjectAfterCurrent
-		bne.s	loc_14D2C
-		move.b	#$14,id(a1)
-		addq.b	#6,routine(a1)
-		move.w	x_pos(a0),x_pos(a1)
-		move.w	y_pos(a0),y_pos(a1)
-		move.b	status(a0),status(a1)
-		move.l	a0,$3C(a1)
-
-loc_14D2C:				; CODE XREF: ROM:00014D04j
-					; ROM:00014D0Aj
-		btst	#0,status(a0)
-		beq.s	loc_14D3A
-		move.b	#2,mapping_frame(a0)
-
-loc_14D3A:				; CODE XREF: ROM:00014D32j
-		move.b	mapping_frame(a0),$3A(a0)
-
-loc_14D40:				; DATA XREF: ROM:00014CC8o
-		move.b	$3A(a0),d1
-		btst	#3,status(a0)
-		beq.s	loc_14D9A
-		moveq	#2,d1
-		lea	(MainCharacter).w,a1
-		move.w	x_pos(a0),d0
-		sub.w	x_pos(a1),d0
-		bcc.s	loc_14D60
-		neg.w	d0
-		moveq	#0,d1
-
-loc_14D60:				; CODE XREF: ROM:00014D5Aj
-		cmpi.w	#8,d0
-		bcc.s	loc_14D68
-		moveq	#1,d1
-
-loc_14D68:				; CODE XREF: ROM:00014D64j
-		btst	#4,status(a0)
-		beq.s	loc_14DBE
-		moveq	#2,d2
-		lea	(Sidekick).w,a1
-		move.w	x_pos(a0),d0
-		sub.w	x_pos(a1),d0
-		bcc.s	loc_14D84
-		neg.w	d0
-		moveq	#0,d2
-
-loc_14D84:				; CODE XREF: ROM:00014D7Ej
-		cmpi.w	#8,d0
-		bcc.s	loc_14D8C
-		moveq	#1,d2
-
-loc_14D8C:				; CODE XREF: ROM:00014D88j
-		add.w	d2,d1
-		cmpi.w	#3,d1
-		bne.s	loc_14D96
-		addq.w	#1,d1
-
-loc_14D96:				; CODE XREF: ROM:00014D92j
-		lsr.w	#1,d1
-		bra.s	loc_14DBE
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_14D9A:				; CODE XREF: ROM:00014D4Aj
-		btst	#4,status(a0)
-		beq.s	loc_14DBE
-		moveq	#2,d1
-		lea	(Sidekick).w,a1
-		move.w	x_pos(a0),d0
-		sub.w	x_pos(a1),d0
-		bcc.s	loc_14DB6
-		neg.w	d0
-		moveq	#0,d1
-
-loc_14DB6:				; CODE XREF: ROM:00014DB0j
-		cmpi.w	#8,d0
-		bcc.s	loc_14DBE
-		moveq	#1,d1
-
-loc_14DBE:				; CODE XREF: ROM:00014D6Ej
-					; ROM:00014D98j ...
-		bsr.w	sub_14E10
-		lea	(byte_14FFE).l,a2
-		btst	#0,mapping_frame(a0)
-		beq.s	loc_14DD6
-		lea	(byte_1502F).l,a2
-
-loc_14DD6:				; CODE XREF: ROM:00014DCEj
-		lea	(MainCharacter).w,a1
-		move.w	y_vel(a1),$38(a0)
-		move.w	x_pos(a0),-(sp)
-		moveq	#0,d1
-		move.b	width_pixels(a0),d1
-		moveq	#8,d3
-		move.w	(sp)+,d4
-		bra.w	SlopedPlatform
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-locret_14DF2:				; DATA XREF: ROM:00014CCAo
-		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-		moveq	#2,d1
-		lea	(MainCharacter).w,a1
-		move.w	x_pos(a0),d0
-		sub.w	x_pos(a1),d0
-		bcc.s	loc_14E08
-		neg.w	d0
-		moveq	#0,d1
-
-loc_14E08:				; CODE XREF: ROM:00014E02j
-		cmpi.w	#8,d0
-		bcc.s	sub_14E10
-		moveq	#1,d1
-
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-sub_14E10:				; CODE XREF: ROM:loc_14DBEp
-					; ROM:00014E0Cj
-		move.b	mapping_frame(a0),d0
-		cmp.b	d1,d0
-		beq.s	locret_14E3A
-		bcc.s	loc_14E1C
-		addq.b	#2,d0
-
-loc_14E1C:				; CODE XREF: sub_14E10+8j
-		subq.b	#1,d0
-		move.b	d0,mapping_frame(a0)
-		move.b	d1,$3A(a0)
-		bclr	#0,render_flags(a0)
-		btst	#1,mapping_frame(a0)
-		beq.s	locret_14E3A
-		bset	#0,render_flags(a0)
-
-locret_14E3A:				; CODE XREF: sub_14E10+6j
-					; sub_14E10+22j
-		rts
-; End of function sub_14E10
-
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_14E3C:				; DATA XREF: ROM:00014CCCo
-		addq.b	#2,routine(a0)
-		move.l	#Map_obj14b,mappings(a0)
-		move.w	#$3CE,art_tile(a0)
-		bsr.w	Adjust2PArtPointer
-		ori.b	#4,render_flags(a0)
-		move.b	#4,priority(a0)
-		move.b	#$8B,collision_flags(a0)
-		move.b	#$C,width_pixels(a0)
-		move.w	x_pos(a0),$30(a0)
-		addi.w	#$28,x_pos(a0) ; '('
-		addi.w	#$10,y_pos(a0)
-		move.w	y_pos(a0),$34(a0)
-		move.b	#1,mapping_frame(a0)
-		btst	#0,status(a0)
-		beq.s	loc_14E9C
-		subi.w	#$50,x_pos(a0) ; 'P'
-		move.b	#2,$3A(a0)
-
-loc_14E9C:				; CODE XREF: ROM:00014E8Ej
-					; DATA XREF: ROM:00014CCEo
-		movea.l	$3C(a0),a1
-		moveq	#0,d0
-		move.b	$3A(a0),d0
-		sub.b	$3A(a1),d0
-		beq.s	loc_14EF2
-		bcc.s	loc_14EB0
-		neg.b	d0
-
-loc_14EB0:				; CODE XREF: ROM:00014EACj
-		move.w	#$F7E8,d1
-		move.w	#$FEEC,d2
-		cmpi.b	#1,d0
-		beq.s	loc_14ED6
-		move.w	#$F510,d1
-		move.w	#$FF34,d2
-		cmpi.w	#$A00,$38(a1)
-		blt.s	loc_14ED6
-		move.w	#$F200,d1
-		move.w	#$FF60,d2
-
-loc_14ED6:				; CODE XREF: ROM:00014EBCj
-					; ROM:00014ECCj
-		move.w	d1,y_vel(a0)
-		move.w	d2,x_vel(a0)
-		move.w	x_pos(a0),d0
-		sub.w	$30(a0),d0
-		bcc.s	loc_14EEC
-		neg.w	x_vel(a0)
-
-loc_14EEC:				; CODE XREF: ROM:00014EE6j
-		addq.b	#2,routine(a0)
-		bra.s	loc_14F30
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_14EF2:				; CODE XREF: ROM:00014EAAj
-		lea	(word_14FF4).l,a2
-		moveq	#0,d0
-		move.b	mapping_frame(a1),d0
-		move.w	#$28,d2	; '('
-		move.w	x_pos(a0),d1
-		sub.w	$30(a0),d1
-		bcc.s	loc_14F10
-		neg.w	d2
-		addq.w	#2,d0
-
-loc_14F10:				; CODE XREF: ROM:00014F0Aj
-		add.w	d0,d0
-		move.w	$34(a0),d1
-		add.w	(a2,d0.w),d1
-		move.w	d1,y_pos(a0)
-		add.w	$30(a0),d2
-		move.w	d2,x_pos(a0)
-		clr.w	y_sub(a0)
-		clr.w	x_sub(a0)
-		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_14F30:				; CODE XREF: ROM:00014EF0j
-					; DATA XREF: ROM:00014CD0o
-		tst.w	y_vel(a0)
-		bpl.s	loc_14F4E
-		bsr.w	j_ObjectMoveAndFall
-		move.w	$34(a0),d0
-		subi.w	#$2F,d0	; '/'
-		cmp.w	y_pos(a0),d0
-		bgt.s	locret_14F4C
-		bsr.w	j_ObjectMoveAndFall
-
-locret_14F4C:				; CODE XREF: ROM:00014F46j
-		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_14F4E:				; CODE XREF: ROM:00014F34j
-		bsr.w	j_ObjectMoveAndFall
-		movea.l	$3C(a0),a1
-		lea	(word_14FF4).l,a2
-		moveq	#0,d0
-		move.b	mapping_frame(a1),d0
-		move.w	x_pos(a0),d1
-		sub.w	$30(a0),d1
-		bcc.s	loc_14F6E
-		addq.w	#2,d0
-
-loc_14F6E:				; CODE XREF: ROM:00014F6Aj
-		add.w	d0,d0
-		move.w	$34(a0),d1
-		add.w	(a2,d0.w),d1
-		cmp.w	y_pos(a0),d1
-		bgt.s	locret_14FC2
-		movea.l	$3C(a0),a1
-		moveq	#2,d1
-		tst.w	x_vel(a0)
-		bmi.s	loc_14F8C
-		moveq	#0,d1
-
-loc_14F8C:				; CODE XREF: ROM:00014F88j
-		move.b	d1,$3A(a1)
-		move.b	d1,$3A(a0)
-		cmp.b	mapping_frame(a1),d1
-		beq.s	loc_14FB6
-		lea	(MainCharacter).w,a2
-		bclr	#3,status(a1)
-		beq.s	loc_14FA8
-		bsr.s	sub_14FC4
-
-loc_14FA8:				; CODE XREF: ROM:00014FA4j
-		lea	(Sidekick).w,a2
-		bclr	#4,status(a1)
-		beq.s	loc_14FB6
-		bsr.s	sub_14FC4
-
-loc_14FB6:				; CODE XREF: ROM:00014F98j
-					; ROM:00014FB2j
-		clr.w	x_vel(a0)
-		clr.w	y_vel(a0)
-		subq.b	#2,routine(a0)
-
-locret_14FC2:				; CODE XREF: ROM:00014F7Cj
-		rts
-
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-sub_14FC4:				; CODE XREF: ROM:00014FA6p
-					; ROM:00014FB4p
-		move.w	y_vel(a0),y_vel(a2)
-		neg.w	y_vel(a2)
-		bset	#1,status(a2)
-		bclr	#3,status(a2)
-		clr.b	jumping(a2)
-		move.b	#$10,anim(a2)
-		move.b	#2,routine(a2)
-		move.w	#$CC,d0	; 'Ì'
-		jmp	(PlaySound_Special).l
-; End of function sub_14FC4
-
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-word_14FF4:	dc.w	 -8,  -$1C,  -$2F,  -$1C,    -8; 0 ; DATA XREF:	ROM:loc_14EF2o
-					; ROM:00014F56o
-byte_14FFE:	dc.b  $14, $14,	$16, $18, $1A, $1C, $1A; 0 ; DATA XREF:	ROM:00014DC2o
-		dc.b  $18, $16,	$14, $13, $12, $11, $10; 7
-		dc.b   $F,  $E,	 $D,  $C,  $B,	$A,   9; 14
-		dc.b	8,   7,	  6,   5,   4,	 3,   2; 21
-		dc.b	1,   0,	 -1,  -2,  -3,	-4,  -5; 28
-		dc.b   -6,  -7,	 -8,  -9, -$A, -$B, -$C; 35
-		dc.b  -$D, -$E,	-$E, -$E, -$E, -$E, -$E; 42
-byte_1502F:	dc.b	5,   5,	  5,   5,   5,	 5,   5; 0 ; DATA XREF:	ROM:00014DD0o
-		dc.b	5,   5,	  5,   5,   5,	 5,   5; 7
-		dc.b	5,   5,	  5,   5,   5,	 5,   5; 14
-		dc.b	5,   5,	  5,   5,   5,	 5,   5; 21
-		dc.b	5,   5,	  5,   5,   5,	 5,   5; 28
-		dc.b	5,   5,	  5,   5,   5,	 5,   5; 35
-		dc.b	5,   5,	  5,   5,   5,	 5,   0; 42
-; -------------------------------------------------------------------------------
-; sprite mappings
-; -------------------------------------------------------------------------------
-Map_obj14:	incbin	"mappings/sprite/obj14_a.bin"
-; -------------------------------------------------------------------------------
-; sprite mappings
-; -------------------------------------------------------------------------------
-Map_obj14b:	incbin	"mappings/sprite/obj14_b.bin"
-
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-		nop
-
-j_ObjectMoveAndFall:				; CODE XREF: ROM:00014F36p
-					; ROM:00014F48p ...
+j_ObjectMoveAndFall:
 		jmp	(ObjectMoveAndFall).l
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		align 4
 
 		include	"_incObj/16 - HTZ Lifts.asm"
 
-loc_152A4:				; CODE XREF: ROM:00015180j
+loc_152A4:
 		jmp	(DisplaySprite).l
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_152AA:				; CODE XREF: ROM:0001517Cj
+loc_152AA:
 		jmp	(DeleteObject).l
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-j_ObjectMove_0:				; CODE XREF: ROM:Obj16_Movep
+j_ObjectMove_0:
 		jmp	(ObjectMove).l
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		align 4
+
 ;----------------------------------------------------
 ; Object 19 - CPZ platforms moving side	to side
 ;----------------------------------------------------
@@ -24404,142 +24039,24 @@ j_ObjectMove_2:				; CODE XREF: ROM:00015C10p
 		jmp	(ObjectMove).l
 		align 4
 
-; ===========================================================================
-; ---------------------------------------------------------------------------
-; Object 4F - Redz (dinosaur badnik) from HPZ
-; ---------------------------------------------------------------------------
+		include	"_incObj/4F - Redz.asm"
 
-Obj4F:
-		moveq	#0,d0
-		move.b	routine(a0),d0
-		move.w	Obj4F_Index(pc,d0.w),d1
-		jmp	Obj4F_Index(pc,d1.w)
-; ===========================================================================
-Obj4F_Index:	dc.w Obj4F_Init-Obj4F_Index
-		dc.w Obj4F_Main-Obj4F_Index
-		dc.w Obj4F_Delete-Obj4F_Index
-; ===========================================================================
-
-Obj4F_Init:
-		move.l	#Map_obj4F,mappings(a0)
-		move.w	#$500,art_tile(a0)
-		move.b	#4,render_flags(a0)
-		move.b	#4,priority(a0)
-		move.b	#$10,width_pixels(a0)
-		move.b	#$10,y_radius(a0)
-		move.b	#6,x_radius(a0)
-		move.b	#$C,collision_flags(a0)
-		bsr.w	j_ObjectMoveAndFall_1
-		jsr	(ObjHitFloor).l
-		tst.w	d1
-		bpl.s	locret_15E0C
-		add.w	d1,y_pos(a0)
-
-loc_15DFC:
-		move.w	#0,y_vel(a0)
-		addq.b	#2,routine(a0)
-		bchg	#0,status(a0)
-
-locret_15E0C:
-		rts
-; ===========================================================================
-
-Obj4F_Main:
-		moveq	#0,d0
-		move.b	routine_secondary(a0),d0
-		move.w	Obj4F_SubIndex(pc,d0.w),d1
-		jsr	Obj4F_SubIndex(pc,d1.w)
-		lea	(Ani_obj4F).l,a1
-		bsr.w	j_AnimateSprite_2
-		move.w	x_pos(a0),d0
-		andi.w	#$FF80,d0
-		sub.w	(Camera_X_pos_coarse).w,d0
-		cmpi.w	#$280,d0
-		bhi.w	loc_15E3E
-		bra.w	loc_15EE8
-; ---------------------------------------------------------------------------
-
-loc_15E3E:
-		lea	(Object_Respawn_Table).w,a2
-		moveq	#0,d0
-		move.b	respawn_index(a0),d0
-		beq.s	loc_15E50
-		bclr	#7,2(a2,d0.w)
-
-loc_15E50:
-		bra.w	JmpTo4_DeleteObject
-; ===========================================================================
-Obj4F_SubIndex:	dc.w Obj4F_MoveLeft-Obj4F_SubIndex
-		dc.w Obj4F_ChkFloor-Obj4F_SubIndex
-; ===========================================================================
-; loc_15E58:
-Obj4F_MoveLeft:
-		subq.w	#1,$30(a0)	; is Redz not moving?
-		bpl.s	locret_15E7A	; if not, branch
-		addq.b	#2,routine_secondary(a0)
-		move.w	#$FF80,x_vel(a0)
-		move.b	#1,anim(a0)
-		bchg	#0,status(a0)
-		bne.s	locret_15E7A
-		neg.w	x_vel(a0)
-
-locret_15E7A:
-		rts
-; ===========================================================================
-; loc_15E7C:
-Obj4F_ChkFloor:
-		bsr.w	j_ObjectMove_3
-		jsr	(ObjHitFloor).l
-		cmpi.w	#$FFF8,d1
-		blt.s	Obj4F_StopMoving
-		cmpi.w	#$C,d1
-		bge.s	Obj4F_StopMoving
-		add.w	d1,y_pos(a0)
-		rts
-; ---------------------------------------------------------------------------
-; loc_15E98:
-Obj4F_StopMoving:
-		subq.b	#2,routine_secondary(a0)
-		move.w	#(1*60)-1,$30(a0)	; pause for 1 second
-		move.w	#0,x_vel(a0)
-		move.b	#0,anim(a0)
-		rts
-; ===========================================================================
-
-Obj4F_Delete:
-		bra.w	JmpTo4_DeleteObject
-; ===========================================================================
-; animation script
-Ani_obj4F:	dc.w byte_15EB8-Ani_obj4F
-		dc.w byte_15EBB-Ani_obj4F
-byte_15EB8:	dc.b   9,  1,$FF
-byte_15EBB:	dc.b   9,  0,  1,  2,  1,$FF,  0
-; ---------------------------------------------------------------------------
-; Sprite mappings - Redz (dinosaur badnik) from HPZ
-; ---------------------------------------------------------------------------
-Map_obj4F:	incbin	"mappings/sprite/obj4F.bin"
-		align 4
-
-loc_15EE8:				; CODE XREF: ROM:00015E3Aj
+loc_15EE8:
 		jmp	(DisplaySprite).l
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 JmpTo4_DeleteObject:
 		jmp	(DeleteObject).l
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
-j_AnimateSprite_2:			; CODE XREF: ROM:00015E22p
+j_AnimateSprite_2:
 		jmp	(AnimateSprite).l
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
-j_ObjectMoveAndFall_1:				; CODE XREF: ROM:00015DEAp
+j_ObjectMoveAndFall_1:
 		jmp	(ObjectMoveAndFall).l
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
-j_ObjectMove_3:				; CODE XREF: ROM:loc_15E7Cp
+j_ObjectMove_3:
 		jmp	(ObjectMove).l
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		align 4
+
 ;----------------------------------------------------
 ; Object 50 - unused Seahorse badnik from HPZ
 ;----------------------------------------------------
@@ -30473,7 +29990,7 @@ loc_1A844:				; CODE XREF: Obj09_ChkItems+B0j
 		addq.b	#1,(Emerald_count).w
 
 loc_1A862:				; CODE XREF: Obj09_ChkItems+C0j
-		move.w	#$93,d0	; '“'
+		move.w	#MusID_Emerald,d0	; '“'
 		jsr	(PlaySound_Special).l
 		moveq	#0,d4
 		rts
@@ -32136,7 +31653,7 @@ Debug_EHZ:	dc.w $13		; DATA XREF: ROM:0001BCF2o
 		dc.b  $A,  1,$40,  0	; 0
 		dc.l Map_Obj36+$36000000
 		dc.b   0,  0,$24,$34	; 0
-		dc.l Map_obj14+$14000000
+		dc.l MapUnc_Seesaw+$14000000
 		dc.b   0,  0,  3,$CE	; 0
 		dc.l Map_obj41+$41000000
 		dc.b $81,  0,  4,$5C	; 0
@@ -32154,7 +31671,7 @@ Debug_EHZ:	dc.w $13		; DATA XREF: ROM:0001BCF2o
 		dc.b   0,  0,  4,  2	; 0
 		dc.l Map_obj53+$53000000
 		dc.b   0,  0,  4,$1C	; 0
-		dc.l Map_obj4F+$4F000000
+		dc.l MapUnc_Redz+$4F000000
 		dc.b   0,  0,  5,  0	; 0
 		dc.l Map_Obj52+$52000000
 		dc.b   0,  0,$25,$30	; 0
@@ -32187,7 +31704,7 @@ Debug_HTZ:	dc.w $13		; DATA XREF: ROM:0001BCF6o
 		dc.b  $A,  1,$40,  0	; 0
 		dc.l Map_Obj36+$36000000
 		dc.b   0,  0,$24,$34	; 0
-		dc.l Map_obj14+$14000000
+		dc.l MapUnc_Seesaw+$14000000
 		dc.b   0,  0,  3,$CE	; 0
 		dc.l Map_obj41+$41000000
 		dc.b $81,  0,  4,$5C	; 0
@@ -32225,7 +31742,7 @@ Debug_HPZ:	dc.w $F			; DATA XREF: ROM:0001BCF4o
 		dc.b   0,  0,$44,$75	; 0
 		dc.l Map_Obj03+$03000000
 		dc.b   0,  0,$26,$BC	; 0
-		dc.l Map_obj4F+$4F000000
+		dc.l MapUnc_Redz+$4F000000
 		dc.b   0,  0,  5,  0	; 0
 		dc.l Map_Obj52+$52000000
 		dc.b   0,  0,$25,$30	; 0
@@ -32340,7 +31857,12 @@ ArtLoadCues:	dc.w PLC_Main-ArtLoadCues,PLC_Main2-ArtLoadCues
 		dc.w LeftoverArt_Unknown+2-ArtLoadCues,LeftoverArt_Unknown+4-ArtLoadCues
 		dc.w LeftoverArt_Unknown+6-ArtLoadCues,LeftoverArt_Unknown+8-ArtLoadCues
 
-; macro for a pattern load request
+; macro for the header of a PLR list
+plrlistheader macro *
+\*:	dc.w ((\*_End-\*-2)/6)-1
+	endm
+
+; macro for a pattern load request entry
 plreq macro toVRAMaddr,fromROMaddr
 	dc.l	fromROMaddr		; art to load
 	dc.w	(toVRAMaddr<<5)		; VRAM address to load it at (multiplied by $20)
@@ -32350,7 +31872,7 @@ plreq macro toVRAMaddr,fromROMaddr
 ; PATTERN LOAD REQUEST LIST
 ; Standard 1 - loaded for every level
 ; --------------------------------------------------------------------------------------
-PLC_Main:	dc.w ((PLC_Main_End-PLC_Main)/6)-1
+PLC_Main:	plrlistheader
 		plreq $47C, Nem_Lamppost
 		plreq $6CA, Nem_HUD
 		plreq $7D4, Nem_Lives
@@ -32361,7 +31883,7 @@ PLC_Main_End:
 ; PATTERN LOAD REQUEST LIST
 ; Standard 2 - loaded for every level
 ; --------------------------------------------------------------------------------------
-PLC_Main2:	dc.w ((PLC_Main2_End-PLC_Main2)/6)-1
+PLC_Main2:	plrlistheader
 		plreq $680, Nem_Monitors
 		plreq $4BE, Nem_Shield
 		plreq $4DE, Nem_Stars
@@ -32370,21 +31892,21 @@ PLC_Main2_End:
 ; PATTERN LOAD REQUEST LIST
 ; Explosion - loaded for every level AFTER the title card
 ; --------------------------------------------------------------------------------------
-PLC_Explode:	dc.w ((PLC_Explode_End-PLC_Explode)/6)-1
+PLC_Explode:	plrlistheader
 		plreq $5A0, Nem_Explosion
 PLC_Explode_End:
 ; --------------------------------------------------------------------------------------
 ; PATTERN LOAD REQUEST LIST
 ; Game/Time over
 ; --------------------------------------------------------------------------------------
-PLC_GameOver:	dc.w ((PLC_GameOver_End-PLC_GameOver)/6)-1
+PLC_GameOver:	plrlistheader
 		plreq $55E, Nem_GameOver
 PLC_GameOver_End:
 ; --------------------------------------------------------------------------------------
 ; PATTERN LOAD REQUEST LIST
 ; Green Hill Zone primary
 ; --------------------------------------------------------------------------------------
-PLC_GHZ:	dc.w ((PLC_GHZ_End-PLC_GHZ)/6)-1
+PLC_GHZ:	plrlistheader
 		plreq 0, Nem_GHZ
 		plreq $470, Nem_GHZ_Piranha
 		plreq $4A0, Nem_VSpikes
@@ -32400,14 +31922,14 @@ PLC_GHZ_End:
 ; PATTERN LOAD REQUEST LIST
 ; Green Hill Zone secondary
 ; --------------------------------------------------------------------------------------
-PLC_GHZ2:	dc.w ((PLC_GHZ2_End-PLC_GHZ2)/6)-1
+PLC_GHZ2:	plrlistheader
 		plreq $470, Nem_GHZ_Piranha
 PLC_GHZ2_End:
 ; --------------------------------------------------------------------------------------
 ; PATTERN LOAD REQUEST LIST
 ; Chemical Plant Zone primary
 ; --------------------------------------------------------------------------------------
-PLC_CPZ:	dc.w ((PLC_CPZ_End-PLC_CPZ)/6)-1
+PLC_CPZ:	plrlistheader
 		plreq 0, Nem_CPZ
 		plreq $3D0, Nem_CPZ_Unknown
 		plreq $400, Nem_CPZ_FloatingPlatform
@@ -32416,7 +31938,7 @@ PLC_CPZ_End:
 ; PATTERN LOAD REQUEST LIST
 ; Chemical Plant Zone secondary
 ; --------------------------------------------------------------------------------------
-PLC_CPZ2:	dc.w ((PLC_CPZ2_End-PLC_CPZ2)/6)-1
+PLC_CPZ2:	plrlistheader
 		plreq $434, Nem_VSpikes
 		plreq $43C, Nem_DSpring
 		plreq $45C, Nem_VSpring2
@@ -32426,7 +31948,7 @@ PLC_CPZ2_End:
 ; PATTERN LOAD REQUEST LIST
 ; Emerald Hill Zone primary
 ; --------------------------------------------------------------------------------------
-PLC_EHZ:	dc.w ((PLC_EHZ_End-PLC_EHZ)/6)-1
+PLC_EHZ:	plrlistheader
 		plreq 0, Nem_EHZ
 		plreq $39E, Nem_EHZ_Fireball
 		plreq $3AE, Nem_EHZ_Waterfall
@@ -32441,7 +31963,7 @@ PLC_EHZ_End:
 ; PATTERN LOAD REQUEST LIST
 ; Emerald Hill Zone secondary
 ; --------------------------------------------------------------------------------------
-PLC_EHZ2:	dc.w ((PLC_EHZ2_End-PLC_EHZ2)/6)-1
+PLC_EHZ2:	plrlistheader
 		plreq $560, Nem_Shield
 		plreq $4AC, Nem_Points
 		plreq $3E6, Nem_Buzzer
@@ -32452,7 +31974,7 @@ PLC_EHZ2_End:
 ; PATTERN LOAD REQUEST LIST
 ; Hidden Palace Zone primary
 ; --------------------------------------------------------------------------------------
-PLC_HPZ:	dc.w ((PLC_HPZ_End-PLC_HPZ)/6)-1
+PLC_HPZ:	plrlistheader
 		plreq 0, Nem_HPZ
 		plreq $300, Nem_HPZ_Bridge
 		plreq $315, Nem_HPZ_Waterfall
@@ -32466,9 +31988,9 @@ PLC_HPZ_End:
 ; PATTERN LOAD REQUEST LIST
 ; Hidden Palace Zone secondary
 ; --------------------------------------------------------------------------------------
-PLC_HPZ2:	dc.w ((PLC_HPZ2_End-PLC_HPZ2)/6)-1
+PLC_HPZ2:	plrlistheader
 		plreq $500, Nem_Redz
-word_1C1E2:	plreq $530, Nem_Bat
+		plreq $530, Nem_Bat
 PLC_HPZ2_End:
 		; unused PLR entries
 		plreq $300, Nem_Crocobot
@@ -32481,7 +32003,7 @@ PLC_HPZ2_End:
 ; PATTERN LOAD REQUEST LIST
 ; Hill Top Zone primary
 ; --------------------------------------------------------------------------------------
-PLC_HTZ:	dc.w ((PLC_HTZ_End-PLC_HTZ)/6)-1
+PLC_HTZ:	plrlistheader
 		plreq 0, Nem_EHZ
 		plreq $1FC, Nem_HTZ
 		plreq $500, Nem_HTZ_AniPlaceholders
@@ -32500,7 +32022,7 @@ PLC_HTZ_End:
 ; PATTERN LOAD REQUEST LIST
 ; Hill Top Zone secondary
 ; --------------------------------------------------------------------------------------
-PLC_HTZ2:	dc.w ((PLC_HTZ2_End-PLC_HTZ2)/6)-1
+PLC_HTZ2:	plrlistheader
 		plreq $3E6, Nem_HTZ_Lift
 PLC_HTZ2_End:
 		; unused PLR entries
@@ -32511,14 +32033,14 @@ PLC_HTZ2_End:
 ; PATTERN LOAD REQUEST LIST
 ; Sonic 1 title card
 ; --------------------------------------------------------------------------------------
-PLC_S1TitleCard:dc.w ((PLC_S1TitleCard_End-PLC_S1TitleCard)/6)-1
+PLC_S1TitleCard:plrlistheader
 		plreq $580, Nem_S1TitleCard
 PLC_S1TitleCard_End:
 ; --------------------------------------------------------------------------------------
 ; PATTERN LOAD REQUEST LIST
 ; End of zone bosses
 ; --------------------------------------------------------------------------------------
-PLC_Boss:	dc.w ((PLC_Boss_End-PLC_Boss)/6)-1
+PLC_Boss:	plrlistheader
 		plreq $460, Nem_BossShip
 		plreq $4C0, Nem_EHZ_Boss
 		plreq $540, Nem_EHZ_Boss_Blades
@@ -32534,7 +32056,7 @@ PLC_Boss_End:
 ; PATTERN LOAD REQUEST LIST
 ; End of level signpost
 ; --------------------------------------------------------------------------------------
-PLC_Signpost:	dc.w ((PLC_Signpost_End-PLC_Signpost)/6)-1
+PLC_Signpost:	plrlistheader
 		plreq $680, Nem_Signpost
 		plreq $4B6, Nem_S1BonusPoints
 		plreq $462, Nem_BigFlash
@@ -32551,7 +32073,7 @@ PLC_S1SpecialStage_End:
 ; PATTERN LOAD REQUEST LIST
 ; Green Hill Zone animals
 ; --------------------------------------------------------------------------------------
-PLC_GHZAnimals:	dc.w ((PLC_GHZAnimals_End-PLC_GHZAnimals)/6)-1
+PLC_GHZAnimals:	plrlistheader
 		plreq $580, Nem_Bunny
 		plreq $592, Nem_Flicky
 PLC_GHZAnimals_End:
@@ -32559,7 +32081,7 @@ PLC_GHZAnimals_End:
 ; PATTERN LOAD REQUEST LIST
 ; Labyrinth Zone animals
 ; --------------------------------------------------------------------------------------
-PLC_LZAnimals:	dc.w ((PLC_LZAnimals_End-PLC_LZAnimals)/6)-1
+PLC_LZAnimals:	plrlistheader
 		plreq $580, Nem_Penguin
 		plreq $592, Nem_Seal
 PLC_LZAnimals_End:
@@ -32567,7 +32089,7 @@ PLC_LZAnimals_End:
 ; PATTERN LOAD REQUEST LIST
 ; Chemical Plant Zone animals
 ; --------------------------------------------------------------------------------------
-PLC_CPZAnimals:	dc.w ((PLC_CPZAnimals_End-PLC_CPZAnimals)/6)-1
+PLC_CPZAnimals:	plrlistheader
 		plreq $580, Nem_Squirrel
 		plreq $592, Nem_Seal
 PLC_CPZAnimals_End:
@@ -32575,7 +32097,7 @@ PLC_CPZAnimals_End:
 ; PATTERN LOAD REQUEST LIST
 ; Emerald Hill Zone animals
 ; --------------------------------------------------------------------------------------
-PLC_EHZAnimals:	dc.w ((PLC_EHZAnimals_End-PLC_EHZAnimals)/6)-1
+PLC_EHZAnimals:	plrlistheader
 		plreq $580, Nem_Pig
 		plreq $592, Nem_Flicky
 PLC_EHZAnimals_End:
@@ -32583,7 +32105,7 @@ PLC_EHZAnimals_End:
 ; PATTERN LOAD REQUEST LIST
 ; Hidden Palace Zone animals
 ; --------------------------------------------------------------------------------------
-PLC_HPZAnimals:	dc.w ((PLC_HPZAnimals_End-PLC_HPZAnimals)/6)-1
+PLC_HPZAnimals:	plrlistheader
 		plreq $580, Nem_Pig
 		plreq $592, Nem_Chicken
 PLC_HPZAnimals_End:
@@ -32591,7 +32113,7 @@ PLC_HPZAnimals_End:
 ; PATTERN LOAD REQUEST LIST
 ; Hill Top Zone animals
 ; --------------------------------------------------------------------------------------
-PLC_HTZAnimals:	dc.w ((PLC_HTZAnimals_End-PLC_HTZAnimals)/6)-1
+PLC_HTZAnimals:	plrlistheader
 		plreq $580, Nem_Bunny
 		plreq $592, Nem_Chicken
 PLC_HTZAnimals_End:

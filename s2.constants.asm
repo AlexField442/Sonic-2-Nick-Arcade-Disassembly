@@ -60,8 +60,8 @@ lrb_solid_bit:		equ $3F			; the bit to check for left/right/bottom solidity (eit
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; some variables and functions to help define those constants (redefined before a new set of IDs)
-; V-Int routines
 
+; V-Int routines
 VintID_Lag:			equ (Vint_Lag_ptr-Vint_SwitchTbl)		; 0
 VintID_SEGA:			equ (Vint_SEGA_ptr-Vint_SwitchTbl)		; 2
 VintID_Title:			equ (Vint_Title_ptr-Vint_SwitchTbl)		; 4
@@ -102,6 +102,13 @@ MusID_SpecialStage:		equ ((MusPtr_SpecialStage-MusicIndex)/4)+MusID__First	; $89
 MusID_Title:			equ ((MusPtr_Title-MusicIndex)/4)+MusID__First		; $8A
 MusID_Ending:			equ ((MusPtr_Ending-MusicIndex)/4)+MusID__First		; $8B
 MusID_Boss:			equ ((MusPtr_Boss-MusicIndex)/4)+MusID__First		; $8C
+MusID_FZ:			equ ((MusPtr_FZ-MusicIndex)/4)+MusID__First		; $8D
+MusID_ActClear:			equ ((MusPtr_ActClear-MusicIndex)/4)+MusID__First	; $8E
+MusID_GameOver:			equ ((MusPtr_GameOver-MusicIndex)/4)+MusID__First	; $8F
+MusID_Continue:			equ ((MusPtr_Continue-MusicIndex)/4)+MusID__First	; $90
+MusID_Credits:			equ ((MusPtr_Credits-MusicIndex)/4)+MusID__First	; $91
+MusID_Drowning:			equ ((MusPtr_Drowning-MusicIndex)/4)+MusID__First	; $92
+MusID_Emerald:			equ ((MusPtr_Emerald-MusicIndex)/4)+MusID__First	; $93
 
 ; ---------------------------------------------------------------------------
 ; Miscellaneous constants without dedicated pointers

@@ -24,7 +24,7 @@ Obj_Index:
 		dc.l Obj_Bridge		; Bridges in GHZ, EHZ and HPZ
 		dc.l Obj12		; Emerald from Hidden Palace Zone
 		dc.l Obj13		; Waterfall from Hidden Palace Zone
-		dc.l Obj14		; Seesaw from Hill Top Zone
+		dc.l Obj_Seesaw		; Seesaw from Hill Top Zone
 		dc.l Obj15		; Swinging platforms in GHZ, CPZ and EHZ
 		dc.l Obj_HTZLift	; Diagonally moving lift from HTZ
 		dc.l Obj_SpikeHelix	; (S1) GHZ rotating log helix spikes
@@ -83,7 +83,7 @@ Obj_Index:
 		dc.l Obj4C		; BBat from HPZ
 		dc.l Obj4D		; Stego/Stegway from HPZ
 		dc.l Obj4E		; Gator from HPZ
-		dc.l Obj4F		; Redz (dinosaur badnik) from HPZ
+		dc.l Obj_Redz		; Redz (dinosaur badnik) from HPZ
 		dc.l Obj50		; Seahorse/Aquis from HPZ
 		dc.l Obj51		; Skyhorse from HPZ
 		dc.l Obj52		; BFish from HPZ

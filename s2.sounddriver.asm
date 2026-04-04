@@ -34,8 +34,14 @@ MusPtr_SpecialStage:	dc.l Music89
 MusPtr_Title:		dc.l Music8A
 MusPtr_Ending:		dc.l Music8B
 MusPtr_Boss:		dc.l Music8C
-		dc.l Music8D, Music8E, Music8F,	Music90, Music91, Music92
-		dc.l Music93
+MusPtr_FZ:		dc.l Music8D
+MusPtr_ActClear:	dc.l Music8E
+MusPtr_GameOver:	dc.l Music8F
+MusPtr_Continue:	dc.l Music90
+MusPtr_Credits:		dc.l Music91
+MusPtr_Drowning:	dc.l Music92
+MusPtr_Emerald:		dc.l Music93
+
 ; ---------------------------------------------------------------------------
 ; Type of sound	being played ($90 = music; $70 = normal	sound effect)
 ; ---------------------------------------------------------------------------
