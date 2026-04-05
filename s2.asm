@@ -13303,7 +13303,7 @@ word_C8B0:	dc.w 2			; DATA XREF: ROM:Map_Obj3Bo
 ;----------------------------------------------------
 ; Object 3C - GHZ smashable wall
 ;
-; Internal name: "kageb"
+; Internal name: "brkabe"
 ;----------------------------------------------------
 
 Obj3C:					; DATA XREF: ROM:Obj_Indexo
