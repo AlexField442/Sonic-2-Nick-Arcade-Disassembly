@@ -37,7 +37,7 @@ Obj_Index:
 		dc.l ObjNull
 		dc.l Obj1F		; (S1) Crabmeat from GHZ
 		dc.l ObjNull
-		dc.l Obj21		; Score/Rings/Time display (HUD)
+		dc.l Obj_HUD		; Score/Rings/Time display (HUD)
 		dc.l Obj22		; (S1) Buzz Bomber from GHZ
 		dc.l Obj23		; (S1) Buzz Bomber/Newtron missile
 		dc.l Obj24		; (S1) Unused Buzz Bomber missile explosion
@@ -61,8 +61,8 @@ Obj_Index:
 		dc.l Obj36		; Vertical spikes
 		dc.l Obj37		; Scattering rings (generated when Sonic or Tails are hurt and has rings)
 		dc.l Obj_Barrier	; Shield and invincibility stars
-		dc.l Obj39		; Game Over/Time Over text
-		dc.l Obj3A		; (S1) End of level results screen
+		dc.l Obj_GameOver	; Game Over/Time Over text
+		dc.l Obj_Results	; (S1) End of level results screen
 		dc.l Obj3B		; (S1) Purple rock from GHZ
 		dc.l Obj3C		; (S1) Breakable wall
 		dc.l Obj3D		; (S1) GHZ boss
@@ -142,7 +142,7 @@ Obj_Index:
 		dc.l ObjNull
 		dc.l ObjNull
 		dc.l ObjNull
-		dc.l Obj8A		; (S1) "SONIC TEAM PRESENTS" screen and credits
+		dc.l Obj_StaffRoll	; (S1) "SONIC TEAM PRESENTS" screen and credits
 		dc.l ObjNull
 		dc.l ObjNull
 ; ===========================================================================

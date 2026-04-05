@@ -554,11 +554,39 @@ Saved_Extra_life_flags:		rs.b	1
 
 Emerald_count:			rs.b	1
 Emeralds_array:			rs.b	6
+
+LAST_VALUE:			equ	__rs	; $FE5E
 		popo						; restore options
 
-Two_player_mode:		equ $FFFFFFE8
+Logspike_anim_counter:		equ $FFFFFEC0
+Logspike_anim_frame:		equ $FFFFFEC1
+Rings_anim_counter:		equ $FFFFFEC2
+Rings_anim_frame:		equ $FFFFFEC3
+Unknown_anim_counter:		equ $FFFFFEC4
+Unknown_anim_frame:		equ $FFFFFEC5
+Ring_spill_anim_counter:	equ $FFFFFEC6
+Ring_spill_anim_frame:		equ $FFFFFEC7
+Ring_spill_anim_accum:		equ $FFFFFEC8
 
+LevSel_HoldTimer:		equ $FFFFFF80
+Level_select_zone:		equ $FFFFFF82
+Sound_test_sound:		equ $FFFFFF84
+
+Next_Extra_life_score:		equ $FFFFFFC0
+Level_select_flag:		equ $FFFFFFE0
+Slow_motion_flag:		equ $FFFFFFE1
+Debug_options_flag:		equ $FFFFFFE2
+Hidden_credits_flag:		equ $FFFFFFE3
+Correct_cheat_entries:		equ $FFFFFFE4
+Correct_cheat_entries_2:	equ $FFFFFFE6
+Two_player_mode:		equ $FFFFFFE8
+unk_FFEA:			equ $FFFFFFEA
+Demo_mode_flag:			equ $FFFFFFF0
+Demo_number:			equ $FFFFFFF2
+Ending_demo_number:		equ $FFFFFFF4
+Graphics_flags:			equ $FFFFFFF8
 Debug_mode_flag:		equ $FFFFFFFA
+Checksum_fourcc:		equ $FFFFFFFC
 
 ; ---------------------------------------------------------------------------
 ; VDP addresses

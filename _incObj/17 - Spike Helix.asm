@@ -112,7 +112,7 @@ SpikeHelix_Delete:
 
 ; sub_878C:
 SpikeHelix_RotateSpike:
-		move.b	($FFFFFEC1).w,d0	; get synchronised frame value
+		move.b	(Logspike_anim_frame).w,d0	; get synchronised frame value
 		move.b	#0,collision_flags(a0)	; make object harmless
 		add.b	spikehelix_frame(a0),d0	; add initial frame
 		andi.b	#7,d0
