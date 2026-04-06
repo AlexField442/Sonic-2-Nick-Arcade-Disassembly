@@ -57,7 +57,7 @@ loc_1253E:
 Warp_LoadSonic:
 		subq.w	#1,warp_vanishtime(a0)	; subtract 1 from vanishing time
 		bne.s	locret_12556		; if there's any time left, branch
-		move.b	#1,(MainCharacter).w	; set Sonic's object ID to 1
+		move.b	#ObjID_Sonic,(MainCharacter).w	; set Sonic's object ID to 1
 		jmp	(DeleteObject).l
 ; ---------------------------------------------------------------------------
 

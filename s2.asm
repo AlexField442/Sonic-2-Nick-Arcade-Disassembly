@@ -1828,8 +1828,8 @@ loc_3330:
 loc_339A:				; CODE XREF: ROM:0000339Cj
 		move.l	d0,(a1)+
 		dbf	d1,loc_339A
-		move.b	#$E,(Object_RAM+$40).w
-		move.b	#$E,(Object_RAM+$80).w
+		move.b	#ObjID_TitleCharacters,(Object_RAM+$40+id).w
+		move.b	#ObjID_TitleCharacters,(Object_RAM+$80+id).w
 		move.b	#1,(Object_RAM+$80+mapping_frame).w
 		jsr	(RunObjects).l
 		jsr	(BuildSprites).l
@@ -2568,7 +2568,7 @@ loc_3CE6:
 		nop				; ???
 		move.b	(a1,d0.w),d0
 		bsr.w	PlaySound
-		move.b	#$34,(Object_RAM+$80).w
+		move.b	#ObjID_TitleCard,(Object_RAM+$80+id).w
 
 LevelInit_TitleCard:
 		move.b	#VintID_TitleCard,(Vint_routine).w
@@ -2595,10 +2595,10 @@ loc_3D2A:
 		jsr	(ApplySonic1Collision).l
 		bsr.w	LoadCollisionIndexes
 		bsr.w	WaterEffects
-		move.b	#1,(MainCharacter).w
+		move.b	#ObjID_Sonic,(MainCharacter+id).w
 		tst.w	(Demo_mode_flag).w
 		bmi.s	loc_3D6C
-		move.b	#$21,(Object_RAM+$380).w
+		move.b	#ObjID_HUD,(Object_RAM+$380+id).w
 
 loc_3D6C:
 		tst.w	(Two_player_mode).w
@@ -2607,7 +2607,7 @@ loc_3D6C:
 		beq.s	LevelInit_SkipTails ; funny how	they skipped Tails in EHZ for the Nick Arcade show
 
 LevelInit_LoadTails:
-		move.b	#2,(Sidekick).w
+		move.b	#ObjID_Tails,(Sidekick+id).w
 		move.w	(MainCharacter+x_pos).w,(Sidekick+x_pos).w
 		move.w	(MainCharacter+y_pos).w,(Sidekick+y_pos).w
 		subi.w	#$20,(Sidekick+x_pos).w
@@ -2624,9 +2624,9 @@ loc_3DA6:
 		move.w	#0,(Ctrl_1).w
 		tst.b	(Water_flag).w
 		beq.s	loc_3DD0
-		move.b	#4,(Object_RAM+$780).w
+		move.b	#ObjID_WaterSurface,(Object_RAM+$780+id).w
 		move.w	#$60,(Object_RAM+$780+x_pos).w
-		move.b	#4,(Object_RAM+$7C0).w
+		move.b	#ObjID_WaterSurface,(Object_RAM+$7C0+id).w
 		move.w	#$120,(Object_RAM+$7C0+x_pos).w
 
 loc_3DD0:
@@ -3872,7 +3872,7 @@ loc_50CC:
 		jsr	(S1SS_Load).l
 		move.l	#0,(Camera_X_pos).w
 		move.l	#0,(Camera_Y_pos).w
-		move.b	#9,(MainCharacter).w
+		move.b	#ObjID_SSPlayer,(MainCharacter+id).w
 		bsr.w	PalCycle_S1SS
 		clr.w	(SS_rotation_angle).w
 		move.w	#$40,(SS_rotation_speed).w
@@ -7806,7 +7806,7 @@ loc_7672:				; CODE XREF: ROM:0000766Cj
 		bcs.s	locret_76AA
 		bsr.w	AllocateObject
 		bne.s	loc_7692
-		move.b	#$3D,id(a1) ; '='
+		move.b	#ObjID_GHZBoss,id(a1) ; '='
 		move.w	#$2A60,x_pos(a1)
 		move.w	#$280,y_pos(a1)
 
@@ -7867,7 +7867,7 @@ loc_76EA:				; CODE XREF: ROM:000076D2j
 		bcc.s	locret_7724
 		bsr.w	AllocateObject
 		bne.s	loc_770C
-		move.b	#$77,id(a1) ; 'w'
+		move.b	#ObjID_LZBoss,id(a1) ; 'w'
 
 loc_770C:				; CODE XREF: ROM:00007704j
 		move.w	#MusID_Boss,d0
@@ -8060,7 +8060,7 @@ DynResize_CPZ3_BossCheck:
 		addq.b	#2,(Dynamic_Resize_Routine).w
 		bsr.w	AllocateObject
 		bne.s	DynResize_CPZ3_Null
-		move.b	#$55,id(a1)	; load Obj55 (EHZ boss, likely CPZ boss at one point)
+		move.b	#ObjID_EHZBoss,id(a1)	; load Obj55 (EHZ boss, likely CPZ boss at one point)
 		move.w	#$680,x_pos(a1)
 		move.w	#$540,y_pos(a1)
 		moveq	#$11,d0
@@ -8111,7 +8111,7 @@ DynResize_EHZ2_01:			; DATA XREF: ROM:DynResize_EHZ2_Indexo
 		addq.b	#2,(Dynamic_Resize_Routine).w
 		bsr.w	AllocateObject
 		bne.s	loc_7946
-		move.b	#$55,(a1) ; 'U'
+		move.b	#ObjID_EHZBoss,(a1) ; 'U'
 		move.b	#$81,subtype(a1)
 		move.w	#$29D0,x_pos(a1)
 		move.w	#$426,y_pos(a1)
@@ -9945,7 +9945,7 @@ loc_96E4:				; CODE XREF: ROM:000096D8j
 		move.b	#1,$32(a0)
 		bsr.w	AllocateObject
 		bne.s	loc_972E
-		move.b	#$20,id(a1) ; ' '
+		move.b	#ObjID_Cannonball,id(a1) ; ' '
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		move.w	#$FF00,x_vel(a1)
@@ -10023,8 +10023,8 @@ loc_97C6:				; CODE XREF: ROM:00009794j
 					; ROM:0000979Ej ...
 		subq.w	#1,$30(a0)
 		bpl.s	loc_97E2
-		move.b	#$24,id(a0) ; '$'
-		move.b	#$3F,id(a0) ; '?'
+		move.b	#ObjID_Fizzle,id(a0) ; '$'
+		move.b	#ObjID_BossExplosion,id(a0) ; '?'
 		move.b	#0,routine(a0)
 		bra.w	Obj3F		; explosion object
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -10105,7 +10105,7 @@ loc_9890:				; DATA XREF: ROM:Obj27_Indexo
 		addq.b	#2,routine(a0)
 		bsr.w	AllocateObject
 		bne.s	loc_98B2
-		move.b	#$28,id(a1) ; '('
+		move.b	#ObjID_Animal,id(a1) ; '('
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		move.w	$3E(a0),$3E(a1)
@@ -10366,7 +10366,7 @@ loc_9C4A:				; CODE XREF: ROM:00009C42j
 		bne.s	loc_9CAA
 		bsr.w	AllocateObject
 		bne.s	loc_9CA6
-		move.b	#$29,id(a1) ; ')'
+		move.b	#ObjID_Points,id(a1) ; ')'
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		move.w	$3E(a0),d0
@@ -10762,496 +10762,16 @@ word_A0AA:	dc.w 2			; DATA XREF: ROM:0000A06Co
 word_A0BC:	dc.w 2			; DATA XREF: ROM:0000A06Eo
 		dc.w $F805,   $A,    5,$FFF0; 0
 		dc.w $F805,   $E,    7,	   0; 4
-
-; ===========================================================================
 		nop
-; ===========================================================================
-; ---------------------------------------------------------------------------
-; Object 1F - Crabmeat from GHZ
-;
-; Internal name: "kani"
-; ---------------------------------------------------------------------------
-; OST:
-obj1F_timer:	equ $30	; time to wait for performing an action
-obj1F_status:	equ $32	; 0 = moving, 1 = firing
-; ---------------------------------------------------------------------------
 
-Obj1F:
-		moveq	#0,d0
-		move.b	routine(a0),d0
-		move.w	Obj1F_Index(pc,d0.w),d1
-		jmp	Obj1F_Index(pc,d1.w)
-; ===========================================================================
-Obj1F_Index:	dc.w Obj1F_Init-Obj1F_Index
-		dc.w Obj1F_Main-Obj1F_Index
-		dc.w Obj1F_Delete-Obj1F_Index
-		dc.w Obj1F_BallInit-Obj1F_Index
-		dc.w Obj1F_BallMove-Obj1F_Index
-; ===========================================================================
-; loc_A0E8:
-Obj1F_Init:
-		move.b	#$10,y_radius(a0)
-		move.b	#8,x_radius(a0)
-		move.l	#Map_obj1F,mappings(a0)
-		move.w	#$400,art_tile(a0)
-		bsr.w	Adjust2PArtPointer
-		move.b	#4,render_flags(a0)
-		move.b	#3,priority(a0)
-		move.b	#6,collision_flags(a0)
-		move.b	#$15,width_pixels(a0)
-		bsr.w	ObjectMoveAndFall
-		jsr	(ObjHitFloor).l
-		tst.w	d1
-		bpl.s	locret_A13E
-		add.w	d1,y_pos(a0)
-		move.b	d3,angle(a0)
-		move.w	#0,y_vel(a0)
-		addq.b	#2,routine(a0)
+		include	"_incObj/1F - Crabmeat.asm"
+		include	"_incObj/22 - Buzz Bomber.asm"
+		include	"_incObj/23 - Badnik Missile.asm"
+		include_Ani_BuzzBomber
+		include_Ani_Missile
+		include_MapUnc_BuzzBomber
+		include_MapUnc_Missile
 
-locret_A13E:
-		rts
-; ===========================================================================
-; loc_A140:
-Obj1F_Main:
-		moveq	#0,d0
-		move.b	routine_secondary(a0),d0
-		move.w	Obj1F_Main_Index(pc,d0.w),d1
-		jsr	Obj1F_Main_Index(pc,d1.w)
-		lea	(Ani_obj1F).l,a1
-		bsr.w	AnimateSprite
-		bra.w	MarkObjGone
-; ===========================================================================
-Obj1F_Main_Index:	dc.w Obj1F_WaitMove-Obj1F_Main_Index
-			dc.w Obj1F_WalkOnFloor-Obj1F_Main_Index
-; ===========================================================================
-; loc_A160:
-Obj1F_WaitMove:
-		subq.w	#1,obj1F_timer(a0)
-		bpl.s	locret_A19A
-		tst.b	render_flags(a0)
-		bpl.s	Obj1F_Move
-		bchg	#1,obj1F_status(a0)
-		bne.s	Obj1F_MakeFire
-; loc_A174:
-Obj1F_Move:
-		addq.b	#2,routine_secondary(a0)
-		move.w	#$7F,obj1F_timer(a0)
-		move.w	#$80,x_vel(a0)
-		bsr.w	Obj1F_SetAni
-		addq.b	#3,d0
-		move.b	d0,anim(a0)
-		bchg	#0,status(a0)
-		bne.s	locret_A19A
-		neg.w	x_vel(a0)
-
-locret_A19A:
-		rts
-; ===========================================================================
-; loc_A19C:
-Obj1F_MakeFire:
-		move.w	#$3B,obj1F_timer(a0)
-		move.b	#6,anim(a0)
-		bsr.w	AllocateObject
-		bne.s	Obj1F_MakeFire2
-		move.b	#$1F,id(a1)
-		move.b	#6,routine(a1)
-		move.w	x_pos(a0),x_pos(a1)
-		subi.w	#$10,x_pos(a1)
-		move.w	y_pos(a0),y_pos(a1)
-		move.w	#-$100,x_vel(a1)
-; loc_A1D2:
-Obj1F_MakeFire2:
-		bsr.w	AllocateObject
-		bne.s	locret_A1FC
-		move.b	#$1F,id(a1)
-		move.b	#6,routine(a1)
-		move.w	x_pos(a0),x_pos(a1)
-		addi.w	#$10,x_pos(a1)
-		move.w	y_pos(a0),y_pos(a1)
-		move.w	#$100,x_vel(a1)
-
-locret_A1FC:
-		rts
-; ===========================================================================
-; loc_A1FE:
-Obj1F_WalkOnFloor:
-		subq.w	#1,obj1F_timer(a0)
-		bmi.s	loc_A252
-		bsr.w	ObjectMove
-		bchg	#0,obj1F_status(a0)
-		bne.s	loc_A238
-		move.w	x_pos(a0),d3
-		addi.w	#$10,d3
-		btst	#0,status(a0)
-		beq.s	loc_A224
-		subi.w	#$20,d3
-
-loc_A224:
-		jsr	(ObjHitFloor2).l
-		cmpi.w	#-8,d1
-		blt.s	loc_A252
-		cmpi.w	#$C,d1
-		bge.s	loc_A252
-		rts
-; ===========================================================================
-
-loc_A238:
-		jsr	(ObjHitFloor).l
-		add.w	d1,y_pos(a0)
-		move.b	d3,angle(a0)
-		bsr.w	Obj1F_SetAni
-		addq.b	#3,d0
-		move.b	d0,anim(a0)
-		rts
-; ===========================================================================
-
-loc_A252:
-		subq.b	#2,routine_secondary(a0)
-		move.w	#$3B,obj1F_timer(a0)
-		move.w	#0,x_vel(a0)
-		bsr.w	Obj1F_SetAni
-		move.b	d0,anim(a0)
-		rts
-
-; ---------------------------------------------------------------------------
-; Subroutine to	set the	correct	animation for a	Crabmeat
-; ---------------------------------------------------------------------------
-
-; ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
-
-; sub_A26C:
-Obj1F_SetAni:
-		moveq	#0,d0
-		move.b	angle(a0),d3
-		bmi.s	loc_A288
-		cmpi.b	#6,d3
-		bcs.s	locret_A286
-		moveq	#1,d0
-		btst	#0,status(a0)
-		bne.s	locret_A286
-		moveq	#2,d0
-
-locret_A286:
-		rts
-; ===========================================================================
-
-loc_A288:
-		cmpi.b	#-6,d3
-		bhi.s	locret_A29A
-		moveq	#2,d0
-		btst	#0,status(a0)
-		bne.s	locret_A29A
-		moveq	#1,d0
-
-locret_A29A:
-		rts
-; End of function Obj1F_SetAni
-
-; ===========================================================================
-; loc_A29C:
-Obj1F_Delete:
-		bra.w	DeleteObject
-; ===========================================================================
-; loc_A2A0:
-Obj1F_BallInit:
-		addq.b	#2,routine(a0)
-		move.l	#Map_obj1F,mappings(a0)
-		move.w	#$400,art_tile(a0)
-		bsr.w	Adjust2PArtPointer
-		move.b	#4,render_flags(a0)
-		move.b	#3,priority(a0)
-		move.b	#$87,collision_flags(a0)
-		move.b	#8,width_pixels(a0)
-		move.w	#$FC00,y_vel(a0)
-		move.b	#7,anim(a0)
-; loc_A2DA:
-Obj1F_BallMove:
-		lea	(Ani_obj1F).l,a1
-		bsr.w	AnimateSprite
-		bsr.w	ObjectMoveAndFall
-		move.w	(Camera_Max_Y_pos).w,d0
-		addi.w	#$E0,d0
-		cmp.w	y_pos(a0),d0
-		bcs.w	DeleteObject
-		bra.w	DisplaySprite
-; ===========================================================================
-; animation script
-Ani_obj1F:	dc.w byte_A30C-Ani_obj1F
-		dc.w byte_A30F-Ani_obj1F
-		dc.w byte_A312-Ani_obj1F
-		dc.w byte_A315-Ani_obj1F
-		dc.w byte_A31A-Ani_obj1F
-		dc.w byte_A31F-Ani_obj1F
-		dc.w byte_A324-Ani_obj1F
-		dc.w byte_A327-Ani_obj1F
-byte_A30C:	dc.b  $F,  0,$FF
-byte_A30F:	dc.b  $F,  2,$FF
-byte_A312:	dc.b  $F,$22,$FF
-byte_A315:	dc.b  $F,  1,$21,  0,$FF
-byte_A31A:	dc.b  $F,$21,  3,  2,$FF
-byte_A31F:	dc.b  $F,  1,$23,$22,$FF
-byte_A324:	dc.b  $F,  4,$FF
-byte_A327:	dc.b   1,  5,  6,$FF,  0
-
-; ---------------------------------------------------------------------------
-; Sprite mappings
-; ---------------------------------------------------------------------------
-Map_obj1F:	incbin	"mappings/sprite/obj1F.bin"
-
-; ===========================================================================
-; ---------------------------------------------------------------------------
-; Object 22 - Buzz Bomber from GHZ
-;
-; Internal name: "hachi"
-; ---------------------------------------------------------------------------
-; OST:
-buzzbomber_time:	equ $32		; time to wait for performing an action
-buzzbomber_status:	equ $34		; 0 = still, 1 = flying, 2 = shooting
-buzzbomber_parent:	equ $3C
-; ---------------------------------------------------------------------------
-
-Obj22:	
-		moveq	#0,d0
-		move.b	routine(a0),d0
-		move.w	Obj22_Index(pc,d0.w),d1
-		jmp	Obj22_Index(pc,d1.w)
-; ===========================================================================
-Obj22_Index:	dc.w Obj22_Init-Obj22_Index
-		dc.w Obj22_Main-Obj22_Index
-		dc.w Obj22_Delete-Obj22_Index
-; ===========================================================================
-; loc_A41C:
-Obj22_Init:
-		addq.b	#2,routine(a0)
-		move.l	#Map_obj22,mappings(a0)
-		move.w	#$444,art_tile(a0)
-		bsr.w	Adjust2PArtPointer
-		move.b	#4,render_flags(a0)
-		move.b	#3,priority(a0)
-		move.b	#8,collision_flags(a0)
-		move.b	#$18,width_pixels(a0)
-; loc_A44A:
-Obj22_Main:
-		moveq	#0,d0
-		move.b	routine_secondary(a0),d0
-		move.w	Obj22_Main_Index(pc,d0.w),d1
-		jsr	Obj22_Main_Index(pc,d1.w)
-		lea	(Ani_obj22).l,a1
-		bsr.w	AnimateSprite
-		bra.w	MarkObjGone
-; ===========================================================================
-Obj22_Main_Index:	dc.w Obj22_Move-Obj22_Main_Index
-			dc.w Obj22_NearSonic-Obj22_Main_Index
-; ===========================================================================
-; loc_A46A:
-Obj22_Move:
-		subq.w	#1,buzzbomber_time(a0)
-		bpl.s	locret_A49A
-		btst	#1,buzzbomber_status(a0)
-		bne.s	Obj22_LoadMissile
-		addq.b	#2,routine_secondary(a0)
-		move.w	#$7F,buzzbomber_time(a0)
-		move.w	#$400,x_vel(a0)
-		move.b	#1,anim(a0)
-		btst	#0,status(a0)
-		bne.s	locret_A49A
-		neg.w	x_vel(a0)
-
-locret_A49A:
-		rts
-; ===========================================================================
-; loc_A49C:
-Obj22_LoadMissile:
-		bsr.w	AllocateObject
-		bne.s	locret_A4FE
-		move.b	#$23,id(a1)	; load Obj23 (Buzz Bomber/Newtron missile)
-		move.w	x_pos(a0),x_pos(a1)
-		move.w	y_pos(a0),y_pos(a1)
-		addi.w	#$1C,y_pos(a1)
-		move.w	#$200,y_vel(a1)
-		move.w	#$200,x_vel(a1)
-		move.w	#$18,d0
-		btst	#0,status(a0)
-		bne.s	loc_A4D8
-		neg.w	d0
-		neg.w	x_vel(a1)
-
-loc_A4D8:
-		add.w	d0,x_pos(a1)
-		move.b	status(a0),status(a1)
-		move.w	#$E,buzzbomber_time(a1)
-		move.l	a0,buzzbomber_parent(a1)
-		move.b	#1,buzzbomber_status(a0)
-		move.w	#$3B,buzzbomber_time(a0)
-		move.b	#2,anim(a0)
-
-locret_A4FE:
-		rts
-; ===========================================================================
-; loc_A500:
-Obj22_NearSonic:
-		subq.w	#1,buzzbomber_time(a0)
-		bmi.s	loc_A536
-		bsr.w	ObjectMove
-		tst.b	buzzbomber_status(a0)
-		bne.s	locret_A558
-		move.w	(MainCharacter+x_pos).w,d0
-		sub.w	x_pos(a0),d0
-		bpl.s	loc_A51C
-		neg.w	d0
-
-loc_A51C:
-		cmpi.w	#$60,d0		; is Buzz Bomber within $60 pixels of Sonic?
-		bcc.s	locret_A558	; if not, branch
-		tst.b	render_flags(a0)
-		bpl.s	locret_A558
-		move.b	#2,buzzbomber_status(a0)
-		move.w	#$1D,buzzbomber_time(a0)
-		bra.s	loc_A548
-; ===========================================================================
-
-loc_A536:
-		move.b	#0,buzzbomber_status(a0)
-		bchg	#0,status(a0)
-		move.w	#$3B,buzzbomber_time(a0)
-
-loc_A548:
-		subq.b	#2,routine_secondary(a0)
-		move.w	#0,x_vel(a0)
-		move.b	#0,anim(a0)
-
-locret_A558:
-		rts
-; ===========================================================================
-; loc_A55A:
-Obj22_Delete:
-		bra.w	DeleteObject
-; ===========================================================================
-; ---------------------------------------------------------------------------
-; Object 23 - Buzz Bomber/Newtron missile
-; ---------------------------------------------------------------------------
-; OST:
-missile_parent:	equ $3C
-; ---------------------------------------------------------------------------
-
-Obj23:
-		moveq	#0,d0
-		move.b	routine(a0),d0
-		move.w	Obj23_Index(pc,d0.w),d1
-		jmp	Obj23_Index(pc,d1.w)
-; ===========================================================================
-Obj23_Index:	dc.w Obj23_Init-Obj23_Index
-		dc.w Obj23_Animate-Obj23_Index
-		dc.w Obj23_Move-Obj23_Index
-		dc.w Obj23_Delete-Obj23_Index
-		dc.w Obj23_Newtron-Obj23_Index
-; ===========================================================================
-; loc_A576:
-Obj23_Init:
-		subq.w	#1,$32(a0)
-		bpl.s	Obj23_ChkDel
-		addq.b	#2,routine(a0)
-		move.l	#Map_obj23,mappings(a0)
-		move.w	#$2444,art_tile(a0)
-		bsr.w	Adjust2PArtPointer
-		move.b	#4,render_flags(a0)
-		move.b	#3,priority(a0)
-		move.b	#8,width_pixels(a0)
-		andi.b	#3,status(a0)
-		tst.b	subtype(a0)	; was the object created by a Newtron?
-		beq.s	Obj23_Animate	; if not, branch
-
-		move.b	#8,routine(a0)
-		move.b	#$87,collision_flags(a0)
-		move.b	#1,anim(a0)
-		bra.s	Obj23_Animate2
-; ===========================================================================
-; loc_A5C4:
-Obj23_Animate:
-		movea.l	missile_parent(a0),a1
-		cmpi.b	#$27,id(a1)	; is Buzz Bomber destroyed?
-		beq.s	Obj23_Delete	; if yes, branch
-		lea	(Ani_obj23).l,a1
-		bsr.w	AnimateSprite
-		bra.w	DisplaySprite
-
-; ---------------------------------------------------------------------------
-; Subroutine to	check if the Buzz Bomber which fired the missile has been
-; destroyed, and if it has, deletes the missile
-; ---------------------------------------------------------------------------
-
-; ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
-
-; loc_A5DE:
-Obj23_ChkDel:
-		movea.l	missile_parent(a0),a1
-		cmpi.b	#$27,id(a1)	; is Buzz Bomber destroyed?
-		beq.s	Obj23_Delete	; if yes, branch
-		rts
-; End of function Obj23_ChkDel
-
-; ===========================================================================
-; loc_A5EC:
-Obj23_Move:
-		btst	#7,status(a0)	; has the missile collided with the level? (flag never set)
-		bne.s	Obj23_Explode	; if yes, branch
-		move.b	#$87,collision_flags(a0)
-		move.b	#1,anim(a0)
-		bsr.w	ObjectMove
-		lea	(Ani_obj23).l,a1
-		bsr.w	AnimateSprite
-		move.w	(Camera_Max_Y_pos).w,d0
-		addi.w	#$E0,d0
-		cmp.w	y_pos(a0),d0
-		bcs.s	Obj23_Delete
-		bra.w	DisplaySprite
-; ===========================================================================
-; loc_A620:
-Obj23_Explode:
-		move.b	#$24,id(a0) ; load Obj24 (unused Buzz Bomber missile explosion)
-		move.b	#0,routine(a0)
-		bra.w	Obj24
-; ===========================================================================
-; loc_A630:
-Obj23_Delete:
-		bra.w	DeleteObject
-; ===========================================================================
-; loc_A634:
-Obj23_Newtron:
-		tst.b	render_flags(a0)
-		bpl.s	Obj23_Delete
-		bsr.w	ObjectMove
-; loc_A63E:
-Obj23_Animate2:
-		lea	(Ani_obj23).l,a1
-		bsr.w	AnimateSprite
-		bra.w	DisplaySprite
-; ===========================================================================
-; animation script
-Ani_obj22:	dc.w byte_A652-Ani_obj22
-		dc.w byte_A656-Ani_obj22
-		dc.w byte_A65A-Ani_obj22
-byte_A652:	dc.b   1,  0,  1,$FF
-byte_A656:	dc.b   1,  2,  3,$FF
-byte_A65A:	dc.b   1,  4,  5,$FF
-
-Ani_obj23:	dc.w byte_A662-Ani_obj23
-		dc.w byte_A666-Ani_obj23
-byte_A662:	dc.b   7,  0,  1,$FC
-byte_A666:	dc.b   1,  2,  3,$FF
-
-; ---------------------------------------------------------------------------
-; sprite mappings - Buzz Bomber
-; ---------------------------------------------------------------------------
-Map_obj22:	incbin	"mappings/sprite/obj22.bin"
-
-; ---------------------------------------------------------------------------
-; sprite mappings - Buzz Bomber missile
-; ---------------------------------------------------------------------------
-Map_obj23:	incbin	"mappings/sprite/obj23.bin"
-
-; ===========================================================================
-		nop
 ; ===========================================================================
 ;----------------------------------------------------------------------------
 ; Object 25 - Rings
@@ -11295,7 +10815,7 @@ loc_A82A:				; CODE XREF: ROM:0000A886j
 		bne.s	loc_A88A
 
 loc_A832:				; CODE XREF: ROM:0000A828j
-		move.b	#$25,id(a1) ; '%'
+		move.b	#ObjID_Ring,id(a1) ; '%'
 		addq.b	#2,routine(a1)
 		move.w	d2,x_pos(a1)
 		move.w	x_pos(a0),$32(a1)
@@ -11414,7 +10934,7 @@ loc_A94E:				; CODE XREF: ROM:0000A9DAj
 		bne.w	loc_A9DE
 
 loc_A956:				; CODE XREF: ROM:0000A94Cj
-		move.b	#$37,id(a1) ; '7'
+		move.b	#ObjID_LostRings,id(a1) ; '7'
 		addq.b	#2,routine(a1)
 		move.b	#8,y_radius(a1)
 		move.b	#8,x_radius(a1)
@@ -11562,7 +11082,7 @@ loc_AAF4:				; DATA XREF: ROM:0000AA84o
 		move.b	#0,collision_flags(a0)
 		bsr.w	AllocateObject
 		bne.w	loc_AB2C
-		move.b	#$7C,id(a1) ; '|'
+		move.b	#ObjID_RingFlash,id(a1) ; '|'
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		move.l	a0,$3C(a1)
@@ -11904,7 +11424,7 @@ loc_AFDC:				; DATA XREF: ROM:0000AE6Ao
 		move.b	#0,collision_flags(a0)
 		bsr.w	AllocateObject
 		bne.s	loc_B004
-		move.b	#$2E,id(a1) ; '.'
+		move.b	#ObjID_MonitorContents,id(a1) ; '.'
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		move.b	anim(a0),anim(a1)
@@ -11912,7 +11432,7 @@ loc_AFDC:				; DATA XREF: ROM:0000AE6Ao
 loc_B004:				; CODE XREF: ROM:0000AFEAj
 		bsr.w	AllocateObject
 		bne.s	loc_B020
-		move.b	#$27,id(a1) ; '''
+		move.b	#ObjID_Explosion,id(a1) ; '''
 		addq.b	#2,routine(a1)
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
@@ -12052,7 +11572,7 @@ Monitor_Shoes:				; DATA XREF: ROM:0000B0D0o
 
 Monitor_Shield:				; DATA XREF: ROM:0000B0D2o
 		move.b	#1,(Shield_flag).w
-		move.b	#$38,(MainCharacter+$180).w ; '8'
+		move.b	#ObjID_Barrier,(MainCharacter+$180+id).w
 		move.w	#$AF,d0	; '¯'
 		jmp	(PlaySound).l
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -12060,7 +11580,7 @@ Monitor_Shield:				; DATA XREF: ROM:0000B0D2o
 Monitor_Invincibility:			; DATA XREF: ROM:0000B0D4o
 		move.b	#1,(Invincibility_flag).w
 		move.w	#$4B0,(MainCharacter+invincibility_time).w
-		move.b	#$38,(Object_RAM+$200).w ; '8'
+		move.b	#ObjID_Barrier,(Object_RAM+$200+id).w
 		move.b	#1,(Object_RAM+$200+anim).w
 		tst.b	(Lock_screen).w
 		bne.s	locret_B1A8
@@ -12591,7 +12111,7 @@ loc_BDAE:				; CODE XREF: ROM:0000BDAAj
 
 loc_BDC2:				; CODE XREF: ROM:0000BDBEj
 					; ROM:0000BDF8j
-		move.b	#$7E,id(a1) ; '~'
+		move.b	#ObjID_SSResults,id(a1) ; '~'
 		move.w	(a2)+,x_pixel(a1)
 		move.w	(a2)+,$30(a1)
 		move.w	(a2)+,y_pixel(a1)
@@ -12750,7 +12270,7 @@ loc_BF4C:				; DATA XREF: ROM:S1Obj7F_Indexo
 		bcs.w	DeleteObject
 
 loc_BF60:				; CODE XREF: ROM:0000BFA2j
-		move.b	#$7F,id(a1) ; ''
+		move.b	#ObjID_SSEmeralds,id(a1) ; ''
 		move.w	(a2)+,x_pixel(a1)
 		move.w	#$F0,y_pixel(a1) ; 'ð'
 		lea	(Emeralds_array).w,a3
@@ -14424,7 +13944,7 @@ Obj42_FireMissile:
 		move.b	#1,$32(a0)
 		bsr.w	AllocateObject
 		bne.s	locret_ED6C
-		move.b	#$23,id(a1)
+		move.b	#ObjID_Missile,id(a1)
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		subq.w	#8,y_pos(a1)
@@ -14591,7 +14111,7 @@ Obj0D_Sparkle:
 		lea	Obj0D_RingSparklePositions(pc,d0.w),a2
 		bsr.w	AllocateObject
 		bne.s	locret_F0B2
-		move.b	#$25,id(a1)
+		move.b	#ObjID_Ring,id(a1)
 		move.b	#6,routine(a1)
 		move.b	(a2)+,d0
 		ext.w	d0
@@ -14629,7 +14149,7 @@ Obj0D_EndLevel:
 
 loc_F0E0:
 		; This check here is for S1's Big Ring, which would set Sonic's Object ID to 0
-		tst.b	(MainCharacter).w
+		tst.b	(MainCharacter+id).w
 		beq.s	loc_F0F6
 		move.w	(MainCharacter+x_pos).w,d0
 		move.w	(Camera_Max_X_pos).w,d1
@@ -14653,7 +14173,7 @@ Load_EndOfAct:
 		move.w	(Camera_Max_X_pos).w,(Camera_Min_X_pos).w
 		clr.b	(Invincibility_flag).w
 		clr.b	(Update_HUD_timer).w
-		move.b	#$3A,(Object_RAM+$5C0).w
+		move.b	#ObjID_Results,(Object_RAM+$5C0+id).w
 		moveq	#$10,d0
 		jsr	(LoadPLC2).l
 		move.b	#1,(Update_Bonus_score).w
@@ -14806,7 +14326,7 @@ Obj40_Floor:
 		move.b	#$F,$33(a0)
 		bsr.w	AllocateObject
 		bne.s	locret_F354
-		move.b	#$40,id(a1)
+		move.b	#ObjID_Motobug,id(a1)
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		move.b	status(a0),status(a1)
@@ -15103,8 +14623,8 @@ Obj01_InWater:
 		bne.s	locret_FC0A	; if already underwater, branch
 
 		bsr.w	ResumeMusic
-		move.b	#$A,(Object_RAM+$340).w	; load Obj0A (sonic's breathing bubbles) at $FFFFB340
-		move.b	#$81,(Object_RAM+$368).w
+		move.b	#ObjID_SmallBubbles,(Object_RAM+$340+id).w	; load Obj0A (sonic's breathing bubbles) at $FFFFB340
+		move.b	#$81,(Object_RAM+$340+subtype).w
 		move.w	#$300,(Sonic_top_speed).w
 		move.w	#6,(Sonic_acceleration).w
 		move.w	#$40,(Sonic_deceleration).w
@@ -15112,7 +14632,7 @@ Obj01_InWater:
 		asr	y_vel(a0)	; memory oprands can only be shifted one at a time
 		asr	y_vel(a0)
 		beq.s	locret_FC0A
-		move.b	#8,(Object_RAM+$300).w	; splash animation
+		move.b	#ObjID_WaterSplash,(Object_RAM+$300+id).w	; splash animation
 		move.w	#$AA,d0			; splash sound
 		jmp	(PlaySound_Special).l
 
@@ -15128,7 +14648,7 @@ Obj01_OutWater:
 		move.w	#$80,(Sonic_deceleration).w
 		asl	y_vel(a0)
 		beq.w	locret_FC0A
-		move.b	#8,(Object_RAM+$300).w	; splash animation
+		move.b	#ObjID_WaterSplash,(Object_RAM+$300+id).w	; splash animation
 		cmpi.w	#$F000,y_vel(a0)
 		bgt.s	loc_FC98
 		move.w	#$F000,y_vel(a0)	; limit upward y velocity exiting the water
@@ -16462,8 +15982,8 @@ Sonic_GameOver:
 		subq.b	#1,(Life_count).w
 		bne.s	loc_10888
 		move.w	#0,$3A(a0)
-		move.b	#$39,(Object_RAM+$80).w
-		move.b	#$39,(Object_RAM+$C0).w
+		move.b	#ObjID_GameOver,(Object_RAM+$80+id).w
+		move.b	#ObjID_GameOver,(Object_RAM+$C0+id).w
 		move.b	#1,(Object_RAM+$C0+mapping_frame).w
 		clr.b	(Time_Over_flag).w
 
@@ -16479,8 +15999,8 @@ loc_10888:
 		tst.b	(Time_Over_flag).w
 		beq.s	locret_108B4
 		move.w	#0,$3A(a0)
-		move.b	#$39,(Object_RAM+$80).w
-		move.b	#$39,(Object_RAM+$C0).w
+		move.b	#ObjID_GameOver,(Object_RAM+$80+id).w
+		move.b	#ObjID_GameOver,(Object_RAM+$C0+id).w
 		move.b	#2,(Object_RAM+$80+mapping_frame).w
 		move.b	#3,(Object_RAM+$C0+mapping_frame).w
 		bra.s	loc_10876
@@ -16871,7 +16391,7 @@ Obj02_Init:
 		move.b	#$D,lrb_solid_bit(a0)
 		move.b	#0,flips_remaining(a0)
 		move.b	#4,flip_speed(a0)
-		move.b	#5,(Object_RAM+$1C0).w	; load Tails' tails at $B1C0
+		move.b	#ObjID_TailsTails,(Object_RAM+$1C0+id).w	; load Tails' tails at $B1C0
 
 ; ---------------------------------------------------------------------------
 ; Normal state for Tails
@@ -19099,7 +18619,7 @@ loc_1220C:				; CODE XREF: ROM:loc_121FAj
 		move.w	d0,$3A(a0)
 		jsr	(AllocateObject).l
 		bne.w	locret_122DC
-		move.b	#$A,id(a1)
+		move.b	#ObjID_SmallBubbles,id(a1)
 		move.w	(MainCharacter+x_pos).w,x_pos(a1)
 		moveq	#6,d0
 		btst	#0,(MainCharacter+status).w
@@ -20824,7 +20344,7 @@ loc_1394E:				; CODE XREF: S1Obj47_Bump+60j
 		jsr	(AddPoints).l
 		bsr.w	AllocateObject
 		bne.s	locret_13974
-		move.b	#$29,id(a1) ; ')'
+		move.b	#ObjID_Points,id(a1) ; ')'
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		move.b	#4,mapping_frame(a1)
@@ -21030,7 +20550,7 @@ loc_13BAC:				; CODE XREF: ROM:loc_13BA2j
 		move.w	d0,$38(a0)
 		bsr.w	AllocateObject
 		bne.s	loc_13C28
-		move.b	#$64,id(a1) ; 'd'
+		move.b	#ObjID_Bubbles,id(a1) ; 'd'
 		move.w	x_pos(a0),x_pos(a1)
 		jsr	(RandomNumber).l
 		andi.w	#$F,d0
@@ -21775,7 +21295,7 @@ sub_144D4:				; CODE XREF: ROM:0001449Ap
 					; ROM:000144C0p
 		jsr	(AllocateObjectAfterCurrent).l
 		bne.s	locret_14516
-		move.b	#$13,id(a1)
+		move.b	#ObjID_HPZWaterfall,id(a1)
 		addq.b	#4,routine(a1)
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
@@ -23072,7 +22592,7 @@ Obj50_Init:				; DATA XREF: ROM:Obj50_Indexo
 		move.w	y_pos(a0),$2A(a0)
 		bsr.w	j_AllocateObject
 		bne.s	loc_15FDA
-		move.b	#$50,id(a1) ; 'P'
+		move.b	#ObjID_Seahorse,id(a1) ; 'P'
 		move.b	#4,routine(a1)
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
@@ -23110,7 +22630,7 @@ loc_16006:				; DATA XREF: ROM:00015F1Ao
 		movea.l	$36(a0),a1
 		tst.b	(a1)
 		beq.w	loc_1676E
-		cmpi.b	#$50,(a1) ; 'P'
+		cmpi.b	#ObjID_Seahorse,(a1) ; 'P'
 		bne.w	loc_1676E
 		btst	#7,status(a1)
 		bne.w	loc_1676E
@@ -23166,7 +22686,7 @@ loc_16086:				; CODE XREF: sub_16078+Aj
 		st	$2D(a0)
 		bsr.w	j_AllocateObject
 		bne.s	locret_160F2
-		move.b	#$50,id(a1) ; 'P'
+		move.b	#ObjID_Seahorse,id(a1) ; 'P'
 		move.b	#6,routine(a1)
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
@@ -23718,7 +23238,7 @@ locret_1669C:				; CODE XREF: ROM:0001667Cj
 loc_1669E:				; CODE XREF: ROM:0001660Ej
 		bsr.w	j_AllocateObject
 		bne.s	locret_16706
-		move.b	#$51,id(a1) ; 'Q'
+		move.b	#ObjID_Skyhorse,id(a1) ; 'Q'
 		move.b	#4,routine(a1)
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
@@ -23892,7 +23412,7 @@ Obj4B_Init:
 		bsr.w	j_AllocateObjectAfterCurrent_0
 		bne.s	locret_1689E
 
-		move.b	#$4B,id(a1)	; load obj4B
+		move.b	#ObjID_Buzzer,id(a1)	; load obj4B
 		move.b	#4,routine(a1)	; => Obj4B_Flame
 		move.l	#Map_obj4B,mappings(a1)
 		move.w	#$3E6,art_tile(a1)
@@ -24013,7 +23533,7 @@ Obj4B_ShootProjectile:
 		jsr	(AllocateObjectAfterCurrent).l
 		bne.s	locret_169D8
 
-		move.b	#$4B,id(a1) ; load obj4B
+		move.b	#ObjID_Buzzer,id(a1) ; load obj4B
 		move.b	#6,routine(a1)	; => Obj4B_Projectile
 		move.l	#Map_obj4B,mappings(a1)
 		move.w	#$3E6,art_tile(a1)
@@ -24184,7 +23704,7 @@ loc_16BAA:				; DATA XREF: ROM:00016B64o
 		move.w	#$1E,$2C(a0)
 		jsr	(AllocateObject).l
 		bne.s	loc_16C10
-		move.b	#$4A,id(a1) ; 'J'
+		move.b	#ObjID_Octus,id(a1) ; 'J'
 		move.b	#4,routine(a1)
 		move.l	#Map_Obj4A,mappings(a1)
 		move.b	#4,mapping_frame(a1)
@@ -24200,7 +23720,7 @@ loc_16BAA:				; DATA XREF: ROM:00016B64o
 loc_16C10:				; CODE XREF: ROM:00016BC4j
 		jsr	(AllocateObject).l
 		bne.s	locret_16C74
-		move.b	#$4A,id(a1) ; 'J'
+		move.b	#ObjID_Octus,id(a1) ; 'J'
 		move.b	#6,routine(a1)
 		move.l	#Map_Obj4A,mappings(a1)
 		move.w	#$24C6,art_tile(a1)
@@ -24993,7 +24513,7 @@ Obj54_Init:
 		move.b	#$E,x_radius(a0)
 		bsr.w	j_AllocateObjectAfterCurrent_1
 		bne.s	loc_17670
-		move.b	#$54,id(a1)
+		move.b	#ObjID_Snail,id(a1)
 		move.b	#6,routine(a1)
 		move.l	#Map_obj54,mappings(a1)
 		move.w	#$2402,art_tile(a1)
@@ -25083,7 +24603,7 @@ locret_17712:				; CODE XREF: sub_176D0+4j
 sub_17714:				; CODE XREF: sub_176D0+3Ep
 		bsr.w	j_AllocateObjectAfterCurrent_1
 		bne.s	locret_17770
-		move.b	#$54,id(a1) ; 'T'
+		move.b	#ObjID_Snail,id(a1) ; 'T'
 		move.b	#8,routine(a1)
 		move.l	#Map_obj4B,mappings(a1)
 		move.w	#$3E6,art_tile(a1)
@@ -25107,7 +24627,7 @@ locret_17770:				; CODE XREF: sub_17714+4j
 
 loc_17772:
 		movea.l	$2A(a0),a1
-		cmpi.b	#$54,(a1) ; 'T'
+		cmpi.b	#ObjID_Snail,(a1) ; 'T'
 		bne.w	loc_17854
 		tst.b	$34(a1)
 		bne.w	loc_17854
@@ -25144,7 +24664,7 @@ loc_177B4:				; DATA XREF: ROM:000175E2o
 
 loc_177EC:				; DATA XREF: ROM:000175E4o
 		movea.l	$2A(a0),a1
-		cmpi.b	#$54,(a1) ; 'T'
+		cmpi.b	#ObjID_Snail,(a1) ; 'T'
 		bne.w	loc_17854
 		move.w	x_pos(a1),x_pos(a0)
 		move.w	y_pos(a1),y_pos(a0)
@@ -25307,7 +24827,7 @@ loc_179AE:				; DATA XREF: ROM:off_179A8o
 		bclr	#0,$2D(a0)
 		bsr.w	j_AllocateObjectAfterCurrent
 		bne.w	loc_181A8
-		move.b	#$58,id(a1) ; 'X'
+		move.b	#ObjID_EHZBoss4,id(a1) ; 'X'
 		move.l	a0,$34(a1)
 		move.l	#Map_Obj58,mappings(a1)
 		move.w	#$2540,art_tile(a1)
@@ -25462,7 +24982,7 @@ off_17B38:	dc.w loc_17B3C-off_17B38 ; DATA	XREF: ROM:off_17B38o
 
 loc_17B3C:				; DATA XREF: ROM:off_17B38o
 		movea.l	$34(a0),a1
-		cmpi.b	#$55,(a1) ; 'U'
+		cmpi.b	#ObjID_EHZBoss,(a1) ; 'U'
 		bne.w	loc_181AE
 		btst	#0,$2D(a1)
 		beq.s	loc_17B60
@@ -25497,7 +25017,7 @@ loc_17BA2:				; CODE XREF: ROM:00017B8Cj
 
 loc_17BB0:				; DATA XREF: ROM:00017AFEo
 		movea.l	$34(a0),a1
-		cmpi.b	#$55,(a1) ; 'U'
+		cmpi.b	#ObjID_EHZBoss,(a1) ; 'U'
 		bne.w	loc_181AE
 		btst	#1,$2D(a1)
 		beq.w	loc_181A8
@@ -25532,7 +25052,7 @@ off_17C10:	dc.w loc_17C18-off_17C10 ; DATA	XREF: ROM:off_17C10o
 
 loc_17C18:				; DATA XREF: ROM:off_17C10o
 		movea.l	$34(a0),a1
-		cmpi.b	#$55,(a1) ; 'U'
+		cmpi.b	#ObjID_EHZBoss,(a1) ; 'U'
 		bne.w	loc_181AE
 		btst	#1,$2D(a1)
 		beq.w	loc_181A8
@@ -25542,7 +25062,7 @@ loc_17C18:				; DATA XREF: ROM:off_17C10o
 
 loc_17C36:				; DATA XREF: ROM:00017C12o
 		movea.l	$34(a0),a1
-		cmpi.b	#$55,(a1) ; 'U'
+		cmpi.b	#ObjID_EHZBoss,(a1) ; 'U'
 		bne.w	loc_181AE
 		move.b	status(a1),status(a0)
 		move.b	render_flags(a1),render_flags(a0)
@@ -25600,7 +25120,7 @@ loc_17CE0:				; CODE XREF: ROM:00017CD4j
 
 loc_17CE4:				; DATA XREF: ROM:00017B02o
 		movea.l	$34(a0),a1
-		cmpi.b	#$55,(a1) ; 'U'
+		cmpi.b	#ObjID_EHZBoss,(a1) ; 'U'
 		bne.w	loc_181AE
 		btst	#3,$2D(a1)
 		bne.s	loc_17D4A
@@ -25674,7 +25194,7 @@ loc_17D92:				; CODE XREF: sub_17D6A+1Aj
 sub_17D9A:				; CODE XREF: ROM:loc_17F98p
 		jsr	(AllocateObjectAfterCurrent).l
 		bne.s	loc_17E0E
-		move.b	#$58,id(a1) ; 'X'
+		move.b	#ObjID_EHZBoss4,id(a1) ; 'X'
 		move.l	a0,$34(a1)
 		move.l	#Map_Obj58a,mappings(a1)
 		move.w	#$24C0,art_tile(a1)
@@ -25696,7 +25216,7 @@ sub_17D9A:				; CODE XREF: ROM:loc_17F98p
 loc_17E0E:				; CODE XREF: sub_17D9A+6j
 		jsr	(AllocateObjectAfterCurrent).l
 		bne.s	loc_17E82
-		move.b	#$58,id(a1) ; 'X'
+		move.b	#ObjID_EHZBoss4,id(a1) ; 'X'
 		move.l	a0,$34(a1)
 		move.l	#Map_Obj58a,mappings(a1)
 		move.w	#$24C0,art_tile(a1)
@@ -25718,7 +25238,7 @@ loc_17E0E:				; CODE XREF: sub_17D9A+6j
 loc_17E82:				; CODE XREF: sub_17D9A+7Aj
 		jsr	(AllocateObjectAfterCurrent).l
 		bne.s	loc_17EF6
-		move.b	#$58,id(a1) ; 'X'
+		move.b	#ObjID_EHZBoss4,id(a1) ; 'X'
 		move.l	a0,$34(a1)
 		move.l	#Map_Obj58a,mappings(a1)
 		move.w	#$24C0,art_tile(a1)
@@ -25740,7 +25260,7 @@ loc_17E82:				; CODE XREF: sub_17D9A+7Aj
 loc_17EF6:				; CODE XREF: sub_17D9A+EEj
 		jsr	(AllocateObjectAfterCurrent).l
 		bne.s	locret_17F52
-		move.b	#$58,id(a1) ; 'X'
+		move.b	#ObjID_EHZBoss4,id(a1) ; 'X'
 		move.l	a0,$34(a1)
 		move.l	#Map_Obj58a,mappings(a1)
 		move.w	#$24C0,art_tile(a1)
@@ -25764,7 +25284,7 @@ locret_17F52:				; CODE XREF: sub_17D9A+162j
 loc_17F54:				; DATA XREF: ROM:000182FEo
 		jsr	(AllocateObjectAfterCurrent).l
 		bne.s	loc_17F98
-		move.b	#$58,id(a1) ; 'X'
+		move.b	#ObjID_EHZBoss4,id(a1) ; 'X'
 		move.l	a0,$34(a1)
 		move.l	#Map_Obj58a,mappings(a1)
 		move.w	#$4C0,art_tile(a1)
@@ -25782,7 +25302,7 @@ loc_17F98:				; CODE XREF: ROM:00017F5Aj
 		move.w	#$2C0,y_pos(a0)
 		jsr	(AllocateObjectAfterCurrent).l
 		bne.s	locret_17FF8
-		move.b	#$58,id(a1) ; 'X'
+		move.b	#ObjID_EHZBoss4,id(a1) ; 'X'
 		move.l	a0,$34(a1)
 		move.l	#Map_Obj58,mappings(a1)
 		move.w	#$2540,art_tile(a1)
@@ -25950,7 +25470,7 @@ Obj55_Init:
 loc_18230:
 		jsr	(AllocateObjectAfterCurrent).l
 		bne.w	loc_182E8
-		move.b	#$55,id(a1)
+		move.b	#ObjID_EHZBoss,id(a1)
 		move.l	a0,$34(a1)
 		move.l	a1,$34(a0)
 		move.l	#Map_Obj55,mappings(a1)
@@ -25973,7 +25493,7 @@ loc_18294:
 		bmi.s	loc_182E8
 		jsr	(AllocateObjectAfterCurrent).l
 		bne.s	loc_182E8
-		move.b	#$55,id(a1)
+		move.b	#ObjID_EHZBoss,id(a1)
 		move.l	a0,$34(a1)
 
 loc_182AC:
@@ -26256,7 +25776,7 @@ loc_18D22:				; CODE XREF: ROM:00018D6Cj
 
 loc_18D2A:				; CODE XREF: ROM:00018D20j
 		move.b	(a2)+,routine(a1)
-		move.b	#$3D,id(a1) ; '='
+		move.b	#ObjID_GHZBoss,id(a1) ; '='
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		move.l	#Map_Eggman,mappings(a1)
@@ -26362,7 +25882,7 @@ BossDefeated:				; CODE XREF: ROM:00017956j
 		bne.s	locret_18EA0
 		jsr	(AllocateObject).l
 		bne.s	locret_18EA0
-		move.b	#$3F,id(a1) ; '?'
+		move.b	#ObjID_BossExplosion,id(a1) ; '?'
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		jsr	(RandomNumber).l
@@ -26415,7 +25935,7 @@ loc_18EC8:				; DATA XREF: ROM:00018DBCo
 		addq.b	#2,routine_secondary(a0)
 		jsr	(AllocateObjectAfterCurrent).l
 		bne.s	loc_18F0E
-		move.b	#$48,id(a1) ; 'H'
+		move.b	#ObjID_WreckingBall,id(a1) ; 'H'
 		move.w	$30(a0),x_pos(a1)
 		move.w	$38(a0),y_pos(a1)
 		move.l	a0,$34(a1)
@@ -26673,7 +26193,7 @@ loc_1912E:				; CODE XREF: ROM:00019190j
 		bne.s	loc_19194
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
-		move.b	#$48,id(a1) ; 'H'
+		move.b	#ObjID_WreckingBall,id(a1) ; 'H'
 		move.b	#6,routine(a1)
 		move.l	#Map_Obj15,mappings(a1)
 		move.w	#$380,art_tile(a1)
@@ -26768,7 +26288,7 @@ loc_19248:				; CODE XREF: sub_19236+Aj
 		move.b	status(a1),status(a0)
 		tst.b	status(a1)
 		bpl.s	locret_19272
-		move.b	#$3F,id(a0) ; '?'
+		move.b	#ObjID_BossExplosion,id(a0) ; '?'
 		move.b	#0,routine(a0)
 
 locret_19272:				; CODE XREF: sub_19236+2Ej
@@ -26781,7 +26301,7 @@ loc_19274:				; DATA XREF: ROM:000190FAo
 		movea.l	$34(a0),a1
 		tst.b	status(a1)
 		bpl.s	loc_1928A
-		move.b	#$3F,id(a0) ; '?'
+		move.b	#ObjID_BossExplosion,id(a0) ; '?'
 		move.b	#0,routine(a0)
 
 loc_1928A:				; CODE XREF: ROM:0001927Cj
@@ -27052,7 +26572,7 @@ Obj3E_Explosion:			; DATA XREF: ROM:00019516o
 		bne.s	loc_19660
 		jsr	(AllocateObject).l
 		bne.s	loc_19660
-		move.b	#$3F,id(a1) ; '?'
+		move.b	#ObjID_BossExplosion,id(a1) ; '?'
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		jsr	(RandomNumber).l
@@ -27085,7 +26605,7 @@ loc_19668:				; CODE XREF: ROM:00019664j
 loc_1968E:				; CODE XREF: ROM:000196B4j
 		jsr	(AllocateObject).l
 		bne.s	locret_196B8
-		move.b	#$28,id(a1) ; '('
+		move.b	#ObjID_Animal,id(a1) ; '('
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		add.w	d4,x_pos(a1)
@@ -27104,7 +26624,7 @@ Obj3E_Animals:				; DATA XREF: ROM:0001951Co
 		bne.s	loc_196F8
 		jsr	(AllocateObject).l
 		bne.s	loc_196F8
-		move.b	#$28,id(a1) ; '('
+		move.b	#ObjID_Animal,id(a1) ; '('
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 		jsr	(RandomNumber).l
@@ -27404,7 +26924,7 @@ loc_19994:				; CODE XREF: TouchResponse+1A8j
 
 loc_199AE:				; CODE XREF: TouchResponse+1BAj
 		bsr.w	AddPoints
-		move.b	#$27,id(a1) ; '''
+		move.b	#ObjID_Explosion,id(a1) ; '''
 		move.b	#0,routine(a1)
 		tst.w	y_vel(a0)
 		bmi.s	loc_199D4
@@ -27461,7 +26981,7 @@ loc_19A10:
 		beq.w	Hurt_NoRings
 		jsr	(AllocateObject).l
 		bne.s	HurtShield
-		move.b	#$37,id(a1) ; '7'
+		move.b	#ObjID_LostRings,id(a1) ; '7'
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
 
@@ -27489,7 +27009,7 @@ Hurt_ChkSpikes:				; CODE XREF: HurtSonic+66j
 		move.b	#$1A,anim(a0)
 		move.w	#$78,invulnerable_time(a0) ; 'x'
 		move.w	#$A3,d0	; '£'
-		cmpi.b	#$36,(a2) ; '6'
+		cmpi.b	#ObjID_Spikes,(a2) ; '6'
 		bne.s	loc_19A98
 		cmpi.b	#$16,(a2)
 		bne.s	loc_19A98
@@ -27526,7 +27046,7 @@ KillSonic:				; CODE XREF: sub_F456+268p
 		move.b	#$18,anim(a0)
 		bset	#7,art_tile(a0)
 		move.w	#$A3,d0	; '£'
-		cmpi.b	#$36,(a2) ; '6'
+		cmpi.b	#ObjID_Spikes,(a2) ; '6'
 		bne.s	loc_19AF8
 		move.w	#$A6,d0	; '¦'
 
@@ -30386,195 +29906,195 @@ DebugList:	dc.w Debug_GHZ-DebugList
 		dc.w Debug_HTZ-DebugList
 		dc.w Debug_HPZ-DebugList
 Debug_GHZ:	dc.w $E			; DATA XREF: ROM:DebugListo
-		dc.l Map_Obj25+$25000000
+		dc.l Map_Obj25+(ObjID_Ring<<24)
 		dc.b   0,  0,$26,$BC	; subtype, frame, VRAM setting (2 bytes)
-		dc.l Map_Obj26+$26000000
+		dc.l Map_Obj26+(ObjID_Monitor<<24)
 		dc.b   0,  0,  6,$80	; 0
-		dc.l Map_obj1F+$1F000000
+		dc.l MapUnc_Crabmeat+(ObjID_Crabmeat<<24)
 		dc.b   0,  0,  4,  0	; 0
-		dc.l Map_obj22+$22000000
+		dc.l MapUnc_BuzzBomber+(ObjID_BuzzBomber<<24)
 		dc.b   0,  0,  4,$44	; 0
-		dc.l Map_Obj2B+$2B000000
+		dc.l Map_Obj2B+(ObjID_Chopper<<24)
 		dc.b   0,  0,  4,$70	; 0
-		dc.l Map_Obj36+$36000000
+		dc.l Map_Obj36+(ObjID_Spikes<<24)
 		dc.b   0,  0,  4,$A0	; 0
-		dc.l Map_Obj18+$18000000
+		dc.l Map_Obj18+(ObjID_Platform<<24)
 		dc.b   0,  0,$40,  0	; 0
-		dc.l Map_Obj3B+$3B000000
+		dc.l Map_Obj3B+(ObjID_PurpleRock<<24)
 		dc.b   0,  0,$66,$C0	; 0
-		dc.l Map_obj40+$40000000
+		dc.l Map_obj40+(ObjID_Motobug<<24)
 		dc.b   0,  0,  4,$E0	; 0
-		dc.l Map_obj41_GHZ+$41000000
+		dc.l Map_obj41_GHZ+(ObjID_Spring<<24)
 		dc.b   0,  0,  4,$A8	; 0
-		dc.l Map_obj42+$42000000
+		dc.l Map_obj42+(ObjID_Newtron<<24)
 		dc.b   0,  0,$24,$9B	; 0
-		dc.l Map_obj44+$44000000
+		dc.l Map_obj44+(ObjID_GHZWall<<24)
 		dc.b   0,  0,$43,$4C	; 0
-		dc.l Map_Obj79+$79000000
+		dc.l Map_Obj79+(ObjID_Checkpoint<<24)
 		dc.b   1,  0,$26,$BC	; 0
-		dc.l Map_Obj03+$03000000
+		dc.l Map_Obj03+(ObjID_Pathswapper<<24)
 		dc.b   0,  0,$26,$BC	; 0
 Debug_CPZ:	dc.w $10		; DATA XREF: ROM:0001BCEEo
 					; ROM:0001BCF0o
-		dc.l Map_Obj25+$25000000
+		dc.l Map_Obj25+(ObjID_Ring<<24)
 		dc.b   0,  0,$26,$BC	; 0
-		dc.l Map_Obj26+$26000000
+		dc.l Map_Obj26+(ObjID_Monitor<<24)
 		dc.b   0,  0,  6,$80	; 0
-		dc.l Map_obj41_GHZ+$41000000
+		dc.l Map_obj41_GHZ+(ObjID_Spring<<24)
 		dc.b   0,  0,  4,$A8	; 0
-		dc.l Map_Obj03+$03000000
+		dc.l Map_Obj03+(ObjID_Pathswapper<<24)
 		dc.b   0,  0,  7,$BC	; 0
-		dc.l Map_Obj0B+$0B000000
+		dc.l Map_Obj0B+(ObjID_LZPole<<24)
 		dc.b   0,  0,$E0,  0	; 0
-		dc.l Map_Obj0C+$0C000000
+		dc.l Map_Obj0C+(ObjID_CPZPlatform<<24)
 		dc.b   0,  0,$E4,$18	; 0
-		dc.l Map_Obj15_CPZ+$15000000
+		dc.l Map_Obj15_CPZ+(ObjID_SwingingPlatform<<24)
 		dc.b   8,  0,$24,$18	; 0
-		dc.l Map_Obj03+$03000000
+		dc.l Map_Obj03+(ObjID_Pathswapper<<24)
 		dc.b   9,  1,$26,$BC	; 0
-		dc.l Map_Obj03+$03000000
+		dc.l Map_Obj03+(ObjID_Pathswapper<<24)
 		dc.b  $D,  5,$26,$BC	; 0
-		dc.l Map_Obj19+$19000000
+		dc.l Map_Obj19+(ObjID_Platform2<<24)
 		dc.b   1,  0,$64,  0	; 0
-		dc.l Map_Obj36+$36000000
+		dc.l Map_Obj36+(ObjID_Spikes<<24)
 		dc.b   0,  0,$24,$34	; 0
-		dc.l Map_obj41+$41000000
+		dc.l Map_obj41+(ObjID_Spring<<24)
 		dc.b $81,  0,  4,$5C	; 0
-		dc.l Map_obj41+$41000000
+		dc.l Map_obj41+(ObjID_Spring<<24)
 		dc.b $90,  3,  4,$70	; 0
-		dc.l Map_obj41+$41000000
+		dc.l Map_obj41+(ObjID_Spring<<24)
 		dc.b $A0,  6,  4,$5C	; 0
-		dc.l Map_obj41+$41000000
+		dc.l Map_obj41+(ObjID_Spring<<24)
 		dc.b $30,  7,  4,$3C	; 0
-		dc.l Map_obj41+$41000000
+		dc.l Map_obj41+(ObjID_Spring<<24)
 		dc.b $40, $A,  4,$3C	; 0
 Debug_EHZ:	dc.w $13		; DATA XREF: ROM:0001BCF2o
-		dc.l Map_Obj25+$25000000
+		dc.l Map_Obj25+(ObjID_Ring<<24)
 		dc.b   0,  0,$26,$BC	; 0
-		dc.l Map_Obj26+$26000000
+		dc.l Map_Obj26+(ObjID_Monitor<<24)
 		dc.b   0,  0,  6,$80	; 0
-		dc.l Map_Obj79+$79000000
+		dc.l Map_Obj79+(ObjID_Checkpoint<<24)
 		dc.b   1,  0,  4,$7C	; 0
-		dc.l Map_Obj03+$03000000
+		dc.l Map_Obj03+(ObjID_Pathswapper<<24)
 		dc.b   0,  0,$26,$BC	; 0
-		dc.l MapUnc_EHZWaterfall+$49000000
+		dc.l MapUnc_EHZWaterfall+(ObjID_EHZWaterfall<<24)
 		dc.b   0,  0,$23,$AE	; 0
-		dc.l MapUnc_EHZWaterfall+$49000000
+		dc.l MapUnc_EHZWaterfall+(ObjID_EHZWaterfall<<24)
 		dc.b   2,  3,$23,$AE	; 0
-		dc.l MapUnc_EHZWaterfall+$49000000
+		dc.l MapUnc_EHZWaterfall+(ObjID_EHZWaterfall<<24)
 		dc.b   4,  5,$23,$AE	; 0
-		dc.l Map_obj18_EHZ+$18000000
+		dc.l Map_obj18_EHZ+(ObjID_Platform<<24)
 		dc.b   1,  0,$40,  0	; 0
-		dc.l Map_obj18_EHZ+$18000000
+		dc.l Map_obj18_EHZ+(ObjID_Platform<<24)
 		dc.b  $A,  1,$40,  0	; 0
-		dc.l Map_Obj36+$36000000
+		dc.l Map_Obj36+(ObjID_Spikes<<24)
 		dc.b   0,  0,$24,$34	; 0
-		dc.l MapUnc_Seesaw+$14000000
+		dc.l MapUnc_Seesaw+(ObjID_Seesaw<<24)
 		dc.b   0,  0,  3,$CE	; 0
-		dc.l Map_obj41+$41000000
+		dc.l Map_obj41+(ObjID_Spring<<24)
 		dc.b $81,  0,  4,$5C	; 0
-		dc.l Map_obj41+$41000000
+		dc.l Map_obj41+(ObjID_Spring<<24)
 		dc.b $90,  3,  4,$70	; 0
-		dc.l Map_obj41+$41000000
+		dc.l Map_obj41+(ObjID_Spring<<24)
 		dc.b $A0,  6,  4,$5C	; 0
-		dc.l Map_obj41+$41000000
+		dc.l Map_obj41+(ObjID_Spring<<24)
 		dc.b $30,  7,  4,$3C	; 0
-		dc.l Map_obj41+$41000000
+		dc.l Map_obj41+(ObjID_Spring<<24)
 		dc.b $40, $A,  4,$3C	; 0
-		dc.l Map_obj4B+$4B000000
+		dc.l Map_obj4B+(ObjID_Buzzer<<24)
 		dc.b   0,  0,  3,$E6	; 0
-		dc.l Map_obj54+$54000000
+		dc.l Map_obj54+(ObjID_Snail<<24)
 		dc.b   0,  0,  4,  2	; 0
-		dc.l Map_obj53+$53000000
+		dc.l Map_obj53+(ObjID_Masher<<24)
 		dc.b   0,  0,  4,$1C	; 0
-		dc.l MapUnc_Redz+$4F000000
+		dc.l MapUnc_Redz+(ObjID_Redz<<24)
 		dc.b   0,  0,  5,  0	; 0
-		dc.l Map_Obj52+$52000000
+		dc.l Map_Obj52+(ObjID_BFish<<24)
 		dc.b   0,  0,$25,$30	; 0
-		dc.l Map_Obj50+$50000000
+		dc.l Map_Obj50+(ObjID_Seahorse<<24)
 		dc.b   0,  0,$25,$70	; 0
-		dc.l Map_Obj50+$51000000
+		dc.l Map_Obj50+(ObjID_Skyhorse<<24)
 		dc.b   0,  0,$25,$70	; 0
-		dc.l Map_Obj4D+$4D000000
+		dc.l Map_Obj4D+(ObjID_Stego<<24)
 		dc.b   0,  0,$23,$C4	; 0
-		dc.l Map_obj4B+$4B000000
+		dc.l Map_obj4B+(ObjID_Buzzer<<24)
 		dc.b   0,  0,  3,$2C	; 0
-		dc.l Map_Obj4E+$4E000000
+		dc.l Map_Obj4E+(ObjID_Gator<<24)
 		dc.b   0,  0,$23,  0	; 0
-		dc.l Map_Obj4C+$4C000000
+		dc.l Map_Obj4C+(ObjID_BBat<<24)
 		dc.b   0,  0,$23,$50	; 0
-		dc.l Map_Obj4A+$4A000000
+		dc.l Map_Obj4A+(ObjID_Octus<<24)
 		dc.b   0,  0,$23,$8A	; 0
 Debug_HTZ:	dc.w $13		; DATA XREF: ROM:0001BCF6o
-		dc.l Map_Obj25+$25000000
+		dc.l Map_Obj25+(ObjID_Ring<<24)
 		dc.b   0,  0,$26,$BC	; 0
-		dc.l Map_Obj26+$26000000
+		dc.l Map_Obj26+(ObjID_Monitor<<24)
 		dc.b   0,  0,  6,$80	; 0
-		dc.l Map_Obj79+$79000000
+		dc.l Map_Obj79+(ObjID_Checkpoint<<24)
 		dc.b   1,  0,  4,$7C	; 0
-		dc.l Map_Obj03+$03000000
+		dc.l Map_Obj03+(ObjID_Pathswapper<<24)
 		dc.b   0,  0,$26,$BC	; 0
-		dc.l Map_obj18_EHZ+$18000000
+		dc.l Map_obj18_EHZ+(ObjID_Platform<<24)
 		dc.b   1,  0,$40,  0	; 0
-		dc.l Map_obj18_EHZ+$18000000
+		dc.l Map_obj18_EHZ+(ObjID_Platform<<24)
 		dc.b  $A,  1,$40,  0	; 0
-		dc.l Map_Obj36+$36000000
+		dc.l Map_Obj36+(ObjID_Spikes<<24)
 		dc.b   0,  0,$24,$34	; 0
-		dc.l MapUnc_Seesaw+$14000000
+		dc.l MapUnc_Seesaw+(ObjID_Seesaw<<24)
 		dc.b   0,  0,  3,$CE	; 0
-		dc.l Map_obj41+$41000000
+		dc.l Map_obj41+(ObjID_Spring<<24)
 		dc.b $81,  0,  4,$5C	; 0
-		dc.l Map_obj41+$41000000
+		dc.l Map_obj41+(ObjID_Spring<<24)
 		dc.b $90,  3,  4,$70	; 0
-		dc.l Map_obj41+$41000000
+		dc.l Map_obj41+(ObjID_Spring<<24)
 		dc.b $A0,  6,  4,$5C	; 0
-		dc.l Map_obj41+$41000000
+		dc.l Map_obj41+(ObjID_Spring<<24)
 		dc.b $30,  7,  4,$3C	; 0
-		dc.l Map_obj41+$41000000
+		dc.l Map_obj41+(ObjID_Spring<<24)
 		dc.b $40, $A,  4,$3C	; 0
-		dc.l MapUnc_HTZLift+$16000000
+		dc.l MapUnc_HTZLift+(ObjID_HTZLift<<24)
 		dc.b   0,  0,$43,$E6	; 0
-		dc.l MapUnc_HTZLift+$1C000000
+		dc.l MapUnc_HTZLift+(ObjID_Scenery<<24)
 		dc.b   4,  1,$43,$E6	; 0
-		dc.l MapUnc_HTZLift+$1C000000
+		dc.l MapUnc_HTZLift+(ObjID_Scenery<<24)
 		dc.b   5,  2,$43,$E6	; 0
-		dc.l Map_obj4B+$4B000000
+		dc.l Map_obj4B+(ObjID_Buzzer<<24)
 		dc.b   0,  0,  3,$E6	; 0
-		dc.l Map_obj54+$54000000
+		dc.l Map_obj54+(ObjID_Snail<<24)
 		dc.b   0,  0,  4,  2	; 0
-		dc.l Map_obj53+$53000000
+		dc.l Map_obj53+(ObjID_Masher<<24)
 		dc.b   0,  0,  4,$1C	; 0
 Debug_HPZ:	dc.w $F			; DATA XREF: ROM:0001BCF4o
 					; ROM:0001BCF8o
-		dc.l Map_Obj25+$25000000
+		dc.l Map_Obj25+(ObjID_Ring<<24)
 		dc.b   0,  0,$26,$BC	; 0
-		dc.l Map_Obj26+$26000000
+		dc.l Map_Obj26+(ObjID_Monitor<<24)
 		dc.b   0,  0,  6,$80	; 0
-		dc.l Map_Obj1C_01+$1C000000
+		dc.l Map_Obj1C_01+(ObjID_Scenery<<24)
 		dc.b $21,  3,$E4,$85	; 0
-		dc.l Map_Obj13+$13000000
+		dc.l Map_Obj13+(ObjID_HPZWaterfall<<24)
 		dc.b   4,  4,$E4,$15	; 0
-		dc.l Map_Obj1A_HPZ+$1A000000
+		dc.l Map_Obj1A_HPZ+(ObjID_CollapsingPltfm<<24)
 		dc.b   0,  0,$44,$75	; 0
-		dc.l Map_Obj03+$03000000
+		dc.l Map_Obj03+(ObjID_Pathswapper<<24)
 		dc.b   0,  0,$26,$BC	; 0
-		dc.l MapUnc_Redz+$4F000000
+		dc.l MapUnc_Redz+(ObjID_Redz<<24)
 		dc.b   0,  0,  5,  0	; 0
-		dc.l Map_Obj52+$52000000
+		dc.l Map_Obj52+(ObjID_BFish<<24)
 		dc.b   0,  0,$25,$30	; 0
-		dc.l Map_Obj50+$50000000
+		dc.l Map_Obj50+(ObjID_Seahorse<<24)
 		dc.b   0,  0,$25,$70	; 0
-		dc.l Map_Obj50+$51000000
+		dc.l Map_Obj50+(ObjID_Skyhorse<<24)
 		dc.b   0,  0,$25,$70	; 0
-		dc.l Map_Obj4D+$4D000000
+		dc.l Map_Obj4D+(ObjID_Stego<<24)
 		dc.b   0,  0,$23,$C4	; 0
-		dc.l Map_obj4B+$4B000000
+		dc.l Map_obj4B+(ObjID_Buzzer<<24)
 		dc.b   0,  0,  3,$2C	; 0
-		dc.l Map_Obj4E+$4E000000
+		dc.l Map_Obj4E+(ObjID_Gator<<24)
 		dc.b   0,  0,$23,  0	; 0
-		dc.l Map_Obj4C+$4C000000
+		dc.l Map_Obj4C+(ObjID_BBat<<24)
 		dc.b   0,  0,$23,$50	; 0
-		dc.l Map_Obj4A+$4A000000
+		dc.l Map_Obj4A+(ObjID_Octus<<24)
 		dc.b   0,  0,$23,$8A	; 0
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -33467,26 +32987,8 @@ S1Nem_Ballhog:	dc.b $80,$2F,$80,  3,  1,$14,  6,$25, $A,$35,$11,$45,$14,$56,$2F,
 		dc.b $BF,$56,$BA,$25,$27, $E,$E2, $C,$1E,$E6,$83,$88,$AB,$8C,$3F,$3E,$32,$30,$AD,$CE,$20,$C3,$5C,$67,$66,$ED,$DC,$AD,$EE,$48,$82,$F2,$87,  6,$7C,$6A,$1E,$A0,$74,$7B,$3C,$21,$7B,$3C,$4C,$E3,$A8,$9A,$86,$E5,  8,$DE,$33,$BD,$22,$81,$74,$40,$BA,$25,$26,$E8,$A6,$54; 768
 		dc.b $85,$C5,$C1,$BF,$5E,$2A,$E0,$AA,$8A,$AD,$C0,$F9,$43,$20,$DF,$C1,$59,$CE,$39,$E4,$A8,$65,$18,$39,$74,$83,$96,$B5,$DF,  7,$2F,$68,$3B,$68,$65,$7E,$79,$5F,$9A,$F3,$BF,$2C,$EF,$CA,$11,$C8,$BA, $C,$EF,$CF,$39,$65,$D0,$2E,$FC,$F3,$A9,$92,$D6,$CE,$82,$E8,$E8,$47; 832
 		dc.b $28,$2B,$2C,$E3,$9A,$D7,$1E,$B1,$EB,$35,$72,$9C,$79,$22,$D4,$87,$92,$2E,$28,$B5,$9E,$48,$BD,$B9,$26,$DC,$A7,$7F,$59,$DF,$D5,$7D,$6F,$9F,$5A,$21,$4E,$4A,$4B,$A7,$C9,$87,$40,$8B,$4E,$44,$74,  8,$A4,$B9,$29,$35,$B2,$72,$5D,$13,$94,$67,$C9,$53,$EB,$1E,$B7,$80; 896
-Nem_Crabmeat:	dc.b   0,$44,$80,  5,$12,$15, $F,$25,$10,$35,$15,$46,$35,$56,$38,$67,$72,$74,  2,$81,  3,  0,$15,$14,$27,$78,$86,  6,$32,$17,$77,$87,  4,  6,$16,$34,$27,$76,$88,  5, $E,$15,$16,$89,  4,  4,$15,$13,$27,$7A,$8A,  6,$36,$17,$73,$8B,  5,$18,$17,$74,$8C,  6,$2F,$16; 0
-		dc.b $2E,$26,$33,$37,$75,$47,$79,$8D,  4,  3,$15,$11,$28,$F6,$38,$F7,$8E,  4,  5,$16,$37,$FF,$22,$E5,$7F,  6,$B5,$31,$C5,$F4,$D6,$FF,$10,$3B,$A9,  8,$DC,$21,$1C,$E0,$6A,$77,$54,$D4,$EF,$A9,$AC,$75,$35,$3D,$62,$BC,$8C,$A5,$99,$C3,$3E,$77,$9C,$97,$3E,$71,$92,$E7; 64
-		dc.b $B5,$E6,$F5,$EA,$6F,$5E,$A7,$49,$2E,$67,$E1,$6E,$8F,$85,$BA,$37,  5,$F7,$FE,$E2,$C6,$E3,$DE,$F5,$F6,$59,$FE,$B8,$D5,$3F,$50,$A7,$BC,$DD,$91,$11,$48,$F9,$1F,$28,$F1,$1E, $D,$B2,$6A,$B7,$E9,$9A,$1D,$E9,$94,$1B,$2A,$34, $D,$B2,$6A,$9A,$3B,$53,$4D,$24,$B8,$D8; 128
-		dc.b $E4,$8D,$2C,$5C,$F4,$D3,$39,$45,$66,$EC,$B5,$9B,$B9,$21,$17,$27,$42,$7A,$23,$E6,$D9,$39,$9E,$9A,$39,$1A,$48,$EF,$DB,$89,$8D,$29,$24,$67,$20,$82,  6,$70,$82,  9,$30,$82,  7,$B8,$3C,$54,$57,  1,$C9,$46,$C5,$F4,$E9,$B2,$31,$F9,$31,$77,$F3,$44,$53,$B3,$BD,$87; 192
-		dc.b $67,$68,$61,$3B,$A5,$99,$C2,$62,$76,$16,$3A,$4C,$58,$1A,$84,$16,$90,$88,$5B,$3E,$86,$BA,$57,$F6,$24,$45,$AC,$56,$A7,$7A,$DF,$53,$BD,$6F,$81,$DC,$B7,$C0,$EE,$30,$F8,$E6,$1E,$6A,$77,$2B,$CD,$4F,$37,$9A,$9E,$70,$35,$3B,$A0,$6B,$1B,$EA,$6B,$1D,$4D,$4F,$83,$52; 256
-		dc.b $2F,$6D,$6F,$E7,$18,$5F,$CE,$F8,$BE,$ED,$AE,$8C,$BC,$C6,$4B,$9F,$B8,$5F,$EE,$AD,$3F,$9B,$79,$A8,$F7,$EA,$B1,$95,$E7,$BD,$EA,$72,$35,$9E,$EF,$54,$FD,$42,$BD,$67,$6C,$9E,$6B,$3B,$64,$44,$44,$45,  6,$C9,$AA,$D4,$C9,$A1,$95,$3B,$C1,$BF,$4C,$D5,$6C,$9B,$54,$77; 320
-		dc.b   8,$DC,$26,$8B,$8D,$A0,$8D,$8B,$A0,$8D,$99,$11,$17,$11,$E2,$3A,$FB,$6B,$ED,$AB,$64,$D5,$6F,$D3,$57,$2A,$65,$56,$A6,$5A,$B6,$4D,$B6,$15,$EE,$43,$BB,$12,$64,$91,$E6,$E6,$49,$19,$13,$E3,$73,$E3,$CF,$38,$F3,$CD,$65,$7E,$D9,$AB,$FC,$AB,$FC,$AB,$FA,$AC,$1B,$35; 384
-		dc.b $86,$59,$AC,$A8,$DE,$CB,$E0,$D7,$AD,$16,$FD,$CF,$3D,$E6,$A7,$72,$FE,$A1,$16,$24,$44,$45,$53,$E0,$5F,$AD,$2F,$38,$78,$BC,$DF,$FB,$1B,$CD,$FE,$2E,$37,$D2,$E8,$BC,$67,$17,$E6,$6A,$6F,$BE,$2A,$70,$8E,$E7,$C4,$DD,$A6,$B3,$77,$24,$22,$D6,$7A,$CC,$25,$7D,$34,$3D; 448
-		dc.b $68,$FF,$5A,$3A,$42,$61,$2D,$29,$86,$72,  7,$CC,$33,$84,$10,$49,$85,$50,$49,$B5,$15,$C0,$72,$51,$B1,$7D,$3A,$6C,$8C,$7E,$4C,$5D,$FF,$D4,$ED,$2D, $C,$76,$FD,$43,  4,$FD,$33,$92,$C2,$6E,$47,$23,$87,$EE,$28,$82,$D4,$DE,$96,$90,$8E,$F6,$7D, $D,$74,$AF,$F0,$79; 512
-		dc.b  $E,$54,$47,$26,$1F,$B7,$4A,$5F,$86,$F2,$6C,$EF,$7B,$82,$76,$48,$BB,$F6,$E0,$F4,$4E,$E8,$34,$70,$98,$73,$38,$2D,$85,$82,$9D,$BC,$7A,$B0,$FE,$4D,$BF,$7D,$4D,$14,$E8,$FF,$D8,$91,$57,$2B,$4D,$63,$69,$A9,$EE,$E9,$CB,$DD,$39,$7E,$DD,$19,$F9,$39,$AC,$1A,$56,$4F; 576
-		dc.b $D8,$B7,$8A,$82,$FD,$CD,$50,$7F,$26,$43,$FD,$32,$FE,$8A,$72,  4,$5B,$C6,$B1,$22,$22,$2E,$1B,$90,$22,$E4,$9C,$82,$70,$27,$C5,$13,$90,$D6,$2B,$37,$65,$AC,$DD,$C9,  8,$88,$88,$AB,$FB,$98,$7F,$25,$FF,$B9,$A4,$BD,$51,$BF,$72,$25,$93,$9A,$62,$4C,$E4,$69,$89,$76; 640
-		dc.b   8,$24,$EE,$C1,  4,$86,$82,$48,$24,$E4, $F, $F,$67, $E,$1C,$38,$61,$C3,  2,$AE,  3,$92,$8D,$8B,$E9,$D3,$64,$63,$F2,$62,$EF,$E6,$88,$A7,$6F,$71,$DB,$DC,$27,$7F,$E6,$8F,$F4,$8B,$7A,$B0,$B0,$D1,$C8,$2C,$CE,$4A,$2F,$EA,$3C,$1A,$E8,$21,$FC,$12,$22,$22,$22,$22; 704
-		dc.b $E5,$44,$72,$61,$FB,$74,$A5,$F8,$6F,$26,$CE,$F7,$B8,$27,$64,$8B,$BF,$6E, $F,$44,$EE,$83,$47,  9,$87,$33,$82,$D8,$58,$4E,$DE,$12,$96,$13, $A,$2D,$FB,$E1,$2D,$14,$E8,$FF,$D8,$91,$57,$2B,$4D,$63,$69,$A9,$EE,$E9,$CB,$DD,$20,$D0,$FD,$BA,$33,$F2,$73,$58,$34,$AC; 768
-		dc.b $9F,$B1,$6F,$1F,$B9,$1E,$BF,$E2,$44,$44,$45,$AE,$F1,$AC,$48,$88,$B8,$F5,$AF,$EC,$48,$88,$88,$88,$B9,$4D,$DA,$6B,$37,$72,$42,$22,$22,$E4,$9A,$CD,$D5,$98,$75,$66,$D9,$43,$D6,$8F,$F5,$A3,$A4,$26,$12,$D2,$98,$67,$20,$7C,$C3,$38,$41,  4,$98,$55,  4,$9B,$50,$44; 832
-		dc.b $45,$5C,  7,$25,$1B,$17,$D3,$A6,$C8,$C7,$E4,$C5,$DF,$FD,$4E,$DE,$E3,$B7,$B8,$4E,$FE,$D6,$1E,$BF,$70,$2C,$96,$98,$FD,$44,$CE,$9F,$B8,$43,$DE,$D3,$A1,$AE,$89, $F,$E0,$91,$17,$21,$C8,$11,$11,$11,$14,$AE,$8B,$CF,$3E,$71,$92,$E7,$CC,$DE,$B9,$ED,$7B,$D7,$CB,$D7; 896
-		dc.b $C9,$11,$14,$78,$8F,$1E,$DA,$FB,$11,$11,$16,$B7,$F2,$BF,$FC,$39,$FF,  6,$5F,$EC,$91,$FF,$71,$F1,$EB, $F,$E6,$EA,$7B,$91,$14,$17,$AC,$17,$36,$82,$E7,$94,$17,$D9,$A0,$79,$9F,$8B,$B7,$BE,$97,$2B,$91,$73,$34,$73,$1E,$66,$8E,$C9,$AE,$3D,$CD,$D9,$47,$F7,$C6,$9F; 960
-		dc.b $BE,$8B,$F7,$32,$AB,$A1,$3D,$11,$F3,$6C,$9D,$A6,$4D,$AF,$E9,$9A,$B9,$53,$2A,$E5,$46,$AB,$64,$DA,$9A,$39,$EB,$8D,$8E,$48,$D2,$C5,$C7,$24,$67,$66,$FC,$23,$92,$8D,$8B,$E9,$D3,$67,$31,$F9,$41,$77,$F3,$44,$53,$B3,$BD,$87,$67,$68,$61,$3B,$A5,$99,$C2,$6F,$4D,$1C; 1024
-		dc.b $8D,$24,$77,$ED,$C4,$C6,$94,$92,$33,$90,$41,  3,$38,$41,  4,$98,$41,  3,$DC,$1E,$2A,$1E,$27,$61,$63,$A4,$C5,$81,$A8,$41,$69,  8,$85,$B3,$E8,$6B,$A5,$7F,$62,$44,$45,$C6,$F5,$DE,$30,$58,$DD,  5,$3C,$DE,$A7,$D5,$EA,$7D,$5E,$A7,$D5,$EA,$7D,$60,$A7,$9C,$16,$37; 1088
-		dc.b $57,$78,$F1,$B9,$11,$16,$FC,$47,$7A,$DD,$15,$86,$66,$B0,$EA,$6A,$FE,$A6,$AF,$EA,$6A,$FE,$A6,$AF,$CC,$D6,$17,$45,$61,$1D,$EB,$B9,$11,$11,$57,$A5,$7A,$73,$86,$39,$F7,$86,$36,$FD,$33,$F1,$B7,$ED,$9F,$8D,$BF,$6C,$FC,$6D,$FB,$67,$E3,$6F,$DB,$43,$1B,$7E,$9A,$18; 1152
-		dc.b $E7,$DE,$BD,$39,$F1,$D0,$88,$8B,$A7,$1C,$FA,$57,$BF,$3C,$43,$F4,$DB,$62,$1F,$B6,$DB, $F,$FD,$B6,$D8,$7F,$ED,$B6,$C3,$FF,$6D,$B6,$1F,$FA,$6D,$B1, $E,$FC,$F1, $E,$7D,$2B,$D0,$8B,$80,  0; 1216
+Nem_Crabmeat:	incbin	"art/nemesis/Crabmeat.bin"
+		even
 Nem_GHZBuzzbomber:dc.b $80,$37,$80,  4,	 3,$14,	 5,$24,	 8,$34,	 7,$45,$15,$56,$36,$67,$6F,$73,	 0,$81,	 4,  2,$15,$13,$27,$74,$82,  6,$35,$18,$F2,$83,	 4,  6,$16,$2E,$27,$7A,$84,  7,$75,$85,	 7,$76,$86,  6,$2F,$87,	 5,$12,$16,$38,$48,$F3,$58,$F7,$88,  4,	 4,$17,$72,$89,	 5,$16;	0
 		dc.b $8A,  6,$34,$18,$F6,$8B,  6,$32,$17,$6E,$8C,  5,$18,$17,$77,$8D,  7,$78,$8E,  5,$14,$17,$73,$8F,  6,$33,$FF,  0,$6F,$CD,$7C,$51,$73,$5F,  7,$9D,$33,$3A,$78,$3C,$4C,$E9,$A9,$E0,$8F,$3A,$62,$5E,  9,$7C,$B0,$4F,$D8,$FB,$3A,$1F,$69,$13,$DE,$B2,$AC,$DF,$4B,$FB; 64
 		dc.b $19,$3F,$6D,$9B,$2E,$AD,$D6, $A,$D7,$95,$E0,$78,$DF,$8F,  0,$7E,$89,$6D,$99,$92,$EA,$49,$95,$8C,$95,$97,$5F,$CA,$C5,$D1,$D9,$F8,$21,$9C,$75,$FC,$B1,$E8,$AC,$7F,$A5,$7F,$CA,$B6,$4A,$C7,$C1,$5B,$CA,$60,  1,$FD,$95,$45,$FD,$47,$E6,$53,$3A,$22,$F2,$32,$D9,$39; 128

@@ -47,7 +47,7 @@ Seesaw_Init:
 
 		bsr.w	AllocateObjectAfterCurrent
 		bne.s	loc_14D2C
-		move.b	#$14,id(a1)		; load Obj_Seesaw (ball) object
+		move.b	#ObjID_Seesaw,id(a1)	; load Obj_Seesaw (ball) object
 		addq.b	#6,routine(a1)		; use Seesaw_Ball routine
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
