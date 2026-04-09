@@ -51,7 +51,7 @@ ObjID_Fizzle:		objptr Obj24		; (S1) Unused Buzz Bomber missile explosion
 ObjID_Ring:		objptr Obj25		; A ring
 ObjID_Monitor:		objptr Obj26		; Monitor
 ObjID_Explosion:	objptr Obj27		; An explosion, giving off an animal and 100 points
-ObjID_Animal:		objptr Obj28		; Animal and the 100 points from a badnik
+ObjID_Animal:		objptr Obj_Animal	; Animals from badnik
 ObjID_Points:		objptr Obj29		; "100 points" text
 ObjID_Door:		objptr Obj2A		; (S1) Small door from SBZ
 ObjID_Chopper:		objptr Obj2B		; (S1) Chopper from GHZ
