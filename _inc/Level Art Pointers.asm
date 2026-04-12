@@ -37,10 +37,10 @@ levartptrs macro plc1,plc2,palette,art,map16x16,map128x128,music
 
 ; MainLoadBlocks:
 LevelArtPointers:
-		levartptrs  4,  5,  4, Nem_GHZ, Map16_GHZ, Map128_GHZ, MusID_GHZ		;   0 ; GHZ  ; GREEN HILL ZONE
-		levartptrs  6,  7,  5, Nem_CPZ, Map16_CPZ, Map128_CPZ, MusID_LZ			;   1 ; LZ   ; LABYRINTH ZONE
-		levartptrs  8,  9,  6, Nem_CPZ, Map16_CPZ, Map128_CPZ, MusID_CPZ		;   2 ; CPZ  ; CHEMICAL PLANT ZONE
-		levartptrs $A, $B,  7, Nem_EHZ, Map16_EHZ, Map128_EHZ, MusID_EHZ		;   3 ; EHZ  ; EMERALD HILL ZONE
-		levartptrs $C, $D,  8, Nem_HPZ, Map16_HPZ, Map128_HPZ, MusID_HPZ		;   4 ; HPZ  ; HIDDEN PALACE ZONE
-		levartptrs $E, $F,  9, Nem_EHZ, Map16_EHZ, Map128_EHZ, MusID_HTZ		;   5 ; HTZ  ; HILL TOP ZONE
-		levartptrs  0,  0,$13, Nem_GHZ, Map16_GHZ, Map128_GHZ, MusID_HTZ		;   6 ; LEV6 ; LEVEL 6 (UNUSED, SONIC 1 ENDING)
+		levartptrs PLCID_GHZ, PLCID_GHZ2, PalID_GHZ, Nem_GHZ, Map16_GHZ, Map128_GHZ, MusID_GHZ		;   0 ; GHZ  ; GREEN HILL ZONE
+		levartptrs PLCID_LZ, PLCID_LZ2, PalID_LZ, Nem_CPZ, Map16_CPZ, Map128_CPZ, MusID_LZ		;   1 ; LZ   ; LABYRINTH ZONE
+		levartptrs PLCID_CPZ, PLCID_CPZ2, PalID_CPZ, Nem_CPZ, Map16_CPZ, Map128_CPZ, MusID_CPZ		;   2 ; CPZ  ; CHEMICAL PLANT ZONE
+		levartptrs PLCID_EHZ, PLCID_EHZ2, PalID_EHZ, Nem_EHZ, Map16_EHZ, Map128_EHZ, MusID_EHZ		;   3 ; EHZ  ; EMERALD HILL ZONE
+		levartptrs PLCID_HPZ, PLCID_HPZ2, PalID_HPZ, Nem_HPZ, Map16_HPZ, Map128_HPZ, MusID_HPZ		;   4 ; HPZ  ; HIDDEN PALACE ZONE
+		levartptrs PLCID_HTZ, PLCID_HTZ2, PalID_HTZ, Nem_EHZ, Map16_EHZ, Map128_EHZ, MusID_HTZ		;   5 ; HTZ  ; HILL TOP ZONE
+		levartptrs PLCID_Main, PLCID_Main, PalID_Ending, Nem_GHZ, Map16_GHZ, Map128_GHZ, MusID_HTZ	;   6 ; LEV6 ; LEVEL 6 (UNUSED, SONIC 1 ENDING)

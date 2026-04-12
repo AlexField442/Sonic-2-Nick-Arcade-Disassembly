@@ -290,7 +290,7 @@ loc_DA4A:
 		moveq	#0,d1
 		move.b	1(a0),d1
 		bne.s	loc_DA84
-		move.b	($FFFFFEC3).w,d1
+		move.b	(Rings_anim_frame).w,d1
 
 loc_DA84:
 		add.w	d1,d1
@@ -362,7 +362,7 @@ loc_DAE0:				; CODE XREF: BuildSprites2_2p+12j
 		moveq	#0,d1
 		move.b	1(a0),d1
 		bne.s	loc_DB18
-		move.b	($FFFFFEC3).w,d1
+		move.b	(Rings_anim_frame).w,d1
 
 loc_DB18:				; CODE XREF: sub_DACA+48j
 		add.w	d1,d1

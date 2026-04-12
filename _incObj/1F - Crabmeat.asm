@@ -237,4 +237,4 @@ byte_A327:	dc.b   1,  5,  6,$FF
 ; sprite mappings
 ; ---------------------------------------------------------------------------
 ; Map_obj1F:
-MapUnc_Crabmeat:	include	"mappings/sprite/Crabmeat.asm"
+MapUnc_Crabmeat:	include	"mappings/sprite/Badniks - Crabmeat.asm"

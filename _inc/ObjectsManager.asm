@@ -281,8 +281,8 @@ loc_DE9C:
 		bsr.s	sub_DED2
 
 loc_DEC4:
-		move.w	(Object_Respawn_Table).w,($FFFFFFEC).w
-		move.w	(Obj_respawn_index_P2).w,($FFFFFFEE).w
+		move.w	(Object_Respawn_Table).w,(unk_FFEC).w
+		move.w	(Obj_respawn_index_P2).w,(unk_FFEE).w
 		rts
 ; ===========================================================================
 
@@ -500,19 +500,19 @@ sub_E026:
 		lea	(Object_RAM+$E00).w,a3
 		tst.b	(a1)+
 		bmi.s	loc_E05E
-		lea	($FFFFC100).w,a3
+		lea	(Object_RAM+$1100).w,a3
 		tst.b	(a1)+
 		bmi.s	loc_E05E
-		lea	($FFFFC400).w,a3
+		lea	(Object_RAM+$1400).w,a3
 		tst.b	(a1)+
 		bmi.s	loc_E05E
-		lea	($FFFFC700).w,a3
+		lea	(Object_RAM+$1700).w,a3
 		tst.b	(a1)+
 		bmi.s	loc_E05E
-		lea	($FFFFCA00).w,a3
+		lea	(Object_RAM+$1A00).w,a3
 		tst.b	(a1)+
 		bmi.s	loc_E05E
-		lea	($FFFFCD00).w,a3
+		lea	(Object_RAM+$1D00).w,a3
 		tst.b	(a1)+
 		bmi.s	loc_E05E
 		nop
@@ -532,19 +532,19 @@ sub_E062:				; CODE XREF: sub_DED2+30p sub_DF80+22p
 		lea	(Object_RAM+$E00).w,a3
 		cmp.b	(a1)+,d2
 		beq.s	loc_E09A
-		lea	($FFFFC100).w,a3
+		lea	(Object_RAM+$1100).w,a3
 		cmp.b	(a1)+,d2
 		beq.s	loc_E09A
-		lea	($FFFFC400).w,a3
+		lea	(Object_RAM+$1400).w,a3
 		cmp.b	(a1)+,d2
 		beq.s	loc_E09A
-		lea	($FFFFC700).w,a3
+		lea	(Object_RAM+$1700).w,a3
 		cmp.b	(a1)+,d2
 		beq.s	loc_E09A
-		lea	($FFFFCA00).w,a3
+		lea	(Object_RAM+$1A00).w,a3
 		cmp.b	(a1)+,d2
 		beq.s	loc_E09A
-		lea	($FFFFCD00).w,a3
+		lea	(Object_RAM+$1D00).w,a3
 		cmp.b	(a1)+,d2
 		beq.s	loc_E09A
 		nop
@@ -561,7 +561,7 @@ loc_E0A6:				; CODE XREF: sub_E062+64j
 		beq.s	loc_E0C2
 		movea.l	a3,a1
 		moveq	#0,d0
-		move.b	$23(a1),d0
+		move.b	respawn_index(a1),d0
 		beq.s	loc_E0BA
 		bclr	#7,2(a2,d0.w)
 
@@ -610,11 +610,11 @@ loc_E0E6:				; CODE XREF: sub_E0D2+4j sub_E0D2+Cj
 		move.b	(a0)+,d0
 		bpl.s	loc_E116
 		andi.b	#$7F,d0	; ''
-		move.b	d2,$23(a1)
+		move.b	d2,respawn_index(a1)
 
 loc_E116:				; CODE XREF: sub_E0D2+3Aj
 		move.b	d0,id(a1)
-		move.b	(a0)+,$28(a1)
+		move.b	(a0)+,subtype(a1)
 		moveq	#0,d0
 
 locret_E120:				; CODE XREF: sub_E0D2+18j
@@ -661,11 +661,11 @@ loc_E14C:				; CODE XREF: sub_E122+22j
 		move.b	(a0)+,d0
 		bpl.s	loc_E176
 		andi.b	#$7F,d0	; ''
-		move.b	d2,$23(a1)
+		move.b	d2,respawn_index(a1)
 
 loc_E176:				; CODE XREF: sub_E122+4Aj
 		move.b	d0,id(a1)
-		move.b	(a0)+,$28(a1)
+		move.b	(a0)+,subtype(a1)
 		moveq	#0,d0
 
 locret_E180:				; CODE XREF: sub_E122+20j sub_E122+28j

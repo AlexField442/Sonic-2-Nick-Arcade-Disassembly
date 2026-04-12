@@ -582,6 +582,8 @@ Correct_cheat_entries:		equ $FFFFFFE4
 Correct_cheat_entries_2:	equ $FFFFFFE6
 Two_player_mode:		equ $FFFFFFE8
 unk_FFEA:			equ $FFFFFFEA
+unk_FFEC:			equ $FFFFFFEC
+unk_FFEE:			equ $FFFFFFEE
 Demo_mode_flag:			equ $FFFFFFF0
 Demo_number:			equ $FFFFFFF2
 Ending_demo_number:		equ $FFFFFFF4

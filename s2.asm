@@ -1668,7 +1668,7 @@ SegaScreen:
 		bsr.w	PlaneMapToVRAM_H40
 
 loc_316A:
-		moveq	#0,d0
+		moveq	#PalID_Sega,d0
 		bsr.w	PalLoad2
 		move.w	#-$A,(PalCycle_Frame).w
 		move.w	#0,(PalCycle_Timer).w
@@ -1758,7 +1758,7 @@ loc_3260:				; CODE XREF: ROM:00003262j
 loc_3270:				; CODE XREF: ROM:00003272j
 		move.l	d0,(a1)+
 		dbf	d1,loc_3270
-		moveq	#3,d0
+		moveq	#PalID_SonicTails,d0
 		bsr.w	PalLoad1
 		bsr.w	Pal_FadeFromBlack
 		move	#$2700,sr
@@ -1814,7 +1814,7 @@ loc_3330:
 		moveq	#$1F,d1
 		moveq	#$1B,d2
 		bsr.w	PlaneMapToVRAM_H40
-		moveq	#1,d0
+		moveq	#PalID_Title,d0
 		bsr.w	PalLoad1
 		move.b	#MusID_Title,d0
 		bsr.w	PlaySound_Special
@@ -1833,7 +1833,7 @@ loc_339A:				; CODE XREF: ROM:0000339Cj
 		move.b	#1,(Object_RAM+$80+mapping_frame).w
 		jsr	(RunObjects).l
 		jsr	(BuildSprites).l
-		moveq	#0,d0
+		moveq	#PLCID_Main,d0
 		bsr.w	LoadPLC2
 		move.w	#0,(Correct_cheat_entries).w
 		move.w	#0,(Correct_cheat_entries_2).w
@@ -1912,7 +1912,7 @@ Title_Cheat_NoC:			; CODE XREF: ROM:00003486j
 Title_CheckLvlSel:			; CODE XREF: ROM:0000365Cj
 		tst.b	(Level_select_flag).w
 		beq.w	PlayLevel
-		moveq	#2,d0
+		moveq	#PalID_LevelSelect,d0
 		bsr.w	PalLoad2
 		lea	(Horiz_Scroll_Buf).w,a1
 		moveq	#0,d0
@@ -2454,7 +2454,7 @@ loc_3B84:
 		bsr.w	LoadPLC
 
 loc_3BB0:
-		moveq	#1,d0
+		moveq	#PLCID_Main2,d0
 		bsr.w	LoadPLC
 
 loc_3BB6:
@@ -2534,14 +2534,14 @@ loc_3C56:
 
 LevelInit_NoWater:
 		move.w	#$1E,(Air_left).w
-		moveq	#3,d0
+		moveq	#PalID_SonicTails,d0
 		bsr.w	PalLoad2
 		tst.b	(Water_flag).w
 		beq.s	loc_3CC6
-		moveq	#$F,d0
+		moveq	#PalID_LZSonicWater,d0
 		cmpi.b	#3,(Current_Act).w
 		bne.s	loc_3CB6
-		moveq	#$10,d0
+		moveq	#PalID_LZ4SonicWater,d0
 
 loc_3CB6:
 		bsr.w	PalLoad3_Water
@@ -2584,7 +2584,7 @@ LevelInit_TitleCard:
 		jsr	(HUD_Base).l
 
 loc_3D2A:
-		moveq	#3,d0
+		moveq	#PalID_SonicTails,d0
 		bsr.w	PalLoad1
 		bsr.w	LevelSizeLoad
 		bsr.w	DeformBGLayer
@@ -2689,10 +2689,10 @@ loc_3E78:
 loc_3EB2:
 		tst.b	(Water_flag).w
 		beq.s	loc_3EC8
-		moveq	#$B,d0
+		moveq	#PalID_HPZWater,d0
 		cmpi.b	#3,(Current_Act).w
 		bne.s	loc_3EC4
-		moveq	#$D,d0
+		moveq	#PalID_LZ4Water,d0
 
 loc_3EC4:
 		bsr.w	PalLoad4_Water
@@ -2716,11 +2716,11 @@ loc_3ECC:
 ; ===========================================================================
 
 Level_ClrTitleCard:
-		moveq	#2,d0
+		moveq	#PLCID_Explode,d0
 		jsr	(LoadPLC).l
 		moveq	#0,d0
 		move.b	(Current_Zone).w,d0
-		addi.w	#$15,d0
+		addi.w	#PLCID_GHZAnimals,d0
 		jsr	(LoadPLC).l
 
 Level_StartGame:
@@ -3638,7 +3638,7 @@ SignpostArtLoad:
 		cmp.w	(Camera_Min_X_pos).w,d1
 		beq.s	locret_47E2
 		move.w	d1,(Camera_Min_X_pos).w
-		moveq	#$12,d0
+		moveq	#PLCID_Signpost,d0
 		bra.w	LoadPLC2
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -3835,7 +3835,7 @@ loc_507C:
 		bne.s	loc_507C
 		move.w	#$8F02,(a5)
 		bsr.w	S1_SSBGLoad
-		moveq	#$14,d0
+		moveq	#PLCID_SpecialStage,d0
 		bsr.w	RunPLC_ROM
 		lea	(Object_RAM+$2000).w,a1		; leftover RAM location from Sonic 1
 		moveq	#0,d0
@@ -3867,7 +3867,7 @@ loc_50CC:
 		dbf	d1,loc_50CC
 		clr.b	(Water_fullscreen_flag).w
 		clr.w	(Level_Inactive_flag).w
-		moveq	#$A,d0
+		moveq	#PalID_SpecialStage,d0
 		bsr.w	PalLoad1
 		jsr	(S1SS_Load).l
 		move.l	#0,(Camera_X_pos).w
@@ -3959,11 +3959,11 @@ loc_5214:
 		bsr.w	NemDec
 		jsr	(HUD_Base).l
 		move	#$2300,sr
-		moveq	#$11,d0
+		moveq	#PalID_SSResults,d0
 		bsr.w	PalLoad2
-		moveq	#0,d0
+		moveq	#PLCID_Main,d0
 		bsr.w	LoadPLC2
-		moveq	#$1B,d0
+		moveq	#PLCID_SSResults,d0
 		bsr.w	LoadPLC
 		move.b	#1,(Update_HUD_score).w
 		move.b	#1,(Update_Bonus_score).w
@@ -7410,7 +7410,7 @@ loc_72C2:
 		andi.w	#$FF,d0
 		cmpi.w	#$103,(Current_ZoneAndAct).w
 		bne.s	.notLZ4
-		moveq	#$C,d0
+		moveq	#PalID_LZ4,d0
 ; loc_735E:
 .notLZ4:
 		cmpi.w	#$501,(Current_ZoneAndAct).w
@@ -7419,7 +7419,7 @@ loc_72C2:
 		bne.s	.loadPaletteAndPLC
 ; loc_736E:
 .notSBZ2:
-		moveq	#$E,d0
+		moveq	#PalID_SBZ2,d0
 ; loc_7370:
 .loadPaletteAndPLC:
 		bsr.w	PalLoad1
@@ -7815,7 +7815,7 @@ loc_7692:				; CODE XREF: ROM:0000767Ej
 		bsr.w	PlaySound
 		move.b	#1,(Lock_screen).w
 		addq.b	#2,(Dynamic_Resize_Routine).w
-		moveq	#$11,d0
+		moveq	#PLCID_Boss,d0
 		bra.w	LoadPLC
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -7874,7 +7874,7 @@ loc_770C:				; CODE XREF: ROM:00007704j
 		bsr.w	PlaySound
 		move.b	#1,(Lock_screen).w
 		addq.b	#2,(Dynamic_Resize_Routine).w
-		moveq	#$11,d0
+		moveq	#PLCID_Boss,d0
 		bra.w	LoadPLC
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -8063,7 +8063,7 @@ DynResize_CPZ3_BossCheck:
 		move.b	#ObjID_EHZBoss,id(a1)	; load Obj55 (EHZ boss, likely CPZ boss at one point)
 		move.w	#$680,x_pos(a1)
 		move.w	#$540,y_pos(a1)
-		moveq	#$11,d0
+		moveq	#PLCID_Boss,d0
 		bra.w	LoadPLC
 ; ===========================================================================
 
@@ -8120,7 +8120,7 @@ loc_7946:				; CODE XREF: ROM:0000792Ej
 		move.w	#MusID_Boss,d0
 		bsr.w	PlaySound
 		move.b	#1,(Lock_screen).w
-		moveq	#$11,d0
+		moveq	#PLCID_Boss,d0
 		bra.w	LoadPLC
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -8187,7 +8187,7 @@ loc_79BC:				; CODE XREF: ROM:000079B6j
 		bsr.w	PlaySound
 		move.b	#1,(Lock_screen).w
 		addq.b	#2,(Dynamic_Resize_Routine).w
-		moveq	#$11,d0
+		moveq	#PLCID_Boss,d0
 		bra.w	LoadPLC
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -8273,7 +8273,7 @@ loc_7A64:				; CODE XREF: ROM:00007A5Aj
 		move.w	#MusID_Boss,d0
 		bsr.w	PlaySound
 		move.b	#1,(Lock_screen).w
-		moveq	#$11,d0
+		moveq	#PLCID_Boss,d0
 		bra.w	LoadPLC
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -8349,7 +8349,7 @@ loc_7AF4:				; DATA XREF: ROM:00007ACCo
 		bne.s	locret_7B10
 		move.b	#$83,(a1)
 		addq.b	#2,(Dynamic_Resize_Routine).w
-		moveq	#$1E,d0
+		moveq	#PLCID_EggmanSBZ2,d0
 		bra.w	LoadPLC
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -8404,7 +8404,7 @@ loc_7B5A:				; DATA XREF: ROM:DynResize_HTZ3_Indexo
 		cmpi.w	#$2148,(Camera_X_pos).w
 		bcs.s	loc_7B6C
 		addq.b	#2,(Dynamic_Resize_Routine).w
-		moveq	#$1F,d0
+		moveq	#PLCID_FZBoss,d0
 		bsr.w	LoadPLC
 
 loc_7B6C:				; CODE XREF: ROM:00007B60j
@@ -13722,7 +13722,7 @@ Load_EndOfAct:
 		clr.b	(Invincibility_flag).w
 		clr.b	(Update_HUD_timer).w
 		move.b	#ObjID_Results,(Object_RAM+$5C0+id).w
-		moveq	#$10,d0
+		moveq	#PLCID_TitleCard,d0
 		jsr	(LoadPLC2).l
 		move.b	#1,(Update_Bonus_score).w
 		moveq	#0,d0
@@ -15538,7 +15538,7 @@ Sonic_GameOver:
 loc_10876:
 		move.w	#MusID_GameOver,d0
 		jsr	(PlaySound).l
-		moveq	#3,d0
+		moveq	#PLCID_GameOver,d0
 		jmp	(LoadPLC).l
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -24228,7 +24228,7 @@ byte_1781C:	dc.b   1,  0,  1,$FF	; 0 ; DATA XREF: ROM:00017816o
 ; ---------------------------------------------------------------------------
 ; Sprite mappings
 ; ---------------------------------------------------------------------------
-Map_obj54:	incbin	"mappings/sprite/obj54.bin"
+Map_obj54:	include	"mappings/sprite/Badniks - Snail.asm"
 
 
 

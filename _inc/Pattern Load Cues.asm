@@ -16,22 +16,45 @@
 ; process the first part before requesting the rest.
 ; ---------------------------------------------------------------------------
 
-ArtLoadCues:	dc.w PLC_Main-ArtLoadCues,PLC_Main2-ArtLoadCues
-		dc.w PLC_Explode-ArtLoadCues,PLC_GameOver-ArtLoadCues
-		dc.w PLC_GHZ-ArtLoadCues,PLC_GHZ2-ArtLoadCues
-		dc.w PLC_CPZ-ArtLoadCues,PLC_CPZ2-ArtLoadCues
-		dc.w PLC_CPZ-ArtLoadCues,PLC_CPZ2-ArtLoadCues
-		dc.w PLC_EHZ-ArtLoadCues,PLC_EHZ2-ArtLoadCues
-		dc.w PLC_HPZ-ArtLoadCues,PLC_HPZ2-ArtLoadCues
-		dc.w PLC_HTZ-ArtLoadCues,PLC_HTZ2-ArtLoadCues
-		dc.w PLC_S1TitleCard-ArtLoadCues,PLC_Boss-ArtLoadCues
-		dc.w PLC_Signpost-ArtLoadCues,PLC_S1SpecialStage-ArtLoadCues
-		dc.w PLC_S1SpecialStage-ArtLoadCues,PLC_GHZAnimals-ArtLoadCues
-		dc.w PLC_LZAnimals-ArtLoadCues,PLC_CPZAnimals-ArtLoadCues
-		dc.w PLC_EHZAnimals-ArtLoadCues,PLC_HPZAnimals-ArtLoadCues
-		dc.w PLC_HTZAnimals-ArtLoadCues,PLC_SSResults-ArtLoadCues
-		dc.w PLC_Ending-ArtLoadCues,PLC_TryAgain-ArtLoadCues
-		dc.w PLC_EggmanSBZ2-ArtLoadCues,PLC_FZBoss-ArtLoadCues
+; define a PLC ID constant
+plcptr	macro	*,pointer
+	\*:	equ	(*-ArtLoadCues)/2
+	dc.w	pointer-ArtLoadCues
+	endm
+
+ArtLoadCues:
+PLCID_Main:		plcptr PLC_Main
+PLCID_Main2:		plcptr PLC_Main2
+PLCID_Explode:		plcptr PLC_Explode
+PLCID_GameOver:		plcptr PLC_GameOver
+PLCID_GHZ:		plcptr PLC_GHZ
+PLCID_GHZ2:		plcptr PLC_GHZ2
+PLCID_LZ:		plcptr PLC_CPZ
+PLCID_LZ2:		plcptr PLC_CPZ2
+PLCID_CPZ:		plcptr PLC_CPZ
+PLCID_CPZ2:		plcptr PLC_CPZ2
+PLCID_EHZ:		plcptr PLC_EHZ
+PLCID_EHZ2:		plcptr PLC_EHZ2
+PLCID_HPZ:		plcptr PLC_HPZ
+PLCID_HPZ2:		plcptr PLC_HPZ2
+PLCID_HTZ:		plcptr PLC_HTZ
+PLCID_HTZ2:		plcptr PLC_HTZ2
+PLCID_TitleCard:	plcptr PLC_S1TitleCard
+PLCID_Boss:		plcptr PLC_Boss
+PLCID_Signpost:		plcptr PLC_Signpost
+PLCID_Warp:		plcptr PLC_Warp
+PLCID_SpecialStage:	plcptr PLC_S1SpecialStage
+PLCID_GHZAnimals:	plcptr PLC_GHZAnimals
+PLCID_LZAnimals:	plcptr PLC_LZAnimals
+PLCID_CPZAnimals:	plcptr PLC_CPZAnimals
+PLCID_EHZAnimals:	plcptr PLC_EHZAnimals
+PLCID_HPZAnimals:	plcptr PLC_HPZAnimals
+PLCID_HTZAnimals:	plcptr PLC_HTZAnimals
+PLCID_SSResults:	plcptr PLC_SSResults
+PLCID_Ending:		plcptr PLC_Ending
+PLCID_TryAgain:		plcptr PLC_TryAgain
+PLCID_EggmanSBZ2	plcptr PLC_EggmanSBZ2
+PLCID_FZBoss:		plcptr PLC_FZBoss
 
 ; macro for the header of a PLC list
 plcheader macro *
@@ -221,6 +244,12 @@ PLC_Signpost:	plcheader
 		plc $4B6, Nem_S1BonusPoints
 		plc $462, Nem_BigFlash
 PLC_Signpost_End:
+
+; ---------------------------------------------------------------------------
+; Pattern Load Cues - Warp Effect (removed)
+; ---------------------------------------------------------------------------
+PLC_Warp:
+PLC_Warp_End:
 
 ; ---------------------------------------------------------------------------
 ; Pattern Load Cues - Special Stage (blank)

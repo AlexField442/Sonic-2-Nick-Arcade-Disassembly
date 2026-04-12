@@ -137,11 +137,11 @@ TitleCard_NoDisplay2:
 TitleCard_ChangeArt:
 		cmpi.b	#4,routine(a0)
 		bne.s	TitleCard_Delete
-		moveq	#2,d0
+		moveq	#PLCID_Explode,d0
 		jsr	(LoadPLC).l	; load explosion patterns
 		moveq	#0,d0
 		move.b	(Current_Zone).w,d0
-		addi.w	#$15,d0
+		addi.w	#PLCID_GHZAnimals,d0
 		jsr	(LoadPLC).l	; load animal patterns
 ; Obj34_Delete:
 TitleCard_Delete:
