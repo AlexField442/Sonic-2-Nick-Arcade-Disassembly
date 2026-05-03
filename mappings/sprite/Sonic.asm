@@ -1,15 +1,15 @@
-.int:		dc.w word_9160E-.int
-		dc.w word_91610-.int
-		dc.w word_91632-.int
-		dc.w word_91644-.int
-		dc.w word_9166E-.int
-		dc.w word_91698-.int
-		dc.w word_916C2-.int
-		dc.w word_916E4-.int
-		dc.w word_91706-.int
-		dc.w word_91718-.int
-		dc.w word_9172A-.int
-		dc.w word_9173C-.int
+.int:		dc.w .blank-.int
+		dc.w .stand-.int
+		dc.w .wait1-.int
+		dc.w .wait2-.int
+		dc.w .wait3-.int
+		dc.w .wait4-.int
+		dc.w .lookup1-.int
+		dc.w .lookup2-.int
+		dc.w .getup1-.int
+		dc.w .getup2-.int
+		dc.w .turn1-.int
+		dc.w .turn2-.int
 		dc.w word_9175E-.int
 		dc.w word_91780-.int
 		dc.w word_91792-.int
@@ -165,53 +165,65 @@
 		dc.w word_9250E-.int
 		dc.w word_92520-.int
 		dc.w word_9253A-.int
-word_9160E:	dc.w 0
-word_91610:	dc.w 4
+; word_9160E:
+.blank:		dc.w 0
+; word_91610:
+.stand:		dc.w 4
 		dc.w $E405,    0,    0,   -8
 		dc.w $EC03,    4,    2, -$10
 		dc.w $F409,    8,    4,   -8
 		dc.w  $409,   $E,    7,   -8
-word_91632:	dc.w 2
+; word_91632:
+.wait1:		dc.w 2
 		dc.w $EC0B,    0,    0, -$10
 		dc.w  $C09,   $C,    6,   -8
-word_91644:	dc.w 5
+; word_91644:
+.wait2:		dc.w 5
 		dc.w $EC01,    0,    0, -$10
 		dc.w $EC05,    2,    1,   -8
 		dc.w $FC09,    6,    3, -$10
 		dc.w  $C01,   $C,    6,   -8
 		dc.w  $C05,   $E,    7,	   0
-word_9166E:	dc.w 5
+; word_9166E:
+.wait3:		dc.w 5
 		dc.w $EC01,    0,    0, -$10
 		dc.w $EC05,    2,    1,   -8
 		dc.w $FC09,    6,    3, -$10
 		dc.w  $C01,   $C,    6,   -8
 		dc.w  $C05,   $E,    7,	   0
-word_91698:	dc.w 5
+; word_91698:
+.wait4:		dc.w 5
 		dc.w $EC01,    0,    0, -$10
 		dc.w $EC05,    2,    1,   -8
 		dc.w $FC09,    6,    3, -$10
 		dc.w  $C01,   $C,    6,   -8
 		dc.w  $C05,   $E,    7,	   0
-word_916C2:	dc.w 4
+; word_916C2:
+.lookup1:	dc.w 4
 		dc.w $E405,    0,    0,   -8
 		dc.w $EC03,    4,    2, -$10
 		dc.w $F409,    8,    4,   -8
 		dc.w  $409,   $E,    7,   -8
-word_916E4:	dc.w 4
+; word_916E4:
+.lookup2:	dc.w 4
 		dc.w $E405,    0,    0,   -8
 		dc.w $EC03,    4,    2, -$10
 		dc.w $F405,    8,    4,   -8
 		dc.w  $409,   $C,    6,   -8
-word_91706:	dc.w 2
+; word_91706:
+.getup1:	dc.w 2
 		dc.w $F40B,    0,    0, -$1F
 		dc.w  $405,   $C,    6,   -7
-word_91718:	dc.w 2
+; word_91718:
+.getup2:	dc.w 2
 		dc.w $E40B,    0,    0, -$12
 		dc.w  $40D,   $C,    6, -$12
-word_9172A:	dc.w 2
+; word_9172A:
+.turn1:		dc.w 2
 		dc.w $E40B,    0,    0, -$10
 		dc.w  $405,   $C,    6,   -8
-word_9173C:	dc.w 4
+; word_9173C:
+.turn2:		dc.w 4
 		dc.w $E407,    0,    0, -$10
 		dc.w  $405,    8,    4, -$10
 		dc.w $E407, $800, $800,	   0

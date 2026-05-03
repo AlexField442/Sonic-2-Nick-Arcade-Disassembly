@@ -136,7 +136,7 @@ ObjID_Checkpoint:	objptr Obj79		; Checkpoint
 			dc.l ObjNull
 			dc.l ObjNull
 ObjID_RingFlash:	objptr ObjNull		; (S1) Giant ring flash (pointer removed)
-ObjID_HiddenPoints:	objptr Obj7D		; (S1) Hidden points at end of stage
+ObjID_HiddenPoints:	objptr Obj_HiddenPoints	; (S1) Hidden points at end of stage
 ObjID_SSResults:	objptr ObjNull		; (S1) Special Stage results (pointer removed)
 ObjID_SSEmeralds:	objptr ObjNull		; (S1) Special Stage results emeralds (pointer removed)
 			dc.l ObjNull

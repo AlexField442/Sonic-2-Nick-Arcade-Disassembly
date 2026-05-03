@@ -3,7 +3,6 @@
 ; Pseudo-object that manages where rings are placed onscreen
 ; as you move through the level, and otherwise updates them.
 ; ---------------------------------------------------------------------------
-
 ; RingPosLoad:
 RingsManager:
 		moveq	#0,d0
