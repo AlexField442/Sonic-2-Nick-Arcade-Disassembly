@@ -116,7 +116,7 @@ Results_ChkBonus:
 		tst.w	d0
 		bne.s	Results_AddBonus
 		move.w	#$C5,d0
-		jsr	(PlaySound_Special).l
+		jsr	(PlaySound).l
 		addq.b	#2,routine(a0)
 		cmpi.w	#$501,(Current_ZoneAndAct).w
 		bne.s	Results_SetDelay
@@ -135,7 +135,7 @@ Results_AddBonus:
 		andi.b	#3,d0
 		bne.s	locret_BC64
 		move.w	#$CD,d0
-		jmp	(PlaySound_Special).l
+		jmp	(PlaySound).l
 ; ===========================================================================
 ; loc_BC80: Obj3A_NextLevel:
 Results_NextLevel:
@@ -205,7 +205,7 @@ loc_BD1E:
 		addq.b	#2,routine(a0)
 		clr.b	(Control_Locked).w
 		move.w	#MusID_FZ,d0
-		jmp	(PlaySound).l
+		jmp	(PlayMusic).l
 ; ---------------------------------------------------------------------------
 ; Obj3A_SetBoundary:
 Results_SetBoundary:

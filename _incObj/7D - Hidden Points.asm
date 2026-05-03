@@ -49,7 +49,7 @@ HiddenPoints_Init:
 		move.b	subtype(a0),mapping_frame(a0)
 		move.w	#$77,hiddenpoints_timer(a0)
 		move.w	#$C9,d0
-		jsr	(PlaySound_Special).l
+		jsr	(PlaySound).l
 		moveq	#0,d0
 		move.b	subtype(a0),d0
 		add.w	d0,d0

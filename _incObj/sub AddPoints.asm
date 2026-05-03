@@ -25,7 +25,7 @@ loc_1B214:
 		addq.b	#1,(Life_count).w
 		addq.b	#1,(Update_HUD_lives).w
 		move.w	#MusID_ExtraLife,d0
-		jmp	(PlaySound).l
+		jmp	(PlayMusic).l
 
 locret_1B23C:
 		rts

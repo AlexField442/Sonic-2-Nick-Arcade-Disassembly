@@ -592,7 +592,7 @@ PlaySoundByIndex:
 		move.b	#$80,QueueToPlay(a6)	; reset	music flag
 		; music
 		cmpi.b	#$9F,d7	
-		bls.w	PlayMusic
+		bls.w	PlaySound_CheckBGM
 		; redundant check unless the above is changed to a lower value
 		cmpi.b	#$A0,d7
 		bcs.w	locret_71F8C
@@ -650,8 +650,8 @@ loc_71FC4:
 ; ---------------------------------------------------------------------------
 ; Play music tracks (uses sound IDs $81-$9F)
 ; ---------------------------------------------------------------------------
-; loc_71FD2: Music_81to9F:
-PlayMusic:
+; loc_71FD2: Music_81to9F: PlayMusic:
+PlaySound_CheckBGM:
 		cmpi.b	#MusID_ExtraLife,d7	; is "extra life" music	played?
 		bne.s	loc_72024		; if not, branch
 		tst.b	$27(a6)
