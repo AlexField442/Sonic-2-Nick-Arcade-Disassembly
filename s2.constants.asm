@@ -150,16 +150,15 @@ Block_Table:			rs.w	$C00
 Block_Table_End:		equ	__rs
 
 TempArray_LayerDef:		rs.b	$200		; used by some layer deformation routines
+
 Decomp_Buffer:			rs.b	$200		; used by Nemesis as a temporary buffer before it is uploaded to VRAM
+Decomp_Buffer_End:		equ	__rs
 
 Sprite_Input_Table:		rs.b	$400
 Sprite_Input_Table_End:		equ	__rs
 
 Object_RAM:			rs.b	$2000
 Object_RAM_End:			equ	__rs
-
-MainCharacter:			equ	Object_RAM
-Sidekick:			equ	Object_RAM+$40
 
 Primary_Collision:		rs.b	$600
 Secondary_Collision:		rs.b	$600
@@ -280,6 +279,8 @@ unk_EEE0:			rs.w	1
 Camera_X_pos_copy:		rs.l	1
 Camera_Y_pos_copy:		rs.l	1
 				rs.b	8		; $FFFFEEF8-$FFFFEEFF ; unused
+Camera_RAM_End:			equ	__rs
+
 Block_cache:			rs.w	512/16*2	; width of plane in blocks, with each block getting two words.
 
 				rs.b	$80		; $FFFFEF80-$FFFFEFFF ; unused
@@ -465,21 +466,25 @@ Underwater_target_palette:		rs.b	palette_line_size	; this is used by the screen-
 Underwater_target_palette_line2:	rs.b	palette_line_size	; while Underwater_palette contains the blacked-out palette caused by the fading,
 Underwater_target_palette_line3:	rs.b	palette_line_size	; Underwater_target_palette will contain the palette the screen will ultimately fade in to.
 Underwater_target_palette_line4:	rs.b	palette_line_size
+Underwater_target_palette_End:		equ	__rs
 
 Underwater_palette:		rs.b	palette_line_size	; main palette for underwater parts of the screen
 Underwater_palette_line2:	rs.b	palette_line_size
 Underwater_palette_line3:	rs.b	palette_line_size
 Underwater_palette_line4:	rs.b	palette_line_size
+Underwater_palette_End:		equ	__rs
 
 Normal_palette:			rs.b	palette_line_size	; main palette for non-underwater parts of the screen
 Normal_palette_line2:		rs.b	palette_line_size
 Normal_palette_line3:		rs.b	palette_line_size
 Normal_palette_line4:		rs.b	palette_line_size
+Normal_palette_End:		equ	__rs
 
 Target_palette:			rs.b	palette_line_size	; this is used by the screen-fading subroutines.
 Target_palette_line2:		rs.b	palette_line_size	; while Normal_palette contains the blacked-out palette caused by the fading,
 Target_palette_line3:		rs.b	palette_line_size	; Target_palette will contain the palette the screen will ultimately fade in to.
 Target_palette_line4:		rs.b	palette_line_size
+Target_palette_End:		equ	__rs
 
 Object_Respawn_Table:		rs.w	1
 Obj_respawn_data:		rs.b	$BE
@@ -590,6 +595,40 @@ Ending_demo_number:		equ $FFFFFFF4
 Graphics_flags:			equ $FFFFFFF8
 Debug_mode_flag:		equ $FFFFFFFA
 Checksum_fourcc:		equ $FFFFFFFC
+
+; ---------------------------------------------------------------------------
+; Title objects
+TitleSonic:			equ	Object_RAM+$40
+TitleTails:			equ	Object_RAM+$80
+
+; Level objects
+MainCharacter:			equ	Object_RAM
+Sidekick:			equ	Object_RAM+$40
+GameOver_GameText:		equ	Object_RAM+$80
+GameOver_OverText:		equ	Object_RAM+$C0
+TimeOver_TimeText:		equ	Object_RAM+$80
+TimeOver_OverText:		equ	Object_RAM+$C0
+Shield:				equ	Object_RAM+$180
+TailsTails:			equ	Object_RAM+$1C0
+InvincibilityStars:		equ	Object_RAM+$200
+Sonic_WaterSplash:		equ	Object_RAM+$300
+Sonic_BreathingBubbles:		equ	Object_RAM+$340
+HUD:				equ	Object_RAM+$380
+WaterSurface1:			equ	Object_RAM+$780
+WaterSurface2:			equ	Object_RAM+$7C0
+
+; Title card objects
+TitleCard:			equ	Object_RAM+$80
+TitleCard_Name:			equ	Object_RAM+$C0
+TitleCard_Zone:			equ	Object_RAM+$100
+TitleCard_Act:			equ	Object_RAM+$140
+TitleCard_Oval:			equ	Object_RAM+$180
+Results:			equ	Object_RAM+$5C0
+
+; Special Stage objects
+SSResults:			equ	Object_RAM+$5C0
+SSContinue:			equ	Object_RAM+$6C0
+SSEmeralds:			equ	Object_RAM+$800
 
 ; ---------------------------------------------------------------------------
 ; VDP addresses

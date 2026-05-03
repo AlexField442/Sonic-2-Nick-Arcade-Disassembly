@@ -1712,55 +1712,29 @@ TitleScreen:				; CODE XREF: ROM:000003A0j
 		bsr.w	Pal_FadeToBlack
 		move	#$2700,sr
 		bsr.w	SoundDriverLoad
+
 		lea	(VDP_control_port).l,a6
-		move.w	#$8004,(a6)
-		move.w	#$8230,(a6)
-		move.w	#$8407,(a6)
-		move.w	#$9001,(a6)
-		move.w	#$9200,(a6)
-		move.w	#$8B03,(a6)
-		move.w	#$8720,(a6)
+		move.w	#$8004,(a6)		; horizontal interrupts disabled
+		move.w	#$8230,(a6)		; Plane A at $C000
+		move.w	#$8407,(a6)		; Plane B at $E000
+		move.w	#$9001,(a6)		; 64x32 scroll window
+		move.w	#$9200,(a6)		; disable Window plane
+		move.w	#$8B03,(a6)		; scroll per-row horizontally, full-screen vertically
+		move.w	#$8720,(a6)		; set background color to palette line 2, color 0
 		clr.b	(Water_fullscreen_flag).w
-		move.w	#$8C81,(a6)
+		move.w	#$8C81,(a6)		; 40 cells, no interlace, S/H disabled
 		bsr.w	ClearScreen
-		lea	(Sprite_Input_Table).w,a1
-		moveq	#0,d0
-		move.w	#(Sprite_Input_Table_End-Sprite_Input_Table)/4-1,d1
 
-loc_3230:				; CODE XREF: ROM:00003232j
-		move.l	d0,(a1)+
-		dbf	d1,loc_3230
-		lea	(Object_RAM).w,a1
-		moveq	#0,d0
-		move.w	#(Object_RAM_End-Object_RAM)/4-1,d1
+		clearRAM Sprite_Input_Table
+		clearRAM Object_RAM
+		clearRAM Misc_Variables
+		clearRAM Camera_RAM
+		clearRAM Target_palette
 
-loc_3240:				; CODE XREF: ROM:00003242j
-		move.l	d0,(a1)+
-		dbf	d1,loc_3240
-		lea	(Misc_Variables).w,a1
-		moveq	#0,d0
-		move.w	#(Misc_Variables_End-Misc_Variables)/4-1,d1	; '?'
-
-loc_3250:				; CODE XREF: ROM:00003252j
-		move.l	d0,(a1)+
-		dbf	d1,loc_3250
-		lea	(Camera_RAM).w,a1
-		moveq	#0,d0
-		move.w	#$3F,d1	; '?'
-
-loc_3260:				; CODE XREF: ROM:00003262j
-		move.l	d0,(a1)+
-		dbf	d1,loc_3260
-		lea	(Target_palette).w,a1
-		moveq	#0,d0
-		move.w	#$1F,d1
-
-loc_3270:				; CODE XREF: ROM:00003272j
-		move.l	d0,(a1)+
-		dbf	d1,loc_3270
 		moveq	#PalID_SonicTails,d0
 		bsr.w	PalLoad1
 		bsr.w	Pal_FadeFromBlack
+
 		move	#$2700,sr
 		move.l	#$40000000,(VDP_control_port).l
 		lea	(Nem_Title).l,a0
@@ -1773,7 +1747,7 @@ loc_3270:				; CODE XREF: ROM:00003272j
 		lea	(Art_Text).l,a5
 		move.w	#$28F,d1
 
-loc_32C4:				; CODE XREF: ROM:000032C6j
+loc_32C4:
 		move.w	(a5)+,(a6)
 		dbf	d1,loc_32C4
 		nop
@@ -1785,26 +1759,27 @@ loc_32C4:				; CODE XREF: ROM:000032C6j
 		move.w	#0,(PalCycle_Timer).w
 		bsr.w	Pal_FadeToBlack
 		move	#$2700,sr
+
 		lea	(Chunk_Table).l,a1
 		lea	(Eni_TitleMap).l,a0
 		move.w	#0,d0
 		bsr.w	EniDec
 		lea	(Chunk_Table).l,a1
 		move.l	#$40000003,d0
-		moveq	#$27,d1	; '''
+		moveq	#$27,d1
 		moveq	#$1B,d2
 		bsr.w	PlaneMapToVRAM_H40
+
 		lea	(Chunk_Table).l,a1
 		lea	(Eni_TitleBg1).l,a0
 		move.w	#0,d0
-
-loc_3330:
 		bsr.w	EniDec
 		lea	(Chunk_Table).l,a1
 		move.l	#$60000003,d0
 		moveq	#$1F,d1
 		moveq	#$1B,d2
 		bsr.w	PlaneMapToVRAM_H40
+
 		lea	(Chunk_Table).l,a1
 		lea	(Eni_TitleBg2).l,a0
 		move.w	#0,d0
@@ -1814,23 +1789,20 @@ loc_3330:
 		moveq	#$1F,d1
 		moveq	#$1B,d2
 		bsr.w	PlaneMapToVRAM_H40
+
 		moveq	#PalID_Title,d0
 		bsr.w	PalLoad1
 		move.b	#MusID_Title,d0
 		bsr.w	PlaySound_Special
+
 		move.b	#0,(Debug_mode_flag).w
 		move.w	#0,(Two_player_mode).w
 		move.w	#$178,(Demo_Time_left).w
-		lea	(Object_RAM+$80).w,a1
-		moveq	#0,d0
-		move.w	#$F,d1
+		clearRAM Object_RAM+$80,Object_RAM+$C0
 
-loc_339A:				; CODE XREF: ROM:0000339Cj
-		move.l	d0,(a1)+
-		dbf	d1,loc_339A
-		move.b	#ObjID_TitleCharacters,(Object_RAM+$40+id).w
-		move.b	#ObjID_TitleCharacters,(Object_RAM+$80+id).w
-		move.b	#1,(Object_RAM+$80+mapping_frame).w
+		move.b	#ObjID_TitleCharacters,(TitleSonic+id).w
+		move.b	#ObjID_TitleCharacters,(TitleTails+id).w
+		move.b	#1,(TitleTails+mapping_frame).w
 		jsr	(RunObjects).l
 		jsr	(BuildSprites).l
 		moveq	#PLCID_Main,d0
@@ -1841,27 +1813,27 @@ loc_339A:				; CODE XREF: ROM:0000339Cj
 		move.w	#4,(Sonic_Pos_Record_Index).w
 		move.w	#0,(Sonic_Pos_Record_Buf).w
 		move.w	(VDP_Reg1_val).w,d0
-		ori.b	#$40,d0	; '@'
+		ori.b	#$40,d0
 		move.w	d0,(VDP_control_port).l
 		bsr.w	Pal_FadeFromBlack
 
-TitleScreen_Loop:			; CODE XREF: ROM:0000349Aj
+TitleScreen_Loop:
 		move.b	#VintID_Title,(Vint_routine).w
 		bsr.w	WaitForVint
 		jsr	(RunObjects).l
 		bsr.w	Deform_TitleScreen
 		jsr	(BuildSprites).l
 		bsr.w	RunPLC_RAM
-		tst.b	(Graphics_flags).w
-		bpl.s	Title_RegionJ
-		lea	(LvlSelCode_US).l,a0
+		tst.b	(Graphics_flags).w	; is this a Japanese Mega Drive?
+		bpl.s	Title_RegionJ		; if yes, branch
+		lea	(LvlSelCode_US).l,a0	; use NTSC-U/PAL combination
 		bra.s	LevelSelectCheat
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; ===========================================================================
 
-Title_RegionJ:				; CODE XREF: ROM:00003416j
-		lea	(LvlSelCode_J).l,a0
+Title_RegionJ:
+		lea	(LvlSelCode_J).l,a0	; use NTSC-J combination (identical)
 
-LevelSelectCheat:			; CODE XREF: ROM:0000341Ej
+LevelSelectCheat:
 		move.w	(Correct_cheat_entries).w,d0
 		adda.w	d0,a0
 		move.b	(Ctrl_1_Press).w,d0
@@ -1881,53 +1853,47 @@ LevelSelectCheat:			; CODE XREF: ROM:0000341Ej
 		moveq	#1,d1
 		move.b	d1,1(a0,d1.w)
 
-Title_Cheat_PlayRing:			; CODE XREF: ROM:0000344Ej
-					; ROM:00003454j
+Title_Cheat_PlayRing:
 		move.b	#1,(a0,d1.w)
 		move.b	#$B5,d0
 		bsr.w	PlaySound_Special
 		bra.s	Title_Cheat_CountC
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+; ===========================================================================
 
-Title_Cheat_NoMatch:			; CODE XREF: ROM:00003436j
+Title_Cheat_NoMatch:
 		tst.b	d0
 		beq.s	Title_Cheat_CountC
 		cmpi.w	#9,(Correct_cheat_entries).w
 		beq.s	Title_Cheat_CountC
 		move.w	#0,(Correct_cheat_entries).w
 
-Title_Cheat_CountC:			; CODE XREF: ROM:0000343Ej
-					; ROM:0000346Aj ...
+Title_Cheat_CountC:
 		move.b	(Ctrl_1_Press).w,d0
-		andi.b	#$20,d0	; ' '
+		andi.b	#$20,d0
 		beq.s	Title_Cheat_NoC
 		addq.w	#1,(Correct_cheat_entries_2).w
 
-Title_Cheat_NoC:			; CODE XREF: ROM:00003486j
+Title_Cheat_NoC:
 		tst.w	(Demo_Time_left).w
 		beq.w	Demo
 		andi.b	#$80,(Ctrl_1_Press).w
 		beq.w	TitleScreen_Loop
 
-Title_CheckLvlSel:			; CODE XREF: ROM:0000365Cj
+Title_CheckLvlSel:
 		tst.b	(Level_select_flag).w
 		beq.w	PlayLevel
 		moveq	#PalID_LevelSelect,d0
 		bsr.w	PalLoad2
-		lea	(Horiz_Scroll_Buf).w,a1
-		moveq	#0,d0
-		move.w	#(Horiz_Scroll_Buf_End-Horiz_Scroll_Buf)/4-32-1,d1
 
-LevelSelect_ClearScroll:		; CODE XREF: ROM:000034B8j
-		move.l	d0,(a1)+
-		dbf	d1,LevelSelect_ClearScroll
+		clearRAM Horiz_Scroll_Buf,Horiz_Scroll_Buf_End-128
 		move.l	d0,(Vscroll_Factor).w
+
 		move	#$2700,sr
 		lea	(VDP_data_port).l,a6
 		move.l	#$60000003,(VDP_control_port).l
 		move.w	#$3FF,d1
 
-LevelSelect_ClearVRAM:			; CODE XREF: ROM:000034DAj
+LevelSelect_ClearVRAM:
 		move.l	d0,(a6)
 		dbf	d1,LevelSelect_ClearVRAM
 		bsr.w	LevelSelect_TextLoad
@@ -2398,14 +2364,16 @@ loc_3AFC:				; CODE XREF: UnknownSub_4+12j
 
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 		nop
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+; ===========================================================================
+
 MusicList:	dc.b MusID_GHZ
 		dc.b MusID_LZ
 		dc.b MusID_CPZ
 		dc.b MusID_EHZ
 		dc.b MusID_HPZ
 		dc.b MusID_HTZ
-		dc.b $8D
+		dc.b MusID_FZ
 		even
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
@@ -2458,41 +2426,12 @@ loc_3BB0:
 		bsr.w	LoadPLC
 
 loc_3BB6:
-		lea	(Sprite_Input_Table).w,a1
-		moveq	#0,d0
-		move.w	#(Sprite_Input_Table_End-Sprite_Input_Table)/4-1,d1
+		clearRAM Sprite_Input_Table
+		clearRAM Object_RAM
+		clearRAM MiscLevelVariables
+		clearRAM Misc_Variables
+		clearRAM $FFFFFE60,$FFFFFF80
 
-loc_3BC0:
-		move.l	d0,(a1)+
-		dbf	d1,loc_3BC0
-		lea	(Object_RAM).w,a1
-		moveq	#0,d0
-		move.w	#(Object_RAM_End-Object_RAM)/4-1,d1
-
-loc_3BD0:
-		move.l	d0,(a1)+
-		dbf	d1,loc_3BD0
-		lea	(MiscLevelVariables).w,a1
-		moveq	#0,d0
-		move.w	#(MiscLevelVariables_End-MiscLevelVariables)/4-1,d1
-
-loc_3BE0:
-		move.l	d0,(a1)+
-		dbf	d1,loc_3BE0
-		lea	(Misc_Variables).w,a1
-		moveq	#0,d0
-		move.w	#(Misc_Variables_End-Misc_Variables)/4-1,d1
-
-loc_3BF0:
-		move.l	d0,(a1)+
-		dbf	d1,loc_3BF0
-		lea	($FFFFFE60).w,a1
-		moveq	#0,d0
-		move.w	#$47,d1
-
-loc_3C00:
-		move.l	d0,(a1)+
-		dbf	d1,loc_3C00
 		cmpi.b	#4,(Current_Zone).w
 		bne.s	loc_3C1A
 		move.b	#1,(Water_flag).w
@@ -2568,7 +2507,7 @@ loc_3CE6:
 		nop				; ???
 		move.b	(a1,d0.w),d0
 		bsr.w	PlaySound
-		move.b	#ObjID_TitleCard,(Object_RAM+$80+id).w
+		move.b	#ObjID_TitleCard,(TitleCard+id).w
 
 LevelInit_TitleCard:
 		move.b	#VintID_TitleCard,(Vint_routine).w
@@ -2576,8 +2515,8 @@ LevelInit_TitleCard:
 		jsr	(RunObjects).l
 		jsr	(BuildSprites).l
 		bsr.w	RunPLC_RAM
-		move.w	(Object_RAM+$100+x_pixel).w,d0
-		cmp.w	(Object_RAM+$100+$30).w,d0
+		move.w	(TitleCard_Zone+x_pixel).w,d0
+		cmp.w	(TitleCard_Zone+titlecard_mainX).w,d0
 		bne.s	LevelInit_TitleCard
 		tst.l	(Plc_Buffer).w
 		bne.s	LevelInit_TitleCard
@@ -2598,7 +2537,7 @@ loc_3D2A:
 		move.b	#ObjID_Sonic,(MainCharacter+id).w
 		tst.w	(Demo_mode_flag).w
 		bmi.s	loc_3D6C
-		move.b	#ObjID_HUD,(Object_RAM+$380+id).w
+		move.b	#ObjID_HUD,(HUD+id).w
 
 loc_3D6C:
 		tst.w	(Two_player_mode).w
@@ -2624,10 +2563,10 @@ loc_3DA6:
 		move.w	#0,(Ctrl_1).w
 		tst.b	(Water_flag).w
 		beq.s	loc_3DD0
-		move.b	#ObjID_WaterSurface,(Object_RAM+$780+id).w
-		move.w	#$60,(Object_RAM+$780+x_pos).w
-		move.b	#ObjID_WaterSurface,(Object_RAM+$7C0+id).w
-		move.w	#$120,(Object_RAM+$7C0+x_pos).w
+		move.b	#ObjID_WaterSurface,(WaterSurface1+id).w
+		move.w	#$60,(WaterSurface1+x_pos).w
+		move.b	#ObjID_WaterSurface,(WaterSurface2+id).w
+		move.w	#$120,(WaterSurface2+x_pos).w
 
 loc_3DD0:
 		jsr	(ObjectsManager).l
@@ -2708,10 +2647,10 @@ loc_3ECC:
 		bsr.w	Pal_FadeFromBlack2
 		tst.w	(Demo_mode_flag).w
 		bmi.s	Level_ClrTitleCard
-		addq.b	#2,(Object_RAM+$80+routine).w
-		addq.b	#4,(Object_RAM+$C0+routine).w
-		addq.b	#4,(Object_RAM+$100+routine).w
-		addq.b	#4,(Object_RAM+$140+routine).w
+		addq.b	#2,(TitleCard+routine).w
+		addq.b	#4,(TitleCard_Name+routine).w
+		addq.b	#4,(TitleCard_Zone+routine).w
+		addq.b	#4,(TitleCard_Act+routine).w
 		bra.s	Level_StartGame
 ; ===========================================================================
 
@@ -2821,9 +2760,9 @@ ChangeWaterSurfacePos:			; CODE XREF: ROM:loc_3F54p
 loc_402C:				; CODE XREF: ChangeWaterSurfacePos+10j
 		move.w	d1,d0
 		addi.w	#$60,d0	; '`'
-		move.w	d0,(Object_RAM+$780+x_pos).w
+		move.w	d0,(WaterSurface1+x_pos).w
 		addi.w	#$120,d1
-		move.w	d1,(Object_RAM+$7C0+x_pos).w
+		move.w	d1,(WaterSurface2+x_pos).w
 
 locret_403E:				; CODE XREF: ChangeWaterSurfacePos+4j
 		rts
@@ -3837,36 +3776,14 @@ loc_507C:
 		bsr.w	S1_SSBGLoad
 		moveq	#PLCID_SpecialStage,d0
 		bsr.w	RunPLC_ROM
-		lea	(Object_RAM+$2000).w,a1		; leftover RAM location from Sonic 1
-		moveq	#0,d0
-		move.w	#((Object_RAM_End+$2000)-(Object_RAM+$2000))/4-1,d1
 
-loc_509C:
-		move.l	d0,(a1)+
-		dbf	d1,loc_509C
-		lea	(Misc_Variables).w,a1
-		moveq	#0,d0
-		move.w	#(Misc_Variables_End-Misc_Variables)/4-1,d1
-
-loc_50AC:
-		move.l	d0,(a1)+
-		dbf	d1,loc_50AC
-		lea	($FFFFFE60).w,a1
-		moveq	#0,d0
-		move.w	#$27,d1
-
-loc_50BC:
-		move.l	d0,(a1)+
-		dbf	d1,loc_50BC
-		lea	(Decomp_Buffer).w,a1
-		moveq	#0,d0
-		move.w	#$7F,d1
-
-loc_50CC:
-		move.l	d0,(a1)+
-		dbf	d1,loc_50CC
+		clearRAM Object_RAM+$2000,Object_RAM_End+$2000	; leftover RAM location from Sonic 1
+		clearRAM Misc_Variables
+		clearRAM $FFFFFE60,$FFFFFF00
+		clearRAM Decomp_Buffer
 		clr.b	(Water_fullscreen_flag).w
 		clr.w	(Level_Inactive_flag).w
+
 		moveq	#PalID_SpecialStage,d0
 		bsr.w	PalLoad1
 		jsr	(S1SS_Load).l
@@ -3972,14 +3889,9 @@ loc_5214:
 		move.w	d0,(Bonus_Countdown_2).w
 		move.w	#MusID_ActClear,d0
 		jsr	(PlaySound_Special).l
-		lea	(Object_RAM).w,a1
-		moveq	#0,d0
-		move.w	#(Object_RAM_End-Object_RAM)/4-1,d1
 
-loc_5290:
-		move.l	d0,(a1)+
-		dbf	d1,loc_5290
-		move.b	#$7E,(Object_RAM+$5C0).w
+		clearRAM Object_RAM
+		move.b	#$7E,(SSResults).w
 
 loc_529C:
 		bsr.w	PauseGame
@@ -11120,7 +11032,7 @@ Monitor_Shoes:				; DATA XREF: ROM:0000B0D0o
 
 Monitor_Shield:				; DATA XREF: ROM:0000B0D2o
 		move.b	#1,(Shield_flag).w
-		move.b	#ObjID_Barrier,(MainCharacter+$180+id).w
+		move.b	#ObjID_Barrier,(Shield+id).w
 		move.w	#$AF,d0	; '¯'
 		jmp	(PlaySound).l
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -11128,8 +11040,8 @@ Monitor_Shield:				; DATA XREF: ROM:0000B0D2o
 Monitor_Invincibility:			; DATA XREF: ROM:0000B0D4o
 		move.b	#1,(Invincibility_flag).w
 		move.w	#$4B0,(MainCharacter+invincibility_time).w
-		move.b	#ObjID_Barrier,(Object_RAM+$200+id).w
-		move.b	#1,(Object_RAM+$200+anim).w
+		move.b	#ObjID_Barrier,(InvincibilityStars+id).w
+		move.b	#1,(InvincibilityStars+anim).w
 		tst.b	(Lock_screen).w
 		bne.s	locret_B1A8
 		cmpi.w	#$C,(Air_left).w
@@ -11714,7 +11626,7 @@ loc_BE44:				; CODE XREF: ROM:0000BE28j
 		bne.s	loc_BE32
 		addq.b	#2,routine(a0)
 		move.w	#$B4,anim_frame_duration(a0) ; '´'
-		move.b	#$7F,(Object_RAM+$800).w ; ''
+		move.b	#$7F,(SSEmeralds).w ; ''
 
 loc_BE5C:				; DATA XREF: ROM:0000BD94o
 					; ROM:0000BD98o ...
@@ -11763,8 +11675,8 @@ loc_BEC4:				; DATA XREF: ROM:0000BD9Ao
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_BECE:				; DATA XREF: ROM:0000BD9Eo
-		move.b	#4,(Object_RAM+$6C0+mapping_frame).w
-		move.b	#$14,(Object_RAM+$6C0+routine).w
+		move.b	#4,(SSContinue+mapping_frame).w
+		move.b	#$14,(SSContinue+routine).w
 		move.w	#$BF,d0	; '¿'
 		jsr	(PlaySound_Special).l
 		addq.b	#2,routine(a0)
@@ -13716,12 +13628,12 @@ loc_F0F6:
 
 ; GotThroughAct:
 Load_EndOfAct:
-		tst.b	(Object_RAM+$5C0).w
+		tst.b	(Results).w
 		bne.s	locret_F15E
 		move.w	(Camera_Max_X_pos).w,(Camera_Min_X_pos).w
 		clr.b	(Invincibility_flag).w
 		clr.b	(Update_HUD_timer).w
-		move.b	#ObjID_Results,(Object_RAM+$5C0+id).w
+		move.b	#ObjID_Results,(Results+id).w
 		moveq	#PLCID_TitleCard,d0
 		jsr	(LoadPLC2).l
 		move.b	#1,(Update_Bonus_score).w
@@ -14171,8 +14083,8 @@ Obj01_InWater:
 		bne.s	locret_FC0A	; if already underwater, branch
 
 		bsr.w	ResumeMusic
-		move.b	#ObjID_SmallBubbles,(Object_RAM+$340+id).w	; load Obj0A (sonic's breathing bubbles) at $FFFFB340
-		move.b	#$81,(Object_RAM+$340+subtype).w
+		move.b	#ObjID_SmallBubbles,(Sonic_BreathingBubbles+id).w	; load Obj0A (sonic's breathing bubbles) at $FFFFB340
+		move.b	#$81,(Sonic_BreathingBubbles+subtype).w
 		move.w	#$300,(Sonic_top_speed).w
 		move.w	#6,(Sonic_acceleration).w
 		move.w	#$40,(Sonic_deceleration).w
@@ -14180,7 +14092,7 @@ Obj01_InWater:
 		asr	y_vel(a0)	; memory oprands can only be shifted one at a time
 		asr	y_vel(a0)
 		beq.s	locret_FC0A
-		move.b	#ObjID_WaterSplash,(Object_RAM+$300+id).w	; splash animation
+		move.b	#ObjID_WaterSplash,(Sonic_WaterSplash+id).w	; splash animation
 		move.w	#$AA,d0			; splash sound
 		jmp	(PlaySound_Special).l
 
@@ -14196,7 +14108,7 @@ Obj01_OutWater:
 		move.w	#$80,(Sonic_deceleration).w
 		asl	y_vel(a0)
 		beq.w	locret_FC0A
-		move.b	#ObjID_WaterSplash,(Object_RAM+$300+id).w	; splash animation
+		move.b	#ObjID_WaterSplash,(Sonic_WaterSplash+id).w	; splash animation
 		cmpi.w	#$F000,y_vel(a0)
 		bgt.s	loc_FC98
 		move.w	#$F000,y_vel(a0)	; limit upward y velocity exiting the water
@@ -15530,9 +15442,9 @@ Sonic_GameOver:
 		subq.b	#1,(Life_count).w
 		bne.s	loc_10888
 		move.w	#0,$3A(a0)
-		move.b	#ObjID_GameOver,(Object_RAM+$80+id).w
-		move.b	#ObjID_GameOver,(Object_RAM+$C0+id).w
-		move.b	#1,(Object_RAM+$C0+mapping_frame).w
+		move.b	#ObjID_GameOver,(GameOver_GameText+id).w
+		move.b	#ObjID_GameOver,(GameOver_OverText+id).w
+		move.b	#1,(GameOver_OverText+mapping_frame).w
 		clr.b	(Time_Over_flag).w
 
 loc_10876:
@@ -15547,10 +15459,10 @@ loc_10888:
 		tst.b	(Time_Over_flag).w
 		beq.s	locret_108B4
 		move.w	#0,$3A(a0)
-		move.b	#ObjID_GameOver,(Object_RAM+$80+id).w
-		move.b	#ObjID_GameOver,(Object_RAM+$C0+id).w
-		move.b	#2,(Object_RAM+$80+mapping_frame).w
-		move.b	#3,(Object_RAM+$C0+mapping_frame).w
+		move.b	#ObjID_GameOver,(TimeOver_TimeText+id).w
+		move.b	#ObjID_GameOver,(TimeOver_OverText+id).w
+		move.b	#2,(TimeOver_TimeText+mapping_frame).w
+		move.b	#3,(TimeOver_OverText+mapping_frame).w
 		bra.s	loc_10876
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
@@ -15939,7 +15851,7 @@ Obj02_Init:
 		move.b	#$D,lrb_solid_bit(a0)
 		move.b	#0,flips_remaining(a0)
 		move.b	#4,flip_speed(a0)
-		move.b	#ObjID_TailsTails,(Object_RAM+$1C0+id).w	; load Tails' tails at $B1C0
+		move.b	#ObjID_TailsTails,(TailsTails+id).w	; load Tails' tails at $B1C0
 
 ; ---------------------------------------------------------------------------
 ; Normal state for Tails
@@ -18253,7 +18165,7 @@ loc_1230A:				; CODE XREF: ResumeMusic+26j
 
 loc_12310:				; CODE XREF: ResumeMusic+6j
 		move.w	#$1E,(Air_left).w
-		clr.b	(Object_RAM+$340+$32).w
+		clr.b	(Sonic_BreathingBubbles+$32).w
 		rts
 ; End of function ResumeMusic
 
