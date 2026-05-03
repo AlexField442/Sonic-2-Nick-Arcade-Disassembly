@@ -37,7 +37,7 @@ loc_12406:
 
 loc_1240C:
 		addq.b	#2,routine(a0)
-		move.l	#Map_Sonic,mappings(a0)
+		move.l	#MapUnc_Sonic,mappings(a0)
 		move.w	#$4DE,art_tile(a0)
 		bsr.w	Adjust2PArtPointer
 		move.b	#2,priority(a0)

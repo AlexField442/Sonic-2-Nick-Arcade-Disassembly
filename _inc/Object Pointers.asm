@@ -75,7 +75,7 @@ ObjID_BreakableWall:	objptr Obj3C		; (S1) Breakable wall
 ObjID_GHZBoss:		objptr Obj3D		; (S1) GHZ boss
 ObjID_EggPrison:	objptr Obj3E		; Egg prison
 ObjID_BossExplosion:	objptr Obj3F		; Boss explosion
-ObjID_Motobug:		objptr Obj40		; (S1) Motobug from GHZ
+ObjID_Motobug:		objptr Obj_Motobug	; (S1) Motobug from GHZ
 ObjID_Spring:		objptr Obj41		; Spring
 ObjID_Newtron:		objptr Obj42		; (S1) Newtron from GHZ
 			dc.l ObjNull
