@@ -331,7 +331,7 @@ Seesaw_LaunchPlayer:
 		clr.b	jumping(a2)
 		move.b	#$10,anim(a2)
 		move.b	#2,routine(a2)
-		move.w	#$CC,d0
+		move.w	#SndID_Spring,d0
 		jmp	(PlaySound).l
 ; End of function sub_14FC4
 

@@ -1,3 +1,14 @@
+; Sound ID constants
+MusID__First:		equ $81
+MusID__End:		equ MusID_Emerald
+SndID__First:		equ $A0
+SndID__End:		equ SndID_Signpost
+SpecSndID__First:	equ $D0
+SpecSndID__End:		equ SpecSndID_Waterfall
+CmdID__First:		equ $E0
+CmdID__End:		equ CmdID_Stop
+
+
 Go_SoundTypes:	dc.l SoundTypes
 Go_SoundD0:	dc.l SoundD0Index
 Go_MusicIndex:	dc.l MusicIndex
@@ -21,26 +32,32 @@ byte_71A94:	dc.b   7,$72,$73,$26,$15,  8,$FF,  5
 ; ---------------------------------------------------------------------------
 ; Music	Pointers
 ; ---------------------------------------------------------------------------
+; define an music ID constant
+musptr macro *,pointer
+	\*:	equ	((*-MusicIndex)/4)+MusID__First
+	dc.l	pointer
+	endm
+
 MusicIndex:
-MusPtr_GHZ:		dc.l Music81
-MusPtr_LZ:		dc.l Music82
-MusPtr_CPZ:		dc.l Music83
-MusPtr_EHZ:		dc.l Music84
-MusPtr_HPZ:		dc.l Music85
-MusPtr_HTZ:		dc.l Music86
-MusPtr_Invincible:	dc.l Music87
-MusPtr_ExtraLife:	dc.l Music88
-MusPtr_SpecialStage:	dc.l Music89
-MusPtr_Title:		dc.l Music8A
-MusPtr_Ending:		dc.l Music8B
-MusPtr_Boss:		dc.l Music8C
-MusPtr_FZ:		dc.l Music8D
-MusPtr_ActClear:	dc.l Music8E
-MusPtr_GameOver:	dc.l Music8F
-MusPtr_Continue:	dc.l Music90
-MusPtr_Credits:		dc.l Music91
-MusPtr_Drowning:	dc.l Music92
-MusPtr_Emerald:		dc.l Music93
+MusID_GHZ:		musptr Music81
+MusID_LZ:		musptr Music82
+MusID_CPZ:		musptr Music83
+MusID_EHZ:		musptr Music84
+MusID_HPZ:		musptr Music85
+MusID_HTZ:		musptr Music86
+MusID_Invincible:	musptr Music87
+MusID_ExtraLife:	musptr Music88
+MusID_SpecialStage:	musptr Music89
+MusID_Title:		musptr Music8A
+MusID_Ending:		musptr Music8B
+MusID_Boss:		musptr Music8C
+MusID_FZ:		musptr Music8D
+MusID_ActClear:		musptr Music8E
+MusID_GameOver:		musptr Music8F
+MusID_Continue:		musptr Music90
+MusID_Credits:		musptr Music91
+MusID_Drowning:		musptr Music92
+MusID_Emerald:		musptr Music93
 
 ; ---------------------------------------------------------------------------
 ; Type of sound	being played ($90 = music; $70 = normal	sound effect)
@@ -591,22 +608,22 @@ PlaySoundByIndex:
 		bpl.s	locret_71F8C
 		move.b	#$80,QueueToPlay(a6)	; reset	music flag
 		; music
-		cmpi.b	#$9F,d7	
+		cmpi.b	#MusID__End+$C,d7	
 		bls.w	PlaySound_CheckBGM
 		; redundant check unless the above is changed to a lower value
-		cmpi.b	#$A0,d7
+		cmpi.b	#SndID__First,d7
 		bcs.w	locret_71F8C
 		; sounds
-		cmpi.b	#$CF,d7
+		cmpi.b	#SndID__End,d7
 		bls.w	PlaySound_CheckRing
 		; redundant check unless the above is changed to a lower value
-		cmpi.b	#$D0,d7
+		cmpi.b	#SpecSndID__First,d7
 		bcs.w	locret_71F8C
 		; special sounds
-		cmpi.b	#$E0,d7
+		cmpi.b	#SpecSndID__End+$10,d7
 		bcs.w	loc_7230C
 		; sound commands
-		cmpi.b	#$E4,d7
+		cmpi.b	#CmdID__End,d7
 		bls.s	PlayCommand
 
 locret_71F8C:
@@ -614,17 +631,24 @@ locret_71F8C:
 ; ---------------------------------------------------------------------------
 ; loc_71F8E:
 PlayCommand:
-		subi.b	#$E0,d7
+		subi.b	#CmdID__First,d7
 		lsl.w	#2,d7
 		jmp	CommandIndex(pc,d7.w)
 ; ===========================================================================
+; define an sound command ID constant
+cmdptr macro *,pointer
+	\*:	equ	((*-CommandIndex)/4)+CmdID__First
+	bra.w	pointer
+	endm
+
 ; loc_71F98:
 CommandIndex:
-		bra.w	Sound_E0
-		bra.w	PlaySegaSound
-		bra.w	Sound_E2
-		bra.w	Sound_E3
-		bra.w	Sound_E4
+CmdID_FadeOut:		cmdptr Sound_E0
+CmdID_SegaSound:	cmdptr PlaySegaSound
+CmdID_SpeedUp:		cmdptr Sound_E2
+CmdID_SlowDown:		cmdptr Sound_E3
+CmdID_Stop:		cmdptr Sound_E4
+
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Play the 'SEEEEEEEEGA!' sound
@@ -857,17 +881,17 @@ PlaySound_CheckRing:
 		bne.w	loc_722C6
 		tst.b	$24(a6)
 		bne.w	loc_722C6
-		cmpi.b	#-$4B,d7	; is ring sound	effect played?
+		cmpi.b	#SndID_Ring,d7	; is ring sound	effect played?
 		bne.s	loc_721F4	; if not, branch
 		tst.b	$2B(a6)
 		bne.s	loc_721EE
-		move.b	#-$32,d7	; play ring sound in left speaker
+		move.b	#SndID_RingLeft,d7	; play ring sound in left speaker
 
 loc_721EE:
 		bchg	#0,$2B(a6)	; change speaker
 
 loc_721F4:
-		cmpi.b	#-$59,d7	; is "pushing" sound played?
+		cmpi.b	#SndID_Pushing,d7	; is "pushing" sound played?
 		bne.s	loc_72208	; if not, branch
 		tst.b	$2C(a6)
 		bne.w	locret_722C4
@@ -875,7 +899,7 @@ loc_721F4:
 
 loc_72208:
 		movea.l	(Go_SoundIndex).l,a0
-		subi.b	#-$60,d7
+		subi.b	#SndID__First,d7
 		lsl.w	#2,d7
 		movea.l	(a0,d7.w),a3
 		movea.l	a3,a1
@@ -975,7 +999,7 @@ loc_7230C:				; CODE XREF: PlaySoundByIndex+36j
 		tst.b	$24(a6)
 		bne.w	locret_723C6
 		movea.l	(Go_SoundD0).l,a0
-		subi.b	#-$30,d7
+		subi.b	#SpecSndID__First,d7
 		lsl.w	#2,d7
 		movea.l	(a0,d7.w),a3
 		movea.l	a3,a1
@@ -2325,56 +2349,71 @@ Music93:	include	"sound/music/Mus93 - Get Emerald.asm"
 ; ---------------------------------------------------------------------------
 ; Sound	effect pointers
 ; ---------------------------------------------------------------------------
-SoundIndex:	dc.l SoundA0
-		dc.l SoundA1
-		dc.l SoundA2
-		dc.l SoundA3
-		dc.l SoundA4
-		dc.l SoundA5
-		dc.l SoundA6
-		dc.l SoundA7
-		dc.l SoundA8
-		dc.l SoundA9
-		dc.l SoundAA
-		dc.l SoundAB
-		dc.l SoundAC
-		dc.l SoundAD
-		dc.l SoundAE
-		dc.l SoundAF
-		dc.l SoundB0
-		dc.l SoundB1
-		dc.l SoundB2
-		dc.l SoundB3
-		dc.l SoundB4
-		dc.l SoundB5
-		dc.l SoundB6
-		dc.l SoundB7
-		dc.l SoundB8
-		dc.l SoundB9
-		dc.l SoundBA
-		dc.l SoundBB
-		dc.l SoundBC
-		dc.l SoundBD
-		dc.l SoundBE
-		dc.l SoundBF
-		dc.l SoundC0
-		dc.l SoundC1
-		dc.l SoundC2
-		dc.l SoundC3
-		dc.l SoundC4
-		dc.l SoundC5
-		dc.l SoundC6
-		dc.l SoundC7
-		dc.l SoundC8
-		dc.l SoundC9
-		dc.l SoundCA
-		dc.l SoundCB
-		dc.l SoundCC
-		dc.l SoundCD
-		dc.l SoundCE
-		dc.l SoundCF
 
-SoundD0Index:	dc.l SoundD0
+; define an sound ID constant
+sndptr macro *,pointer
+	\*:	equ	((*-SoundIndex)/4)+SndID__First
+	dc.l	pointer
+	endm
+
+; define an special sound ID constant
+specsndptr macro *,pointer
+	\*:	equ	((*-SoundD0Index)/4)+SpecSndID__First
+	dc.l	pointer
+	endm
+
+SoundIndex:
+SndID_Jump:		sndptr SoundA0
+SndID_Checkpoint:	sndptr SoundA1
+SndID_SpikeSwitch:	sndptr SoundA2
+SndID_Hurt:		sndptr SoundA3
+SndID_Skidding:		sndptr SoundA4
+SndID_MissileDissolve:	sndptr SoundA5
+SndID_HurtBySpikes:	sndptr SoundA6
+SndID_Pushing:		sndptr SoundA7
+SndID_SSGoal:		sndptr SoundA8
+SndID_SSItem:		sndptr SoundA9
+SndID_Splash:		sndptr SoundAA
+SndID_Swish:		sndptr SoundAB
+SndID_BossHit:		sndptr SoundAC
+SndID_InhalingBubble:	sndptr SoundAD
+SndID_Fireball:		sndptr SoundAE
+SndID_Shield:		sndptr SoundAF
+SndID_Saw:		sndptr SoundB0
+SndID_Zap:		sndptr SoundB1
+SndID_Drown:		sndptr SoundB2
+SndID_FireBurn:		sndptr SoundB3
+SndID_Bumper:		sndptr SoundB4
+SndID_Ring:		sndptr SoundB5
+SndID_SpikesMove:	sndptr SoundB6
+SndID_Rumbling:		sndptr SoundB7
+SndID_SpikesMove2:	sndptr SoundB8
+SndID_Smash:		sndptr SoundB9
+SndID_SSGlass:		sndptr SoundBA
+SndID_DoorSlam:		sndptr SoundBB
+SndID_Teleport:		sndptr SoundBC
+SndID_ChainStomp:	sndptr SoundBD
+SndID_Roll:		sndptr SoundBE
+SndID_ContinueJingle:	sndptr SoundBF
+SndID_BasaranFlap:	sndptr SoundC0
+SndID_Explosion:	sndptr SoundC1
+SndID_WaterWarning:	sndptr SoundC2
+SndID_EnterGiantRing:	sndptr SoundC3
+SndID_BossExplosion:	sndptr SoundC4
+SndID_TallyEnd:		sndptr SoundC5
+SndID_RingSpill:	sndptr SoundC6
+SndID_ChainRising:	sndptr SoundC7
+SndID_Flamethrower:	sndptr SoundC8
+SndID_Bonus:		sndptr SoundC9
+SndID_SpecStageEntry:	sndptr SoundCA
+SndID_SlowSmash:	sndptr SoundCB
+SndID_Spring:		sndptr SoundCC
+SndID_Blip:		sndptr SoundCD
+SndID_RingLeft:		sndptr SoundCE
+SndID_Signpost:		sndptr SoundCF
+
+SoundD0Index:
+SpecSndID_Waterfall:	specsndptr SoundD0
 
 SoundA0:	include	"sound/sfx/SndA0 - Jump.asm"
 		even

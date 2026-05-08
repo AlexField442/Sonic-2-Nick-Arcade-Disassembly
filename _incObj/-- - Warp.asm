@@ -47,7 +47,7 @@ Warp_RmvSonic:
 		tst.b	(MainCharacter).w	; is this Sonic?
 		beq.s	loc_1253E		; if not, branch
 		move.b	#0,(MainCharacter).w	; set Sonic's object ID to 0
-		move.w	#$A8,d0
+		move.w	#SndID_SSGoal,d0
 		jsr	(PlaySound).l	; play Special Stage entry sound effect
 
 loc_1253E:

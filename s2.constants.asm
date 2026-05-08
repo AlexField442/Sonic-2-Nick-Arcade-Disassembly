@@ -89,28 +89,6 @@ GameModeID_S1Credits:		equ $1C						; $1C ; referenced despite it not existing
 GameModeFlag_TitleCard:		equ 7 ; flag bit
 GameModeID_TitleCard:		equ 1<<GameModeFlag_TitleCard			; $80 ; flag mask
 
-; Music IDs
-MusID__First			equ $81
-MusID_GHZ:			equ ((MusPtr_GHZ-MusicIndex)/4)+MusID__First		; $81
-MusID_LZ:			equ ((MusPtr_LZ-MusicIndex)/4)+MusID__First		; $82
-MusID_CPZ:			equ ((MusPtr_CPZ-MusicIndex)/4)+MusID__First		; $83
-MusID_EHZ:			equ ((MusPtr_EHZ-MusicIndex)/4)+MusID__First		; $84
-MusID_HPZ:			equ ((MusPtr_HPZ-MusicIndex)/4)+MusID__First		; $85
-MusID_HTZ:			equ ((MusPtr_HTZ-MusicIndex)/4)+MusID__First		; $86
-MusID_Invincible:		equ ((MusPtr_Invincible-MusicIndex)/4)+MusID__First	; $87
-MusID_ExtraLife:		equ ((MusPtr_ExtraLife-MusicIndex)/4)+MusID__First	; $88
-MusID_SpecialStage:		equ ((MusPtr_SpecialStage-MusicIndex)/4)+MusID__First	; $89
-MusID_Title:			equ ((MusPtr_Title-MusicIndex)/4)+MusID__First		; $8A
-MusID_Ending:			equ ((MusPtr_Ending-MusicIndex)/4)+MusID__First		; $8B
-MusID_Boss:			equ ((MusPtr_Boss-MusicIndex)/4)+MusID__First		; $8C
-MusID_FZ:			equ ((MusPtr_FZ-MusicIndex)/4)+MusID__First		; $8D
-MusID_ActClear:			equ ((MusPtr_ActClear-MusicIndex)/4)+MusID__First	; $8E
-MusID_GameOver:			equ ((MusPtr_GameOver-MusicIndex)/4)+MusID__First	; $8F
-MusID_Continue:			equ ((MusPtr_Continue-MusicIndex)/4)+MusID__First	; $90
-MusID_Credits:			equ ((MusPtr_Credits-MusicIndex)/4)+MusID__First	; $91
-MusID_Drowning:			equ ((MusPtr_Drowning-MusicIndex)/4)+MusID__First	; $92
-MusID_Emerald:			equ ((MusPtr_Emerald-MusicIndex)/4)+MusID__First	; $93
-
 ; ---------------------------------------------------------------------------
 ; Miscellaneous constants without dedicated pointers
 

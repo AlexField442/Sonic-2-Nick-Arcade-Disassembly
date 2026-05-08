@@ -168,7 +168,7 @@ Sonic_ChkShoes:	; Checks if Speed Shoes have expired and disables them if they h
 		move.w	#$C,(Sonic_acceleration).w
 		move.w	#$80,(Sonic_deceleration).w
 		move.b	#0,(Speedshoes_flag).w
-		move.w	#$E3,d0
+		move.w	#CmdID_SlowDown,d0
 		jmp	(PlayMusic).l
 ; ---------------------------------------------------------------------------
 ; locret_FBAE: Obj01_ExitChk:
@@ -259,7 +259,7 @@ Sonic_InWater:
 		asr	y_vel(a0)
 		beq.s	locret_FC0A
 		move.b	#ObjID_WaterSplash,(Sonic_WaterSplash+id).w	; splash animation
-		move.w	#$AA,d0			; splash sound
+		move.w	#SndID_Splash,d0			; splash sound
 		jmp	(PlaySound).l
 
 ; ---------------------------------------------------------------------------
@@ -280,7 +280,7 @@ Sonic_OutWater:
 		move.w	#$F000,y_vel(a0)	; limit upward y velocity exiting the water
 
 loc_FC98:
-		move.w	#$AA,d0		; splash sound
+		move.w	#SndID_Splash,d0		; splash sound
 		jmp	(PlaySound).l
 ; End of function Sonic_Water
 
@@ -576,7 +576,7 @@ Sonic_WallRecoil_Right:
 		move.w	#0,inertia(a0)
 		move.b	#$A,anim(a0)
 		move.b	#1,routine_secondary(a0)
-		move.w	#$A3,d0
+		move.w	#SndID_Hurt,d0
 		jsr	(PlaySound).l
 		rts
 ; End of function Sonic_Move
@@ -625,7 +625,7 @@ loc_FF78:
 		blt.s	locret_FFA6
 		move.b	#$D,anim(a0)
 		bclr	#0,status(a0)
-		move.w	#$A4,d0
+		move.w	#SndID_Skidding,d0
 		jsr	(PlaySound).l
 
 locret_FFA6:
@@ -673,7 +673,7 @@ loc_FFDE:
 
 loc_FFFC:
 		bset	#0,status(a0)
-		move.w	#$A4,d0
+		move.w	#SndID_Skidding,d0
 		jsr	(PlaySound).l
 
 locret_1000C:
@@ -961,7 +961,7 @@ Sonic_DoRoll:
 		move.b	#7,x_radius(a0)
 		move.b	#2,anim(a0)
 		addq.w	#5,y_pos(a0)
-		move.w	#$BE,d0
+		move.w	#SndID_Roll,d0
 		jsr	(PlaySound).l
 		tst.w	inertia(a0)
 		bne.s	locret_10276
@@ -1006,7 +1006,7 @@ loc_102AA:
 		addq.l	#4,sp
 		move.b	#1,jumping(a0)
 		clr.b	stick_to_convex(a0)
-		move.w	#$A0,d0
+		move.w	#SndID_Jump,d0
 		jsr	(PlaySound).l
 		move.b	#$13,y_radius(a0)
 		move.b	#9,x_radius(a0)
@@ -1076,7 +1076,7 @@ Sonic_CheckSpindash:
 		andi.b	#$70,d0
 		beq.w	locret_10394
 		move.b	#9,anim(a0)
-		move.w	#$BE,d0
+		move.w	#SndID_Roll,d0
 		jsr	(PlaySound).l
 		addq.l	#4,sp
 		move.b	#1,spindash_flag(a0)

@@ -48,7 +48,7 @@ HiddenPoints_Init:
 		move.b	#$10,width_pixels(a0)
 		move.b	subtype(a0),mapping_frame(a0)
 		move.w	#$77,hiddenpoints_timer(a0)
-		move.w	#$C9,d0
+		move.w	#SndID_Bonus,d0
 		jsr	(PlaySound).l
 		moveq	#0,d0
 		move.b	subtype(a0),d0

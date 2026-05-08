@@ -115,7 +115,7 @@ Results_RingBonus:
 Results_ChkBonus:
 		tst.w	d0
 		bne.s	Results_AddBonus
-		move.w	#$C5,d0
+		move.w	#SndID_TallyEnd,d0
 		jsr	(PlaySound).l
 		addq.b	#2,routine(a0)
 		cmpi.w	#$501,(Current_ZoneAndAct).w
@@ -134,7 +134,7 @@ Results_AddBonus:
 		move.b	(Vint_runcount+3).w,d0
 		andi.b	#3,d0
 		bne.s	locret_BC64
-		move.w	#$CD,d0
+		move.w	#SndID_Blip,d0
 		jmp	(PlaySound).l
 ; ===========================================================================
 ; loc_BC80: Obj3A_NextLevel:
