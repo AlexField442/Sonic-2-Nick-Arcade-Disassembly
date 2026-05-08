@@ -598,37 +598,37 @@ Checksum_fourcc:		equ $FFFFFFFC
 
 ; ---------------------------------------------------------------------------
 ; Title objects
-TitleSonic:			equ	Object_RAM+$40
-TitleTails:			equ	Object_RAM+$80
+TitleSonic:			equ Object_RAM+$40
+TitleTails:			equ Object_RAM+$80
 
 ; Level objects
-MainCharacter:			equ	Object_RAM
-Sidekick:			equ	Object_RAM+$40
-GameOver_GameText:		equ	Object_RAM+$80
-GameOver_OverText:		equ	Object_RAM+$C0
-TimeOver_TimeText:		equ	Object_RAM+$80
-TimeOver_OverText:		equ	Object_RAM+$C0
-Shield:				equ	Object_RAM+$180
-TailsTails:			equ	Object_RAM+$1C0
-InvincibilityStars:		equ	Object_RAM+$200
-Sonic_WaterSplash:		equ	Object_RAM+$300
-Sonic_BreathingBubbles:		equ	Object_RAM+$340
-HUD:				equ	Object_RAM+$380
-WaterSurface1:			equ	Object_RAM+$780
-WaterSurface2:			equ	Object_RAM+$7C0
+MainCharacter:			equ Object_RAM
+Sidekick:			equ Object_RAM+$40
+GameOver_GameText:		equ Object_RAM+$80
+GameOver_OverText:		equ Object_RAM+$C0
+TimeOver_TimeText:		equ Object_RAM+$80
+TimeOver_OverText:		equ Object_RAM+$C0
+Shield:				equ Object_RAM+$180
+TailsTails:			equ Object_RAM+$1C0
+InvincibilityStars:		equ Object_RAM+$200
+Sonic_WaterSplash:		equ Object_RAM+$300
+Sonic_BreathingBubbles:		equ Object_RAM+$340
+HUD:				equ Object_RAM+$380
+WaterSurface1:			equ Object_RAM+$780
+WaterSurface2:			equ Object_RAM+$7C0
 
 ; Title card objects
-TitleCard:			equ	Object_RAM+$80
-TitleCard_Name:			equ	Object_RAM+$C0
-TitleCard_Zone:			equ	Object_RAM+$100
-TitleCard_Act:			equ	Object_RAM+$140
-TitleCard_Oval:			equ	Object_RAM+$180
-Results:			equ	Object_RAM+$5C0
+TitleCard:			equ Object_RAM+$80
+TitleCard_Name:			equ Object_RAM+$C0
+TitleCard_Zone:			equ Object_RAM+$100
+TitleCard_Act:			equ Object_RAM+$140
+TitleCard_Oval:			equ Object_RAM+$180
+Results:			equ Object_RAM+$5C0
 
 ; Special Stage objects
-SSResults:			equ	Object_RAM+$5C0
-SSContinue:			equ	Object_RAM+$6C0
-SSEmeralds:			equ	Object_RAM+$800
+SSResults:			equ Object_RAM+$5C0
+SSContinue:			equ Object_RAM+$6C0
+SSEmeralds:			equ Object_RAM+$800
 
 ; ---------------------------------------------------------------------------
 ; VDP addresses
