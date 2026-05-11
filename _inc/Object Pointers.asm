@@ -52,7 +52,7 @@ ObjID_Ring:		objptr Obj25		; A ring
 ObjID_Monitor:		objptr Obj26		; Monitor
 ObjID_Explosion:	objptr Obj27		; An explosion, giving off an animal and 100 points
 ObjID_Animal:		objptr Obj_Animal	; Animals from badnik
-ObjID_Points:		objptr Obj29		; "100 points" text
+ObjID_Points:		objptr Obj_Points	; "100 points" text
 ObjID_Door:		objptr Obj2A		; (S1) Small door from SBZ
 ObjID_Chopper:		objptr Obj2B		; (S1) Chopper from GHZ
 ObjID_Jaws:		objptr Obj2C		; (S1) Jaws from LZ
@@ -91,7 +91,7 @@ ObjID_BBat:		objptr Obj4C		; BBat from HPZ
 ObjID_Stego:		objptr Obj4D		; Stego/Stegway from HPZ
 ObjID_Gator:		objptr Obj4E		; Gator from HPZ
 ObjID_Redz:		objptr Obj_Redz		; Redz (dinosaur badnik) from HPZ
-ObjID_Seahorse:		objptr Obj50		; Seahorse/Aquis from HPZ
+ObjID_Seahorse:		objptr Obj_Seahorse	; Seahorse/Aquis from HPZ
 ObjID_Skyhorse:		objptr Obj51		; Skyhorse from HPZ
 ObjID_BFish:		objptr Obj52		; BFish from HPZ
 ObjID_Masher:		objptr Obj53		; Masher from EHZ

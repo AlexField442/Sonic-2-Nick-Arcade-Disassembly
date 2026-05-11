@@ -10052,71 +10052,9 @@ word_9A9C:	dc.w 1			; DATA XREF: ROM:00009A8Co
 		nop
 
 		include	"_incObj/28 - Animals.asm"
-
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-;----------------------------------------------------
-; Object 29 - points that appear when you destroy something
-;
-; Internal name: "ten"
-;----------------------------------------------------
-
-Obj29:					; DATA XREF: ROM:Obj_Indexo
-		moveq	#0,d0
-		move.b	routine(a0),d0
-		move.w	Obj29_Index(pc,d0.w),d1
-		jmp	Obj29_Index(pc,d1.w)
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-Obj29_Index:	dc.w loc_9FB2-Obj29_Index ; DATA XREF: ROM:Obj29_Indexo
-					; ROM:00009FB0o
-		dc.w loc_9FE0-Obj29_Index
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_9FB2:				; DATA XREF: ROM:Obj29_Indexo
-		addq.b	#2,routine(a0)
-		move.l	#Map_Obj29,mappings(a0)
-		move.w	#$4AC,art_tile(a0)
-		bsr.w	Adjust2PArtPointer
-		move.b	#4,render_flags(a0)
-		move.b	#1,priority(a0)
-		move.b	#8,width_pixels(a0)
-		move.w	#$FD00,y_vel(a0)
-
-loc_9FE0:				; DATA XREF: ROM:00009FB0o
-		tst.w	y_vel(a0)
-		bpl.w	DeleteObject
-		bsr.w	ObjectMove
-		addi.w	#$18,y_vel(a0)
-		bra.w	DisplaySprite
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+		include	"_incObj/29 - Points.asm"
 		include_MapUnc_Animal
-
-Map_Obj29:	dc.w word_A070-Map_Obj29 ; DATA	XREF: ROM:00009FB6o
-					; ROM:Map_Obj29o ...
-		dc.w word_A07A-Map_Obj29
-		dc.w word_A084-Map_Obj29
-		dc.w word_A08E-Map_Obj29
-		dc.w word_A0A0-Map_Obj29
-		dc.w word_A0AA-Map_Obj29
-		dc.w word_A0BC-Map_Obj29
-word_A070:	dc.w 1			; DATA XREF: ROM:Map_Obj29o
-		dc.w $F805,    2,    1,$FFF8; 0
-word_A07A:	dc.w 1			; DATA XREF: ROM:0000A064o
-		dc.w $F805,    6,    3,$FFF8; 0
-word_A084:	dc.w 1			; DATA XREF: ROM:0000A066o
-		dc.w $F805,   $A,    5,$FFF8; 0
-word_A08E:	dc.w 2			; DATA XREF: ROM:0000A068o
-		dc.w $F801,    0,    0,$FFF8; 0
-		dc.w $F805,   $E,    7,	   0; 4
-word_A0A0:	dc.w 1			; DATA XREF: ROM:0000A06Ao
-		dc.w $F801,    0,    0,$FFFC; 0
-word_A0AA:	dc.w 2			; DATA XREF: ROM:0000A06Co
-		dc.w $F805,    2,    1,$FFF0; 0
-		dc.w $F805,   $E,    7,	   0; 4
-word_A0BC:	dc.w 2			; DATA XREF: ROM:0000A06Eo
-		dc.w $F805,   $A,    5,$FFF0; 0
-		dc.w $F805,   $E,    7,	   0; 4
-		nop
-
+		include_MapUnc_Points
 		include	"_incObj/1F - Crabmeat.asm"
 		include	"_incObj/22 - Buzz Bomber.asm"
 		include	"_incObj/23 - Badnik Missile.asm"
@@ -19689,537 +19627,8 @@ j_ObjectMove_3:
 		jmp	(ObjectMove).l
 		align 4
 
-;----------------------------------------------------
-; Object 50 - unused Seahorse badnik from HPZ
-;
-; Internal name: "seahorse"
-;----------------------------------------------------
+		include	"_incObj/50 - Seahorse.asm"
 
-Obj50:					; DATA XREF: ROM:Obj_Indexo
-		moveq	#0,d0
-		move.b	routine(a0),d0
-		move.w	Obj50_Index(pc,d0.w),d1
-		jmp	Obj50_Index(pc,d1.w)
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-Obj50_Index:	dc.w Obj50_Init-Obj50_Index ; DATA XREF: ROM:Obj50_Indexo
-					; ROM:00015F18o ...
-		dc.w loc_15FDA-Obj50_Index
-		dc.w loc_16006-Obj50_Index
-		dc.w loc_16030-Obj50_Index
-		dc.w Obj50_Routine08-Obj50_Index
-		dc.w Obj50_Routine0A-Obj50_Index
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-Obj50_Init:				; DATA XREF: ROM:Obj50_Indexo
-		addq.b	#2,routine(a0)
-		move.l	#Map_Obj50,mappings(a0)
-		move.w	#$2570,art_tile(a0)
-		ori.b	#4,render_flags(a0)
-		move.b	#$A,collision_flags(a0)
-		move.b	#4,priority(a0)
-		move.b	#$10,width_pixels(a0)
-		move.w	#$FF00,x_vel(a0)
-		move.b	subtype(a0),d0
-		move.b	d0,d1
-		andi.w	#$F0,d1	; 'ğ'
-		lsl.w	#4,d1
-		move.w	d1,$2E(a0)
-		move.w	d1,$30(a0)
-		andi.w	#$F,d0
-		lsl.w	#4,d0
-		subq.w	#1,d0
-		move.w	d0,$32(a0)
-		move.w	d0,$34(a0)
-		move.w	y_pos(a0),$2A(a0)
-		bsr.w	j_AllocateObject
-		bne.s	loc_15FDA
-		move.b	#ObjID_Seahorse,id(a1) ; 'P'
-		move.b	#4,routine(a1)
-		move.w	x_pos(a0),x_pos(a1)
-		move.w	y_pos(a0),y_pos(a1)
-		addi.w	#$A,x_pos(a1)
-		addi.w	#$FFFA,y_pos(a1)
-		move.l	#Map_Obj50,mappings(a1)
-		move.w	#$24E0,art_tile(a1)
-		ori.b	#4,render_flags(a1)
-		move.b	#3,priority(a1)
-		move.b	status(a0),status(a1)
-		move.b	#3,anim(a1)
-		move.l	a1,$36(a0)
-		move.l	a0,$36(a1)
-		bset	#6,status(a0)
-
-loc_15FDA:				; CODE XREF: ROM:00015F80j
-					; DATA XREF: ROM:00015F18o
-		lea	(Ani_Obj50).l,a1
-		bsr.w	j_AnimateSprite_3
-		move.w	#$39C,(Water_Level_1).w
-		moveq	#0,d0
-		move.b	routine_secondary(a0),d0
-		move.w	Obj50_SubIndex(pc,d0.w),d1
-		jsr	Obj50_SubIndex(pc,d1.w)
-		bsr.w	sub_161D8
-		bra.w	loc_1677A
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-Obj50_SubIndex:	dc.w loc_16046-Obj50_SubIndex ;	DATA XREF: ROM:Obj50_SubIndexo
-					; ROM:00016002o ...
-		dc.w loc_16058-Obj50_SubIndex
-		dc.w loc_16066-Obj50_SubIndex
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_16006:				; DATA XREF: ROM:00015F1Ao
-		movea.l	$36(a0),a1
-		tst.b	(a1)
-		beq.w	loc_1676E
-		cmpi.b	#ObjID_Seahorse,(a1) ; 'P'
-		bne.w	loc_1676E
-		btst	#7,status(a1)
-		bne.w	loc_1676E
-		lea	(Ani_Obj50).l,a1
-		bsr.w	j_AnimateSprite_3
-		bra.w	loc_16768
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_16030:				; DATA XREF: ROM:00015F1Co
-		bsr.w	loc_162FC
-		bsr.w	j_ObjectMove_4
-		lea	(Ani_Obj50).l,a1
-		bsr.w	j_AnimateSprite_3
-		bra.w	loc_1677A
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_16046:				; DATA XREF: ROM:Obj50_SubIndexo
-		bsr.w	j_ObjectMove_4
-		bsr.w	sub_162DE
-		bsr.w	sub_16184
-		bsr.w	sub_1611C
-		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_16058:				; DATA XREF: ROM:00016002o
-		bsr.w	j_ObjectMove_4
-		bsr.w	sub_162DE
-		bsr.w	sub_161A6
-		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_16066:				; DATA XREF: ROM:00016004o
-		bsr.w	j_ObjectMoveAndFall_2
-		bsr.w	sub_162DE
-		bsr.w	sub_16078
-		bsr.w	sub_160F4
-		rts
-
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-sub_16078:				; CODE XREF: ROM:0001606Ep
-		tst.b	$2D(a0)
-		bne.s	locret_16084
-		tst.w	y_vel(a0)
-		bpl.s	loc_16086
-
-locret_16084:				; CODE XREF: sub_16078+4j
-		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_16086:				; CODE XREF: sub_16078+Aj
-		st	$2D(a0)
-		bsr.w	j_AllocateObject
-		bne.s	locret_160F2
-		move.b	#ObjID_Seahorse,id(a1) ; 'P'
-		move.b	#6,routine(a1)
-		move.w	x_pos(a0),x_pos(a1)
-		move.w	y_pos(a0),y_pos(a1)
-		move.l	#Map_Obj50,mappings(a1)
-		move.w	#$24E0,art_tile(a1)
-		ori.b	#4,render_flags(a1)
-		move.b	#3,priority(a1)
-		move.b	#$E5,collision_flags(a1)
-		move.b	#2,anim(a1)
-		move.w	#$C,d0
-		move.w	#$10,d1
-		move.w	#$FD00,d2
-		btst	#0,status(a0)
-		beq.s	loc_160E6
-		neg.w	d1
-		neg.w	d2
-
-loc_160E6:				; CODE XREF: sub_16078+68j
-		sub.w	d0,y_pos(a1)
-		sub.w	d1,x_pos(a1)
-		move.w	d2,x_vel(a1)
-
-locret_160F2:				; CODE XREF: sub_16078+16j
-		rts
-; End of function sub_16078
-
-
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-sub_160F4:				; CODE XREF: ROM:00016072p
-		move.w	y_pos(a0),d0
-		cmp.w	(Water_Level_1).w,d0
-		blt.s	locret_1611A
-		move.b	#2,routine_secondary(a0)
-		move.b	#0,anim(a0)
-		move.w	$30(a0),$2E(a0)
-		move.w	#$40,y_vel(a0) ; '@'
-		sf	$2D(a0)
-
-locret_1611A:				; CODE XREF: sub_160F4+8j
-		rts
-; End of function sub_160F4
-
-
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-sub_1611C:				; CODE XREF: ROM:00016052p
-		tst.b	$2C(a0)
-		beq.s	locret_16182
-		move.w	(MainCharacter+x_pos).w,d0
-		move.w	(MainCharacter+y_pos).w,d1
-		sub.w	y_pos(a0),d1
-		bpl.s	locret_16182
-		cmpi.w	#$FFD0,d1
-		blt.s	locret_16182
-		sub.w	x_pos(a0),d0
-		cmpi.w	#$48,d0	; 'H'
-		bgt.s	locret_16182
-		cmpi.w	#$FFB8,d0
-		blt.s	locret_16182
-		tst.w	d0
-		bpl.s	loc_1615A
-		cmpi.w	#$FFD8,d0
-		bgt.s	locret_16182
-		btst	#0,status(a0)
-		bne.s	locret_16182
-		bra.s	loc_16168
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_1615A:				; CODE XREF: sub_1611C+2Cj
-		cmpi.w	#$28,d0	; '('
-		blt.s	locret_16182
-		btst	#0,status(a0)
-		beq.s	locret_16182
-
-loc_16168:				; CODE XREF: sub_1611C+3Cj
-		moveq	#$20,d0	; ' '
-		cmp.w	$32(a0),d0
-		bgt.s	locret_16182
-		move.b	#4,routine_secondary(a0)
-		move.b	#1,anim(a0)
-		move.w	#$FC00,y_vel(a0)
-
-locret_16182:				; CODE XREF: sub_1611C+4j
-					; sub_1611C+12j ...
-		rts
-; End of function sub_1611C
-
-
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-sub_16184:				; CODE XREF: ROM:0001604Ep
-		subq.w	#1,$2E(a0)
-		bne.s	locret_161A4
-		move.w	$30(a0),$2E(a0)
-		addq.b	#2,routine_secondary(a0)
-		move.w	#$FFC0,d0
-		tst.b	$2C(a0)
-		beq.s	loc_161A0
-		neg.w	d0
-
-loc_161A0:				; CODE XREF: sub_16184+18j
-		move.w	d0,y_vel(a0)
-
-locret_161A4:				; CODE XREF: sub_16184+4j
-		rts
-; End of function sub_16184
-
-
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-sub_161A6:				; CODE XREF: ROM:00016060p
-		move.w	y_pos(a0),d0
-		tst.b	$2C(a0)
-		bne.s	loc_161C4
-		cmp.w	(Water_Level_1).w,d0
-		bgt.s	locret_161C2
-		subq.b	#2,routine_secondary(a0)
-		st	$2C(a0)
-		clr.w	y_vel(a0)
-
-locret_161C2:				; CODE XREF: sub_161A6+Ej
-					; sub_161A6+22j
-		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_161C4:				; CODE XREF: sub_161A6+8j
-		cmp.w	$2A(a0),d0
-		blt.s	locret_161C2
-		subq.b	#2,routine_secondary(a0)
-		sf	$2C(a0)
-		clr.w	y_vel(a0)
-		rts
-; End of function sub_161A6
-
-
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-sub_161D8:				; CODE XREF: ROM:00015FF8p
-		moveq	#$A,d0
-		moveq	#$FFFFFFFA,d1
-		movea.l	$36(a0),a1
-		move.w	x_pos(a0),x_pos(a1)
-		move.w	y_pos(a0),y_pos(a1)
-		move.b	status(a0),status(a1)
-		move.b	respawn_index(a0),respawn_index(a1)
-		move.b	render_flags(a0),render_flags(a1)
-		btst	#0,status(a1)
-		beq.s	loc_16208
-		neg.w	d0
-
-loc_16208:				; CODE XREF: sub_161D8+2Cj
-		add.w	d0,x_pos(a1)
-		add.w	d1,y_pos(a1)
-		rts
-; End of function sub_161D8
-
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-Obj50_Routine08:			; DATA XREF: ROM:00015F1Eo
-					; ROM:0001653At
-		bsr.w	j_ObjectMoveAndFall_2
-		bsr.w	sub_16228
-		lea	(Ani_Obj50).l,a1
-		bsr.w	j_AnimateSprite_3
-		bra.w	loc_1677A
-
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-sub_16228:				; CODE XREF: ROM:00016216p
-		jsr	(ObjHitFloor).l
-		tst.w	d1
-		bpl.s	loc_16242
-		add.w	d1,y_pos(a0)
-		move.w	y_vel(a0),d0
-		asr.w	#1,d0
-		neg.w	d0
-		move.w	d0,y_vel(a0)
-
-loc_16242:				; CODE XREF: sub_16228+8j
-		subi.b	#1,collision_property(a0)
-		beq.w	loc_1676E
-		rts
-; End of function sub_16228
-
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-Obj50_Routine0A:			; DATA XREF: ROM:00015F20o
-					; ROM:0001653Ct
-		bsr.w	sub_1629E
-		tst.b	routine_secondary(a0)
-		beq.s	locret_1628E
-		subi.w	#1,$2C(a0)
-		beq.w	loc_1676E
-		move.w	(MainCharacter+x_pos).w,x_pos(a0)
-		move.w	(MainCharacter+y_pos).w,y_pos(a0)
-		addi.w	#$C,y_pos(a0)
-		subi.b	#1,$2A(a0)
-		bne.s	loc_16290
-		move.b	#3,$2A(a0)
-		bchg	#0,status(a0)
-		bchg	#0,render_flags(a0)
-
-locret_1628E:				; CODE XREF: ROM:00016256j
-		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_16290:				; CODE XREF: ROM:0001627Aj
-		lea	(Ani_Obj50).l,a1
-		bsr.w	j_AnimateSprite_3
-		bra.w	loc_16768
-
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-sub_1629E:				; CODE XREF: ROM:Obj50_Routine0Ap
-		tst.b	routine_secondary(a0)
-		bne.s	locret_162DC
-		move.b	(MainCharacter+routine).w,d0
-		cmpi.b	#2,d0
-		bne.s	locret_162DC
-		move.w	(MainCharacter+x_pos).w,x_pos(a0)
-		move.w	(MainCharacter+y_pos).w,y_pos(a0)
-		ori.b	#4,render_flags(a0)
-		move.b	#1,priority(a0)
-		move.b	#5,anim(a0)
-		st	routine_secondary(a0)
-		move.w	#$12C,$2C(a0)
-		move.b	#3,$2A(a0)
-
-locret_162DC:				; CODE XREF: sub_1629E+4j sub_1629E+Ej
-		rts
-; End of function sub_1629E
-
-
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-sub_162DE:				; CODE XREF: ROM:0001604Ap
-					; ROM:0001605Cp ...
-		subq.w	#1,$32(a0)
-		bpl.s	locret_162FA
-		move.w	$34(a0),$32(a0)
-		neg.w	x_vel(a0)
-		bchg	#0,status(a0)
-		move.b	#1,prev_anim(a0)
-
-locret_162FA:				; CODE XREF: sub_162DE+4j
-		rts
-; End of function sub_162DE
-
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_162FC:				; CODE XREF: ROM:loc_16030p
-					; ROM:loc_165C0p
-		tst.b	collision_property(a0)
-		beq.w	locret_1639E
-		moveq	#2,d3
-
-loc_16306:				; CODE XREF: ROM:loc_16378j
-		bsr.w	j_AllocateObject
-		bne.s	loc_16378
-		move.b	id(a0),id(a1)
-		move.b	#8,routine(a1)
-		move.w	x_pos(a0),x_pos(a1)
-		move.w	y_pos(a0),y_pos(a1)
-		move.l	mappings(a0),mappings(a1)
-		move.w	#$24E0,art_tile(a1)
-		ori.b	#4,render_flags(a1)
-		move.b	#3,priority(a1)
-		move.w	#$FF00,y_vel(a1)
-		move.b	#4,anim(a1)
-		move.b	#$78,collision_property(a1) ; 'x'
-		cmpi.w	#1,d3
-		beq.s	loc_16372
-		blt.s	loc_16364
-		move.w	#$C0,x_vel(a1) ; 'À'
-		addi.w	#$FF40,y_vel(a1)
-		bra.s	loc_16378
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_16364:				; CODE XREF: ROM:00016354j
-		move.w	#$FF00,x_vel(a1)
-		addi.w	#$FFC0,y_vel(a1)
-		bra.s	loc_16378
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-loc_16372:				; CODE XREF: ROM:00016352j
-		move.w	#$40,x_vel(a1) ; '@'
-
-loc_16378:				; CODE XREF: ROM:0001630Aj
-					; ROM:00016362j ...
-		dbf	d3,loc_16306
-		bsr.w	j_AllocateObject
-		bne.s	loc_1639A
-		move.b	id(a0),id(a1)
-		move.b	#$A,routine(a1)
-		move.l	mappings(a0),mappings(a1)
-		move.w	#$24E0,art_tile(a1)
-
-loc_1639A:				; CODE XREF: ROM:00016380j
-		bra.w	loc_1676E
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-
-locret_1639E:				; CODE XREF: ROM:00016300j
-		rts
-; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
-Ani_Obj50:	dc.w byte_163B0-Ani_Obj50 ; DATA XREF: ROM:loc_15FDAo
-					; ROM:00016022o ...
-		dc.w byte_163B3-Ani_Obj50
-		dc.w byte_163BB-Ani_Obj50
-		dc.w byte_163C1-Ani_Obj50
-		dc.w byte_163C5-Ani_Obj50
-		dc.w byte_163C8-Ani_Obj50
-		dc.w byte_163CB-Ani_Obj50
-		dc.w byte_163CF-Ani_Obj50
-byte_163B0:	dc.b  $E,  0,$FF	; 0 ; DATA XREF: ROM:Ani_Obj50o
-byte_163B3:	dc.b   5,  3,  4,  3,  4,  3,  4,$FF; 0	; DATA XREF: ROM:000163A2o
-byte_163BB:	dc.b   3,  5,  6,  7,  6,$FF; 0	; DATA XREF: ROM:000163A4o
-byte_163C1:	dc.b   3,  1,  2,$FF	; 0 ; DATA XREF: ROM:000163A6o
-byte_163C5:	dc.b   1,  5,$FF	; 0 ; DATA XREF: ROM:000163A8o
-byte_163C8:	dc.b  $E,  8,$FF	; 0 ; DATA XREF: ROM:000163AAo
-byte_163CB:	dc.b   1,  9, $A,$FF	; 0 ; DATA XREF: ROM:000163ACo
-byte_163CF:	dc.b   5, $B, $C, $B, $C, $B, $C,$FF,  0; 0 ; DATA XREF: ROM:000163AEo
-Map_Obj50:	dc.w word_163F2-Map_Obj50 ; DATA XREF: ROM:00015F26o
-					; ROM:00015FA6o ...
-		dc.w word_1640C-Map_Obj50
-		dc.w word_16416-Map_Obj50
-		dc.w word_16420-Map_Obj50
-		dc.w word_16442-Map_Obj50
-		dc.w word_16464-Map_Obj50
-		dc.w word_1646E-Map_Obj50
-		dc.w word_16478-Map_Obj50
-		dc.w word_16482-Map_Obj50
-		dc.w word_1648C-Map_Obj50
-		dc.w word_164AE-Map_Obj50
-		dc.w word_164D0-Map_Obj50
-		dc.w word_164FA-Map_Obj50
-word_163F2:	dc.w 3			; DATA XREF: ROM:Map_Obj50o
-		dc.w $E80D,    0,    0,$FFF0; 0
-		dc.w $F809,  $16,   $B,$FFF8; 4
-		dc.w  $805,  $24,  $12,$FFF8; 8
-word_1640C:	dc.w 1			; DATA XREF: ROM:000163DAo
-		dc.w $F805,  $28,  $14,$FFF8; 0
-word_16416:	dc.w 1			; DATA XREF: ROM:000163DCo
-		dc.w $F805,  $2C,  $16,$FFF8; 0
-word_16420:	dc.w 4			; DATA XREF: ROM:000163DEo
-		dc.w $E809,    8,    4,$FFF0; 0
-		dc.w $E801,   $E,    7,	   8; 4
-		dc.w $F809,  $16,   $B,$FFF8; 8
-		dc.w  $805,  $24,  $12,$FFF8; 12
-word_16442:	dc.w 4			; DATA XREF: ROM:000163E0o
-		dc.w $E809,  $10,    8,$FFF0; 0
-		dc.w $E801,   $E,    7,	   8; 4
-		dc.w $F809,  $16,   $B,$FFF8; 8
-		dc.w  $805,  $24,  $12,$FFF8; 12
-word_16464:	dc.w 1			; DATA XREF: ROM:000163E2o
-		dc.w $F801,  $30,  $18,$FFFC; 0
-word_1646E:	dc.w 1			; DATA XREF: ROM:000163E4o
-		dc.w $F801,  $32,  $19,$FFFC; 0
-word_16478:	dc.w 1			; DATA XREF: ROM:000163E6o
-		dc.w $F801,  $34,  $1A,$FFFC; 0
-word_16482:	dc.w 1			; DATA XREF: ROM:000163E8o
-		dc.w $F80D,  $36,  $1B,$FFF0; 0
-word_1648C:	dc.w 4			; DATA XREF: ROM:000163EAo
-		dc.w $E80D,    0,    0,$FFF0; 0
-		dc.w $F805,  $1C,   $E,$FFF8; 4
-		dc.w $F801,  $20,  $10,	   8; 8
-		dc.w  $805,  $24,  $12,$FFF8; 12
-word_164AE:	dc.w 4			; DATA XREF: ROM:000163ECo
-		dc.w $E80D,    0,    0,$FFF0; 0
-		dc.w $F805,  $1C,   $E,$FFF8; 4
-		dc.w $F801,  $22,  $11,	   8; 8
-		dc.w  $805,  $24,  $12,$FFF8; 12
-word_164D0:	dc.w 5			; DATA XREF: ROM:000163EEo
-		dc.w $E809,    8,    4,$FFF0; 0
-		dc.w $E801,   $E,    7,	   8; 4
-		dc.w $F805,  $1C,   $E,$FFF8; 8
-		dc.w $F801,  $20,  $10,	   8; 12
-		dc.w  $805,  $24,  $12,$FFF8; 16
-word_164FA:	dc.w 5			; DATA XREF: ROM:000163F0o
-		dc.w $E809,  $10,    8,$FFF0; 0
-		dc.w $E801,   $E,    7,	   8; 4
-		dc.w $F805,  $1C,   $E,$FFF8; 8
-		dc.w $F801,  $22,  $11,	   8; 12
-		dc.w  $805,  $24,  $12,$FFF8; 16
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 ;----------------------------------------------------
 ; Object 51 - unused Skyhorse badnik from HPZ
@@ -20238,13 +19647,13 @@ off_16532:	dc.w loc_1653E-off_16532 ; DATA	XREF: ROM:off_16532o
 		dc.w loc_1659C-off_16532
 		dc.w loc_165C0-off_16532
 		dc.w 0
-		dc.w Obj50_Routine08-off_16532
-		dc.w Obj50_Routine0A-off_16532
+		dc.w Seahorse_Routine08-off_16532
+		dc.w Seahorse_Routine0A-off_16532
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
 
 loc_1653E:				; DATA XREF: ROM:off_16532o
 		addq.b	#2,routine(a0)
-		move.l	#Map_Obj50,mappings(a0)
+		move.l	#MapUnc_Seahorse,mappings(a0)
 		move.w	#$2570,art_tile(a0)
 		ori.b	#4,render_flags(a0)
 		move.b	#$A,collision_flags(a0)
@@ -20264,7 +19673,7 @@ loc_1653E:				; DATA XREF: ROM:off_16532o
 		move.w	#$FF00,x_vel(a0)
 
 loc_1659C:				; DATA XREF: ROM:00016534o
-		lea	Ani_Obj50(pc),a1
+		lea	Ani_Seahorse(pc),a1
 		bsr.w	j_AnimateSprite_3
 		move.w	#$39C,(Water_Level_1).w
 		moveq	#0,d0
@@ -20281,7 +19690,7 @@ off_165BC:	dc.w loc_165D4-off_165BC ; DATA	XREF: ROM:off_165BCo
 loc_165C0:				; DATA XREF: ROM:00016536o
 		bsr.w	loc_162FC
 		bsr.w	j_ObjectMove_4
-		lea	Ani_Obj50(pc),a1
+		lea	Ani_Seahorse(pc),a1
 		bsr.w	j_AnimateSprite_3
 		bra.w	loc_1677A
 ; ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
@@ -20383,7 +19792,7 @@ loc_1669E:				; CODE XREF: ROM:0001660Ej
 		move.b	#4,routine(a1)
 		move.w	x_pos(a0),x_pos(a1)
 		move.w	y_pos(a0),y_pos(a1)
-		move.l	#Map_Obj50,mappings(a1)
+		move.l	#MapUnc_Seahorse,mappings(a1)
 		move.w	#$24E0,art_tile(a1)
 		ori.b	#4,render_flags(a1)
 		move.b	#3,priority(a1)
@@ -27152,9 +26561,9 @@ Debug_EHZ:	dc.w $13		; DATA XREF: ROM:0001BCF2o
 		dc.b   0,  0,  5,  0	; 0
 		dc.l Map_Obj52+(ObjID_BFish<<24)
 		dc.b   0,  0,$25,$30	; 0
-		dc.l Map_Obj50+(ObjID_Seahorse<<24)
+		dc.l MapUnc_Seahorse+(ObjID_Seahorse<<24)
 		dc.b   0,  0,$25,$70	; 0
-		dc.l Map_Obj50+(ObjID_Skyhorse<<24)
+		dc.l MapUnc_Seahorse+(ObjID_Skyhorse<<24)
 		dc.b   0,  0,$25,$70	; 0
 		dc.l Map_Obj4D+(ObjID_Stego<<24)
 		dc.b   0,  0,$23,$C4	; 0
@@ -27223,9 +26632,9 @@ Debug_HPZ:	dc.w $F			; DATA XREF: ROM:0001BCF4o
 		dc.b   0,  0,  5,  0	; 0
 		dc.l Map_Obj52+(ObjID_BFish<<24)
 		dc.b   0,  0,$25,$30	; 0
-		dc.l Map_Obj50+(ObjID_Seahorse<<24)
+		dc.l MapUnc_Seahorse+(ObjID_Seahorse<<24)
 		dc.b   0,  0,$25,$70	; 0
-		dc.l Map_Obj50+(ObjID_Skyhorse<<24)
+		dc.l MapUnc_Seahorse+(ObjID_Skyhorse<<24)
 		dc.b   0,  0,$25,$70	; 0
 		dc.l Map_Obj4D+(ObjID_Stego<<24)
 		dc.b   0,  0,$23,$C4	; 0
@@ -29815,6 +29224,10 @@ Nem_Button:	dc.b $80,$10,$80,  3,  2,$24, $A,$34, $C,$72,  0,$81,  4, $D,$13,  3
 		dc.b $E8,  0, $F,$B6,$B7,$2D,$3C,$B4,$F2,$D3,$CB,$4F,$2D,$3C,$DE,$7F,$9F,$F8,$9F,$F4,$57,$BF,$CC,$FE,$58,$5F,$98,$D5,$6C,  3,$B9,$CE,$FF,$43,$53,$C6,$AF,$1A,$BC,$6A,$F1,$AB,$C6,$BF,$BF,$CE,$FF,$A3,$F1,$3F,$96,$FC,$CF,$B2,$9D,$AD,$FC,$C0,  2,$DF,$C8,$47,$EE,$F6; 64
 		dc.b $71,$E4,$4E,$A2,$75,$13,$A8,$9D,$44,$EB,$86,$B6,$BA,  0,  0,  0,  3,$EB,$E7,$7E,$BC,$E2,$6D,$D3,$52,$9A,$94,$D4,$A6,$A5,$35,$2B,$53,$E3,$A0,  0,$3E,$DA,$DC,$B4,$F2,$D3,$CB,$4F,$2D,$3C,$B4,$F3,$79,$FE,$7F,$40,  0,$7D,$E6,$A7,$8D,$5E,$35,$78,$D5,$E3,$57,$8D; 128
 		dc.b $7F,$7F,$9D,$E8,  0, $F,$5D,$FC,$FA,$BD,$9C,$79,$13,$A8,$9D,$44,$EA,$27,$51,$3A,$E1,$AD,$A0,  0; 192
+
+; ---------------------------------------------------------------------------
+; Graphics loaded in (almost) every level
+; ---------------------------------------------------------------------------
 Nem_VSpring2:	incbin	"art/nemesis/Vertical spring.bin"
 		even
 Nem_HSpring2:	incbin	"art/nemesis/Horizontal spring.bin"
@@ -29835,18 +29248,18 @@ Nem_Monitors:	incbin	"art/nemesis/Monitor and contents.bin"
 		even
 Nem_VSpikes:	incbin	"art/nemesis/Spikes.bin"
 		even
-Nem_Points:	dc.b $80,$12,$80,  3,  3,$14, $C,$25,$1A,$36,$3D,$47,$7C,$56,$3C,$67,$7D,$72,  0,$81,  3,  2,$15,$1C,$26,$3B,$35,$1B,$86,  3,  4,$87,  4, $A,$14, $B,$26,$3A,$FF,  0, $E,$3D,$BF,$C4,$D2,$97,$17,$E3,$B1,$62,$75,$AB,  3,$CB,$F8,$B1,$65,$29,$73,$B7,$B0,  3,$DE,$3E; 0
-					; DATA XREF: ROM:0001C0B6o
-					; ROM:0001C18Eo
-		dc.b $62,$B5,$2B,$C5,$ED,$6A,$B1,  1,$ED,$78,$BE,$52,$95,$AE,$3E,  0,$1C,$7B,$75,$14,$B8,$9A,$6B,$13,$AD,$58,$19,$5A,$BD,$26,$B1,$3A,$8A,$5C,$ED,$EC,  0,$CD,$BE,$FA,$8A,$57,$A9,$A6,$BA,$D5,$29,$7F,$11,$D7,$CE,$B2,$BC,$4D,$7E,$DD,$4A,$7B,$7C,  0,$38,$F6,$EA,$29; 64
-		dc.b $71,$34,$D6,$27,$5A,$B0,$32,$B5,$7A,$4D,$62,$75,$14,$B9,$DB,$D8,  0,$FF,$E2,$FF,$6E,$E5,$78,$B5,$D6,$56,$5C,$FA,$B4,$BA,$F5,$75,$AA,$F5,$35,$9D,$47,$2B,$FE,$20,  7,$1E,$DD,$45,$2E,$26,$9A,$C4,$EB,$56,  6,$56,$AF,$49,$AC,$4E,$A2,$97,$3B,$7B,  0,$1E,$DF,$72; 128
-		dc.b $E2,$96,$B1,$35,$AB,$D5,$80,$EF,$56,$B1,$35,$92,$E2,$97,$B7,$D8,  0,$BE,$C5,$E2,  0,$3E,$AF,$B1,$78,  0; 192
+Nem_Points:	incbin	"art/nemesis/Points text.bin"
+		even
 Nem_Lamppost:	dc.b $80, $A,$80,  3,  2,$14,  9,$24, $A,$72,  0,$81,  3,  3,$15,$1D,$83,  6,$3D,$85,  5,$1B,$87,  7,$7C,$89,  4,  8,$8A,  4, $B,$8B,  5,$1C,$8C,  5,$18,$8D,  6,$3C,$8E,  7,$7D,$8F,  5,$19,$15,$1A,$FF,$FE,  4,$7E,$6A,$A3,$78,$FC,$BC,$EF, $B,$F1,  9,$A8,$9C,$A7; 0
 					; DATA XREF: ROM:0001C09Eo
 		dc.b $6B,$1F,$D0,$8A,$F9,$58,  0,  0,$3F,$C1,$FB,$5F,$13,$E5,$7E,$77,$F8,$1E,$57,$57,$85,$39,$F0,  0,  0,$3F,$C1,$FC,$DD,$FE,$5A,$BF,$32,$BF,$25,$31,$2D,$65,$44,$FA,$B2,$C8,$AF,$C1,  0,  0,  5,$3F,$CF,$67,$F3,$CD,$3D,$75,$30,$51,$F9,$8F,$9F,$75,$F6,$A3,$BA,$98; 64
 		dc.b $6B,$29,$A8,$7A,$61,$FB, $D,$DF,$2F,$96,  4,$EE,$F9,$7C,$B0,$27,$DF,$D4,$46,  9,$F7,$F5,$11,$80,  0,$50,$F4,$F2,$FF,$11,$F3,$F5,$CF,$EF,$75,$D4,$C1,  0; 128
 Nem_Signpost:	incbin	"art/nemesis/Signpost.bin"
 		even
+; ---------------------------------------------------------------------------
+; Sonic 2 enemy graphics
+; ---------------------------------------------------------------------------
+
 Nem_Crocobot:	dc.b   0,$2C,$80,  5,$11,$16,$2A,$26,$30,$36,$33,$47,$76,$58,$EF,$67,$70,$74,  4,$81,  3,  0,$14,  6,$26,$2E,$36,$35,$48,$F2,$57,$6C,$77,$78,$82,  4,  2,$15,$13,$27,$74,$38,$F7,$83,  4,  3,$15, $B,$26,$2B,$47,$6F,$58,$F6,$84,  5,$14,$17,$6E,$85,  6,$31,$17,$6D; 0
 					; DATA XREF: ROM:0001C1E6o
 		dc.b $86,  5,$16,$17,$71,$87,  5, $F,$16,$34,$88,  5, $A,$17,$72,$89,  5,$12,$17,$7A,$8A,  5, $E,$17,$73,$8C,  6,$32,$18,$F3,$8D,  5,$10,$16,$2F,$27,$75,$38,$EE,$FF,$44,$44,$44,$44,$44,$38,$AF,$30,$63,$78,$30,$7F,$B4,$9E,$FB,$47,$F8,$56,$7C,$7F,$C3,$56,$3F,$CD; 64
@@ -29934,24 +29347,8 @@ Nem_HPZ_Piranha:dc.b   0,$40,$80,  5,$10,$15,$14,$25,$12,$36,$34,$46,$30,$56,$2F
 		dc.b $DC,$36,$EA,$5E,$F8,$93,$3A, $B,$AB,$7F,$5B,$B2,$BF,$87,$EB,$5E,$15,$BF,$AE, $E,$FE,$8F,$F2,$CB,$1F,$DD,$A1,$62,$9B,$91,$53,$AB,$95,$8A,$92,$11,$E3,$84,$59,$86,$B6,$61,$18,$47,  8,$99,$99,$99,$FE,$CB,$F4,$7C,$D3,$27,$A6,$6A,$9F,$D9,$5E,$3E,$76,$71,$DB,$A3; 1088
 		dc.b $17,$22,$2F,$BA,$54,$D5,$65,$95,$62,$96,$21,$6F,$9F,$2E,$C0,$D7,$76,  4,$57,$78,$63,$A6,$EF,$52,$D5,$B9,$1D,$D8,$E0,$ED,$4C,$F0,$E0,$E2,$EC,$DF,$D8,$9B,$F5,$4F,$57,$EE,$C1,$28,$FD,$D8,$45,$63,$86,$E9,$A2,$C4,$55,$8C,$2A,$E5, $C,$50,$93,$42,$69,$69,$14,$BE; 1152
 		dc.b $36,$C4,$CC,$ED,$65,$BC,$D9,$CF, $C,$9C,$FF,$27,$4F,$EC,$E7, $F,$F4,$E7,$56,$24,$2A,$17,$90,$BC,$85,$E5,$69,$5A,$43,$F6,$54,$AB,$12,$D7,$FE,$98,$6C,$DA,$54,$84,$92,$71,$34,$A4,$E2,$4C,$1C,$2F,$75,$A0,$C1,$99,$99,$99,$9D,$E0; 1216
-Nem_Seahorses:	dc.b   0,$3E,$80,  5,$13,$15,$12,$25,$16,$36,$32,$46,$33,$56,$2E,$66,$38,$74,  4,$81,  3,  0,$15, $E,$27,$78,$38,$F3,$82,  6,$2F,$83,  7,$76,$84,  6,$3A,$85,  5, $F,$16,$36,$28,$F2,$38,$F6,$86,  4,  6,$16,$37,$87,  4,  8,$17,$73,$88,  4,  5,$17,$77,$89,  3,  1; 0
-		dc.b $15,$18,$27,$7A,$8A,  8,$F7,$8C,  5,$15,$16,$35,$8D,  5,$14,$16,$34,$27,$72,$FF,$44,$44,$44,$44,$BB,$13,$F6,$30,$B3,$7E,$AD,$50,$64,$FD,$1E,$6C,$FA,$3C,$66,$F0,$88,$89,$C7,$EE,$6C,$77,$85,$91,$76,$F1,$22,$ED,$E2,$6F,$3B,$FE,$9D,$F4,$A9,$8F,$D4, $F,$D6,$1D; 64
-		dc.b $B1,$FE,$D7,$7B,$69,$76,$DC, $E,  5,$CF,$6C,$DF,$4A,$F1,$1E,$CD,$CC,$F2,$6F,$53,$1A,$1A,$D1,$F3,$51,$5D,$EB,$B2,$8A,$6B,$A3,$D4,$6B,$A6,$C3,$F5,$9A,$6D,$FA,$CA,$79, $A,$56,$8E,$DA,$7A,$79,$BE,$6F, $D,$DF,$CD,$A0,$88,$F1,  4,$32,$87,$BA,$3B,$87,$86,$F3,$A0; 128
-		dc.b $9C,$77,$39,$61,$24,$A7,$38,$39,$B1,$C8,$31,$CC,$1B,$82,$24,$A1,$4D,$B9,$E2,$CD,$8C,$CA,$22,$22,$22,$22,$6D,$73,$EB,$B6,$4F,$DE,$83,$79,$BF,$5A, $C,$4D,$F4,$DB,$2D,$91,$11,$11,$11,$27,$FB,$9B,$1D,$68,$64,$75,$C2,$C8,$BB,$78, $F,$2E,$6E,$63,$53,$1F,$A8,$14; 192
-		dc.b $D4,$ED,$42,$F3,$4D,$69,$5B,$79,$69,$76,$DC, $E,  5,$CF,$6C,$DF,$4A,$A7,$F1,$6D,$C9,$97,$F4,$E7,$4F,$E4,$A8,$AE,$F5,$D9,$45,$35,$D1,$EA,$35,$E4,$FE,$55,$D3,$6D,$74,$F6,$AB,$56,$83,$CB,$5A,$3C,$79,$51,$ED,$DC,$3D,$CC, $A,$C7,$88,$60,$54,$3D,$D0,$AE,$78,$6F; 256
-		dc.b $3A,  4,$49,$F7,$F5,$6C,$25,$C2,$51,$DE,$43,$7F,$52,$18,$CC,$70,$12,$5D,$EC,$DC,$FD,$4B,$D2,$22,$22,$22,$22,$67,$E5,$9F,$E9,$A8,$37,$1A,$6A,$FC, $F,$64,$44,$44,$44,$44,$FD,$CD,$8E,$B4,$32,$3A,$E1,$64,$5D,$BC,  7,$97,$37,$31,$A9,$8F,$D4,$69,$A9,$DB, $F,$34; 320
-		dc.b $FD,$65,$2D,$E5,$A5,$DB,$70,$38,$17,$3D,$B3,$7D,$2A,$9F,$C5,$B7,$26,$5F,$D3,$9D,$3F,$92,$A2,$BB,$D7,$65,$14,$D7,$47,$A8,$D7,$93,$C7,$EB,$34,$DA,$BC,$BD,$B9,$3B,$CB,$4F,$1E,$C1,$BB,$87,$B9,$81,$58,$F1, $C, $A,$87,$BA,$15,$CF, $D,$E7,$41,$9B,$F4,$AD,$9F,$C9; 384
-		dc.b $A4,$FE,$55,$A4,$DF,$CA,$B4,$7C,$DF,$CA,$B4,$2F,$E5,$5A,$3C,$BF,$95,$69,$E5,$A5,$5A,$BA,$3E,$9A,$EF,$50,$FA,$57,$77,$33,$EA,$CE,$8D,$E8,$EF,$D3,$96,$99,$FD,$47,$36,$91,$EF,  4,$5B, $E,$8C,$CF,$36,$D7,$47,$89,$D3,$D8,$4B,$66,$87,$8D,$DE,$CE,$2E,$2F,$87,$11; 448
-		dc.b $2D,$B0,$E9,$17,$B9,$E2,$4F,$F4,$F1,$36,$15,$F6,  5,$E2,$9B,$3A,$6C,$FF, $F,$13,$67,$8D,$9D,$32,$36, $F, $C,$19,$E3,$60,$F8,$DC,$6C,$26,$60,$37,$90,$B2,$E2,$5C,$F1,$96,$11,$12,$6B,$8B,$73,$39,$46,$33,$28,$89,$DD,$F9,$46,$D9,$BD,$11,$2D,$7F,$E4,$FA,$B5,$FF; 512
-		dc.b $A3,$69,$5F,$FA,$3E,$BB,$4E,$FF,$D1,$F5,$DA,$F9,$DF,$FA,$3E,$BB,$1B,$FF,$47,$D7,$6B,$CD,$FF,$A3,$EB,$B7,$E8,$BF,$27,$D3,$75,$F9,$3B,$FB,$7E,$53,$7E,$85,$FD,$BA,$DD,$CD,$7F,$4C,$E8,$DF,$B3,$BF,$4E,$5A,$67,$F5,$1C,$DA,$47,$BC,$11,$6C,$3A,$33,$3C,$DB,$F2,$9F; 576
-		dc.b $93,$BC,$4F,$B7,$EC,$84,$BF,$24,$D1,$78,$99,$BD,$9C,$7C,$5F, $E,$20,$AF,$E4,$B1,$E6,$6F,$75,$EE,$9D,$FE,$AF,$12,$1D,$7E,$C8,$4E,$F1,$DB,$F2,$4E,$9B,$5F,$E2,$F1,$36,$BC,$7E,$49,$D3,$23,$F2,$42,$F1,$30,$D7,$8F,$C9,  9,$C6,$E3,$F2,$42,$66,  3,$7E,$88,$7A,$CC; 640
-		dc.b $B2,$9C,$97,$75,$36,$EE,$CA,$6C,$63,$F5,  6,$42,$16,$14,$C8,$15,$85,$32,  5,$79,$9B,  2,$B0,$A2,$40,$AC,  3,$20,$5D,  0,$C8,$15,$1E,$E2,$40,$86,$EB,$DE,$4E,$F7,$FC,$A7,$BE,$5F,$9A,$EB,$DE,$EF,$CD,$7A,$CC,$B2,$9C,$97,$75,$36,$EE,$CA,$6C,$63,$F5,  6,$42,$16; 704
-		dc.b $14,$C8,$15,$85,$32,  5,$79,$9B,  2,$B0,$A2,$40,$AC,  3,$20,$5D,  0,$C8,$15,$1E,$E2,$40,$8E,$BD,$EC,$EF,$D5,$22,$70,$57,$82,$88,$89,$2B,$F8,$BE,$E1,$DA,$FC,$C7,$5D,$AE,$1D,$76,$CC,$75,$DA,$E1,$7B,  3,$93,$B9,$DC,$E4,$51,$CD,$85,$EE,$58,$30,$2F,$13,$3D,$C2; 768
-		dc.b $DE,$24,$42,$C5,$E2,$45,$4B, $B,$15,$86,$19,$18,$23,$23,$17,$8C,$8A,$8C,$8A,$DE,$32,$2A,$32,$2B,$78,$B1,$5B,$C6,$4A,$EC,$C2,$22,$22,$5D,$5B,$AA,$73,$A9,$5C,$98,$AC,$5A,$A5,$61,$A5,$52,$B0,$D4,$9D,$1A,$BC,$8C,$EB,$A6,$21,$A7,$8F,$D3,$6B,$6F,$E4,$A2,$24,$A9; 832
-		dc.b $75, $E,$74,$2B,$99,$5B,$96,$2E,$85,$B9,$96,$ED,$F4,$CB,$4B,$A1,$6E,$65,$BB,$F5,$99,$FA,$44,$44,$44,$44,$44,$B6,$B9,$55,$B1,$2D,$70,$B1,$3A,$61,$79,$B4,$E8,$DA,$F2,$95,$69,$85,$89,$62,$B4,$E7,$96,$35,$BB,  8,$88,$89,$6A,$E9,$2A,$E8,$56,$D8,$58,$C9,$61,$B3; 896
-		dc.b $DE,$E6,$E3,$4B,$A3,$86,$E2,$BC,$1A,$F0,$51,$13,$C6,$4E,$2A,$2D,$FC,$1C,$BC,$22,$22,$22,$22,$22,$26,$65,$C6,$C5,$C4,$19,$38,$A9,$12,$F0,$5D,$23,$E6,$6C,$5C,$51,$11,$11,$11,$13,$22,$E3,$6F,$32,$26,$7C,$15,$C7,$F0,$4F,$FC,$5C,$7F,$A2,$67,$FD,$1B,$17,$14,$44; 960
-		dc.b $44,$44,$49,  4,$4E,  4,$86,$63,$87,$4C,$66,$E9,$89,  9,$79,$DB,$FA,$33,$13,$FE, $C,$8F,$F4,$6C,$7C,$64,$66,$EE,  2,$22,$22,$22,$22,$22,  3,$73,$B1,$97,$9E,$25,$FD,$1C,$7F,$C7,$1F,$D1,$CB, $E,$44,$44,$44,$44,$44,$B8,$8C,$8F,$89,$61,$D8,$FF, $C,$FF,$83,$67; 1024
-		dc.b $22,$22,$22,$22,$5C,$2C,$32,$17,$3A,$E1,$30,$88,$89,$98; 1088
+Nem_Seahorses:	incbin	"art/nemesis/Seahorse & Skyhorse.bin"
+		even
 Nem_UnusedRollingBall:dc.b   0,$1B,$80,	 5,$14,$15,$15,$26,$34,$36,$31,$57,$73,$76,$32,$82,  4,	 6,$17,$75,$27,$71,$83,	 3,  0,$16,$2F,$27,$79,$37,$7A,$47,$77,$84,  3,	 1,$15,$13,$26,$33,$37,$6E,$47,$72,$58,$F7,$86,	 7,$74,$17,$76,$87,  6,$30,$17,$78,$88,	 5,$12,$17,$6F,$89,  3,	 2; 0
 		dc.b $17,$70,$8A,  4,  8,$17,$6A,$8B,  4,  7,$16,$2E,$26,$36,$37,$6B,$48,$F6,$78,$F8,$8D,  5,$16,$FF,$CB,$9E,$AC,$77,$69,$3E,$C6,$BE,$F5,$23,$75,  8,$20,$83,$4F,$24,$1B,$DB,$C9,$BD,$83,$7F,$4D,$83,  6,$BD,$AC,$C1,$83,$10,$D6,$E2,$1C,$D9,$AC,$C5,$E1,$F7,$3C,$2F; 64
 		dc.b $68,$51,$47,$4E,$9F,$85,$2E,$4E,$9D,$56,$E4,$E9,$EB,$B1, $B,$4B,$81,$18,$CC,$1E,$64,$65,$FC,$AF,$31,$FB,$84, $F,$EA,$3C,$4B,$81,$DF,$87,$4F,$11,$39,$61,$DB,  9,$4E,$51,$87,$4F,$13,$94,$7E,$9E,$53,$8F,$1B,$9E,$25,$9F,$42,$A3,$DD,$4B,$93,$CB,$30,$46,$A9,$82; 128
@@ -30114,6 +29511,9 @@ Nem_EHZ_Boss_Blades:dc.b   0,$14,$80,  5,$17,$14,  9,$26,$39,$35,$1A,$45,$19,$72
 		dc.b $68,$69,$F7,$4D,$67,$6E,$77,$59,$54,$AC,$A5,$35,$94,$26,$4C,$9D,$47,$F0,$5D,$32,$BA,$74,$D9,$DE,$93,$FE,$5A,$FF,$2E,$AB,$87,$B7,$99,$FB,$AE,$5F,$F7, $D,$2D,$1F,$C9,$BF,$B2,$CF,$66,$D5,$6F,$9F,$32,$EC,$A5,$59,$42,$64,$CA,$14,$7F,  6,$13,$26,$57,$4D,$FB,$1C; 64
 		dc.b $BC,$32,$D7,$CB,$D9,$F8,$A5,$98,$FA,$89,$87,$FD,$33,$DD,$FF,$8C,$FF,$7F,$A7,$68,$9F,$74,$D6,$76,$E7,$75,$95,$53,$8B,$43,$29,$C3,$C6,$27, $F,$18,$9C,$56,$33,$BD,$26,$87,$BF,$CB,$AA,$E1,$ED,$E6,$5F,$8A,$E7,$EB,$ED,$A6,$A3,$F7,$37,$F6,$59,$EC,$DA,$AD,$F3,$E6; 128
 		dc.b $53,$5A,$13,$4E,$1E,$31,$38,$78,$C4,$E2,$AE,$A7,$79,$B5,$2D,$7C,$BD,$9F,$8A,$40,  0,  5,$FA,$EC,  0,  0,  0,$3A,$EC,  0,  0,  0,$3A,$EC,  0,  0,  0,$3A,$EC,  0,  0,  0,$3A,$EC,  0,  0,  0,$3A,$EC,  0,  0,  0; 192
+; ---------------------------------------------------------------------------
+; Sonic 1 leftovers PART 2
+; ---------------------------------------------------------------------------
 S1Nem_Ballhog:	dc.b $80,$2F,$80,  3,  1,$14,  6,$25, $A,$35,$11,$45,$14,$56,$2F,$66,$36,$75, $B,$81,  3,  0,$16,$2E,$27,$76,$38,$F7,$82,  5,$16,$18,$F5,$83,  4,  4,$15,$13,$26,$37,$38,$EF,$48,$EE,$78,$F4,$84,  6,$34,$86,  6,$35,$18,$F2,$87,  5, $F,$16,$31,$27,$78,$38,$F3,$88; 0
 		dc.b   5, $E,$16,$32,$26,$38,$89,  5,$10,$16,$33,$8A,  6,$30,$17,$74,$8B,  5,$12,$18,$F6,$8D,  7,$72,$17,$75,$8E,  7,$73,$8F,  5,$15,$FF,$A3,$F5,$7D,$F5,$E7,$B0,$BC,$5E,$FA,$FE,$32,$FD,$2F,$76,$9B, $B,$45,$D5,$5A,$DF,$55,$C7,  3,$AF,$2A,$7E,$53,$9C,$50,$41,$65; 64
 		dc.b $EA,$16,$E9,$CF,$28,$6F,$62,$3F,$19,$CB,$12,$3A,$DC,$CF,$60,$C1,$9E,$17,$4F,$50,$A1,$66,$B7,$6B,$2D,$67,$1B,$2A,$CA,$FD,$17,$33,$6C,$7F,$58,$6A,$7F,$2B,$23,$22,$2A,$B3,$76,$1A,$F5,$FC,$62,$5A, $F,$3F,$9E,$36,$38,$7E,$17,$9D,$E2,$42,$F1,$80,$DA,$BF,$85,$B1; 128
