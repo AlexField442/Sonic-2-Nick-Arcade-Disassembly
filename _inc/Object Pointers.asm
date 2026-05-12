@@ -39,7 +39,7 @@ ObjID_Platform:		objptr Obj18		; Stationary/moving platforms from GHZ and EHZ
 ObjID_Platform2:	objptr Obj19		; Platform from CPZ
 ObjID_CollapsingPltfm:	objptr Obj1A		; Collapsing platform from GHZ and HPZ
 			dc.l ObjNull
-ObjID_Scenery:		objptr Obj1C		; Stage decorations in GHZ, EHZ, HTZ and HPZ
+ObjID_Scenery:		objptr Obj_Scenery	; Stage decorations in GHZ, EHZ, HTZ and HPZ
 			dc.l ObjNull
 ObjID_Ballhog:		objptr ObjNull		; (S1) Ballhog from SBZ (pointer removed)
 ObjID_Crabmeat:		objptr Obj_Crabmeat	; (S1) Crabmeat from GHZ
@@ -85,15 +85,15 @@ ObjID_GHZWall:		objptr Obj44		; (S1) Unbreakable wall
 			dc.l ObjNull
 ObjID_WreckingBall:	objptr Obj48		; (S1) Eggman's wrecking ball
 ObjID_EHZWaterfall:	objptr Obj_EHZWaterfall	; Waterfall from EHZ
-ObjID_Octus:		objptr Obj4A		; Octus from HPZ
-ObjID_Buzzer:		objptr Obj4B		; Buzzer from EHZ
+ObjID_Octus:		objptr Obj_Octus	; Octus from HPZ
+ObjID_Buzzer:		objptr Obj_Buzzer	; Buzzer from EHZ
 ObjID_BBat:		objptr Obj4C		; BBat from HPZ
 ObjID_Stego:		objptr Obj4D		; Stego/Stegway from HPZ
 ObjID_Gator:		objptr Obj4E		; Gator from HPZ
 ObjID_Redz:		objptr Obj_Redz		; Redz (dinosaur badnik) from HPZ
 ObjID_Seahorse:		objptr Obj_Seahorse	; Seahorse/Aquis from HPZ
 ObjID_Skyhorse:		objptr Obj51		; Skyhorse from HPZ
-ObjID_BFish:		objptr Obj52		; BFish from HPZ
+ObjID_BFish:		objptr Obj_BFish	; BFish from HPZ
 ObjID_Masher:		objptr Obj53		; Masher from EHZ
 ObjID_Snail:		objptr Obj54		; Snail badnik from EHZ
 ObjID_EHZBoss:		objptr Obj55		; EHZ boss

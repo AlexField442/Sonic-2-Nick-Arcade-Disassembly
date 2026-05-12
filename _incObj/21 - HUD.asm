@@ -22,7 +22,7 @@ HUD_Init:
 		move.w	#$108,y_pixel(a0)
 		move.l	#MapUnc_HUD,mappings(a0)
 		move.w	#$6CA,art_tile(a0)
-		bsr.w	j_Adjust2PArtPointer_8
+		bsr.w	JmpTo9_Adjust2PArtPointer
 		move.b	#0,render_flags(a0)
 		move.b	#0,priority(a0)
 ; Obj21_Main:

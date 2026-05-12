@@ -31,12 +31,12 @@ Bridge_Index:	dc.w Bridge_Init-Bridge_Index
 ; loc_7BC6:
 Bridge_Init:
 		addq.b	#2,routine(a0)
-		move.l	#Map_obj11_GHZ,mappings(a0)
+		move.l	#MapUnc_GHZBridge,mappings(a0)
 		move.w	#$44C6,art_tile(a0)
 		move.b	#3,priority(a0)
 		cmpi.b	#3,(Current_Zone).w
 		bne.s	.notEHZ
-		move.l	#Map_obj11,mappings(a0)
+		move.l	#MapUnc_EHZBridge,mappings(a0)
 		move.w	#$43C6,art_tile(a0)
 		move.b	#3,priority(a0)
 ; loc_7BFA:
@@ -44,7 +44,7 @@ Bridge_Init:
 		cmpi.b	#4,(Current_Zone).w
 		bne.s	.notHPZ
 		addq.b	#4,routine(a0)
-		move.l	#Map_obj11_HPZ,mappings(a0)
+		move.l	#MapUnc_HPZBridge,mappings(a0)
 		move.w	#$6300,art_tile(a0)
 ; loc_7C14:
 .notHPZ:
@@ -553,13 +553,16 @@ Bridge_BendData2:
 ; ---------------------------------------------------------------------------
 ; Sprite mappings - GHZ bridge
 ; ---------------------------------------------------------------------------
-Map_obj11_GHZ:	incbin	"mappings/sprite/obj11_GHZ.bin"
+; Map_obj11_GHZ:
+MapUnc_GHZBridge:	incbin	"mappings/sprite/obj11_GHZ.bin"
 ; ---------------------------------------------------------------------------
 ; Sprite mappings - HPZ bridge
 ; ---------------------------------------------------------------------------
-Map_obj11_HPZ:	incbin	"mappings/sprite/obj11_HPZ.bin"
+; Map_obj11_HPZ:
+MapUnc_HPZBridge:	incbin	"mappings/sprite/obj11_HPZ.bin"
 ; ---------------------------------------------------------------------------
 ; Sprite mappings - EHZ bridge
 ; ---------------------------------------------------------------------------
-Map_obj11:	incbin	"mappings/sprite/obj11.bin"
+; Map_obj11:
+MapUnc_EHZBridge:	incbin	"mappings/sprite/obj11.bin"
 		nop

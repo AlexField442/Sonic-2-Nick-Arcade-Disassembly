@@ -184,7 +184,7 @@ PLC_HPZ2_End:
 		plc $350, Nem_Bat
 		plc $3C4, Nem_Triceratops
 		plc $500, Nem_Redz
-		plc $530, Nem_HPZ_Piranha
+		plc $530, Nem_BFish
 
 ; ---------------------------------------------------------------------------
 ; Pattern Load Cues - Hill Top Zone

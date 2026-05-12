@@ -24,7 +24,7 @@ EHZWaterfall_Init:
 		addq.b	#2,routine(a0)
 		move.l	#MapUnc_EHZWaterfall,mappings(a0)
 		move.w	#$23AE,art_tile(a0)
-		bsr.w	j_Adjust2PArtPointer_0
+		bsr.w	JmpTo_Adjust2PArtPointer
 		move.b	#4,render_flags(a0)
 		move.b	#$20,width_pixels(a0)
 		move.w	x_pos(a0),waterfall_unk(a0)
@@ -39,7 +39,7 @@ EHZWaterfall_Main:
 		andi.w	#$FF80,d0
 		sub.w	(Camera_X_pos_coarse).w,d0
 		cmpi.w	#$280,d0
-		bhi.w	loc_1586E
+		bhi.w	JmpTo3_DeleteObject
 
 loc_156F6:
 		move.w	x_pos(a0),d1
@@ -55,7 +55,7 @@ loc_156F6:
 		bcc.s	loc_15728
 		move.b	#1,mapping_frame(a0)
 		add.b	d3,mapping_frame(a0)
-		bra.w	loc_15868
+		bra.w	JmpTo3_DisplaySprite
 ; ===========================================================================
 
 loc_15728:
@@ -68,7 +68,7 @@ loc_15728:
 
 loc_1573A:
 		add.b	d3,mapping_frame(a0)
-		bra.w	loc_15868
+		bra.w	JmpTo3_DisplaySprite
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; sprite mappings

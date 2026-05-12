@@ -16,7 +16,8 @@ Obj_TitleCard:
 		jmp	TitleCard_Index(pc,d1.w)
 ; ===========================================================================
 ; off_B8D6: Obj34_Index:
-TitleCard_Index:	dc.w TitleCard_CheckSBZ3-TitleCard_Index
+TitleCard_Index:
+		dc.w TitleCard_CheckSBZ3-TitleCard_Index
 		dc.w TitleCard_CheckPos-TitleCard_Index
 		dc.w TitleCard_Wait-TitleCard_Index
 		dc.w TitleCard_Wait-TitleCard_Index

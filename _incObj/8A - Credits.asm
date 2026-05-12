@@ -23,7 +23,7 @@ StaffRoll_Init:
 		move.w	#$F0,y_pixel(a0)
 		move.l	#MapUnc_StaffRoll,mappings(a0)
 		move.w	#$5A0,art_tile(a0)
-		bsr.w	j_Adjust2PArtPointer_4
+		bsr.w	JmpTo5_Adjust2PArtPointer
 ; Obj8A_Credits: StaffRoll_Credits:
 		move.w	(Ending_demo_number).w,d0	; load credits index number
 		move.b	d0,mapping_frame(a0)	; display appropriate credits
@@ -34,7 +34,7 @@ StaffRoll_Init:
 		bne.s	StaffRoll_Display	; if not, branch
 ; Obj8A_SonicTeam: StaffRoll_SonicTeam:
 		move.w	#$300,art_tile(a0)
-		bsr.w	j_Adjust2PArtPointer_4
+		bsr.w	JmpTo5_Adjust2PArtPointer
 		move.b	#$A,mapping_frame(a0)
 		tst.b	(Hidden_credits_flag).w	; is the Sonic 1 hidden credits cheat activated?
 		beq.s	StaffRoll_Display	; if not, branch

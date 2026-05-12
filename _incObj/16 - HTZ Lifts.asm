@@ -47,8 +47,8 @@ HTZLift_Main:
 		andi.w	#$FF80,d0
 		sub.w	(Camera_X_pos_coarse).w,d0
 		cmpi.w	#$280,d0
-		bhi.w	loc_152AA
-		bra.w	loc_152A4
+		bhi.w	JmpTo_DeleteObject
+		bra.w	JmpTo_DisplaySprite
 ; ===========================================================================
 ; sub_15184:
 HTZLift_MoveRoutines:
@@ -82,7 +82,7 @@ locret_151BE:
 ; ===========================================================================
 ; loc_151C0: Obj16_Move:
 HTZLift_Slide:
-		bsr.w	j_ObjectMove_0
+		bsr.w	JmpTo_ObjectMove
 		subq.w	#1,lift_movetimer(a0)
 		bne.s	locret_151CE
 		addq.b	#1,lift_routine2(a0)

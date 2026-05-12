@@ -29,7 +29,7 @@ Redz_Init:
 		move.b	#$10,y_radius(a0)
 		move.b	#6,x_radius(a0)
 		move.b	#$C,collision_flags(a0)
-		bsr.w	j_ObjectMoveAndFall_1
+		bsr.w	JmpTo3_ObjectMoveAndFall
 		jsr	(ObjHitFloor).l
 		tst.w	d1
 		bpl.s	locret_15E0C
@@ -50,13 +50,13 @@ Redz_Main:
 		move.w	Redz_SubIndex(pc,d0.w),d1
 		jsr	Redz_SubIndex(pc,d1.w)
 		lea	(Ani_Redz).l,a1
-		bsr.w	j_AnimateSprite_2
+		bsr.w	JmpTo3_AnimateSprite
 		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	(Camera_X_pos_coarse).w,d0
 		cmpi.w	#$280,d0
 		bhi.w	Redz_ChkDel
-		bra.w	loc_15EE8
+		bra.w	JmpTo4_DisplaySprite
 ; ---------------------------------------------------------------------------
 ; loc_15E3E:
 Redz_ChkDel:
@@ -89,7 +89,7 @@ locret_15E7A:
 ; ===========================================================================
 ; loc_15E7C: Obj4F_ChkFloor:
 Redz_ChkFloor:
-		bsr.w	j_ObjectMove_3
+		bsr.w	JmpTo4_ObjectMove
 		jsr	(ObjHitFloor).l
 		cmpi.w	#-8,d1
 		blt.s	Redz_StopMoving
@@ -122,5 +122,5 @@ Ani_Redz:	dc.w .wait-Ani_Redz
 ; sprite mappings
 ; ---------------------------------------------------------------------------
 ; Map_obj4F:
-MapUnc_Redz:	include	"mappings/sprite/Redz.asm"
+MapUnc_Redz:	include	"mappings/sprite/Badnik - Redz.asm"
 		align 4

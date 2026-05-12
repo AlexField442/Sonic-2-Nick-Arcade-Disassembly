@@ -5,11 +5,11 @@
 ; Internal name: "seahorse"
 ; ---------------------------------------------------------------------------
 ; OST:
-seahorse_unk1:			equ $2A		; word
-seahorse_unk2:			equ $2C		; byte
-seahorse_shootingflag:		equ $2D		; byte
-seahorse_shotsremaining:	equ $2E		; word
-seahorse_totalshots:		equ $30		; word
+seahorse_origY:			equ $2A		; word
+seahorse_move_flag:		equ $2C		; byte ; I think this is what it does?
+seahorse_shooting_flag:		equ $2D		; byte
+seahorse_waiting_time:		equ $2E		; word
+seahorse_waiting_time2:		equ $30		; word ; not sure, seems to reset seahorse_waiting_time
 seahorse_range:			equ $32		; word ; range the Seahorse can move(?)
 seahorse_range2:		equ $34		; word ; not sure, seems to reset seahorse_range
 seahorse_child:			equ $36		; long ; pointer to wing object
@@ -39,7 +39,7 @@ Seahorse_Init:
 		move.b	#$A,collision_flags(a0)
 		move.b	#4,priority(a0)
 		move.b	#$10,width_pixels(a0)
-		move.w	#$FF00,x_vel(a0)
+		move.w	#-$100,x_vel(a0)
 		; How subtype works in this instance is that:
 		; - The upper 4 bits is (256 * X) frames of time until Seahorse fires.
 		; - The lower 4 bits is (16 * X) pixels Seahorse can move.
@@ -49,17 +49,17 @@ Seahorse_Init:
 		move.b	d0,d1
 		andi.w	#$F0,d1
 		lsl.w	#4,d1
-		move.w	d1,seahorse_shotsremaining(a0)
-		move.w	d1,seahorse_totalshots(a0)
+		move.w	d1,seahorse_waiting_time(a0)
+		move.w	d1,seahorse_waiting_time2(a0)
 		andi.w	#$F,d0
 		lsl.w	#4,d0
 		subq.w	#1,d0
 		move.w	d0,seahorse_range(a0)
 		move.w	d0,seahorse_range2(a0)
-		move.w	y_pos(a0),seahorse_unk1(a0)
+		move.w	y_pos(a0),seahorse_origY(a0)
 
 		; create Seahorse wing object
-		bsr.w	j_AllocateObject
+		bsr.w	JmpTo_AllocateObject
 		bne.s	Seahorse_Main
 		move.b	#ObjID_Seahorse,id(a1)
 		move.b	#4,routine(a1)
@@ -79,14 +79,14 @@ Seahorse_Init:
 ; loc_15FDA:
 Seahorse_Main:
 		lea	(Ani_Seahorse).l,a1
-		bsr.w	j_AnimateSprite_3
+		bsr.w	JmpTo4_AnimateSprite
 		move.w	#$39C,(Water_Level_1).w
 		moveq	#0,d0
 		move.b	routine_secondary(a0),d0
 		move.w	Seahorse_SubIndex(pc,d0.w),d1
 		jsr	Seahorse_SubIndex(pc,d1.w)
-		bsr.w	sub_161D8
-		bra.w	loc_1677A
+		bsr.w	Seahorse_ControlWing
+		bra.w	JmpTo3_MarkObjGone
 ; ===========================================================================
 ; Obj50_SubIndex:
 Seahorse_SubIndex:
@@ -99,51 +99,50 @@ Seahorse_Wing:
 		movea.l	seahorse_parent(a0),a1
 		; This check is redundant.
 		tst.b	(a1)
-		beq.w	loc_1676E
+		beq.w	JmpTo5_DeleteObject
 		cmpi.b	#ObjID_Seahorse,(a1)
-		bne.w	loc_1676E
+		bne.w	JmpTo5_DeleteObject
 		btst	#7,status(a1)
-		bne.w	loc_1676E
+		bne.w	JmpTo5_DeleteObject
 		lea	(Ani_Seahorse).l,a1
-		bsr.w	j_AnimateSprite_3
-		bra.w	loc_16768
+		bsr.w	JmpTo4_AnimateSprite
+		bra.w	JmpTo5_DisplaySprite
 ; ===========================================================================
 ; loc_16030:
 Seahorse_Bullet:
 		bsr.w	loc_162FC
-		bsr.w	j_ObjectMove_4
+		bsr.w	JmpTo5_ObjectMove
 		lea	(Ani_Seahorse).l,a1
-		bsr.w	j_AnimateSprite_3
-		bra.w	loc_1677A
+		bsr.w	JmpTo4_AnimateSprite
+		bra.w	JmpTo3_MarkObjGone
 ; ===========================================================================
 
 loc_16046:
-		bsr.w	j_ObjectMove_4
+		bsr.w	JmpTo5_ObjectMove
 		bsr.w	sub_162DE
-		bsr.w	sub_16184
-		bsr.w	sub_1611C
+		bsr.w	Seahorse_WaitToMove
+		bsr.w	Seahorse_FollowPlayer
 		rts
 ; ===========================================================================
 
 loc_16058:
-		bsr.w	j_ObjectMove_4
+		bsr.w	JmpTo5_ObjectMove
 		bsr.w	sub_162DE
-		bsr.w	sub_161A6
+		bsr.w	Seahorse_StopMoving
 		rts
 ; ===========================================================================
 ; loc_16066:
 Seahorse_Shooting:
-		bsr.w	j_ObjectMoveAndFall_2
+		bsr.w	JmpTo4_ObjectMoveAndFall
 		bsr.w	sub_162DE
 		bsr.w	Seahorse_ChkIfShoot
-		bsr.w	sub_160F4
+		bsr.w	Seahorse_ChkWaterLevel
 		rts
 
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 ; sub_16078:
 Seahorse_ChkIfShoot:
-		tst.b	seahorse_shootingflag(a0)
+		tst.b	seahorse_shooting_flag(a0)
 		bne.s	locret_16084
 		tst.w	y_vel(a0)
 		bpl.s	Seahorse_ShootBullet
@@ -153,10 +152,10 @@ locret_16084:
 ; ===========================================================================
 ; loc_16086:
 Seahorse_ShootBullet:
-		st	seahorse_shootingflag(a0)
+		st	seahorse_shooting_flag(a0)
 
 		; create bullet object
-		bsr.w	j_AllocateObject
+		bsr.w	JmpTo_AllocateObject
 		bne.s	locret_160F2
 		move.b	#ObjID_Seahorse,id(a1)
 		move.b	#6,routine(a1)
@@ -186,29 +185,27 @@ locret_160F2:
 ; End of function Seahorse_ChkIfShoot
 
 
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-sub_160F4:
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+; sub_160F4:
+Seahorse_ChkWaterLevel:
 		move.w	y_pos(a0),d0
 		cmp.w	(Water_Level_1).w,d0
 		blt.s	locret_1611A
 		move.b	#2,routine_secondary(a0)
 		move.b	#0,anim(a0)
-		move.w	seahorse_totalshots(a0),seahorse_shotsremaining(a0)
+		move.w	seahorse_waiting_time2(a0),seahorse_waiting_time(a0)
 		move.w	#$40,y_vel(a0)
-		sf	seahorse_shootingflag(a0)
+		sf	seahorse_shooting_flag(a0)
 
 locret_1611A:
 		rts
-; End of function sub_160F4
+; End of function Seahorse_ChkWaterLevel
 
 
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-sub_1611C:
-		tst.b	seahorse_unk2(a0)
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+; sub_1611C:
+Seahorse_FollowPlayer:
+		tst.b	seahorse_move_flag(a0)
 		beq.s	locret_16182
 		move.w	(MainCharacter+x_pos).w,d0
 		move.w	(MainCharacter+y_pos).w,d1
@@ -246,19 +243,18 @@ loc_16168:
 
 locret_16182:
 		rts
-; End of function sub_1611C
+; End of function Seahorse_FollowPlayer
 
 
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-sub_16184:
-		subq.w	#1,seahorse_shotsremaining(a0)
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+; sub_16184:
+Seahorse_WaitToMove:
+		subq.w	#1,seahorse_waiting_time(a0)
 		bne.s	locret_161A4
-		move.w	seahorse_totalshots(a0),seahorse_shotsremaining(a0)
+		move.w	seahorse_waiting_time2(a0),seahorse_waiting_time(a0)
 		addq.b	#2,routine_secondary(a0)
 		move.w	#-$40,d0
-		tst.b	seahorse_unk2(a0)
+		tst.b	seahorse_move_flag(a0)
 		beq.s	loc_161A0
 		neg.w	d0
 
@@ -267,20 +263,19 @@ loc_161A0:
 
 locret_161A4:
 		rts
-; End of function sub_16184
+; End of function Seahorse_WaitToMove
 
 
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-sub_161A6:
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+; sub_161A6:
+Seahorse_StopMoving:
 		move.w	y_pos(a0),d0
-		tst.b	seahorse_unk2(a0)
+		tst.b	seahorse_move_flag(a0)
 		bne.s	loc_161C4
 		cmp.w	(Water_Level_1).w,d0
 		bgt.s	locret_161C2
 		subq.b	#2,routine_secondary(a0)
-		st	seahorse_unk2(a0)
+		st	seahorse_move_flag(a0)
 		clr.w	y_vel(a0)
 
 locret_161C2:
@@ -288,45 +283,44 @@ locret_161C2:
 ; ===========================================================================
 
 loc_161C4:
-		cmp.w	seahorse_unk1(a0),d0
+		cmp.w	seahorse_origY(a0),d0
 		blt.s	locret_161C2
 		subq.b	#2,routine_secondary(a0)
-		sf	seahorse_unk2(a0)
+		sf	seahorse_move_flag(a0)
 		clr.w	y_vel(a0)
 		rts
-; End of function sub_161A6
+; End of function Seahorse_StopMoving
 
 
-; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-sub_161D8:
-		moveq	#$A,d0
-		moveq	#-6,d1
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+; sub_161D8:
+Seahorse_ControlWing:
+		moveq	#$A,d0	; X offset
+		moveq	#-6,d1	; Y offset
 		movea.l	seahorse_child(a0),a1
-		move.w	x_pos(a0),x_pos(a1)
+		move.w	x_pos(a0),x_pos(a1)	; align child with parent object
 		move.w	y_pos(a0),y_pos(a1)
 		move.b	status(a0),status(a1)
 		move.b	respawn_index(a0),respawn_index(a1)
 		move.b	render_flags(a0),render_flags(a1)
-		btst	#0,status(a1)
-		beq.s	loc_16208
+		btst	#0,status(a1)	; is Seahorse body facing left?
+		beq.s	loc_16208	; if not, branch
 		neg.w	d0
 
 loc_16208:
 		add.w	d0,x_pos(a1)
 		add.w	d1,y_pos(a1)
 		rts
-; End of function sub_161D8
+; End of function Seahorse_ControlWing
 
 ; ===========================================================================
 ; Obj50_Routine08:
 Seahorse_Routine08:
-		bsr.w	j_ObjectMoveAndFall_2
+		bsr.w	JmpTo4_ObjectMoveAndFall
 		bsr.w	sub_16228
 		lea	(Ani_Seahorse).l,a1
-		bsr.w	j_AnimateSprite_3
-		bra.w	loc_1677A
+		bsr.w	JmpTo4_AnimateSprite
+		bra.w	JmpTo3_MarkObjGone
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
 
@@ -343,7 +337,7 @@ sub_16228:
 
 loc_16242:
 		subi.b	#1,collision_property(a0)
-		beq.w	loc_1676E
+		beq.w	JmpTo5_DeleteObject
 		rts
 ; End of function sub_16228
 
@@ -353,14 +347,14 @@ Seahorse_Routine0A:
 		bsr.w	sub_1629E
 		tst.b	routine_secondary(a0)
 		beq.s	locret_1628E
-		subi.w	#1,seahorse_unk2(a0)
-		beq.w	loc_1676E
+		subi.w	#1,seahorse_move_flag(a0)
+		beq.w	JmpTo5_DeleteObject
 		move.w	(MainCharacter+x_pos).w,x_pos(a0)
 		move.w	(MainCharacter+y_pos).w,y_pos(a0)
 		addi.w	#$C,y_pos(a0)
-		subi.b	#1,seahorse_unk1(a0)
+		subi.b	#1,seahorse_origY(a0)
 		bne.s	loc_16290
-		move.b	#3,seahorse_unk1(a0)
+		move.b	#3,seahorse_origY(a0)
 		bchg	#0,status(a0)
 		bchg	#0,render_flags(a0)
 
@@ -370,8 +364,8 @@ locret_1628E:
 
 loc_16290:
 		lea	(Ani_Seahorse).l,a1
-		bsr.w	j_AnimateSprite_3
-		bra.w	loc_16768
+		bsr.w	JmpTo4_AnimateSprite
+		bra.w	JmpTo5_DisplaySprite
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
 
@@ -388,8 +382,8 @@ sub_1629E:
 		move.b	#1,priority(a0)
 		move.b	#5,anim(a0)
 		st	routine_secondary(a0)
-		move.w	#$12C,seahorse_unk2(a0)
-		move.b	#3,seahorse_unk1(a0)
+		move.w	#$12C,seahorse_move_flag(a0)
+		move.b	#3,seahorse_origY(a0)
 
 locret_162DC:
 		rts
@@ -419,7 +413,7 @@ loc_162FC:
 		moveq	#2,d3
 
 loc_16306:
-		bsr.w	j_AllocateObject
+		bsr.w	JmpTo_AllocateObject
 		bne.s	loc_16378
 		move.b	id(a0),id(a1)
 		move.b	#8,routine(a1)
@@ -451,7 +445,7 @@ loc_16372:
 
 loc_16378:
 		dbf	d3,loc_16306
-		bsr.w	j_AllocateObject
+		bsr.w	JmpTo_AllocateObject
 		bne.s	loc_1639A
 		move.b	id(a0),id(a1)
 		move.b	#$A,routine(a1)
@@ -459,7 +453,7 @@ loc_16378:
 		move.w	#$24E0,art_tile(a1)
 
 loc_1639A:
-		bra.w	loc_1676E
+		bra.w	JmpTo5_DeleteObject
 ; ===========================================================================
 
 locret_1639E:
