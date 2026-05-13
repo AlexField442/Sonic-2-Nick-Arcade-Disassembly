@@ -13,10 +13,10 @@ objptr macro *,pointer
 
 Obj_Index:
 ObjID_Sonic:		objptr Obj_Sonic	; Sonic
-ObjID_Tails:		objptr Obj02		; Tails
+ObjID_Tails:		objptr Obj_Tails	; Tails
 ObjID_Pathswapper:	objptr Obj03		; Collision plane/layer switcher
 ObjID_WaterSurface:	objptr Obj04		; Surface of the water
-ObjID_TailsTails:	objptr Obj05		; Tails' tails
+ObjID_TailsTails:	objptr Obj_TailsTails	; Tails' tails
 ObjID_Spiral:		objptr Obj06		; Twisting spiral pathway in EHZ
 			dc.l ObjNull
 ObjID_WaterSplash:	objptr Obj_WaterSplash	; Water splash in HPZ
@@ -48,7 +48,7 @@ ObjID_HUD:		objptr Obj_HUD		; Score/Rings/Time display (HUD)
 ObjID_BuzzBomber:	objptr Obj_BuzzBomber	; (S1) Buzz Bomber from GHZ
 ObjID_Missile:		objptr Obj_Missile	; (S1) Buzz Bomber/Newtron missile
 ObjID_Fizzle:		objptr Obj24		; (S1) Unused Buzz Bomber missile explosion
-ObjID_Ring:		objptr Obj25		; A ring
+ObjID_Ring:		objptr Obj_Ring		; A ring
 ObjID_Monitor:		objptr Obj26		; Monitor
 ObjID_Explosion:	objptr Obj27		; An explosion, giving off an animal and 100 points
 ObjID_Animal:		objptr Obj_Animal	; Animals from badnik
@@ -66,7 +66,7 @@ ObjID_MonitorContents:	objptr Obj2E		; Monitor contents (code for power-up behav
 ObjID_TitleCard:	objptr Obj_TitleCard	; (S1) Level title card
 			dc.l ObjNull
 ObjID_Spikes:		objptr Obj36		; Vertical spikes
-ObjID_LostRings:	objptr Obj37		; Scattering rings (generated when Sonic or Tails are hurt and has rings)
+ObjID_LostRings:	objptr Obj_LostRings	; Scattering rings (generated when Sonic or Tails are hurt and has rings)
 ObjID_Barrier:		objptr Obj_Barrier	; Shield and invincibility stars
 ObjID_GameOver:		objptr Obj_GameOver	; Game Over/Time Over text
 ObjID_Results:		objptr Obj_Results	; (S1) End of level results screen

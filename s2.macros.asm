@@ -33,3 +33,15 @@ stopZ80 macro
 startZ80 macro
 	move.w	#0,(Z80_Bus_Request).l
 	endm
+
+; macro to shorten Jump-To blocks
+jmpto macro name,address,padding
+\name:	jmp	(\address).l
+	if strlen("\padding")>0
+		if \padding=0
+			align 4
+		else
+			nop
+		endif
+	endif
+	endm

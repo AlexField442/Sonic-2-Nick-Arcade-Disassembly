@@ -8,7 +8,8 @@
 seesaw_origX:		equ $30			; original x-axis position
 seesaw_origY:		equ $34			; original x-axis position
 seesaw_speed:		equ $38			; speed of collision
-seesaw_frame:		equ $3A
+seesaw_state:		equ $3A			; seesaw: 0 = left raised; 2 = right raised; 1 = flat
+						; ball: 0 = on/launched from right side; 2 = on/launched from left side
 seesaw_parent:		equ $3C
 ; ---------------------------------------------------------------------------
 ; Sprite_14CA0: Obj14:
@@ -60,10 +61,10 @@ loc_14D2C:
 		move.b	#2,mapping_frame(a0)	; use different frame (duplicate, so no visible change)
 
 loc_14D3A:
-		move.b	mapping_frame(a0),seesaw_frame(a0)
+		move.b	mapping_frame(a0),seesaw_state(a0)
 ; loc_14D40:
 Seesaw_Main:
-		move.b	seesaw_frame(a0),d1
+		move.b	seesaw_state(a0),d1
 		btst	#3,status(a0)
 		beq.s	loc_14D9A
 		moveq	#2,d1
@@ -173,7 +174,7 @@ Seesaw_ChangeFrame:
 loc_14E1C:
 		subq.b	#1,d0
 		move.b	d0,mapping_frame(a0)
-		move.b	d1,seesaw_frame(a0)
+		move.b	d1,seesaw_state(a0)
 		bclr	#0,render_flags(a0)
 		btst	#1,mapping_frame(a0)
 		beq.s	locret_14E3A
@@ -202,13 +203,13 @@ Seesaw_Ball:
 		btst	#0,status(a0)		; is the Seesaw flipped?
 		beq.s	Seesaw_MoveBall		; if not, branch
 		subi.w	#$50,x_pos(a0)		; move ball to the other side
-		move.b	#2,seesaw_frame(a0)
+		move.b	#2,seesaw_state(a0)
 ; loc_14E9C:
 Seesaw_MoveBall:
 		movea.l	seesaw_parent(a0),a1
 		moveq	#0,d0
-		move.b	seesaw_frame(a0),d0
-		sub.b	seesaw_frame(a1),d0
+		move.b	seesaw_state(a0),d0
+		sub.b	seesaw_state(a1),d0
 		beq.s	loc_14EF2
 		bcc.s	loc_14EB0
 		neg.b	d0
@@ -299,8 +300,8 @@ loc_14F6E:
 		moveq	#0,d1
 
 loc_14F8C:
-		move.b	d1,seesaw_frame(a1)
-		move.b	d1,seesaw_frame(a0)
+		move.b	d1,seesaw_state(a1)
+		move.b	d1,seesaw_state(a0)
 		cmp.b	mapping_frame(a1),d1
 		beq.s	loc_14FB6
 		lea	(MainCharacter).w,a2

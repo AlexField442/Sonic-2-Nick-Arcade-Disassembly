@@ -6,7 +6,7 @@
 ; ---------------------------------------------------------------------------
 ; OST:
 crabmeat_timer:		equ $30	; time to wait for performing an action
-crabmeat_status:	equ $32	; 0 = moving, 1 = firing
+crabmeat_status:	equ $32	; 0/1 = moving, 2/3 = firing
 ; ---------------------------------------------------------------------------
 ; Sprite_A0D0: Obj1F:
 Obj_Crabmeat:

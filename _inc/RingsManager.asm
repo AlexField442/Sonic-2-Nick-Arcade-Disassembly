@@ -247,7 +247,7 @@ loc_DA1E:				; CODE XREF: Touch_Rings+7Cj
 
 loc_DA24:				; CODE XREF: Touch_Rings+80j
 		move.w	#$604,(a1)
-		bsr.w	sub_A8DE
+		bsr.w	CollectRing
 
 loc_DA2C:				; CODE XREF: Touch_Rings+58j Touch_Rings+6Aj ...
 		lea	6(a1),a1
