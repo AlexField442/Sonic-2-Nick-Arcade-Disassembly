@@ -581,7 +581,7 @@ locret_CBA:
 ; loc_CBC: VintSub4:
 Vint_Title:
 		bsr.w	Do_ControllerPal
-		bsr.w	ProcessDPLC
+		bsr.w	ProcessPLC_9Tiles
 		tst.w	(Demo_Time_left).w
 		beq.w	locret_CD0
 
@@ -668,7 +668,7 @@ loc_D48:
 Do_Updates:
 		bsr.w	LoadTilesAsYouMove
 		jsr	(HudUpdate).l
-		bsr.w	ProcessDPLC2
+		bsr.w	ProcessPLC_3Tiles
 		tst.w	(Demo_Time_left).w
 		beq.w	Do_Updates_End
 		subq.w	#1,(Demo_Time_left).w
@@ -762,7 +762,7 @@ loc_F08:
 		movem.l	d0-d1,(Scroll_flags_copy).w
 		bsr.w	LoadTilesAsYouMove
 		jsr	(HudUpdate).l
-		bsr.w	ProcessDPLC
+		bsr.w	ProcessPLC_9Tiles
 		rts
 ; >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ; loc_F88: VintSubE:
@@ -776,7 +776,7 @@ Vint_UnusedE:
 Vint_Fade:
 		bsr.w	Do_ControllerPal
 		move.w	(Hint_counter_reserve).w,(a5)
-		bra.w	ProcessDPLC
+		bra.w	ProcessPLC_9Tiles
 ; >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ; loc_FA4: VintSub16:
 Vint_SSResults:
@@ -1150,340 +1150,15 @@ PlaneMapToVRAM_H40_TileLoop:
 		rts
 ; End of function PlaneMapToVRAM_H40
 
-
-; ---------------------------------------------------------------------------
-; Subroutine for queueing VDP commands (seems to only queue transfers to VRAM),
-; to be issued the next time ProcessDMAQueue is called.
-; Can be called a maximum of 18 times before the buffer needs to be cleared
-; by issuing the commands (this subroutine DOES check for overflow)
-; ---------------------------------------------------------------------------
-
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-
-; DMA_68KtoVRAM: QueueCopyToVRAM: QueueVDPCommand: Add_To_DMA_Queue:
-QueueDMATransfer:
-		movea.l	(VDP_Command_Buffer_Slot).w,a1
-		cmpa.w	#VDP_Command_Buffer_Slot,a1
-		beq.s	QueueDMATransfer_Done	; return if there's no more room in the buffer
-
-		; piece together some VDP commands and store them for later...
-		move.w	#$9300,d0	; command to specify DMA transfer length & $00FF
-		move.b	d3,d0
-		move.w	d0,(a1)+	; store command
-
-		move.w	#$9400,d0	; command to specify DMA transfer length & $FF00
-		lsr.w	#8,d3
-		move.b	d3,d0
-		move.w	d0,(a1)+	; store command
-
-		move.w	#$9500,d0	; command to specify source address & $0001FE
-		lsr.l	#1,d1
-		move.b	d1,d0
-		move.w	d0,(a1)+	; store command
-
-		move.w	#$9600,d0	; command to specify source address & $01FE00
-		lsr.l	#8,d1
-		move.b	d1,d0
-		move.w	d0,(a1)+	; store command
-
-		move.w	#$9700,d0	; command to specify source address & $FE0000
-		lsr.l	#8,d1
-		move.b	d1,d0
-		move.w	d0,(a1)+	; store command
-
-		andi.l	#$FFFF,d2	; command to specify destination address and begin DMA
-		lsl.l	#2,d2
-		lsr.w	#2,d2
-		swap	d2
-		ori.l	#$40000080,d2	; set bits to specify VRAM transfer
-		move.l	d2,(a1)+	; store command
-
-		move.l	a1,(VDP_Command_Buffer_Slot).w	; set the next free slot address
-		cmpa.w	#VDP_Command_Buffer_Slot,a1
-		beq.s	QueueDMATransfer_Done	; return if there's no more room in the buffer
-		move.w	#0,(a1)			; put a stop token at the end of the used part of the buffer
-
-QueueDMATransfer_Done:
-		rts
-; End of function QueueDMATransfer
-
-; ---------------------------------------------------------------------------
-; Subroutine for issuing all VDP commands that were queued
-; (by earlier calls to QueueDMATransfer)
-; Resets the queue when it's done
-; ---------------------------------------------------------------------------
-
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-
-; CopyToVRAM: IssueVDPCommands: Process_DMA: Process_DMA_Queue:
-ProcessDMAQueue:
-		lea	(VDP_control_port).l,a5
-		lea	(VDP_Command_Buffer).w,a1
-
-ProcessDMAQueue_Loop:
-		move.w	(a1)+,d0
-		beq.s	ProcessDMAQueue_Done	; branch if we reached a stop token
-		; issue a set of VDP commands
-		move.w	d0,(a5)			; transfer length
-		move.w	(a1)+,(a5)		; transfer length
-		move.w	(a1)+,(a5)		; source address
-		move.w	(a1)+,(a5)		; source address
-		move.w	(a1)+,(a5)		; source address
-		move.w	(a1)+,(a5)		; destination
-		move.w	(a1)+,(a5)		; destination
-		cmpa.w	#VDP_Command_Buffer_Slot,a1
-		bne.s	ProcessDMAQueue_Loop	; loop if we haven't reached end of buffer
-
-ProcessDMAQueue_Done:
-		move.w	#0,(VDP_Command_Buffer).w
-		move.l	#VDP_Command_Buffer,(VDP_Command_Buffer_Slot).w
-		rts
-; End of function ProcessDMAQueue
-
+		; Decompressors & graphics queuing routines
+		include	"_inc/DMA Queue.asm"
 		include	"_inc/Nemesis Decompression.asm"
-
-; ---------------------------------------------------------------------------
-; Subroutine to load pattern load cues (aka to queue pattern load requests)
-; ---------------------------------------------------------------------------
-
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-
-; ARGUMENTS
-; d0 = index of PLC list (see ArtLoadCues)
-
-; NOTICE: This subroutine does not check for buffer overruns. The programmer
-;	  (or hacker) is responsible for making sure that no more than
-;	  16 load requests are copied into the buffer.
-;    _________DO NOT PUT MORE THAN 16 LOAD REQUESTS IN A LIST!__________
-;         (or if you change the size of Plc_Buffer, the limit becomes (Plc_Buffer_Only_End-Plc_Buffer)/6)
-
-; PLCLoad:
-LoadPLC:
-		movem.l	a1-a2,-(sp)
-		lea	(ArtLoadCues).l,a1
-		add.w	d0,d0
-		move.w	(a1,d0.w),d0
-		lea	(a1,d0.w),a1
-		lea	(Plc_Buffer).w,a2
-
-loc_1688:
-		tst.l	(a2)
-		beq.s	loc_1690
-		addq.w	#6,a2
-		bra.s	loc_1688
-; ---------------------------------------------------------------------------
-
-loc_1690:
-		move.w	(a1)+,d0
-		bmi.s	loc_169C
-
-loc_1694:
-		move.l	(a1)+,(a2)+
-		move.w	(a1)+,(a2)+
-		dbf	d0,loc_1694
-
-loc_169C:
-		movem.l	(sp)+,a1-a2
-		rts
-; End of function LoadPLC
-
-
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-; Queue pattern load requests, but clear the PLQ first
-
-; ARGUMENTS
-; d0 = index of PLC list (see ArtLoadCues)
-
-; NOTICE: This subroutine does not check for buffer overruns. The programmer
-;	  (or hacker) is responsible for making sure that no more than
-;	  16 load requests are copied into the buffer.
-;	  _________DO NOT PUT MORE THAN 16 LOAD REQUESTS IN A LIST!__________
-;         (or if you change the size of Plc_Buffer, the limit becomes (Plc_Buffer_Only_End-Plc_Buffer)/6)
-
-LoadPLC2:
-		movem.l	a1-a2,-(sp)
-		lea	(ArtLoadCues).l,a1
-		add.w	d0,d0
-		move.w	(a1,d0.w),d0
-		lea	(a1,d0.w),a1
-		bsr.s	ClearPLC
-		lea	(Plc_Buffer).w,a2
-		move.w	(a1)+,d0
-		bmi.s	loc_16C8
-
-loc_16C0:
-		move.l	(a1)+,(a2)+
-		move.w	(a1)+,(a2)+
-		dbf	d0,loc_16C0
-
-loc_16C8:
-		movem.l	(sp)+,a1-a2
-		rts
-; End of function LoadPLC2
-
-
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-
-; Clear the pattern load queue ($FFF680 - $FFF700)
-
-ClearPLC:
-		lea	(Plc_Buffer).w,a2
-		moveq	#$1F,d0
-
-loc_16D4:
-		clr.l	(a2)+
-		dbf	d0,loc_16D4
-		rts
-; End of function ClearPLC
-
-
-; ---------------------------------------------------------------------------
-; Subroutine to use graphics listed in a pattern load cue
-; ---------------------------------------------------------------------------
-
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-
-; RunPLC:
-RunPLC_RAM:
-		tst.l	(Plc_Buffer).w
-		beq.s	locret_1730
-		tst.w	(Plc_PatternsLeft).w
-		bne.s	locret_1730
-		movea.l	(Plc_Buffer).w,a0
-		lea	NemDec_WriteAndStay(pc),a3
-		nop
-		lea	(Decomp_Buffer).w,a1
-		move.w	(a0)+,d2
-		bpl.s	loc_16FE
-		adda.w	#$A,a3
-
-loc_16FE:
-		andi.w	#$7FFF,d2
-		move.w	d2,(Plc_PatternsLeft).w
-		bsr.w	NemDecPrepare
-		move.b	(a0)+,d5
-		asl.w	#8,d5
-		move.b	(a0)+,d5
-		moveq	#$10,d6
-		moveq	#0,d0
-		move.l	a0,(Plc_Buffer).w
-		move.l	a3,(Plc_PtrNemCode).w
-		move.l	d0,(Plc_RepeatCount).w
-		move.l	d0,(Plc_PaletteIndex).w
-		move.l	d0,(Plc_PreviousRow).w
-		move.l	d5,(Plc_DataWord).w
-		move.l	d6,(Plc_ShiftValue).w
-
-locret_1730:
-		rts
-; End of function RunPLC_RAM
-
-
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-; Process one PLC from the queue
-
-; sub_1732:
-ProcessDPLC:
-		tst.w	(Plc_PatternsLeft).w
-		beq.w	locret_17CA
-		move.w	#9,(Plc_FramePatternsLeft).w
-		moveq	#0,d0
-		move.w	(Plc_Buffer+4).w,d0
-		addi.w	#$120,(Plc_Buffer+4).w
-		bra.s	ProcessDPLC_Main
-
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-; Process one PLC from the queue
-
-; loc_174E:
-ProcessDPLC2:
-		tst.w	(Plc_PatternsLeft).w
-		beq.s	locret_17CA
-		move.w	#3,(Plc_FramePatternsLeft).w
-		moveq	#0,d0
-		move.w	(Plc_Buffer+4).w,d0
-		addi.w	#$60,(Plc_Buffer+4).w
-; loc_1766:
-ProcessDPLC_Main:
-		lea	(VDP_control_port).l,a4
-		lsl.l	#2,d0
-		lsr.w	#2,d0
-		ori.w	#$4000,d0
-		swap	d0
-		move.l	d0,(a4)
-		subq.w	#4,a4
-		movea.l	(Plc_Buffer).w,a0
-		movea.l	(Plc_PtrNemCode).w,a3
-		move.l	(Plc_RepeatCount).w,d0
-		move.l	(Plc_PaletteIndex).w,d1
-		move.l	(Plc_PreviousRow).w,d2
-		move.l	(Plc_DataWord).w,d5
-		move.l	(Plc_ShiftValue).w,d6
-		lea	(Decomp_Buffer).w,a1
-
-loc_179A:
-		movea.w	#8,a5
-		bsr.w	NemDec_WriteIter
-		subq.w	#1,(Plc_PatternsLeft).w
-		beq.s	ProcessDPLC_Pop
-		subq.w	#1,(Plc_FramePatternsLeft).w
-		bne.s	loc_179A
-		move.l	a0,(Plc_Buffer).w
-		move.l	a3,(Plc_PtrNemCode).w
-		move.l	d0,(Plc_RepeatCount).w
-		move.l	d1,(Plc_PaletteIndex).w
-		move.l	d2,(Plc_PreviousRow).w
-		move.l	d5,(Plc_DataWord).w
-		move.l	d6,(Plc_ShiftValue).w
-
-locret_17CA:
-		rts
-; ===========================================================================
-; pop one request off the buffer so that the next one can be filled
-; loc_17CC:
-ProcessDPLC_Pop:
-		lea	(Plc_Buffer).w,a0
-		moveq	#$15,d0
-
-loc_17D2:
-		move.l	6(a0),(a0)+
-		dbf	d0,loc_17D2
-		rts
-; End of function ProcessDPLC
-
-
-; ---------------------------------------------------------------------------
-; Subroutine to execute a pattern load cue directly from the ROM
-; rather than loading them into the queue first
-; ---------------------------------------------------------------------------
-
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-
-
-RunPLC_ROM:
-		lea	(ArtLoadCues).l,a1
-		add.w	d0,d0
-		move.w	(a1,d0.w),d0
-		lea	(a1,d0.w),a1
-		move.w	(a1)+,d1
-
-loc_17EE:
-		movea.l	(a1)+,a0
-		moveq	#0,d0
-		move.w	(a1)+,d0
-		lsl.l	#2,d0
-		lsr.w	#2,d0
-		ori.w	#$4000,d0
-		swap	d0
-		move.l	d0,(VDP_control_port).l
-		bsr.w	NemDec
-		dbf	d1,loc_17EE
-		rts
-; End of function RunPLC_ROM
-
+		include	"_inc/RunPLC & LoadPLC.asm"
 		include	"_inc/Enigma Decompression.asm"
 		include	"_inc/Kosinski Decompression.asm"
 		include	"_inc/Chameleon Decompression.asm"
+
+		; Palette routines
 		include	"_inc/Palette Cycling.asm"
 		include	"_inc/Palette Fading.asm"
 		include	"_inc/Palette Cycling - SEGA.asm"
