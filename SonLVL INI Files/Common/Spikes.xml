@@ -2,7 +2,7 @@
 <ObjDef xmlns="http://www.sonicretro.org" Namespace="S2ObjectDefinitions.Common" TypeName="Spikes" Language="cs" Name="Spikes" Image="horiz1">
   <Images>
     <ImageFromMappings id="horiz1">
-      <ArtFile filename="../art/nemesis/Spikes.bin" />
+      <ArtFile filename="../art/nemesis/General - Spikes.bin" />
       <MapFile type="Binary" filename="../mappings/sprite/obj36.bin" frame="0" startpal="1" />
     </ImageFromMappings>
   </Images>

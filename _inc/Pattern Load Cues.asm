@@ -108,8 +108,8 @@ PLC_GHZ:	plcheader
 		plc 0, Nem_GHZ
 		plc $470, Nem_GHZ_Piranha
 		plc $4A0, Nem_VSpikes
-		plc $4A8, Nem_VSpring
-		plc $4B8, Nem_HSpring
+		plc $4A8, Nem_HSpring
+		plc $4B8, Nem_VSpring
 		plc $4C6, Nem_GHZ_Bridge
 		plc $4D0, Nem_SwingPlatform
 		plc $4E0, Nem_Motobug

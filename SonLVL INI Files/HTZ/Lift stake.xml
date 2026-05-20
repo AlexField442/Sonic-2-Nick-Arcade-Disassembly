@@ -2,11 +2,11 @@
 <ObjDef xmlns="http://www.sonicretro.org" Name="Lift Stake" Image="stakeleft" DefaultSubtype="04">
   <Images>
     <ImageFromMappings id="stakeleft">
-      <ArtFile filename="../art/nemesis/Diagonal lift from HTZ.bin" />
+      <ArtFile filename="../art/nemesis/HTZ - Diagonal Lift.bin" />
       <MapFile type="ASM" filename="../mappings/sprite/HTZ Lifts.asm" frame="1" startpal="2" />
     </ImageFromMappings>
     <ImageFromMappings id="stakeright">
-      <ArtFile filename="../art/nemesis/Diagonal lift from HTZ.bin" />
+      <ArtFile filename="../art/nemesis/HTZ - Diagonal Lift.bin" />
       <MapFile type="ASM" filename="../mappings/sprite/HTZ Lifts.asm" frame="2" startpal="2" />
     </ImageFromMappings>
   </Images>
