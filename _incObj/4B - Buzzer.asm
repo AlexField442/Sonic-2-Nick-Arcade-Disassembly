@@ -226,7 +226,8 @@ Ani_Buzzer:	dc.w .moving-Ani_Buzzer
 ; byte_169E9:
 .bullet:	dc.b   3,  5,  6,$FF
 ; byte_169ED:
-.shoot:		dc.b   9,  1,  1,  1,  1,  1,$FD,  0,  0
+.shoot:		dc.b   9,  1,  1,  1,  1,  1,$FD,  0
+		even
 
 ; ---------------------------------------------------------------------------
 ; Sprite mappings

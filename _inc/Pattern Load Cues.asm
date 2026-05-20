@@ -176,12 +176,12 @@ PLC_HPZ_End:
 
 PLC_HPZ2:	plcheader
 		plc $500, Nem_Redz
-		plc $530, Nem_Bat
+		plc $530, Nem_BBat
 PLC_HPZ2_End:
 		; unused PLR entries
 		plc $300, Nem_Crocobot
 		plc $32C, Nem_Buzzer
-		plc $350, Nem_Bat
+		plc $350, Nem_BBat
 		plc $3C4, Nem_Triceratops
 		plc $500, Nem_Redz
 		plc $530, Nem_BFish

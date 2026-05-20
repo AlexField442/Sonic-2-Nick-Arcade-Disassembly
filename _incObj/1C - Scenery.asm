@@ -58,7 +58,7 @@ Scenery_Init:
 		; In this build, the HPZ bridge stake and glowing orbs are a subtype of this
 		; object, with the upper 4 bits of subtype being used to determine if it
 		; should be animated. The final split them (and the MTZ lava bubble) into
-		; a separate 'animated' scenery object (71).
+		; a separate 'animated' scenery object ($71).
 		move.b	subtype(a0),d0
 		andi.w	#$F0,d0
 		beq.s	Scenery_Main

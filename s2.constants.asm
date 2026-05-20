@@ -100,7 +100,7 @@ levelrowcount:		equ 32		; maximum height of a level layout in chunks
 palette_line_size:	equ $10*2	; 16 word entries
 
 ; REDRAWING ROUTINES:
-; This ia used by stages that employ a more advanced redraw routine, basing it
+; This is used by stages that employ a more advanced redraw routine, basing it
 ; off the various background positions other than just BG1; this is to stop tiles
 ; from being accidentally overwritten
 
@@ -539,40 +539,56 @@ Saved_Extra_life_flags:		rs.b	1
 Emerald_count:			rs.b	1
 Emeralds_array:			rs.b	6
 
-LAST_VALUE:			equ	__rs	; $FE5E
+Oscillating_Numbers:		rs.w	1
+Oscillation_Control:		equ	__rs-2
+Oscillating_Data:		rs.w	$20
+				rs.b	$20	; $FFFFFEA0-$FFFFFEBF ; unused
+Logspike_anim_counter:		rs.b	1
+Logspike_anim_frame:		rs.b	1
+Rings_anim_counter:		rs.b	1
+Rings_anim_frame:		rs.b	1
+Unknown_anim_counter:		rs.b	1
+Unknown_anim_frame:		rs.b	1
+Ring_spill_anim_counter:	rs.b	1
+Ring_spill_anim_frame:		rs.b	1
+Ring_spill_anim_accum:		rs.b	1
+				rs.b	$26	; $FFFFFECA-$FFFFFEEF ; unused
+Camera_Min_Y_pos_Debug_Copy:	rs.w	1
+Camera_Max_Y_pos_Debug_Copy:	rs.w	1
+				rs.b	$C	; $FFFFFEF4-$FFFFFEFF ; unused
+Oscillating_Data_End:		equ	__rs
+
+Chunk0_Collision:		rs.w	1	; due to a programming oversight, this is used by the
+						; collision code to determine chunk 0's collision
+				rs.b	$7E	; $FFFFFF02-$FFFFFF7F ; unused
+
+LevSel_HoldTimer:		rs.w	1
+Level_select_zone:		rs.w	1
+Sound_test_sound:		rs.w	1
+				rs.b	$3A	; $FFFFFF86-$FFFFFFBF ; unused
+Next_Extra_life_score:		rs.l	1
+				rs.b	$1C	; $FFFFFFC4-$FFFFFFDF ; unused
+Level_select_flag:		rs.b	1
+Slow_motion_flag:		rs.b	1
+Debug_options_flag:		rs.b	1
+Hidden_credits_flag:		rs.b	1
+Correct_cheat_entries:		rs.w	1
+Correct_cheat_entries_2:	rs.w	1
+Two_player_mode:		rs.w	1
+unk_FFEA:			rs.w	1
+unk_FFEC:			rs.w	1
+unk_FFEE:			rs.w	1
+Demo_mode_flag:			rs.w	1
+Demo_number:			rs.w	1
+Ending_demo_number:		rs.w	1
+				rs.b	2	; $FFFFFFF6-$FFFFFFF7 ; unused
+Graphics_flags:			rs.w	1
+Debug_mode_flag:		rs.w	1
+Checksum_fourcc:		rs.l	1
+CrossResetRAM_End:		equ	__rs
+
+RAM_End:			equ	__rs
 		popo						; restore options
-
-Logspike_anim_counter:		equ $FFFFFEC0
-Logspike_anim_frame:		equ $FFFFFEC1
-Rings_anim_counter:		equ $FFFFFEC2
-Rings_anim_frame:		equ $FFFFFEC3
-Unknown_anim_counter:		equ $FFFFFEC4
-Unknown_anim_frame:		equ $FFFFFEC5
-Ring_spill_anim_counter:	equ $FFFFFEC6
-Ring_spill_anim_frame:		equ $FFFFFEC7
-Ring_spill_anim_accum:		equ $FFFFFEC8
-
-LevSel_HoldTimer:		equ $FFFFFF80
-Level_select_zone:		equ $FFFFFF82
-Sound_test_sound:		equ $FFFFFF84
-
-Next_Extra_life_score:		equ $FFFFFFC0
-Level_select_flag:		equ $FFFFFFE0
-Slow_motion_flag:		equ $FFFFFFE1
-Debug_options_flag:		equ $FFFFFFE2
-Hidden_credits_flag:		equ $FFFFFFE3
-Correct_cheat_entries:		equ $FFFFFFE4
-Correct_cheat_entries_2:	equ $FFFFFFE6
-Two_player_mode:		equ $FFFFFFE8
-unk_FFEA:			equ $FFFFFFEA
-unk_FFEC:			equ $FFFFFFEC
-unk_FFEE:			equ $FFFFFFEE
-Demo_mode_flag:			equ $FFFFFFF0
-Demo_number:			equ $FFFFFFF2
-Ending_demo_number:		equ $FFFFFFF4
-Graphics_flags:			equ $FFFFFFF8
-Debug_mode_flag:		equ $FFFFFFFA
-Checksum_fourcc:		equ $FFFFFFFC
 
 ; ---------------------------------------------------------------------------
 ; Title objects

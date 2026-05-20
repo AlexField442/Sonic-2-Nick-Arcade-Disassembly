@@ -27,8 +27,8 @@ Seahorse_Index:	dc.w Seahorse_Init-Seahorse_Index
 		dc.w Seahorse_Main-Seahorse_Index
 		dc.w Seahorse_Wing-Seahorse_Index
 		dc.w Seahorse_Bullet-Seahorse_Index
-		dc.w Seahorse_Routine08-Seahorse_Index
-		dc.w Seahorse_Routine0A-Seahorse_Index
+		dc.w Seahorse_BulletFall-Seahorse_Index
+		dc.w Seahorse_CreateOil-Seahorse_Index
 ; ===========================================================================
 ; loc_15F22: Obj50_Init:
 Seahorse_Init:
@@ -90,8 +90,8 @@ Seahorse_Main:
 ; ===========================================================================
 ; Obj50_SubIndex:
 Seahorse_SubIndex:
-		dc.w loc_16046-Seahorse_SubIndex
-		dc.w loc_16058-Seahorse_SubIndex
+		dc.w Seahorse_Swimming-Seahorse_SubIndex
+		dc.w Seahorse_Floating-Seahorse_SubIndex
 		dc.w Seahorse_Shooting-Seahorse_SubIndex
 ; ===========================================================================
 ; loc_16006:
@@ -110,33 +110,33 @@ Seahorse_Wing:
 ; ===========================================================================
 ; loc_16030:
 Seahorse_Bullet:
-		bsr.w	loc_162FC
+		bsr.w	Seahorse_ShootBullet2
 		bsr.w	JmpTo5_ObjectMove
 		lea	(Ani_Seahorse).l,a1
 		bsr.w	JmpTo4_AnimateSprite
 		bra.w	JmpTo3_MarkObjGone
 ; ===========================================================================
-
-loc_16046:
+; loc_16046:
+Seahorse_Swimming:
 		bsr.w	JmpTo5_ObjectMove
-		bsr.w	sub_162DE
+		bsr.w	Seahorse_CheckOrientation
 		bsr.w	Seahorse_WaitToMove
 		bsr.w	Seahorse_FollowPlayer
 		rts
 ; ===========================================================================
-
-loc_16058:
+; loc_16058:
+Seahorse_Floating:
 		bsr.w	JmpTo5_ObjectMove
-		bsr.w	sub_162DE
+		bsr.w	Seahorse_CheckOrientation
 		bsr.w	Seahorse_StopMoving
 		rts
 ; ===========================================================================
 ; loc_16066:
 Seahorse_Shooting:
 		bsr.w	JmpTo4_ObjectMoveAndFall
-		bsr.w	sub_162DE
+		bsr.w	Seahorse_CheckOrientation
 		bsr.w	Seahorse_ChkIfShoot
-		bsr.w	Seahorse_ChkWaterLevel
+		bsr.w	Seahorse_ChkAttackDone
 		rts
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
@@ -186,8 +186,8 @@ locret_160F2:
 
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-; sub_160F4:
-Seahorse_ChkWaterLevel:
+; sub_160F4: Seahorse_ChkWaterLevel:
+Seahorse_ChkAttackDone:
 		move.w	y_pos(a0),d0
 		cmp.w	(Water_Level_1).w,d0
 		blt.s	locret_1611A
@@ -199,7 +199,7 @@ Seahorse_ChkWaterLevel:
 
 locret_1611A:
 		rts
-; End of function Seahorse_ChkWaterLevel
+; End of function Seahorse_ChkAttackDone
 
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
@@ -314,18 +314,17 @@ loc_16208:
 ; End of function Seahorse_ControlWing
 
 ; ===========================================================================
-; Obj50_Routine08:
-Seahorse_Routine08:
+; Obj50_Routine08: Seahorse_Routine08:
+Seahorse_BulletFall:
 		bsr.w	JmpTo4_ObjectMoveAndFall
-		bsr.w	sub_16228
+		bsr.w	Seahorse_BulletChkFloor
 		lea	(Ani_Seahorse).l,a1
 		bsr.w	JmpTo4_AnimateSprite
 		bra.w	JmpTo3_MarkObjGone
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-sub_16228:
+; sub_16228:
+Seahorse_BulletChkFloor:
 		jsr	(ObjHitFloor).l
 		tst.w	d1
 		bpl.s	loc_16242
@@ -342,9 +341,9 @@ loc_16242:
 ; End of function sub_16228
 
 ; ===========================================================================
-; Obj50_Routine0A:
-Seahorse_Routine0A:
-		bsr.w	sub_1629E
+; Obj50_Routine0A: Seahorse_Routine0A:
+Seahorse_CreateOil:
+		bsr.w	Seahorse_CheckOilHitFloor
 		tst.b	routine_secondary(a0)
 		beq.s	locret_1628E
 		subi.w	#1,seahorse_move_flag(a0)
@@ -368,9 +367,8 @@ loc_16290:
 		bra.w	JmpTo5_DisplaySprite
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-sub_1629E:
+; sub_1629E:
+Seahorse_CheckOilHitFloor:
 		tst.b	routine_secondary(a0)
 		bne.s	locret_162DC
 		move.b	(MainCharacter+routine).w,d0
@@ -387,13 +385,12 @@ sub_1629E:
 
 locret_162DC:
 		rts
-; End of function sub_1629E
+; End of function Seahorse_CheckOilHitFloor
 
 
 ; ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ S U B	R O U T	I N E ÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛÛ
-
-
-sub_162DE:
+; sub_162DE:
+Seahorse_CheckOrientation:
 		subq.w	#1,seahorse_range(a0)
 		bpl.s	locret_162FA
 		move.w	seahorse_range2(a0),seahorse_range(a0)
@@ -403,11 +400,11 @@ sub_162DE:
 
 locret_162FA:
 		rts
-; End of function sub_162DE
+; End of function Seahorse_CheckOrientation
 
 ; ===========================================================================
-
-loc_162FC:
+; loc_162FC:
+Seahorse_ShootBullet2:
 		tst.b	collision_property(a0)
 		beq.w	locret_1639E
 		moveq	#2,d3

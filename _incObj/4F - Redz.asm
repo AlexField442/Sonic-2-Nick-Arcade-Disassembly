@@ -122,5 +122,5 @@ Ani_Redz:	dc.w .wait-Ani_Redz
 ; sprite mappings
 ; ---------------------------------------------------------------------------
 ; Map_obj4F:
-MapUnc_Redz:	include	"mappings/sprite/Badnik - Redz.asm"
+MapUnc_Redz:	include	"mappings/sprite/Badniks - Redz.asm"
 		align 4
