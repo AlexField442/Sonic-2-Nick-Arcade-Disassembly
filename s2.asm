@@ -22098,55 +22098,8 @@ Level_HPZBg:	incbin	"level/layout/HPZ_BG.bin"
 		even
 Level_Null:	dc.b   0,  0,  0,  0
 
-Art_BigRing:	dc.l	     0,	       0,	 0,	   0,	    $D,	     $DD,    $EDDC,   $EDDCC,	     0,	     $DD,   $DDCCC, $DDCCC6C,$DCCCCCCC,$CCCCCCCC,$CCCDCDDD,$DDCCCCDD; 0
-		dc.l   $CCCCCC,$CCC66666,$66666666,$CCCCCCCC,$CCCCCCCC,$CDDDDDDD,$DDDDDDDD,$DDDEEEEE,$CCCCCC00,$666666CC,$66666666,$66666666,$CCCCC666,$DDDDDCCC,$DDDDDDDD,$EEEEEEEE; 16
-		dc.l	     0,$CC000000,$66CCC000,$66666CC0,$66666666,$CC666666,$DCCCC666,$DDDDCCC6,	     0,	       0,	 0,	   0,$C0000000,$66000000,$666C0000,$66666000; 32
-		dc.l	     0,	       0,	 0,	  $E,	   $EE,	     $EE,     $EED,    $EEED,  $EEDDDD,	$EEDDDDC,$EEDDDDCC,$EDDDDCCC,$DDDDCCCD,$DDDCCCCD,$DDCCCCDE,$DCCCCDDE; 48
-		dc.l $CCCCDDDD,$CCCDDDEE,$CDDDEEEE,$DDEEEEEE,$DEEEEE00,$EEEE0000,$EE000000,$E0000000,$EEEEEEEE,$EEEEEEEE,$EEE00000,	   0,	     0,	       0,	 0,	   0; 64
-		dc.l $EEEEEEEE,$EEEEEEEE,     $EEE,	   0,	     0,	       0,	 0,	   0,$EEEDDDCC,$EEEEEDDD,$EEEEEEED,$EEEEEEEE,  $EEEEEE,	   $EEEE,      $EE,	  $E; 80
-		dc.l $66666600,$CC666660,$DDC66666,$EDDC6666,$EEDDC666,$EEEDDC66,$EEEEDDC6,$EEEEEDC6,	     0,	       0,	 0,$60000000,$6C000000,$66000000,$66600000,$666C0000; 96
-		dc.l	 $EEDD,	  $EEEDD,   $EEEDD,  $EEEDDC,  $EEEDDC,	 $EEEDCC, $EEEEDCC, $EEEDDCC, $EEEDCCC,	$EEEDCCC,$EEEEDCCC,$EEEEDCCC,$EEEEDCCC,$EEEEDCCC,$EEEEDCCC,$EEEEDCCC; 112
-		dc.l $EEEEDCCC,$EEEEDCCC,$EEEEDCCC,$EEEEDDCC,$EEEEEDCC,$EEEEEDCC, $EEEEDCC, $EEEEEDC, $EEEEEDC,	$EEEEEDC,  $EEEEDC,  $EEEEED,  $EEEEED,	  $EEEEE,   $EEEEE,    $EEEE; 128
-		dc.l $DCCCCDEE,$CCCCDEE0,$CCCCDE00,$CCCDEE00,$CCCDE000,$CCCDE000,$CCCE0000,$CCDE0000,$CCD00000,$CCD00000,$CCD00000,$CC000000,$C6000000,$C6000000,$C6000000,$C6000000; 144
-		dc.l $66000000,$66000000,$66000000,$66000000,$66000000,$66600000,$66600000,$66600000,$66660000,$66660000,$C6666000,$C6666000,$C6666600,$DC666600,$EDC66660,$EDC66666; 160
-		dc.l $EEEEEDDC,	$EEEEEDC,  $EEEEDD,  $EEEEED,	$EEEED,	  $EEEEE,    $EEEE,    $EEEE,	  $EEE,	    $EEE,     $EEE,	 $EE,	   $EE,	     $EE,      $EE,	 $EE; 176
-		dc.l	   $EE,	     $EE,      $EE,	 $EE,	   $EE,	    $EEE,     $EEE,	$EEE,	 $EEED,	   $EEED,   $EEEDD,   $EEEDD,  $EEEDDC,	 $EEEDCC, $EEEDDCC,$EEEDDCCC; 192
-		dc.l $66660000,$C666C000,$C666C000,$CC666C00,$DC666C00,$DC666C00,$DCC666C0,$DDC666C0,$EDC666C0,$EDC666C0,$EDC6666C,$EDDC666C,$EDDC666C,$EDDC666C,$EDDC666C,$EDDC666C; 208
-		dc.l $EDDCC66C,$EDDCC66C,$EDDCC66C,$EDDCC66C,$EDDCC66C,$DDDCC6CC,$DDDCC6C0,$DDCCC6C0,$DDCCCCD0,$DDCC6CD0,$CDCCCC00,$CCCCCD00,$CDCCCD00,$CCCCD000,$DCCCD000,$DCCD0000; 224
-		dc.l	 $EEEE,	    $EEE,      $EE,	 $EE,	    $E,	       0,	 0,	   0,$EEDC6666,$EEEDC666,$EEEEDC66,$EEEEEDC6,$EEEEEEDC,$EEEEEEED, $EEEEEEE,  $EEEEEE; 240
-		dc.l $60000000,$66000000,$66660000,$66666600,$66666666,$CC666666,$DDC66666,$EEDCCC66,	     0,	       0,	 0,	   0,	     0,$66600000,$66666666,$66666666; 256
-		dc.l	     0,	       0,	 0,	   0,	     0,	    $DDD,$6666CCCC,$CCCCCCCC,	    $E,	     $EE,    $EEED,  $EEEDDC,$EEDDDCCC,$DCCCCCCC,$CCCCCCCC,$CCCCCCCD; 272
-		dc.l $EEDDCCCD,$DDCCCCDD,$DCCCCDDD,$CCCCDDDD,$CCCDDDDE,$CCDDDDEE,$CDDDDEE0,$DDDDEE00,$CCDD0000,$CDD00000,$DD000000,$DE000000,$E0000000,	       0,	 0,	   0; 288
-		dc.l	$EEEEE,	   $EEEE,      $EE,	  $E,	     0,	       0,	 0,	   0,$EEEDDCCC,$EEEEEDDD,$EEEEEEEE,$EEEEEEEE, $EEEEEEE,	  $EEEEE,      $EE,	   0; 304
-		dc.l $CCCCCCCC,$DCCCCCCC,$EDDDDCCC,$EEEEDDDD,$EEEEEEEE,$EEEEEEEE,$EEEEEEEE,  $EEEEEE,$CCCCCCCC,$CCCCCCCC,$CCCCCCCC,$DDDDDDDD,$EEEEEEEE,$EEEEEEEE,$EEEEEEEE,$EEEEEE00; 320
-		dc.l $CCCCCDDD,$CCCDDDDD,$DDDDDEEE,$DEEEEEEE,$EEEEEEE0,$EEEEE000,$EE000000,	   0,$DDEEE000,$EEEE0000,$EE000000,$E0000000,	     0,	       0,	 0,	   0; 336
-		dc.l	     0,	       0,	$D,	$DDC,	 $DCCC,	  $DCCCD,  $DCCDDD, $DCDDDDD,	$CCCCC,	$DCCC666,$CC666666,$C6CCC666,$CCCCCCCC,$DDDDDDDD,$DDDDDDDD,$DDDDDDDD; 352
-		dc.l $CCCCC000,$66666CCC,$66666666,$66666666,$66666666,$CC666666,$DDCC6666,$DDDDC666,	     0,	       0,$CC000000,$66CC0000,$6666C000,$66666600,$66666660,$66666666; 368
-		dc.l	     0,	      $E,      $ED,	 $ED,	  $EDD,	    $EDD,    $EDDE,   $EEDDE,$DDDDDDDD,$DDDDDEEE,$DDDEEEEE,$DDEEEEEE,$DEEEEEEE,$EEEEEEEE,$EEEEEEE0,$EEEEEDE0; 384
-		dc.l $EEEEEEEE,$EEEEEEEE,$EEEE0000,$EE000000,$E0000000,	       0,	 0,	   0,$DDDDDC66,$EEDDDDC6,$EEEEDDDC,  $EEEDDD,	$EEEDD,	   $EEDD,     $EED,	 $EE; 400
-		dc.l	   $EE,	      $E,	$E,	   0,	     0,	       0,	 0,	   0,$66666666,$66666666,$66666666,$C6666666,$DC666666,$DC666666,$DDC66666,$DDC66666; 416
-		dc.l $DDDC6666,$EDDC6666,$EDDDC666,$EDDDC666,$EDDDCC66,$EEDDDC66,$EEDDDC66, $EDDDCC6,$60000000,$66000000,$66000000,$66600000,$666C0000,$66660000,$66666000,$66666000; 432
-		dc.l $66666000,$66666C00,$66666C00,$666666C0,$666666C0,$666666C0,$66666660,$6666666C,	$EDDEE,	  $EDDEE,   $EDEEE,  $EEDEEE,  $EDDEEE,	 $EDDEED, $EEDDEED, $EEDEEDD; 448
-		dc.l  $EDDEEDD,	$EDDEDDC,$EEDDEDCC,$EEDDEDCC,$EEDDEDCC,$EEDDDCCC,$EEEDDCCC,$EEEDDCC6,$EEEDDCC6,$EEEDDCC6,$EEEDDC66,$EEEDDC66,$EEEEDC66,$EEEEDC66, $EEEDC66, $EEEED66; 464
-		dc.l  $EEEED66,	$EEEED66,  $EEEDC6,  $EEEEC6,  $EEEEC6,	  $EEEDC,   $EEEED,   $EEEED,$EEEDDD00,$EEDDDE00,$EDDDD000,$DDDDE000,$DDDD0000,$DDCD0000,$DCCD0000,$CCCD0000; 480
-		dc.l $CCCD0000,$CCC00000,$CCC00000,$CC600000,$C6600000,$66600000,$66600000,$66600000,$66600000,$66600000,$66600000,$66600000,$66600000,$66600000,$66600000,$66660000; 496
-		dc.l $66660000,$66660000,$66660000,$66660000,$66666000,$66666000,$C6666600,$C6666600, $EDDDCC6,	$EDDDCC6, $EDDDCC6, $EDDDDCC,  $EDDDCC,	 $EDDDCC,  $EDDDCC,  $EDDDCC; 512
-		dc.l   $EDDDCC,	 $EDDDCC,  $EDDDCC,  $EDDDCC, $EDDDDCC,	$EDDDCCC, $EDDDCCC, $EDDDCCC,$6666666C,$6666666C,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666; 528
-		dc.l $6666666C,$C666666C,$C666666C,$CCC666CC,$CCCCCCCC,$CCCCCCCC,$CCCCCCCC,$CCCCCCCD,	     0,	       0,	 0,	   0,	     0,	      $E,	$E,	 $ED; 544
-		dc.l	   $ED,	    $EDD,    $DDDD,   $DDDDD,  $DDDDDC,$DDDDDCCD,$DDDCCDDD,$DDDDDDDD, $EDDDCCC,$EDDDDCCC,$EDDDDCCC,$EDDDCCCC,$EDDDCCCC,$DDDDCCCC,$DDDCCCCC,$DDDCCDCC; 560
-		dc.l $DDCCDDCC,$DDCCDDDC,$DCCDDDDD,$CCDDDDDD,$CDDDDDDD,$DDDDDDDD,$DDDDDDDD,$DDDDDDEE,$CCCCCCCD,$CCCCCCC0,$CCCCCCC0,$CCCCCCD0,$CCCCCCD0,$CCCCCD00,$CCCCCD00,$CCCCD000; 576
-		dc.l $CCCCD000,$CCDDE000,$DDDE0000,$DDDE0000,$DDE00000,$DE000000,$EE000000,$E0000000,	$EEEEE,	   $EEEE,     $EEE,	$EEE,	   $EE,	     $EE,	$E,	   0; 592
-		dc.l $D6666660,$EC666660,$EDC66666,$EEDC6666,$EEED6666,$EEEEDD66,$EEEEDDDD,$EEEEEEDD,	     0,	       0,	 0,$60000000,$66000000,$66660000,$D6666DDD,$DDDDDDDD; 608
-		dc.l  $EEEEEED,	$EEEEEEE,   $EEEEE,    $EEEE,	  $EEE,	      $E,	 0,	   0,$DDDDDDDD,$DDDDDDDD,$EEEDDDDD,$EEEEEEDD,$EEEEEEEE,$EEEEEEEE, $EEEEEEE,   $EEEEE; 624
-		dc.l $DDDDDDDD,$DDDDDDDD,$DDDDDDDD,$DDDEEEEE,$EEEEEEEE,$EEEEEEEE,$EEEEEEEE,$EEEEE000,$DDDDDEEE,$DDDEEEE0,$EEEEEE00,$EEEEE000,$EEEE0000,$EE000000,	 0,	   0; 640
-		dc.l	     0,	     $CC,     $CC6,    $DC66,	$DCC66,	  $DC666,  $DCC666,  $DCC666, $DDCC666,	$DCCC666, $DCC6666,$DDCC6666,$DDCC6666,$DDCC6666,$DDCC6666,$DDCC6666; 656
-		dc.l $DDCC6666,$DDCC6666,$DDCC6666,$DDCC6666,$DDCC6666,$DDCC6666,$DDCC6666,$DDCC6666,$EDCCC666,$EDCCC666,$EDCCC666,$EDCCC666,$EDCCC666,$EDCCC666,$EDCCC666,$EDCCCC66; 672
-		dc.l $CCCCCCCC,$C666666C,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666; 688
-		dc.l $66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666; 704
-		dc.l $EDDCCC66,$EDDCCC66,$EDDCCCC6,$EDDCCCCC,$EDDCCCCC,$EDDCCCCC,$EDDCCCCC,$EDDCCCCC,$EDDCCCCC,$EDDDCCCC,$EDDDCCCC,$EEDDCCCC,$EEDDCCCC,$EEDDDCCC,$EEDDDCCC,$EEDDDDCC; 720
-		dc.l $EEDDDDDC,$EEDDDDDD,$EEDDDDDD,$EEDDDDDD,$EEEDDDDD,	$EEDDDDD, $EEDDDDD, $EEEDDDD,  $EEDDDD,	 $EEEDDD,   $EEEDD,   $EEEEE,	 $EEEE,	    $EEE,      $EE,	   0; 736
-		dc.l $66666666,$66666666,$66666666,$C666666C,$CCCCCCCC,$CCCCCCCC,$CCCCCCCC,$CCCCCCCC,$CCCCCCCC,$CCCCCCCC,$CCCCCCCC,$CCCCCCCC,$CCCCCCCC,$CCCCCCCC,$CCCCCCCC,$CCCCCCCC; 752
-		dc.l $CCCCCCCC,$DCCCCCCD,$DDDDDDDD,$DDDDDDDD,$DDDDDDDD,$DDDDDDDD,$DDDDDDDD,$DDDDDDDD,$DDDDDDDD,$DDDDDDDD,$DDDDDDDD,$DDDDDDDD,$EEEEEEEE,$EEEEEEEE,$EEEEEEEE,$EEEEEEEE; 768
+Art_BigRing:	incbin	"art/uncompressed/Giant Ring.bin"
+		even
 ;
 ; leftover level layouts from a	previous build
 ;
@@ -22311,55 +22264,8 @@ Leftover_LevelLayouts:dc.b   0,	 0,$6E,$6E,$AF,$76,$AB,$43,  0,	 0,$B5,$66,$A8,$
 ;----------------------------------------------------
 ; leftover from	a previous build
 ;----------------------------------------------------
-Leftover_Art_BigRing:dc.l	  0,	    0,	      0,	0,	 $D,	  $DD,	  $EDDC,   $EDDCC,	  0,	  $DD,	 $DDCCC, $DDCCC6C,$DCCCCCCC,$CCCCCCCC,$CCCDCDDD,$DDCCCCDD; 0
-		dc.l   $CCCCCC,$CCC66666,$66666666,$CCCCCCCC,$CCCCCCCC,$CDDDDDDD,$DDDDDDDD,$DDDEEEEE,$CCCCCC00,$666666CC,$66666666,$66666666,$CCCCC666,$DDDDDCCC,$DDDDDDDD,$EEEEEEEE; 16
-		dc.l	     0,$CC000000,$66CCC000,$66666CC0,$66666666,$CC666666,$DCCCC666,$DDDDCCC6,	     0,	       0,	 0,	   0,$C0000000,$66000000,$666C0000,$66666000; 32
-		dc.l	     0,	       0,	 0,	  $E,	   $EE,	     $EE,     $EED,    $EEED,  $EEDDDD,	$EEDDDDC,$EEDDDDCC,$EDDDDCCC,$DDDDCCCD,$DDDCCCCD,$DDCCCCDE,$DCCCCDDE; 48
-		dc.l $CCCCDDDD,$CCCDDDEE,$CDDDEEEE,$DDEEEEEE,$DEEEEE00,$EEEE0000,$EE000000,$E0000000,$EEEEEEEE,$EEEEEEEE,$EEE00000,	   0,	     0,	       0,	 0,	   0; 64
-		dc.l $EEEEEEEE,$EEEEEEEE,     $EEE,	   0,	     0,	       0,	 0,	   0,$EEEDDDCC,$EEEEEDDD,$EEEEEEED,$EEEEEEEE,  $EEEEEE,	   $EEEE,      $EE,	  $E; 80
-		dc.l $66666600,$CC666660,$DDC66666,$EDDC6666,$EEDDC666,$EEEDDC66,$EEEEDDC6,$EEEEEDC6,	     0,	       0,	 0,$60000000,$6C000000,$66000000,$66600000,$666C0000; 96
-		dc.l	 $EEDD,	  $EEEDD,   $EEEDD,  $EEEDDC,  $EEEDDC,	 $EEEDCC, $EEEEDCC, $EEEDDCC, $EEEDCCC,	$EEEDCCC,$EEEEDCCC,$EEEEDCCC,$EEEEDCCC,$EEEEDCCC,$EEEEDCCC,$EEEEDCCC; 112
-		dc.l $EEEEDCCC,$EEEEDCCC,$EEEEDCCC,$EEEEDDCC,$EEEEEDCC,$EEEEEDCC, $EEEEDCC, $EEEEEDC, $EEEEEDC,	$EEEEEDC,  $EEEEDC,  $EEEEED,  $EEEEED,	  $EEEEE,   $EEEEE,    $EEEE; 128
-		dc.l $DCCCCDEE,$CCCCDEE0,$CCCCDE00,$CCCDEE00,$CCCDE000,$CCCDE000,$CCCE0000,$CCDE0000,$CCD00000,$CCD00000,$CCD00000,$CC000000,$C6000000,$C6000000,$C6000000,$C6000000; 144
-		dc.l $66000000,$66000000,$66000000,$66000000,$66000000,$66600000,$66600000,$66600000,$66660000,$66660000,$C6666000,$C6666000,$C6666600,$DC666600,$EDC66660,$EDC66666; 160
-		dc.l $EEEEEDDC,	$EEEEEDC,  $EEEEDD,  $EEEEED,	$EEEED,	  $EEEEE,    $EEEE,    $EEEE,	  $EEE,	    $EEE,     $EEE,	 $EE,	   $EE,	     $EE,      $EE,	 $EE; 176
-		dc.l	   $EE,	     $EE,      $EE,	 $EE,	   $EE,	    $EEE,     $EEE,	$EEE,	 $EEED,	   $EEED,   $EEEDD,   $EEEDD,  $EEEDDC,	 $EEEDCC, $EEEDDCC,$EEEDDCCC; 192
-		dc.l $66660000,$C666C000,$C666C000,$CC666C00,$DC666C00,$DC666C00,$DCC666C0,$DDC666C0,$EDC666C0,$EDC666C0,$EDC6666C,$EDDC666C,$EDDC666C,$EDDC666C,$EDDC666C,$EDDC666C; 208
-		dc.l $EDDCC66C,$EDDCC66C,$EDDCC66C,$EDDCC66C,$EDDCC66C,$DDDCC6CC,$DDDCC6C0,$DDCCC6C0,$DDCCCCD0,$DDCC6CD0,$CDCCCC00,$CCCCCD00,$CDCCCD00,$CCCCD000,$DCCCD000,$DCCD0000; 224
-		dc.l	 $EEEE,	    $EEE,      $EE,	 $EE,	    $E,	       0,	 0,	   0,$EEDC6666,$EEEDC666,$EEEEDC66,$EEEEEDC6,$EEEEEEDC,$EEEEEEED, $EEEEEEE,  $EEEEEE; 240
-		dc.l $60000000,$66000000,$66660000,$66666600,$66666666,$CC666666,$DDC66666,$EEDCCC66,	     0,	       0,	 0,	   0,	     0,$66600000,$66666666,$66666666; 256
-		dc.l	     0,	       0,	 0,	   0,	     0,	    $DDD,$6666CCCC,$CCCCCCCC,	    $E,	     $EE,    $EEED,  $EEEDDC,$EEDDDCCC,$DCCCCCCC,$CCCCCCCC,$CCCCCCCD; 272
-		dc.l $EEDDCCCD,$DDCCCCDD,$DCCCCDDD,$CCCCDDDD,$CCCDDDDE,$CCDDDDEE,$CDDDDEE0,$DDDDEE00,$CCDD0000,$CDD00000,$DD000000,$DE000000,$E0000000,	       0,	 0,	   0; 288
-		dc.l	$EEEEE,	   $EEEE,      $EE,	  $E,	     0,	       0,	 0,	   0,$EEEDDCCC,$EEEEEDDD,$EEEEEEEE,$EEEEEEEE, $EEEEEEE,	  $EEEEE,      $EE,	   0; 304
-		dc.l $CCCCCCCC,$DCCCCCCC,$EDDDDCCC,$EEEEDDDD,$EEEEEEEE,$EEEEEEEE,$EEEEEEEE,  $EEEEEE,$CCCCCCCC,$CCCCCCCC,$CCCCCCCC,$DDDDDDDD,$EEEEEEEE,$EEEEEEEE,$EEEEEEEE,$EEEEEE00; 320
-		dc.l $CCCCCDDD,$CCCDDDDD,$DDDDDEEE,$DEEEEEEE,$EEEEEEE0,$EEEEE000,$EE000000,	   0,$DDEEE000,$EEEE0000,$EE000000,$E0000000,	     0,	       0,	 0,	   0; 336
-		dc.l	     0,	       0,	$D,	$DDC,	 $DCCC,	  $DCCCD,  $DCCDDD, $DCDDDDD,	$CCCCC,	$DCCC666,$CC666666,$C6CCC666,$CCCCCCCC,$DDDDDDDD,$DDDDDDDD,$DDDDDDDD; 352
-		dc.l $CCCCC000,$66666CCC,$66666666,$66666666,$66666666,$CC666666,$DDCC6666,$DDDDC666,	     0,	       0,$CC000000,$66CC0000,$6666C000,$66666600,$66666660,$66666666; 368
-		dc.l	     0,	      $E,      $ED,	 $ED,	  $EDD,	    $EDD,    $EDDE,   $EEDDE,$DDDDDDDD,$DDDDDEEE,$DDDEEEEE,$DDEEEEEE,$DEEEEEEE,$EEEEEEEE,$EEEEEEE0,$EEEEEDE0; 384
-		dc.l $EEEEEEEE,$EEEEEEEE,$EEEE0000,$EE000000,$E0000000,	       0,	 0,	   0,$DDDDDC66,$EEDDDDC6,$EEEEDDDC,  $EEEDDD,	$EEEDD,	   $EEDD,     $EED,	 $EE; 400
-		dc.l	   $EE,	      $E,	$E,	   0,	     0,	       0,	 0,	   0,$66666666,$66666666,$66666666,$C6666666,$DC666666,$DC666666,$DDC66666,$DDC66666; 416
-		dc.l $DDDC6666,$EDDC6666,$EDDDC666,$EDDDC666,$EDDDCC66,$EEDDDC66,$EEDDDC66, $EDDDCC6,$60000000,$66000000,$66000000,$66600000,$666C0000,$66660000,$66666000,$66666000; 432
-		dc.l $66666000,$66666C00,$66666C00,$666666C0,$666666C0,$666666C0,$66666660,$6666666C,	$EDDEE,	  $EDDEE,   $EDEEE,  $EEDEEE,  $EDDEEE,	 $EDDEED, $EEDDEED, $EEDEEDD; 448
-		dc.l  $EDDEEDD,	$EDDEDDC,$EEDDEDCC,$EEDDEDCC,$EEDDEDCC,$EEDDDCCC,$EEEDDCCC,$EEEDDCC6,$EEEDDCC6,$EEEDDCC6,$EEEDDC66,$EEEDDC66,$EEEEDC66,$EEEEDC66, $EEEDC66, $EEEED66; 464
-		dc.l  $EEEED66,	$EEEED66,  $EEEDC6,  $EEEEC6,  $EEEEC6,	  $EEEDC,   $EEEED,   $EEEED,$EEEDDD00,$EEDDDE00,$EDDDD000,$DDDDE000,$DDDD0000,$DDCD0000,$DCCD0000,$CCCD0000; 480
-		dc.l $CCCD0000,$CCC00000,$CCC00000,$CC600000,$C6600000,$66600000,$66600000,$66600000,$66600000,$66600000,$66600000,$66600000,$66600000,$66600000,$66600000,$66660000; 496
-		dc.l $66660000,$66660000,$66660000,$66660000,$66666000,$66666000,$C6666600,$C6666600, $EDDDCC6,	$EDDDCC6, $EDDDCC6, $EDDDDCC,  $EDDDCC,	 $EDDDCC,  $EDDDCC,  $EDDDCC; 512
-		dc.l   $EDDDCC,	 $EDDDCC,  $EDDDCC,  $EDDDCC, $EDDDDCC,	$EDDDCCC, $EDDDCCC, $EDDDCCC,$6666666C,$6666666C,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666; 528
-		dc.l $6666666C,$C666666C,$C666666C,$CCC666CC,$CCCCCCCC,$CCCCCCCC,$CCCCCCCC,$CCCCCCCD,	     0,	       0,	 0,	   0,	     0,	      $E,	$E,	 $ED; 544
-		dc.l	   $ED,	    $EDD,    $DDDD,   $DDDDD,  $DDDDDC,$DDDDDCCD,$DDDCCDDD,$DDDDDDDD, $EDDDCCC,$EDDDDCCC,$EDDDDCCC,$EDDDCCCC,$EDDDCCCC,$DDDDCCCC,$DDDCCCCC,$DDDCCDCC; 560
-		dc.l $DDCCDDCC,$DDCCDDDC,$DCCDDDDD,$CCDDDDDD,$CDDDDDDD,$DDDDDDDD,$DDDDDDDD,$DDDDDDEE,$CCCCCCCD,$CCCCCCC0,$CCCCCCC0,$CCCCCCD0,$CCCCCCD0,$CCCCCD00,$CCCCCD00,$CCCCD000; 576
-		dc.l $CCCCD000,$CCDDE000,$DDDE0000,$DDDE0000,$DDE00000,$DE000000,$EE000000,$E0000000,	$EEEEE,	   $EEEE,     $EEE,	$EEE,	   $EE,	     $EE,	$E,	   0; 592
-		dc.l $D6666660,$EC666660,$EDC66666,$EEDC6666,$EEED6666,$EEEEDD66,$EEEEDDDD,$EEEEEEDD,	     0,	       0,	 0,$60000000,$66000000,$66660000,$D6666DDD,$DDDDDDDD; 608
-		dc.l  $EEEEEED,	$EEEEEEE,   $EEEEE,    $EEEE,	  $EEE,	      $E,	 0,	   0,$DDDDDDDD,$DDDDDDDD,$EEEDDDDD,$EEEEEEDD,$EEEEEEEE,$EEEEEEEE, $EEEEEEE,   $EEEEE; 624
-		dc.l $DDDDDDDD,$DDDDDDDD,$DDDDDDDD,$DDDEEEEE,$EEEEEEEE,$EEEEEEEE,$EEEEEEEE,$EEEEE000,$DDDDDEEE,$DDDEEEE0,$EEEEEE00,$EEEEE000,$EEEE0000,$EE000000,	 0,	   0; 640
-		dc.l	     0,	     $CC,     $CC6,    $DC66,	$DCC66,	  $DC666,  $DCC666,  $DCC666, $DDCC666,	$DCCC666, $DCC6666,$DDCC6666,$DDCC6666,$DDCC6666,$DDCC6666,$DDCC6666; 656
-		dc.l $DDCC6666,$DDCC6666,$DDCC6666,$DDCC6666,$DDCC6666,$DDCC6666,$DDCC6666,$DDCC6666,$EDCCC666,$EDCCC666,$EDCCC666,$EDCCC666,$EDCCC666,$EDCCC666,$EDCCC666,$EDCCCC66; 672
-		dc.l $CCCCCCCC,$C666666C,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666; 688
-		dc.l $66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666,$66666666; 704
-		dc.l $EDDCCC66,$EDDCCC66,$EDDCCCC6,$EDDCCCCC,$EDDCCCCC,$EDDCCCCC,$EDDCCCCC,$EDDCCCCC,$EDDCCCCC,$EDDDCCCC,$EDDDCCCC,$EEDDCCCC,$EEDDCCCC,$EEDDDCCC,$EEDDDCCC,$EEDDDDCC; 720
-		dc.l $EEDDDDDC,$EEDDDDDD,$EEDDDDDD,$EEDDDDDD,$EEEDDDDD,	$EEDDDDD, $EEDDDDD, $EEEDDDD,  $EEDDDD,	 $EEEDDD,   $EEEDD,   $EEEEE,	 $EEEE,	    $EEE,      $EE,	   0; 736
-		dc.l $66666666,$66666666,$66666666,$C666666C,$CCCCCCCC,$CCCCCCCC,$CCCCCCCC,$CCCCCCCC,$CCCCCCCC,$CCCCCCCC,$CCCCCCCC,$CCCCCCCC,$CCCCCCCC,$CCCCCCCC,$CCCCCCCC,$CCCCCCCC; 752
-		dc.l $CCCCCCCC,$DCCCCCCD,$DDDDDDDD,$DDDDDDDD,$DDDDDDDD,$DDDDDDDD,$DDDDDDDD,$DDDDDDDD,$DDDDDDDD,$DDDDDDDD,$DDDDDDDD,$DDDDDDDD,$EEEEEEEE,$EEEEEEEE,$EEEEEEEE,$EEEEEEEE; 768
+Leftover_Art_BigRing:	incbin	"art/uncompressed/Giant Ring.bin"
+			even
 ;
 ; these	are some level mappings	(16x16 or 256x256)
 ;
@@ -22603,208 +22509,52 @@ ObjPos_Index:	dc.w ObjPos_GHZ1-ObjPos_Index,ObjPos_Null-ObjPos_Index
 		dc.w ObjPos_S1SBZ1pf5-ObjPos_Index,ObjPos_S1SBZ1pf6-ObjPos_Index
 		dc.w ObjPos_S1SBZ1pf1-ObjPos_Index,ObjPos_S1SBZ1pf2-ObjPos_Index
 
-		dc.w $FFFF,    0,    0
-ObjPos_GHZ1:	incbin	"level/objects/GHZ_1.bin"
-		dc.w $FFFF,    0,    0
-ObjPos_GHZ2:	incbin	"level/objects/GHZ_2.bin"
-		dc.w $FFFF,    0,    0
-ObjPos_GHZ3:	incbin	"level/objects/GHZ_3.bin"
-		dc.w $FFFF,    0,    0
-ObjPos_LZ1:	dc.w $FFFF,    0,    0
-ObjPos_LZ2:	dc.w $FFFF,    0,    0
-ObjPos_LZ3:	dc.w $FFFF,    0,    0
-ObjPos_S1LZ1pf1:dc.w	 7,$1078, $21A	; 0 ; DATA XREF: ROM:ObjPos_Indexo
-		dc.w	 0,$10BE, $291	; 3
-		dc.w	 2,$10BE, $307	; 6
-		dc.w	 2,$10BE, $37E	; 9
-		dc.w	 2,$105C, $390	; 12
-		dc.w	 4,$1022, $352	; 15
-		dc.w	 5,$1022, $2DB	; 18
-		dc.w	 5,$1022, $265	; 21
-		dc.w	 5		; 24
-ObjPos_S1LZ1pf2:dc.w	 7,$127E, $280	; 0 ; DATA XREF: ROM:ObjPos_Indexo
-		dc.w   $10,$12CE, $305	; 3
-		dc.w   $12,$12CE, $38A	; 6
-		dc.w   $12,$12CE, $40F	; 9
-		dc.w   $12,$12A7, $46E	; 12
-		dc.w   $13,$1232, $40F	; 15
-		dc.w   $14,$1232, $38A	; 18
-		dc.w   $14,$1232, $305	; 21
-		dc.w   $14		; 24
-ObjPos_S1LZ2pf1:dc.w	 7, $D22, $483	; 0 ; DATA XREF: ROM:ObjPos_Indexo
-		dc.w   $21, $D9C, $482	; 3
-		dc.w   $20, $DAE, $4EA	; 6
-		dc.w   $23, $DAE, $564	; 9
-		dc.w   $23, $DAE, $5DD	; 12
-		dc.w   $23, $D34, $5DE	; 15
-		dc.w   $22, $D22, $576	; 18
-		dc.w   $21, $D22, $4FC	; 21
-		dc.w   $21		; 24
-ObjPos_S1LZ2pf2:dc.w	 7, $D62, $3A2	; 0 ; DATA XREF: ROM:ObjPos_Indexo
-		dc.w   $30, $DD4, $3A2	; 3
-		dc.w   $31, $DEE, $3FA	; 6
-		dc.w   $32, $DEE, $46C	; 9
-		dc.w   $32, $DEE, $4DD	; 12
-		dc.w   $32, $D7C, $4DE	; 15
-		dc.w   $33, $D62, $486	; 18
-		dc.w   $30, $D62, $414	; 21
-		dc.w   $30		; 24
-ObjPos_S1LZ3pf1:dc.w	$B, $CAD, $242	; 0 ; DATA XREF: ROM:ObjPos_Indexo
-		dc.w   $41, $D2D, $242	; 3
-		dc.w   $41, $DAC, $242	; 6
-		dc.w   $41, $DDE, $28F	; 9
-		dc.w   $42, $DDE, $30E	; 12
-		dc.w   $42, $DDE, $38D	; 15
-		dc.w   $42, $DB0, $3DE	; 18
-		dc.w   $43, $D31, $3DE	; 21
-		dc.w   $43, $CB2, $3DE	; 24
-		dc.w   $43, $C52, $3BF	; 27
-		dc.w   $44, $C52, $340	; 30
-		dc.w   $44, $C52, $2C1	; 33
-		dc.w   $44		; 36
-ObjPos_S1LZ3pf2:dc.w	 8,$1252, $20A	; 0 ; DATA XREF: ROM:ObjPos_Indexo
-		dc.w   $50,$12D2, $20A	; 3
-		dc.w   $51,$1352, $20A	; 6
-		dc.w   $51,$13D2, $20A	; 9
-		dc.w   $51,$13DE, $27E	; 12
-		dc.w   $52,$139E, $2BE	; 15
-		dc.w   $53,$131E, $2BE	; 18
-		dc.w   $53,$129E, $2BE	; 21
-		dc.w   $53,$1252, $28A	; 24
-		dc.w   $50,$FFFF,    0	; 27
-		dc.w	 0		; 30
-ObjPos_CPZ1:	incbin	"level/objects/CPZ_1.bin"
-		dc.w $FFFF,    0,    0
-ObjPos_CPZ2:	dc.w $FFFF,    0,    0
-ObjPos_CPZ3:	dc.w $FFFF,    0,    0
-ObjPos_EHZ1:	incbin	"level/objects/EHZ_1.bin"
-		dc.w $FFFF,    0,    0
-ObjPos_EHZ2:	incbin	"level/objects/EHZ_2.bin"
-		dc.w $FFFF,    0,    0
-ObjPos_EHZ3:	dc.w $FFFF,    0,    0
-ObjPos_HPZ1:	incbin	"level/objects/HPZ_1.bin"
-		dc.w $FFFF,    0,    0
-ObjPos_HPZ2:	dc.w $FFFF,    0,    0
-ObjPos_HPZ3:	dc.w $FFFF,    0,    0
-ObjPos_HTZ1:	incbin	"level/objects/HTZ_1.bin"
-		dc.w $FFFF,    0,    0
-ObjPos_HTZ2:	dc.w $FFFF,    0,    0
-ObjPos_HTZ3:	incbin	"level/objects/HTZ_3.bin"
-		dc.w $FFFF,    0,    0
-ObjPos_S1SBZ1pf1:dc.w 7			; DATA XREF: ROM:ObjPos_Indexo
-		dc.w  $E14, $370,    0	; 0
-		dc.w  $E5A, $34D,    1	; 3
-		dc.w  $EA0, $32A,    1	; 6
-		dc.w  $EE7, $307,    1	; 9
-		dc.w  $EEF, $340,    2	; 12
-		dc.w  $EA9, $363,    3	; 15
-		dc.w  $E63, $386,    3	; 18
-		dc.w  $E1C, $3A9,    3	; 21
-ObjPos_S1SBZ1pf2:dc.w 7			; DATA XREF: ROM:ObjPos_Indexo
-		dc.w  $F14, $2E0,  $10	; 0
-		dc.w  $F5A, $2BD,  $11	; 3
-		dc.w  $FA0, $29A,  $11	; 6
-		dc.w  $FE7, $277,  $11	; 9
-		dc.w  $FEF, $2B0,  $12	; 12
-		dc.w  $FA9, $2D3,  $13	; 15
-		dc.w  $F63, $2F6,  $13	; 18
-		dc.w  $F1C, $319,  $13	; 21
-ObjPos_S1SBZ1pf3:dc.w 7			; DATA XREF: ROM:ObjPos_Indexo
-		dc.w $1014, $270,  $20	; 0
-		dc.w $105A, $24D,  $21	; 3
-		dc.w $10A0, $22A,  $21	; 6
-		dc.w $10E7, $207,  $21	; 9
-		dc.w $10EF, $240,  $22	; 12
-		dc.w $10A9, $263,  $23	; 15
-		dc.w $1063, $286,  $23	; 18
-		dc.w $101C, $2A9,  $23	; 21
-ObjPos_S1SBZ1pf4:dc.w 7			; DATA XREF: ROM:ObjPos_Indexo
-		dc.w  $F14, $570,  $30	; 0
-		dc.w  $F5A, $54D,  $31	; 3
-		dc.w  $FA0, $52A,  $31	; 6
-		dc.w  $FE7, $507,  $31	; 9
-		dc.w  $FEF, $540,  $32	; 12
-		dc.w  $FA9, $563,  $33	; 15
-		dc.w  $F63, $586,  $33	; 18
-		dc.w  $F1C, $5A9,  $33	; 21
-ObjPos_S1SBZ1pf5:dc.w 7			; DATA XREF: ROM:ObjPos_Indexo
-		dc.w $1B14, $670,  $40	; 0
-		dc.w $1B5A, $64D,  $41	; 3
-		dc.w $1BA0, $62A,  $41	; 6
-		dc.w $1BE7, $607,  $41	; 9
-		dc.w $1BEF, $640,  $42	; 12
-		dc.w $1BA9, $663,  $43	; 15
-		dc.w $1B63, $686,  $43	; 18
-		dc.w $1B1C, $6A9,  $43	; 21
-ObjPos_S1SBZ1pf6:dc.w	  7,$1C14, $5E0	 ; 0 ; DATA XREF: ROM:ObjPos_Indexo
-		dc.w   $50,$1C5A, $5BD	; 3
-		dc.w   $51,$1CA0, $59A	; 6
-		dc.w   $51,$1CE7, $577	; 9
-		dc.w   $51,$1CEF, $5B0	; 12
-		dc.w   $52,$1CA9, $5D3	; 15
-		dc.w   $53,$1C63, $5F6	; 18
-		dc.w   $53,$1C1C, $619	; 21
-		dc.w   $53,$FFFF,    0	; 24
-		dc.w	 0		; 27
-ObjPos_S1Ending:dc.w   $10, $170,$280C	; 0 ; DATA XREF: ROM:ObjPos_Indexo
-		dc.w   $14, $1B2,$2812	; 3
-		dc.w   $28, $1B0,$280C	; 6
-		dc.w   $30, $1B2,$2812	; 9
-		dc.w   $40, $170,$280F	; 12
-		dc.w   $5B, $1B1,$2811	; 15
-		dc.w   $64, $1B1,$2811	; 18
-		dc.w   $68, $1B1,$280C	; 21
-		dc.w   $D8, $1B0,$2813	; 24
-		dc.w   $E4, $1B1,$280C	; 27
-		dc.w   $E8, $1B0,$280F	; 30
-		dc.w   $F4, $1B0,$2810	; 33
-		dc.w   $F8, $1AF,$2814	; 36
-		dc.w  $108, $1B0,$280E	; 39
-		dc.w  $108, $1B4,$2813	; 42
-		dc.w  $110, $173,$280C	; 45
-		dc.w  $114, $1B0,$2810	; 48
-		dc.w  $128, $174,$280E	; 51
-		dc.w  $128, $1B0,$2814	; 54
-		dc.w  $128, $1B2,$2813	; 57
-		dc.w  $130, $1B8,$280C	; 60
-		dc.w  $210, $1B0,$280A	; 63
-		dc.w  $230, $1B2,$2813	; 66
-		dc.w  $260, $1B0,$280D	; 69
-		dc.w  $290, $1B6,$2813	; 72
-		dc.w  $2B0, $150,$280A	; 75
-		dc.w  $2B0, $180,$280A	; 78
-		dc.w  $2B0, $1B0,$280A	; 81
-		dc.w  $2F0, $1B2,$2813	; 84
-		dc.w  $300, $1B0,$280A	; 87
-		dc.w  $384, $1B0,$280D	; 90
-		dc.w  $434, $1B8,$280D	; 93
-		dc.w  $478, $1A4,$2813	; 96
-		dc.w  $4D8, $176,$2813	; 99
-		dc.w  $4F8, $170,$280A	; 102
-		dc.w  $530, $170,$2810	; 105
-		dc.w  $560, $170,$2810	; 108
-		dc.w  $590, $170,$2810	; 111
-		dc.w  $5C0, $170,$2810	; 114
-		dc.w  $5D8, $170,$2810	; 117
-		dc.w  $624, $170,$280A	; 120
-		dc.w  $6C4, $1A4,$280D	; 123
-		dc.w  $734, $1B8,$280A	; 126
-		dc.w  $7F8, $174,$280A	; 129
-		dc.w  $878, $178,$280D	; 132
-		dc.w  $9B8, $158,$280A	; 135
-		dc.w  $A00, $1B4,$280D	; 138
-		dc.w  $A48, $152,$2812	; 141
-		dc.w  $A78, $152,$2812	; 144
-		dc.w  $AA8, $152,$2812	; 147
-		dc.w  $AD4, $154,$2814	; 150
-		dc.w  $B34, $138,$280A	; 153
-		dc.w  $BF8, $174,$280A	; 156
-		dc.w  $CC4, $1AB,$280D	; 159
-		dc.w  $CC8, $148,$280A	; 162
-		dc.w  $D34, $1BA,$280D	; 165
-		dc.w  $DF8, $174,$280A	; 168
-		dc.w $FFFF,    0,    0
-ObjPos_Null:	dc.w $FFFF,    0,    0
+			dc.w $FFFF,    0,    0
+ObjPos_GHZ1:		incbin	"level/objects/GHZ_1.bin"
+			dc.w $FFFF,    0,    0
+ObjPos_GHZ2:		incbin	"level/objects/GHZ_2.bin"
+			dc.w $FFFF,    0,    0
+ObjPos_GHZ3:		incbin	"level/objects/GHZ_3.bin"
+			dc.w $FFFF,    0,    0
+ObjPos_LZ1:		dc.w $FFFF,    0,    0
+ObjPos_LZ2:		dc.w $FFFF,    0,    0
+ObjPos_LZ3:		dc.w $FFFF,    0,    0
+ObjPos_S1LZ1pf1:	incbin	"level/objects/LZ_1_PF1.bin"
+ObjPos_S1LZ1pf2:	incbin	"level/objects/LZ_1_PF2.bin"
+ObjPos_S1LZ2pf1:	incbin	"level/objects/LZ_2_PF1.bin"
+ObjPos_S1LZ2pf2:	incbin	"level/objects/LZ_2_PF2.bin"
+ObjPos_S1LZ3pf1:	incbin	"level/objects/LZ_3_PF1.bin"
+ObjPos_S1LZ3pf2:	incbin	"level/objects/LZ_3_PF2.bin"
+			dc.w $FFFF,    0,    0
+ObjPos_CPZ1:		incbin	"level/objects/CPZ_1.bin"
+			dc.w $FFFF,    0,    0
+ObjPos_CPZ2:		dc.w $FFFF,    0,    0
+ObjPos_CPZ3:		dc.w $FFFF,    0,    0
+ObjPos_EHZ1:		incbin	"level/objects/EHZ_1.bin"
+			dc.w $FFFF,    0,    0
+ObjPos_EHZ2:		incbin	"level/objects/EHZ_2.bin"
+			dc.w $FFFF,    0,    0
+ObjPos_EHZ3:		dc.w $FFFF,    0,    0
+ObjPos_HPZ1:		incbin	"level/objects/HPZ_1.bin"
+			dc.w $FFFF,    0,    0
+ObjPos_HPZ2:		dc.w $FFFF,    0,    0
+ObjPos_HPZ3:		dc.w $FFFF,    0,    0
+ObjPos_HTZ1:		incbin	"level/objects/HTZ_1.bin"
+			dc.w $FFFF,    0,    0
+ObjPos_HTZ2:		dc.w $FFFF,    0,    0
+ObjPos_HTZ3:		incbin	"level/objects/HTZ_3.bin"
+			dc.w $FFFF,    0,    0
+ObjPos_S1SBZ1pf1:	incbin	"level/objects/SBZ_1_PF1.bin"
+ObjPos_S1SBZ1pf2:	incbin	"level/objects/SBZ_1_PF2.bin"
+ObjPos_S1SBZ1pf3:	incbin	"level/objects/SBZ_1_PF3.bin"
+ObjPos_S1SBZ1pf4:	incbin	"level/objects/SBZ_1_PF4.bin"
+ObjPos_S1SBZ1pf5:	incbin	"level/objects/SBZ_1_PF5.bin"
+ObjPos_S1SBZ1pf6:	incbin	"level/objects/SBZ_1_PF6.bin"
+			dc.w $FFFF,    0,    0
+ObjPos_S1Ending:	incbin	"level/objects/Ending_1.bin"
+			dc.w $FFFF,    0,    0
+ObjPos_Null:		dc.w $FFFF,    0,    0
+
 ; ---------------------------------------------------------------------------
 ; Leftover symbol tables due to compiler weirdness; these are formatted
 ; with a Unix-like line break instead of a DOS-like line break, as Sonic 2
@@ -22894,674 +22644,313 @@ Leftover_50A9C:
 		include	"s2.sounddriver.asm"
 
 ; ---------------------------------------------------------------------------
-; Primary object assets (players and common objects)
+; Compressed/Uncompressed Graphics - Sonic, Tails, splash/dust, and power-ups
 ; ---------------------------------------------------------------------------
-Art_Sonic:	incbin	"art/uncompressed/Sonic's art.bin"
-		even
-MapUnc_Sonic:	include	"mappings/sprite/Sonic.asm"
-Art_Tails:	incbin	"art/uncompressed/Tails' art.bin"
-		even
-SonicDynPLC:	incbin	"mappings/spriteDPLC/Sonic.bin"
-		even
-Nem_Shield:	dc.b $80,$20,$80,  4,  8,$14,  9,$25,$16,$34, $A,$45,$1A,$55,$17,$65,$1B,$72,  0,$81,  4,  4,$16,$39,$26,$3A,$37,$76,$82,  5,$18,$17,$79,$83,  4,  5,$17,$77,$28,$F5,$84,  4,  6,$17,$78,$28,$F4,$85,  5,$19,$28,$FA,$86,  6,$38,$87,  4,  7,$17,$7B,$28,$F8,$38,$F9; 0
-					; DATA XREF: ROM:0001C0C4o
-					; ROM:0001C188o
-		dc.b $FF, $D,$E2,$F8,$4D,$61,$1E,$B0,$8F,$58,$47,$AC,$23,$CA,$5D,$27,  8,$E4,$21,$38,$47,$84,  2,$D8,$5F,$1F,$31,$FA,$2E,$D8,$EB,$E5,$3E,$29,$ED,$DA,$79,$AE,$42,$DE,$B6,$EF,$A5,$BA,$97,$50,$DF,$FD,$8D,$AD,$D5,$F4,$AE,$94,$AE,$94,$AE,$94,$AE,$92,$B7,$59,$57,$42; 64
-		dc.b $14,$95,$74,$85,  2,$CA,$DF,$D5,$8F,$5F,$95,$F8,$EC,$FD,$52,$5B,$F6,$73,$DE,$BB,$85,$BD,$2D,$E3,$4D,$76,$2E,$C1,$BF,$F9,$1B,$6B,$B2,$69,$91,$69,$91,$69,$91,$69,$91,$65,$AE,$D2,$C8,$A4,$31,$2C,$8B, $C,  5,$9B,$3F,$D6,$8F,$4E,$CD,$D7,$EC,$D3,$D6,$96,$DF,$B4; 128
-		dc.b $9F,$15,$E0,$2D,$D5,$B9,$D2,$5D, $B,$A0,$6F,$FE,$66,$F3,$7C,$AE,$B2,$AD,$59,$56,$AC,$AB,$56,$55,$A5,$2E,$93,$95,$62,$10,$9C,$AB,$42,  1,$6C,$F1,$E7,$F6,$D1,$F5,$FB,$3C,$FA,$FE,$D1,$7D,$29,$AD,$DA,$79,$AE,$42,$DF,$16,$F7,$A7,$BB,$97,$70,$DF,$FD, $D,$F1,$7E; 192
-		dc.b $1B,$5C,$32,$57, $C,$95,$C3,$25,$70,$C9,$2F,$77,$9E,$19,  8,$72,$78,$64,$87,  2,$DC,$63,$BF,$EC,$A3,$F4,$DF,$B4,$E3,$D3,$B3,$75,$49,$6F,$99,$F7,$5E,$C2,$DD,$5B,$9D,$25,$D0,$BA,  6,$FF,$EA,  0,  0,  0,$6F,$17,$C2,$6B,  8,$6B,  9, $F,$6C,$21, $F,$6C,$24,$39; 256
-		dc.b   9,$18,$42,$1E,$10,$23,  9, $F,  8,  1,$38,$EF,$E3,$E8,  0,  3,$78,$D7,$94,$B7,$9E,$6D,$8E,$6D,$E5,$27,$E3,$99,$7D,$7B,$9E,$61,$EC,$92,$F3,$CE,$92,$B3,  9,$59,$BE,$65,$2D,$9B,$E6,$F9,$2F,$90,$BE,$40,  0,  0,$27,$FE,$5F,$F1,$3F,$EE,$7F,$C4,$23,$F6,$B1,$F5; 320
-		dc.b $59,  0,  0,  0,$36,  0; 384
-Nem_Stars:	incbin	"art/nemesis/General - Invincibility Stars.bin"
-		even
-		dc.b	0,0,0,0,0,0,0,0,0,0
-Art_SplashDust:	incbin	"art/uncompressed/Dust and water splash.bin"
-		even
-Map_Tails:	incbin	"mappings/sprite/Tails.bin"
-TailsDynPLC:	incbin	"mappings/spriteDPLC/Tails.bin"
-		even
+Art_Sonic:		incbin	"art/uncompressed/Sonic's art.bin"
+			even
+MapUnc_Sonic:		include	"mappings/sprite/Sonic.asm"
+Art_Tails:		incbin	"art/uncompressed/Tails' art.bin"
+			even
+SonicDynPLC:		incbin	"mappings/spriteDPLC/Sonic.bin"
+			even
+Nem_Shield:		incbin	"art/nemesis/General - Barrier.bin"
+			even
+Nem_Stars:		incbin	"art/nemesis/General - Invincibility Stars.bin"
+			even
+			dc.b	0,0,0,0,0,0,0,0,0,0
+Art_SplashDust:		incbin	"art/uncompressed/Dust and water splash.bin"
+			even
+Map_Tails:		incbin	"mappings/sprite/Tails.bin"
+TailsDynPLC:		incbin	"mappings/spriteDPLC/Tails.bin"
+			even
 ; ---------------------------------------------------------------------------
-; Sega and title screen assets
+; Compressed Graphics - SEGA Logo and Title Screen
 ; ---------------------------------------------------------------------------
-Nem_SegaLogo:	dc.b $80,$7D,$80,  5,$16,$15,$1B,$26,$3A,$35,$1C,$45,$19,$54,  9,$64,  7,$72,  0,$81,  5,$18,$15,$1A,$27,$77,$37,$76,$47,$78,$58,$F8,$77,$79,$82,  4, $A,$83,  4,  8,$84,  4,  6,$17,$7A,$85,  4,  5,$86,  4,  4,$17,$7B,$87,  5,$17,$FF,  0,  0,$F1,$FA,$20,  0,$3F; 0
-					; DATA XREF: ROM:0000310Ao
-		dc.b $27,$FA,$2D,$20,  0,$1E,$FF,$2F,$FA,$6C,  0,  1,$FF,$20,  0,$3F,$FC,  0,  7,$FC,$80,  0,$FF,$B0,  0,$1F,$F2,  0,  3,$F7,$FF,$BD,  0,  3,$F6,$5F,$B6,  0,  3,$F6,$DF,$B2,  0,  3,$F6,$5F,$BE,  0,  3,$F7,$DF,$B2,  0,  3,$F6,$5F,$B6,  0,  3,$F6,$DF,$B2,  0,  3; 64
-		dc.b $F6,$5D,$80,  0,$FD,$9F,$EC,$80,  3,$3F,$A3,$FE,$16,$BF,$1E,$FF,$8E,  0, $F,$DF,$FE,$F8,  0,  0,  0,$1D,$9D,$80,$E5,$35,$F1,$68,$AB,$C2,$A5,$95,$A1,$39,$49,$37,$FF,  8,$52,$B5,$FB,$43,$2A,  1,$CF,$21,$E4,  3,$C8,  3,$D4,$D2,$CA,$A4,$DF,  1,$D5,$35,$F5,$66; 128
-		dc.b $C4,$2A,$6E,$EB,$28,$3F,$90,$F8,  0,$DF,$C0,$16,$AC,$B6,$23,$AA,$BA,$F2,$95,$32,$A9,$37,$F0, $D,$7F,$85,$40,$27,$C8,$68,  2,$74,  1,$95,$CC,$5D,$B8,$AC,$9C,$5A,$4C,$AD,$FB,$86,$DB,$F2,$FA,$FC,$BE,$17,$DE,$FD,$83,$F9, $B,$B4,$A2,$E2,$EB,$28,$D7,$89,$46,$59; 192
-		dc.b $4A,$FF, $D,$C0,$E7,$6E,$77,$2C,$AE,$B3,$80,$3B,$EF,$1B,$EF,$D6,$1F,$4F,$8C,$E0, $C,$E2,$71,$3A,$CE,$A7,$1B,$C6,$DB,$19,$65,$CB,$46,$6A,$13,$3E,$F3,$51,$3E,$E6,$33,$A4,  0,$E9,$5B,$8B,$E9,$7A,$54,$5B,$46,$D5,$2A,$DE,$B6,$B1,$A5,$40,$B2,$B4,$76,$86,$5A,$E5; 256
-		dc.b $59,$5A,$FD,$DA,$EC,$A9,$D2,$A0,$13,$E4,$F2,$1E,$15,$E2,$69,$26,$EF,$87,$81,$D3,$AE,$C0,$1D,$24,$A3,$4F,$E4,$E6,$EF,$58,  4,$5A,$F1,$EA,$33,$16,$BF,$8B,$61,$32,$AE,$D9,$D0,$7C,$1B,$F8, $D,$E1,$79,$AB,$44,$D2,$4D,$DF, $F,  3,$A0,  5,$91,$6B,$BD,$93,$D4,$74; 320
-		dc.b $8D,$16,$BF,$7F,$C9,$DB,  9,$D5,$EC,$B9,$AC,$2F,$80,$D1,$3A,  9,$D0,  1,$98,$7C,$3D,$F7,$17,$EE,$DB,$64,$CA,$A6,$62,$A7,$DC,$D3,$A0,  0,  6,$D1,$74,$BD,$2B,$6D,$BA,$8E,$C0,  2,$3A,$BA,$D7,$8B,$23,$3A,$2B,$D4,$75,$8D,$FB,$7A,$89,$4C,$3D,$FA,$EC,$B8,  7,$C0; 384
-		dc.b   6,$70, $F,$80, $C,$D7,$C5,$91,$E1,$D0,  2,$71,$66,$D2,$F5,$F9,$5B,$32,$F5,$8B,$7E,$4F,$97,$B5,$D3,$95,$68,$74,$1D,$33,$A4,  0,$7F,  7,$5D,$AE,$E8,  1,$E4,$65,$AC,$B2,$D5,$BB,  0,  1,$DB,$7A,  0,  1,$33,$A4,  0,$CE,$89,$D0,  1,$E4,$F3,$3A,  0,$F8,$37,$A9; 448
-		dc.b $D5,$FC,$6D,  0,  3,$3A,  0,$3E, $E,$76,$E7,$60, $D,$13,$A9,$D7,$22,$F3,$84,$9B,$CC,$54,$E1,$26,$F3,$15,$38,$4D,$E9,$6D,$7D,$B6,$D2,$CD,$B6,$DC,$4B,$59,$72,$96,$6C,$C4,$B5,$97,$29,$66,$CC,$2B,$A3,$C4,$AD,$9B,$2D,$64,$78,$95,$B3,$65,$AC,$93,$8A,$4A,$D7,$13; 512
-		dc.b  $F,$77,$A8,$94,$C3,$DD,$EA,$25,$35,$31,$64,$78,$74,$7A,$47,$87,$F7,$35,$1C,$C5,$3D,$ED,$74,$E6,$2D,$F9,$3E,$7E,$56,$CC,$BC,$C5,$59,$95,$36,$A9,$56,$F5,$D2,$A2,$DA,$38,$BE,$96,$55,$80,$15,$25,$AE,$CA,$9D,$55,$95,$AF,$88,$68,$EF,$76,$B2,$F1,$16,$2E,$E8,  0; 576
-		dc.b $AE,$DF,$E1,$A8,$98,$65,$94,$A6,$94,$56,$75,$67,$86,$94,$8A,$94,$80,  0,$F3,$A0,  0,$9D,$4E,$B7,$D8,  0,$39,$DB,$7F,  0,  1,$A9,$F2,  0,  6,$B6,$BD,$FA,$8A,$9C,$24,$DE,$62,$A7,  9,$37,$98,$AC,$E2,$90,$E3,$3A,$3C,$4B,$3A,$3C,$4B,$59,$75,$D3,$61,$AC,$AE,$C4; 640
-		dc.b $AB,$B0,$16,$D4,$AD,$9B,$2D,$64,$78,$95,$B3,$65,$AC,$8F,$12,$B6,$6C,$B6,$3D,$3D,$3A,  0,$1E,$61,$F0,$F7,$7A,$89,$4C,$3D,$DE,$A3,$38,$BC,$55,$FB,$F5,$50,$92,$D0,$EC,$AE,$CA,$EC,$1E,$40,$47,$A4,$95,$68,$4C,$C5,$5E,$15,$2D,$86,$5F,$C9,$35,$F1,$65,$68,$C5,$D9; 704
-		dc.b $72,$8A,$C0,  6,$A1,$97,$AA,$B5,$2F,$A5,$B4,$5D,$A2,$CA,$8B,$64,$5F,$56,$A4,$E9,$15,$AD,$59,$56,$7F,$C9,$CA,$5C,$78,$74,$57,$C3,$FE,$55,$F0,$F7,$7A,$D7,$29,$D1,$E1,$D2,$9D,$1E,$1D, $D,$F6,  0,$78,$7C,$3D,$F1,$1E,$1A,$D7,$98,$A9,$C2,$4D,$DE,$9D,  3,$95,$89; 768
-		dc.b $89,$6B,$2E,$52,$CD,$98,$96,$B2,$E5,$2C,$D9,$87,$D0,  7,$B9,$F5,$3F,$93,$CB,$6D,$B8,$D6,$86,$98,$95,$B3,$65,$AC,$8F,$12,$AE,$C1,$80,  6,$74,$78,$7C,$5A,$3C,$6E,$EF,$51,$29,$87,$BB,$D4,$4A,$61,$EF,$D7,$65,  9,$F0,  1,$4A,$C9,$CA,$56,$BF,$63,$C8,  3,$A3,$A0; 832
-		dc.b $E8,$F1,$29,$79,$FC,$9E,$55,$AD,$AE,$97,$40,$5A,$9E,$EF,$89,$FC,$AC,$B5,$B4,  1,$94,$78,$74,$78,$DE,$A9,$27,  9,$37,$7A,$98,$49,$C3,$A4,$FE,$4F,$8B,$6F,$7C,$4B,$36,$62,$5A,$CB,$94,$B3,$66,$25,$AC,$B9,$4B,$36,$6B,$1B,$AD,$57,$23,$71,$D3,$3B,$76,  0,$76,$7F; 896
-		dc.b $4E,$C0, $F,$DC, $F,  7,$5E,  3,$B8,$74,$8B,$F1,$76,$7A,$FF, $C,  7,$48,$BA,$8B,$22,$FA,$B5,$23,$5D,$A2,$CA,$9F,$95,$B5,$2F,$A5,$B2,$B4,$32,$F4,$CA,$12,$AE,$A4,$A3,$C4,$FB,$CA,$45,$66,$1B,$2A,$DB,$4E,$EB,$DE,$3A,$4E,$91,$EB,$A8,$7C,$3D,$DE,$91,$E3,$9D,$D4; 960
-		dc.b   3,$7A,  3,$50,$F7,$98,$C4,$E2,$26,$E9,$9F,$C9,$4D,$D2,$6B,$3A,$49,$57,$63,$8B,$4B,$9C,$43,$65,$1E,$25,$B9,$AB,$36,$B6,$B6,$6C,$B5,$93,$AE,$F6,$81,$B7,$E1,$80,  0,$B2,$7F,$86,$E1,$E4,$74,$E2,$2C,$5D,$5A,$31,$76,$AB,$32,$D0,$67,$57,$6C,$A5,$37,$21,$97,$35; 1024
-		dc.b   0,$13,$E2,$2D,$8C,$C4,$B5,$97,$29,$66,$CC,$75,$DB,$7A, $F,$10,$F1,$2A,$F7,$78,$EB,$B0,$73,$54,$F7,$7A,$89,$4C,$3D,$F9,$DD,$40,  0, $E,$2B,$D4,$4A,$33,$A2,$BD,$44,$FB,$7A,$89,$4C,$3D,$FA,  0; 1088
-Eni_SegaLogo:	dc.b   7, $F,  0,$13,  0,$13,$AE,$80,$6B,$C0,$1A,$F8,$26,$BA,  1,$AF,  0,$6B,$E0,$9A,$E8,  6,$BC,  1,$AF,$82,$6B,$A0,$1A,$F0,  6,$BE,  9,$AE,$80,$6B,$C0,$1A,$F8,$26,$BA,  1,$AF,  0,$6B,$E0,$9A,$E8,  6,$BC,  1,$AF,$82,$6A,$A0,$1E,$28,$45,  4,$56,$80,$3C,$20,$95; 0
-					; DATA XREF: ROM:0000311Ao
-		dc.b $7C,$12,  3,$EF,$BE,$FB,$EF,$BE,$FB,$EF,$BE,$FB,$EF,$BE,$FB,$EF,$BE,$FB,$EF,$BE,$FB,$EB,  7,  0, $B,$83,  8, $B,$85,  8, $B,$80,$80,$AF,$87,  0,$13,$85,  4,$13,$85,  8,$13,$8E,$F8,$70,  8,$B8,$70,  1,$E8,$10,  0,  0,$30,$41,$E8,$30,  0,  0,$4F,$A2,$25,$10; 64
-		dc.b $74,  4,$10,$96,  7,$10,  0,$2E,$C0,$80,$12,$C7,$7D,  1,$78,  3,$B8,$45,$2F,$A9,$4C,  0,  2,$EC,$A6,$94,$B1,$76,$33,$E8,  1,  0, $B,$87,$E4,$1D,$93,$C2,$7A,$4F,$49,$F0,  0,$27,$E5,  0,  0, $B,$B0,$20,  0,  0,$A8,$84,$47,$D0,  2,  0,$27, $E,$89,$29,$82,  9; 128
-		dc.b $FA,  2,$B2,$58,$4B,$41,$38,$27,  6,  0,$51,  2,  8,$27,  2,$88,$54,$7F,$89,$63,$22,$E1,$51,$23,$10,$88,$BD,$22,$35, $C,$8B,$83, $C,$8B,$80,$FB,$EF,$BE,$FB,$EF,$BE,$FB,$EF,$BE,$FB,$EF,$BE,$FB,$EF,$BE,$FB,$EF,$BE,$FA,$E0,$22,  2,$3F,$C0,  0; 192
-Eni_TitleMap:	dc.b   8, $D,$60,  1,  0,  0,$7D,$F7,$DF,$7D,$F7,$DF,$7D,$F4,$C2,$91,$80,  3,$E1,$81,$F1,$70,$69,$18,  3,$17,  3,$83,$80,$15, $E,$8E,  2,$87,$80,  5,$E1,$84,$72,$71,  8,$78,  3, $F,  3,$C7,$C2,$E0,$E0,  5,$43,$81,$85,$4A,$E5,$88,$38,$FE,$1E,$CF,$C7,$60,$E1,$5C; 0
-					; DATA XREF: ROM:000032FEo
-		dc.b $5C,$52, $E,  0,$56,  6,  0, $A,$26,$15,$1B,$37,$2A,$89,$85,$71,$72,$38,$58,  1,$58,$38,  0,$38,$38,$54,$68,$58,$D7,$2F,$34,$83,$85,$71,$F2,$E8,$78,  1,$58,$38,  0,$38,$38,$54,$38,$F8,$D7,$1F,$3D,$83,$85,$71,$F3,$98,$78,  1,$58,$38,  2,  6,$21,  2,$8E,$14; 64
-		dc.b $81,$85,$41,$81,$87,$81,$8F,$8D,$70,$F4,$2E,$F8,$7B,$A0,$73,$FC,$2B,$85,$78,$A7,$3E,$E4,$30,$F0,  2,$B0,$B0,  0,$3C,$71,$1E,$15, $E,$4E,$35,$C7,$D2,$39,$E1,$5E,$47,$D1,$3A,$1C,$4C,  0,$AC,$3C,  0,$34,$9C,$6B,$9B,$A7,$C5,$C0, $A,$C3,$C0,  7,$89,$8B,$A9,$45; 128
-		dc.b $C0, $A,$C4,$C0,  7,$87,$87,$B3,$46,$C0, $A,$C5,$C0,  7,$85,$C3,$BC,$C7,$C0, $A,$C5,$C0,  7,$85,$C3,$C6,$47,$C0, $A,$C2,$C0,  7,$8B,$8F,$D1,$44,$C0, $A,$C1,$C0,  7,$85,$CB,$DE,$EB,$CD,$77,$97,$DD,$43,$C0, $A,$C2,$C0,  0,$40,$C2,$A1,$42,$C0,  3,$E1,$F9,$B0; 192
-		dc.b $B0,  6,$2F,$97,$C7, $A,$FC,$88,$98,  1,$58,$38,  0,$58,$78,  0,$6E,$1F,$6A,$1E,  0,$CB,$F6,$61,$E0,  5,$60,$E0,  0,$20,$6B,$10,$A2,$E0,  1,$62,$E0, $C,$5F,$93,$8E,$B1,$FC,$30,$F0,  2,$B0,$70,  0,$32,$30,  0,$B2,$30,  6,$1F,$D9, $F,  0,$2B,$33,  0,  5,  7; 256
-		dc.b $7A,$81,$3B,  0,$2B,$3F,  0,$4F,$C0,$10,$70,  2,$B3,$F0,  4,$8C,  0,$43,$EF,$BE,$FB,$E8,$FF,  0; 320
-Eni_TitleBg1:	dc.b   9, $D,  0,$1E,  1,  0,$7D,$F7,$DF,$7A,$8A,$80,$F1,$70,$15,  3,$7D,$BA,$6A,  8,$FB,$56,$14,$21, $A,$2A,$23,$C1,$40,$DF,$4A,$8A,$89,$C2,$41,$5A,$6A,$2A,$85,$25,$19,$7D,$2A,$2A,$39,  5,  5,$78,$28,$F4,$24,$15,$E8,$A3,$EA,$1C,$A4,  8,$2A,$A3,$F4,$94,$39,$FA; 0
-					; DATA XREF: ROM:00003326o
-		dc.b $2A,$43,  5,  5,$78,$29,$1C,$24,$15,$E8,$A4,$8A,$2C,$A4,$A8,$2A,$A4,$94,$94,$59,$DC,$2E,$21,$CD,$49,$90,$55,  5,$54,$7A,$1A, $A,$F3,$52,$74,$15,$41,$57,$1E,$84,$82,$BC,$9C,$75,$43,$94,$3D,$BC,$2E,$31,$CD,$4A,$10,$55,  5,$54,$8E,$1A, $A,$F3,$52,$94,$15,$41; 64
-		dc.b $57,$23,$84,$82,$BF,$1C,$89,$45,$94,$5E,$4A,$A4,$AE,$4A,$A4,$AE,$4A,$A4,$AE,$4A,$A4,$AE,$4A,$A4,$AE,$94,$95,$70,$B2,$CA,$52,$5B,$FA,$4B,$EC,$BE,$CB,$A4,$BE,$4B,$AC,$BE,$CB,$E4,$C2,$4B,$AC,$BE,$4B,$AC,$BE,$4B,$A4,$BE,$CB,$66,$C8,$1D,$29,$31,$FD,$26,$76,$67; 128
-		dc.b $66,$52,$69,$26,$B6,$69,$66,$92,$6D,$26,$F6,$69,$27,$16,$69,$27,$12,$73,$66,$33,$C0,  2,$8C,$9D,$71,$93,$B9,  3,$9E,  0,$12,$C0,  2,$1C,$81,$CB,  0, $B,$E2,$79,$44,$4F,$30,$99,$ED,$61,$40,$C4,$68,$54,$44,$F2,$A0,$A6,$41,$14,$EA,$22,$A3,$C0,$54,$6A,$8A,$9D; 192
-		dc.b $11,$4C,$C2,$69,$BE,$C5,$40,$53,$85,$38,$54,$45,$48,$54,$45,$64,$D3,$8D,$38,$D4,  5,$30,$53,$69, $A,$D5,$21,$5C,  2,  8, $F,$51,$15,$AE,$22,$BE,$2B,$94,$85,$72,$28, $F,$51,$15,$AA,$22,$BB,$10,  7,$B9, $A,$D0,$B0, $B, $C,$60,$1E,$A2,$2C,$12,$80,$7A,$88,$B0; 256
-		dc.b $46,  1,$EF,$C2,$C0,$2C,$42,$C6,$2C,$42,$C6,$2C,$42,$C6,$2C,$42,$C6,$2C,$42,$C6,$2C,$42,$C6,$2C,$42,$C7,$44,$58,$A8,$8B,$15,$11,$62,$A2,$2C,$54,$45,$8A,$88,$B1,$51,$16,$2A,$22,$C5,$4C,$58,$A8,$8B,$25,$11,$64,$A2,$2C,$94,$45,$92,$88,$B2,$51,$16,$4A,$22,$C9; 320
-		dc.b $44,$59,$28,$8B,$25,$11,$64,$A2,$2C,$94,$45,$92,$88,$B2,$51,$16,$4A,$62,$C9,$44,$59,$A8,$8B,$35,$11,$66,$A2,$2C,$D4,$45,$9A,$88,$B3,$51,$16,$6A,$22,$CD,$44,$59,$A8,$8B,$35,$11,$66,$A2,$2C,$D4,$45,$9A,$88,$B3,$53,$16,$6A,$22,$D1,$44,$5A,$28,$8B,$45,$11,$68; 384
-		dc.b $A2,$2D,$14,$45,$A2,$88,$B4,$51,$16,$8A,$22,$D1,$44,$5A,$28,$8B,$45,$11,$68,$A2,$2D,$14,$45,$A2,$98,$B4,$51,$16,$AA,$22,$D5,$44,$5A,$A8,$8B,$55,$11,$6A,$A2,$2D,$54,$45,$AA,$88,$B5,$51,$16,$AA,$22,$D5,$44,$5A,$A8,$8B,$55,$11,$6A,$A2,$2D,$54,$C5,$AA,$88,$B6; 448
-		dc.b $51,$16,$CA,$22,$D9,$44,$5B,$28,$8B,$65,$11,$6C,$A2,$2D,$94,$45,$B2,$88,$B6,$51,$16,$CA,$22,$D9,$44,$5B,$28,$8B,$65,$11,$6C,$A6,$2D,$94,$45,$BA,$88,$B7,$51,$16,$EA,$22,$DD,$44,$5B,$A8,$8B,$75,$11,$6E,$A2,$2D,$D4,$45,$BA,$88,$B7,$51,$16,$EA,$22,$DD,$44,$5B; 512
-		dc.b $A8,$8B,$75,$31,$6E,$A2,$2E,$14,$45,$C2,$88,$B8,$51,$17, $A,$22,$E1,$44,$5C,$28,$8B,$85,$11,$70,$A2,$2E,$14,$45,$C2,$88,$B8,$51,$17, $A,$22,$E1,$44,$5C,$28,$8B,$85,$11,$6E,$A2,$2D,$D4,$45,$BA,$88,$B7,$51,$16,$EA,$22,$DD,$44,$5B,$A8,$8B,$75,$11,$6E,$A2,$2D; 576
-		dc.b $D4,$45,$BA,$88,$B7,$51,$16,$EA,$22,$DD,$44,$5B,$A9,$8B,$75,$11,$70,$A2,$2E,$14,$45,$C2,$88,$B8,$51,$17, $A,$22,$E1,$44,$5C,$28,$8B,$85,$11,$70,$A2,$2E,$14,$45,$C2,$88,$B8,$51,$17, $A,$22,$E1,$44,$5C,$3F,$80; 640
-Eni_TitleBg2:	dc.b   9, $D,  0,$1E,  1,  0,$7D,$F7,$DF,$7D,$F7,$DF,$7D,$F7,$DF,$7D,$F7,$D1,$A2,$2E,$4D,$F2,$50,$27,  1,$50,$37,$29,$8B,$A6,$13,$75,$A2,$2F, $B,$D2,$50,$57,$29,$8B,$D6,$13,$7B,$A8,$2F,$DF,$86,  4,$E0,  6,  0,$60,$86,  6,$60,$EE, $E,$61,$24,$AE,$4A,$A4,$AE,$4A; 0
-					; DATA XREF: ROM:0000334Eo
-		dc.b $A4,$AE,$4A,$A4,$AE,$8C,$95,$51,$92,$AA,$32,$55,$4E,$61,$68,$CC,$2D,$19,$85,$A3,$31,$34,$66,$26,$8C,$C4,$D1,$98,$99,$F2,  7,  6,$40,$F8,$4C,$5C,$C9,  3,$9E,  0,$13,$C0,  2,$78,  0,$4F,  0, $C,$26,$7B,$44,$4F,$30,$99,$ED,$B1,$40,$A2,$27,$98,$4C,$F6,$88,$A0; 64
-		dc.b $61,$34,$1A,$22,$79,$84,$CF,$70,$99,$EE,$13,$4D,$A2,$29,$98,$4D,$37,$A8,$A8, $A,$70,$A7, $A,$88,$A9, $A,$8D,$51,$53,$A2,$29,$98,$4D,$37,$E8,$A8, $A,$71,$A7,$1A,$80,$A6, $A,$69,$A6,$9A,$61,$A6,$9A,$60,$AD,$8A,$F8,$AE,$8A,$F0,$10,$80,$7A,$90,$AD,$52,$15,$C8; 128
-		dc.b $40,$3D,$44,$56,$B8,$8A,$F8,$AE,$52,$15,$C8,$A0,$3D,$44,$56,$B8, $B, $C,$60,$1E,$A2,$2C,$11,$80,$7A,$88,$B0,$4A,  1,$EA,$62,$C1,$44,$58,$A8,$8B,$15,$11,$62,$A2,$2C,$54,$45,$8A,$88,$B1,$51,$16,$2A,$22,$C5,$44,$58,$A8,$8B,$15,$11,$62,$A2,$2C,$54,$45,$8A,$88; 192
-		dc.b $B1,$53,$16,$2A,$22,$C9,$44,$59,$28,$8B,$25,$11,$64,$A2,$2C,$94,$45,$92,$88,$B2,$51,$16,$4A,$22,$C9,$44,$59,$28,$8B,$25,$11,$64,$A2,$2C,$94,$45,$92,$98,$B2,$51,$16,$6A,$22,$CD,$44,$59,$A8,$8B,$35,$11,$66,$A2,$2C,$D4,$45,$9A,$88,$B3,$51,$16,$6A,$22,$CD,$44; 256
-		dc.b $59,$A8,$8B,$35,$11,$66,$A2,$2C,$D4,$C5,$9A,$88,$B4,$51,$16,$8A,$22,$D1,$44,$5A,$28,$8B,$45,$11,$68,$A2,$2D,$14,$45,$A2,$88,$B4,$51,$16,$8A,$22,$D1,$44,$5A,$28,$8B,$45,$11,$68,$A6,$2D,$14,$45,$AA,$88,$B5,$51,$16,$AA,$22,$D5,$44,$5A,$A8,$8B,$55,$11,$6A,$A2; 320
-		dc.b $2D,$54,$45,$AA,$88,$B5,$51,$16,$AA,$22,$D5,$44,$5A,$A8,$8B,$55,$31,$6A,$A2,$2D,$94,$45,$B2,$88,$B6,$51,$16,$CA,$22,$D9,$44,$5B,$28,$8B,$65,$11,$6C,$A2,$2D,$94,$45,$B2,$88,$B6,$51,$16,$CA,$22,$D9,$44,$5B,$29,$8B,$65,$11,$6E,$A2,$2D,$D4,$45,$BA,$88,$B7,$51; 384
-		dc.b $16,$EA,$22,$DD,$44,$5B,$A8,$8B,$75,$11,$6E,$A2,$2D,$D4,$45,$BA,$88,$B7,$51,$16,$EA,$22,$DD,$4C,$5B,$A8,$8B,$85,$11,$70,$A2,$2E,$14,$45,$C2,$88,$B8,$51,$17, $A,$22,$E1,$44,$5C,$28,$8B,$85,$11,$70,$A2,$2E,$14,$45,$C2,$88,$B8,$51,$17, $A,$22,$E1,$44,$5B,$A8; 448
-		dc.b $8B,$75,$11,$6E,$A2,$2D,$D4,$45,$BA,$88,$B7,$51,$16,$EA,$22,$DD,$44,$5B,$A8,$8B,$75,$11,$6E,$A2,$2D,$D4,$45,$BA,$88,$B7,$51,$16,$EA,$62,$DD,$44,$5C,$28,$8B,$85,$11,$70,$A2,$2E,$14,$45,$C2,$88,$B8,$51,$17, $A,$22,$E1,$44,$5C,$28,$8B,$85,$11,$70,$A2,$2E,$14; 512
-		dc.b $45,$C2,$88,$B8,$51,$17, $F,$E0; 576
-Nem_Title:	dc.b $81,$8C,$80,  4,  2,$14,  5,$25,$10,$35,$11,$46,$2E,$56,$30,$66,$32,$73,  0,$81,  4,  3,$16,$2F,$28,$E9,$38,$E6,$78,$EC,$82,  5, $E,$18,$E3,$83,  4,  4,$16,$34,$28,$E8,$84,  5,$12,$18,$E2,$85,  5,$16,$18,$EB,$86,  5, $C,$17,$70,$87,  5, $F,$17,$6C,$28,$ED; 0
-					; DATA XREF: ROM:0000328Eo
-		dc.b $88,  6,$35,$89,  6,$26,$17,$6D,$28,$EE,$8A,  5,$14,$17,$6E,$8B,  6,$33,$17,$72,$8C,  5,$15,$18,$EA,$8D,  6,$27,$18,$E7,$8E,  6,$31,$8F,  5, $D,$17,$6F,$FF,  0,  0,  0,  1,$D2,$71,$C5,$38,$53,$39,$38,$EE,$6C,$D4,$34,$63,$4B,$F5,$B7,$4E,$20,$6E,$97,$2E,  0; 64
-		dc.b   9,$38,$EE,$6C,$D4,$93,$8D,$7F,$5A,$D9,$A9,$27,$43,$F5,$AD,$9B,$FA,$DC,$80,  0,$1E,$54,$93,$8E,$39,$C9,$C6,  0,  0,$13,$A4,$C8,$3B,$89,$D6,$83,$A5,$C1,  0,$C9,$D0,$74,$B8,$49,$D2,$64,$9D,$FA,$59,$3B,$F4,$BD,$BD,$7D,$BD,$3A,$7E,$93,$F4,$A2,$2E,$97,  9,$7E; 128
-		dc.b $9A,$4E,$EB,$77,$F1,$76,$5B,$F6,$EC,$BD,$9C,$CC,$D8,$CF,$E3,$EE,$4F,$D9,$4B,$F3,  3,$FE,$DF,$F5,$FF,$BF,$67,$FD,$FF,$F5,$F9,$89,$A9,$5D,$31, $A,$68,$C6,$94,$E2,  6,$8C,$6D,$C6,$8C,$68,$B8,$D3,$FC,$CF,$90,  2,$70,$27,$C1,$A5,$3D,$CE,$59,$DD,$27,$B0,$BF,$5A; 192
-		dc.b $D9,$A9,$28,$FE,$B5,$B9,$4E,  0,$1F,$F6,$71,$E1,$35,$24,$E3,$87,$3B,$66,$A4,$9C,$6B,$FA,$D6,$CD,$4B,$BF,$5A,  7,$FD,$80,  0,$64,$EC,$1C,$CC,$1D,$2C,$9D,$73,$B8,$A0,$EE,$26,$D9,$5C,$C6,$DB,$57,$BA,$53,$3B,$5D,$84,$C6,$EB,$67,$A9,$B7,$5D,$85,$7B,$F3,$32,$E3; 256
-		dc.b $FD,$37,$13,$BA,$F6,$13,$BA,$F6,$15,$F6,$D8,$57,$B3,$61,$5E,$CD,$94,$BD,$9B,$29,$52,$66,$CA,$56, $F,$A5,$61,$BC,$AB,$FA,$DC,$FA,$EF,$67,$6E,$E6,$6C,$DD,$55,$7D,$2B,$75,$6E,$DF, $F,$D7,$CE,$C2,$DF,$FA,$D2,$CD,$BC,$F7,$27,$F8,$AA,$16,$75,$DE,$4D,$9D,$93,$B7; 320
-		dc.b $9D,$B3,$B0,$99,$3A,$B9,$AC,$26,$6F,$CE,$4F,$61,$31,$F2,$E4,$F2,$71,$3F,$32,$74,$F9,$CD,$9C,$FC,$63,$FF,$FF,$FD,  0, $F,$F5,$67,$91,$80,  0, $E,$97,$2F,$DB,$23,$1A,$53,$88,$1A,$31,$A5,$3C, $D,$18,$D2,$9E,  6,$8C,$69,$4F,  3,$46,$36,$E3,$46,$37,$F8,$CF,$93; 384
-		dc.b $80,  0,$4E,$27,$C3,$9C,  0,  0,$19,$7E,$F5,$D2,$79,$7E,$F5,$B3,$52,$EF,$D6,$80,  0,$FF,$B6,$72,$71,$C6,$76,$CD,$4C,$E4,$E3,$2F,$DE,$B6,$6A,$5D,$FA,$D0,  7,$FD,$80,$CE,$4E,$38,$CE,$D9,$A9,$9C,$9C,$65,$FB,$D6,$CD,$4B,$BF,$5A,$3F,$EC,  0,$19,$C9,$C7,$19,$DB; 448
-		dc.b $35,$39,$49,$C5,$FC,$D6,$CD,$FD,$6E,$40,  1,$93,$8E,$E7,$32,$9C,$A5,$C6,$C6,$FE,$AE,$44,$C6,$C5,$CC,$6F,$E6,$15,$CC,$6E,$BB,  9,$CC,$6E,$AF,$57,$31,$BA,$BD,$4D,$8D,$D5,$E5,$7B,$DB,$AB,$C8,$D8,$FA,$6A,$F2,$36,$1D,$22,$6C,$3A,$13,$CA,$FD,$94,$53,$63,$E9,$55; 512
-		dc.b $3D,$94,$83,$5F,$4A,$C1,$AE,$A4,$37,$B9,$90,$6F,$3B,$20,$D6,$6F,$64,$1B,$37,$1B,$66,$83,$79,$E1,$BE,$78,$B7,$9E,$E9,$F2,$6E,$4C,$C9,$9B,$F3,$8F,$EB,$F3,  0,  0,  4,$77,$E6,$59,$EF,$59,$66,$59,$C9,$65,$9C,$33,$91,$67,$76,$60,$56,$1F,$BC,$B7,$EB,$3F,$6A,$FF; 576
-		dc.b $D6,$7E,$E7,$10,  0,$FF,$E7,$FD,$7F,$EF,$FD,$4B,$33,  3,$4C,$8C,  0,  4,$B9,$7F,$59,$A5,$3C,$51,$8D,$29,$E0,$68,$C6,$97,$3A,$9A,$31,$AB,$3A,$9A,$33,$7C,$4D,$38,$36,$27,$A7,$F5,$B6,$48,  0,$27,$1C,$F7,$35,$67,$8B,$B9,$CB,$F5,$B6,$87,$39,$6A,$F8,$CF,$AB,$C4; 640
-		dc.b $67,$D5,$E4,$6B,$3E,$AF,$23,$79,$4F,$AB,$D5,$F4,$9F,$57,$A9,$AB,$5E,$6F,$64,$F4,$53,$61,$D1,$5A,$6C,$3A,$2B,$67,$23,$A2,$B6,$72,$7D,$15,$B3,$AD,$15,$B3,$DC,$D9,$EE,$6C,$F7,$36,$19,$EB,$B7,$9D,$73,$79,$3A,$2D,$27,$67,$74,$B3,$BA,$59,$E1,$98,$10,$9B,$5C,$F0; 704
-		dc.b $7E,$77,$38,$9B,$76,$72,$BA,$A5,$9C,$A1,$5B,$2E,$65,$D5,$67,$C0,$FA,$DF,  3,$D7,$61,$1A,$9C,$D8,$F1,$A4,$3A,$BF,$4A,$5D,$5D,$7D,$B5,$EB,$D8,$57,$DB,$61,$5E,$F9,$3C,$AF,$7C,$A7,$C6,$F7,$CA,$7C,$55,$F2,$4C,$62,$7C,$7F,$CB,$ED,$FE,  9,$5E,$FF,$DA,$1B,$E4,$9F; 768
-		dc.b $BE,$94,$FF,$9E,$8E,$20,$65,$FF,$A7,$FF,$92,$7F,$F7,  0,  0,$FF,$7E,$39,$18, $E,$93,$8E,$29,$C2,$9C,$A4,$EB,$A7,$6C,$C6,$8C,$69,$7E,$B5,$D6,$63,$62,$9C,$1A,$B3,$91,$E8,$CD,$E5,$39,$5E,$9C,$1B,$13,$D1,$8D,$38,$5E,$8C,$A6,$72,$71,$91,$A7,$3B,$66,$A7,$2B,$2F; 832
-		dc.b $F3,$5C,$27,$1C,$F7,$35,$79,$E0,$CD,$EB,$CE,$49,$C3,$7A,$CF,$D1,$C3,$79,$4B,$67,$17,$1C,$E0,  0,$27,$1C,$F7,$7E,$B4,$46,$71,$84,$FA,$8B,$A7,$D5,$E2,$33,$EA,$F2,$9E,$DC,$78,$9F,$56,$AF,$57,$D2,$E3,$83,$5E,$46,$FA,$13,$67,$57,$D0,$9B,$3A,$9C,$27,$26,$93,$E8; 896
-		dc.b $4D,$56,$1A,$B5,$9B,$D8,$ED,$5D,$3E,$7F,$AF,$9C, $C,$9B,$93,$1B,$93,$32,$66,$FC,$E1,$37,$EB,$F3, $A,$78,$1E,$B7,$1E,$AF,$89,$EA,$F1,$13,$D5,$E4,$6A,$7A,$BC,$8D,$F7,$EA,$F2,$35,$FC,$C3,$C8,$DF,$29,$F6,$11,$BD,$31,$81,$BD,$31,$81,$BD,$31,$81,$BD,$31,$8B,$D3; 960
-		dc.b $1B,$93,$11,$86,$20,  0,  0,  0,  0,  6,$4D,$C6,$7C,$F8,$B6,$91,$A3,$1A,$53,$88,$1A,$31,$A5,$3C, $D,$18,$D1,$71,$A3,$1B,$71,$A7,$F9,$9F,$36,$53,$81,$38,$13,$E0,$D2,$9E,$E6,$AE,$CE,$27,$7E,$B7,$67,$13,$80,  0,  7,$7E,$F6, $E,$FD,$E8,  0,  1,$94,$F6,$E3,$84; 1024
-		dc.b $FA,$BC,$13,$16,$7D,$5E,  1,$32,$85,$3E,$AF,  4,$CA,$14,$93,$3F,$CF,$25,$33,$56,$AE,$6F,$2A,$14,$EA,$D2,$71,$36,$32,$CC,$A7,$84,$B3,$26,$C7,$35,$9C,$65,$B7,$5C,$E2,$E2,$7E,$71,$CD,$C4,$DB,$B3,$94,$4D,$73,$96,$59,$A9,$EA,$2E,$3D,$5E,$47,$37,$EB,$8E,$D1,$37; 1088
-		dc.b $A6,$27,$AB,$D5,$31,$2D,$5E,$46,$FC,$6E,$7A,$41,$EA,$98,$DC,$CC,$93,$1B,$9B,$4F,$E4,$B1,$A5,$3C,$51,$8D,$29,$E0,$68,$C6,$94,$F8,$62,$53,$A9,$A3, $F,$12,$9D,$4D,$18,$78,$C4,$D1,$87,$8F,$ED,$9F,$27,$20,  0,$65,$38,$CB,$12,$9E,$DC,$72,$C5,$D3,$EA,$F2,$65, $A; 1152
-		dc.b $7C,$1B,$94,$F8,$35,$75,$79,$32,$93,$80,$B3,$7E,$7B,$57,$1C,$D8,$C4,$F5,$78,$11,$3D,$5E,  9,$99,$22,$9E,$AF,$26,$16,$3A,$CA,$BC,$A7,$C4,$93,  6,$63,$82, $C,$B1,  3,$2F,$E7,$E3,$3E,$77,$1A,$33,  3,$4C,$8C,  0,$2D,$CB,$F8,$C7,$89,$4F,$16,$1E,$25,$3C,$11,$86; 1216
-		dc.b $D2,$9D,$4D,$38,$34,$B9,$C8,$F4,$63,$63,$7A,$33,$7C,$4D,$3F,$CC,$F9,$3C,$60,$8C,  0,  1,$6E,$39,$1D,$5B,$30,$79,$32,$93,$80, $B,$36,$C1,$AB,$9C,$B2,$CF,$F3,$DA,$CE,$30,$6E, $D,$63,$6E,$61,$32,$2D,$61,$33,$7E,$64,$F6,$13,$1F,$2C,$C9,$E4,$E2,$7E,$6A,$D9,$A8; 1280
-		dc.b $47,$8E,$76,  0,$8F,$57,$82,$60,$C7,  4, $B,$4C,$D3,$88,$FF,$3D,$85,$E1,$D2,$E5,$27,$19,$23,$1A,$4D,$9A,$99,$9A,$31,$AB,$CE,  8,$D1,$8D,$29,$C9,$D2,$B4,$CD,$29,$C9,$38,$6F,$29,$C8,$F4,$E0,$D2,$9C,$AF,$D1,$9B,$F3,$93,$8B,$14,$E1,$3B,$66,$A4,$A9,$A1,$7F,$37; 1344
-		dc.b $60,  2,$71,$CF,$76,$F2,$E7,$87, $D,$E5,$CE,$5C,$5C,$7F,$AD,$19,$25,$80,  0,  1,$C7,$23,$EA,$6B,  6,$52,$CB,$30,  0,$3B,$6A,$CD,$EB,$2C,$CB,$39,$43,$38,$67,$2C,$B3,  0,  8,$1C,$DF,$9E,$CF,$AC,  0,  0,$14,$CD,$2C,$CB,$71,$40,$D1,$8D,$B8,$D1,$8D,$B8,$D1,$98; 1408
-		dc.b $1A,$64,$60,$7F,$DA,$71,$3E, $D,$29,$EE,$63,$4A,$78,$A3,$1A,$5C,$EA,$68,$CD,$E5,$3A,$9A,$70,$69,$4F,$C1,$FC,$4E,$E7,  0,  1,$77,$EA,$A7,$5D,$D0,$9D,$7F,$55,$33,$40,$11,$DD,$33,$7F,$74,  1,$7E,$AB,$F3,$18,$E6,$CF,$D6,  0,$B8,$E7,$FB,$6F,$CC, $C,$3F,$F5,$FF; 1472
-		dc.b $5F,$FC,$88,$7F,$D8, $B,$BF,$55,$77,$E9,$7F,$54,$B3,$6A,$5C,$6F,$D2,$1B,$6B,$C6,$C7,$B7,$F8,$20,  0,$3F,$E6,$EF,$F1,$98,  2,$1F,$BA,$5D,$DF,$B5,$2A,$75,$C5,$26,$FE,$66,$3F,$E3,$30,$3F,$D4,$5F,$E5,$A6,$56,$1F,$FE,$EC,  0,$7E,$AA,$EF,$D2,$EE,$C1,$D6,$A2,$E3; 1536
-		dc.b $BF,$56,$D1,$4C,  0,  0,  0, $C,$BF,$F5,$37,$F9,$41,$7F,$9D,$3F,$D0,  0,$DD,$87,$5A,$65,$54,$8F,$6D,$DF,$A8,$48,$1E,$46,  4,$3F,$95,  9,$BF,$6A,$A9,$82,$2F,$ED,$CF,$F4,$5F,$B9,$EC,  3,$F9,$50,$FD,$AC,$C2,$1F,$B7,$8C,$DF,$AB,$2E,$83,$FF,$18,$17,$7E,$AA,$29; 1600
-		dc.b $37,$5C,$10,$2E,$CE,$88,$72,$FF,$1B,$B2,$31,$FF,$AF,$FA,$8F,$FB,$F2,$B2,$BD,$B8,$F1,$D7,$6C,$3F,$82,$D7,$B0,$53,$29,$80,$CA,$DF,$E6,$1F,$C6,$1F,$A6,  0,$65,$4F,$DB,$67,$8E,$AE,  3,$F6,$D9,$E2,$3F,$30,$21,$FF,$AF,$EA,$A1,$7F,$14,  0,$D9,$B7, $F,$ED,$61,$D7; 1664
-		dc.b $FD,$AD,$19,$B2,$4E,$9E,$17,$A3,$1B,$71,$A3,$30,$34,$C8,$C0,$1C,$AB,$3F,$EF,$1A,$F3,$B9,$99,$62,$60,  1,$97,$4A,$7E,$BE,  9,$5B,$93,$3F,$DB,$92,$66,$2E,$4A,$7F,$44, $A,$FF,$98,$7F,$DC, $E,$6F,$DD,$C2,$82,$3F,$A6,$FD,$61,$26,$49,$FD,$7C,$B3, $B,$FC,$B0,$21; 1728
-		dc.b $FF,$30,$98,$26,  9,$41,$72,$53,$2F,$CF,$17,$EE,$A1,$37,$EC,$B3,$DF,$36,$59,$E5,$D8,  7,$FF,$B2,$97,$FB,$F3,  3,$B2,$1F,$CA,$2D,$D7,$50,$43,$F7,$3F,$BB,$47,$15,$30,$72,$46,$F5,$FE, $E,$27,$4B,$BF,$3C,$54,$14,$FD,$F1,$24,$D9,$51,$3F,$8F,$40,$81,  2,$5D,$45; 1792
-		dc.b $FE,$56,$2B,$30,$8C,$BF,$57,$FB,$20,$5F,$E1,  0,$BF,$DC,  6,$7F,$AF,$97,$6C,$73,$45,$FE,  8,$A2,$65,$44,$FF,$70,$90,$FD,$A7,$EF,$C4,$79,$80,$8F,$EF,$84,$B2,$6F,$EA,$E5,$DA,$39,$80,$8F,$EF,$81,$7E,$A8,$76,$C8,$A6,$E3,$18,$5E,  6,$1F,$9E,$FD,$50,$BB,$F4,$5F; 1856
-		dc.b $AB,$DE,$3B,  0,$FF,$F0,$12,$FF,$38,  0, $C,$90,$BF,$B4,$49,$FB,$A5,$AC,$68,$EB,$45,$1C,$5B,$15,$33,$B9,$30,$42,$A7,$F0,$41,$53, $A,$FF,$98,$7F,$DC, $E,$CC,$37,$47,$72,$FE,$DB,$F5,$80,$BF,$CE,$32,$CD,$3F,$A2,$BF,$BA,$1B,$90,$93,$F4,$5A,$5D,$51,$88,$2D,$D7; 1920
-		dc.b $36,$26,$A7,$3D,$88,$E7,$84,$C6,$52,$C3,$4D,$DF,$B9,  9,$2C,$28,$53,$E1,$B7,$F7,$A5,$C5,$3C,$D0,$9E,$1D,$DB,$D6,$45,$31,$70,$DB,$3E,$D5,$9A,$12,$84,$D1,$FD,$A0,$87,$EF,$4B,$F5,$B1,$9F,$F5,$DF,$AF,$C4,$FB,$78,$11,$E3,$FC,$9F,$D7,$ED,$C3,$8B,$BA,$EF,$D2,$6D; 1984
-		dc.b $C2,$62,$9B,$F9,$A5,$36,  7,$89,$7F,$3F,$13,$7F,$EF,$D9,$C6,$82,$E9,$C7,$3C,$C2,$68,$6F,$C6,$33,$30,$8C,$71,$7E,$B6,$5C,  5,$D2,$C2,$78,$7E,$F6,$26,$A7,$8C,$31,$DF,$89,$86,$2F, $F,$DF,$ED,$29,$86,$13,  1,$84,$D8,$4C,$C8,$ED,$62,$CD,$CF,$C5,$C6,  6,$D9,$C7; 2048
-		dc.b $F3,$59,$89,$E0,$78,$FF,$3C,$35,$DF,$A6,$FD,$78,$E7,$C2,$7C,$8F,$11,$86,$2F,$18,$33,$F6,$9F,$AD,  5,$38,$FE,$E9,$62,$71,$32,$3C,$7F,$7F,$88,$23,$C2,$49,$FD,$21,$39,$7E,$B6,$32,$87,$EB,$71,$29,$9B,$89,$A9,$C0,$F1,$DF,  6,$44,$E0,$C3,$54,$84,$93,$8C,$A4,$24; 2112
-		dc.b $BF,$DD,$9A,$7C,$8F,$1F,$EF,$E2,$62,$EF,$E0,$FE,$89,$1F,$FA,$E8,$4F,$1F,$D6,$8C,$63,$FA,$F3,$C8,$C4,$7A,$6E,$FD,$73,$CA,$6E,$71,$84,$E2,$7C,$31,$3C, $F,$11,$81,$97,$EB,$7F,$48,$8E,$18,$7F,$F7,$23,$C7,$FB,$F8,$98,$CA,$F6,$7F,$3F,$60,$BA,$60,  0,$10,$FD,$EF; 2176
-		dc.b $E9,  4,$80,$CB,$9E,$E9,$D7,$F9,$A4,$DC,$4E,$E7,$25,$7B,$B7,$2C,$8B,$6E,$E2,$91,$4D,$84,$D7,$48,$4C,  6,  9,$4F,$DC,$FE,$E9,$15,$23,$4D,$B4,$1B,$A1,$2B,$4F,$74,$AB,$37,$14,$26,$C2,$67,$94,$96,$9F,$9E,$9A,$79,$2E,$73,$5C,$62,$58,$19,$4D,$84,$84,$66,$B9, $E; 2240
-		dc.b $79,$4D,$2C,$5F,$2B,$14,$D2,$B5,$D3,$43,$F9,$25,$65,$FE,$41,$DB,$2A,$EA,$2E,$32,$E9,$85,$4B,$BB,$5F,$CF,$60,$78,$6A,$47,$FC,$82,$68,$68,  3,$FB,$DB,$E3,$7A,$F3,$41,$B7,$6F,$2F,$E7,$AE,$B8,$1E,  7,$34,$3A,$66,$5F,$CC,$4D, $D,$97,$4C,$F0,$DC,$26,$D7,$29,$82; 2304
-		dc.b $A7,$F2,$87, $F,$D2,$F1,$27,$F0,$55,$FB,$F0,$32,$FE,$FC,$C7,$94,$D7,$C5, $B,$6F,$31,$22,$FE,$E7,$45,$ED,$67,$ED,$E0,$63,$FF,$E0,$65,$D9,$37,$FB,$D9,$D9,$87,$FF,$CB,$5B,$8F,$58,$DF,$32,$F4,$ED,$87,$75,$CF,$8F,$73,$E1,$30,$18,$4D,$97,$EA,$8E,$8A,$90,$E4,$49; 2368
-		dc.b $97,$F5,$1A,$4D,$1F,$DF,  4,$60,$7F,$44,$BF,$D2,$F8,$F6,$B6,$2F,$DE,$30,$D4,$8F, $D,$44,$52,$13,$45,$17,$F6,$FC,$5B,$23,$FF,$F9,$C4, $D,$79,$EE,$E7,$8C,$C7,$5F,$E0,$97,$FA,$7B,$75,$2E,$EF,$D7,$80, $C,$17,$EA,$BA,$6E,$FD,$CC,$7B,$95,$38,$B0,$68,$68,$C0,$CB; 2432
-		dc.b $F5,$42,$27,$86,$DF,$D2,$7F,$1F, $F,$FF,$80,$46,$3F,$C2,$5F,$F9,$2F,$DC,$80,$26,  2,$1F,$CA,$40,$BF,$D5,$60,$2E,$9B,$9E,$BC,$CB,$FA,$FB,$B5,$32,$FD,$7C,$26,$3C,$A6,$BD,$7F,$72,$A6,$C9,$AE,$98,$DF,$FC,$97,$AF,$F1,$C1,$7F,$FC,  3,$D7,$F3,$DA,$DF,$29,$98,$AC; 2496
-		dc.b $98,$AC,$F3,$1D,$2B,$62,$FD,$FA,$9B,$63,$AC,$D8,$18,$23,$FE,$3B,$1A,$80,  0,  5,$DF,$AC,$BB,$F5,$80, $C,$3A,$A1,$FA,$C5,$FD,$60,$BB,$FF,$98,$75,$47,$AA,$F2,$FD,$65,$EB,$52,$3C,$AF,$C2,$FC,$2F,$8E,$72,$9E,$AC,$FD,$5C,$67,$1F,$AA,$8D,$30,$A8,$BA,$D5,$BB,$3C; 2560
-		dc.b $A8,$CE,$34,$FD,$D3,$D1,$7B,$A0,$83,$A0,$20,  3,$FF,$5F,$F9,  3,$FE,$60, $D,$DF,$D3,$DB,$72,$60,$91,$E8,$5E,$80,  5,$C9,$92,  0,  0,  1,$7F,$87, $D,  7,$40,$FE,$D2,$50,$6D,$5D,$AA,$91,$45,$42,$DA,$48,$53,  1,$FF,$3A,$69,$B9,$37,  2,$DA,$2E,$FE,$49,$4D,$4B; 2624
-		dc.b $B4,$87,$44,$34,$C3,$F5,$49,$1E,$EB,$B6,$92,$47,$6E,$1D,  0, $C,$13,$76,$9B,$84,$76,$85,$CC,$BF,$B2,$49,$87,$2F,$E9,$84,$3F,$DD,$25,$21,$DD,$76,$DC,$36,$C7,$69,$68,$53,$60,$85,$FB,$38,$3E,$EE,$26,$FE,$E9,$36,$19,$6D,$29,$8A,$60, $A,$65,$DA,$5B,$46,$AF,$FE; 2688
-		dc.b $9B,$72,$FC,$F6,$E4,$FD,$57,$EE,$61,$31,$77,$42,$62,$9A,$E9,$97,$6A,$6E,$48,$24,$7A,  5,$DB,$93,$76,$94,$DB,$84,$D1,$DA,$53,$65,$D1,$FC,$91, $F,$E1,$8A,$69,$FB,$A4,$59,$8B,$69,$4C,  4,$C5,$B5,$76,$E5,$FF,$30,$5A,$7F,$29, $A,$62,$FD,$CD,$DD,$D7,$4D,  4,$DD; 2752
-		dc.b $A6,$E4,  0,  0,  7,$F8,$E8,$98,$4C,$5A, $D,  7,$40,  3,$F5,$5F,$CB,$EE,$FE, $C,$3F,$92,  7,$FC,$C0,$E5,$FB,$A4,$A5,$FF,$B9,$4A,$6D,$82,$5D,$A4,$3A,  0,$17,$7F,$F2,$EF,$D6,$2F,$EB,$2E,$A8,$A8,$A8,$A8,$AA,$FF,$70,$AA,  0,  0,  0,  0,$17,$6E,$87,$EA,$97,$F5; 2816
-		dc.b $57,$6E,$CE,$9F,$BB,$5B,$F0,$BE,$14,$5B,$CB,$73,$4A,$9C,$A8,$5B,$E8,$57,$AE,$F5,$BD,$77,$AD,$EB,$BE,$9C,$A9,$FA,$B9,  1,$23,$53,  0,  8,$48,$BA,$40,  0,  5,$AA,$BB,$AC,$AB,  7,$75,$97,$50,  0, $F,$FE, $F,$FE,  0,  7,$FF,  0,$FF,$E0,  3,$26,$FE,$F2,$7D,$5B; 2880
-		dc.b $71,$DB,$65,$C7,$D7,$56,$F0,$6D,$71,$78,$5D,$B0,$98,$BF,$66,$5A,$63,$37,$F5,$4D,$FD,$57,$1E,$CA,$95,$EF,$2B,$DF,$59,$C9,$DD,$56,$95,$13,$11,$32,$ED,$2D,$BF,$F3,$FF,$AA,$F6,$61,$FF,$FE,$9D,$7F,$76,$3B,$AE,$FD,$9C,$7F,$EB,$D8,$3F,$FF,$9E,$B7,$FE,$62,$F0,$BB; 2944
-		dc.b $57,$69,$7F,$8F,$FE,$BD,$83,$FF,$FA,$FF,  7,$53,  5,$FC,$92,$9B,$F8,$6F,$D3,$F8,$A7,$22,$FE, $E,$2E,$CE,$2D,$9C,$A7,$FD,$FC,$EB,$5E,$6A,$DA,$B7,$4C,$53,$17,$EE,$4B,$52,$99,$36,$7E,$60,$9E,$85,$C5,$FA,$B3,$B7,$F6,$EF,$FE,$69,$34,$BF,$58,$B3,$93,$61,$5B,$54; 3008
-		dc.b $F5,$CB,$F9,$25,$DD,$FF,$3F,$FA,$F6, $F,$FF,$FE,$A2,$FF,$CC,$1E,$DC,$36,$96,$D5,$9B,$FE,$7F,$F5,$EC,$1F,$FF,$3D,$7F,$A2,$B3,$47,$6A,$FE,$E4,$BF,$E7,$FF,$5F,$E8,$8B,$FF,$FF,$AF,$F4,$75,$29,$B0,$42,$FE,$4A,$FF,$8F,$FA,$B3,$63,$1E,$A7,$F4,$95,$76,$1A,$CF,$57; 3072
-		dc.b $DE,$4F,$96,$DC,$5B,$D6,$EA,$97,$EA,$A3,$5A,$65,$5A,$65,$5A,  1,$85,$69, $E, $F,$A5,$F8,$9A,$DE,$BB,$D6,$F5,$DE,$B7,$AE,$F5,$BD,$77,$AD,$EB,$BD,$6F,$5D,$EB,$7A,$EF,$C6,$99,$D3,$96,$AC,$29,$11,$E8,$70,$34,$23,$11,$92,$64,$E4,$E3,$BB,$F6,$45,$D7,$17,$33,$4D; 3136
-		dc.b $8E,$FC,$F0,  0, $E,$8D,$90,$4E,$3D,$20,$DE,$5F,$AE,$75,$8E,$DB, $A,$F7,$91,$BB,$B4,$8D,$4D,$D6,$7F,  8,$5E,$E9,$32,$EB,$DD,$91,$8D,$9F,$DA,$E3,$C3,$66,$F8,$FE,$DA,$F5,$32,$D9,$F9,$8B,$DF,$79,$6C,$FC,$C3,$A4,$FB,$CB,$61,$1B,$A4,$FB,$CB,$F5,$59,$EB,$BF,$10; 3200
-		dc.b $32,$AE,$15,$7F,$4D,$DF,$A8,$BE,$AF,$4E,$DF,$CC,$43,$F5,$DD,$64,$F9,$17,$57,$F1,$EB,$B2,$DC,$5B,$9E,$8E,$7D,$FF,$9E,$42,$BF,$65,$F1,$BF,$66,$17,$8F,$FA,$7F,$DF,$F5,$5F,$C7,$FC,$F1,$73,$C0,$CB,$F3,$C5,$3A,$BF,$A7,$F3,$DC,$E7,$B0,$8D,$71,$23,$53,$FC,$F1,$F1; 3264
-		dc.b $59,$C9,$3A,$3B,$FE,$FF,$D7,$DD,$96,$23,$F9,$A5,$39,$7F,$3A,$72,$C4,$E3,$8A,$4E,$EF,$D9,$EF,$AF,$F1,$FA,$8B,$8B,$F4,$BB,$2A,$46,$5B,$38,$DE,$64,$F2,$E9,$71,$3C,$8E,$17,$BC,$60,$DC,$66,$FE,$40,$15,$C9,$E6,$21,$D2,$94,$E9,$FD,$44,$3F,$31,$DA,$E3,$CF,$4F,$D2; 3328
-		dc.b   0,  0,$19,$56,$15,$FD,$35,$16,$B4,$17,$56,$82,$EA,$D2,$EA,$43,$F7,$4B,$BA,$EF,$FD,  1,$86,$E8,$7E,$A9,$7F,$54,  5,$DB,$B3,$A7,$29,$1A,$DF,$BA,$CB,$4E,$51,$A1,$5F,$85,$F8,$5F,$85,$F8,$5F,$1E,$9F,$E1,$80,  0,$C9,$D7,$71,$D7,$47,$5E,$55,$81,$82,$4A,$8B,$92; 3392
-		dc.b $B1,$E3,$AC,$5D,$D5,$75,$44,$2F,$75,$A3,$7B,$A5,$91,$80,  0,$EB,$FD,$23, $D,$D2,$7F,$4C, $D,$DC,$4F,$BA,$F4,  0,$A9,$34,$4E,$6E,$21,$FC,$2F,$D6,$81,$94,$C3,$FD,$25,$FF,$4B,$BF,$49,$CF,$5C,$E8,$58,$B6,$3F,$9E,$32,$DB,$AB,$A7,$C7,$7F,$E9,$36,$FE,$90,$2F,$F7; 3456
-		dc.b $A3,$CD,$B7,$77,$EE,$F8,$FF,$7F,$F9,$EF,$EB,$DF,$FD,$86,$BB,$FC,$93, $F,$EF,$2F,$F4,$57,$FB,$7C,$45,$8E,$BF,$C9,$FC,$F6,  7,$8B,$2E,$73,$CD,$91,$9C,$98,$4C,$C1,$83,$86,$4C,$32,$99,$26,$FD,$B3,$E1,$D2,$F9,$41,$FC,$4E,$38,$25,$E0,$5C,$71,$3C,$90,$F3,$8D,$70; 3520
-		dc.b $A8,$C2,$A3, $A,$8C,$2B,$1F,$D6,  0,  0,  5,$FF,$C8,$F5,$4F,$5F,$DE,$AD,$F8,$5E,$B7,$A9,$95,$FD,$50,$FD,$62,$FE,$B0, $B,$BF,$5B,$D5,$1B,$FA,$A0,$7D,$57,$54,  0,  5,$DB,$F0,$DE,$32,$60,$C1,$8F,$19,$27,$EB,$D9,$99,$BD, $B,$6B,$E9,$D1,$36,$CD,$20,$FD,$22,$C0; 3584
-		dc.b $97,$70,$17,$1B, $B,$F8,$6E,$D2,$5F,$E3, $F,  0, $C,$BF,$E7,$FF,$30,  0,  1,$32,$40,  0,  0,$24,$DF,$C2,  0,  2,$A4,$85,$D3,$49,$B7,$66,$D2,$FE,$62,$D6,$35,$5F,$E6,  0,  0,$2F,$DE,$47,$F7,$80,  0,  0,$26,$1B,$80,  0,$5D,$38,$5F,$E1,$6A,$97,$5E,$2E,$BC,$5D; 3648
-		dc.b $78,$BA,$FC, $F, $F,$EA,$4D,$2F,$EC,$CA,$6F,$FE,$80,  0,$9A,$5D,$D2,$9B,$8A,$6F,$D2,$4D,$29,$BF,$FA,  0,$18,$6D,$97,$F2,$4A,$79,$BF,$A9,$37,$FF,$40,  3,$9F,$FA,$5B,$59,$76,$DC,$27,$C4,  0,$27,$B9,$C7,$9A,$E6,$6E,  2,$E9,$E9,$35,$D3,$71,$5C,$D0,$D0,$D7,$27; 3712
-		dc.b $F4,$88,$C6,$1F,$F9,$FF,$A0,$1F,$FF,$FF,$90,$1F,$F9,$FF,$A0,$1F,$FF,$71,$E6,  5,$D3,$53, $F,$D2,$64,$DC,$1B,$83,$41,$7E,$99,$B0,$67,$EE,$5A,$4C,$9A,$9F,$B9,$6A,$A6,$DB,$93,$6C,$36,$D3,$F7,$3B,$FF,$92,$D5,$6F,$73,$63,$DC,$C6,$AB, $B,$42,$99,$B0,$DC,$53,$34; 3776
-		dc.b $A6,$2E,$E6,$AF,$71,$4C,$D2,$61,$6E,$8C,$C5,$A1,$4C,$D2,$6F,$EE,$5B, $A,$F7,$70,$69,$32,$33,$AE,$2B,$B6,$44,$93,$AC,$D2,$26,$B1,$76,$C9,$71,$5D,$A4,$D2,$9E,$13,$C3,$F7,$32,$83,$6B,$49,$6D,$93,$49,$89,$3A,$B8,$B4,$2D,$BD,$64,$C2,$98,$A6,$EB,$2C,$60,$D2,$9E; 3840
-		dc.b $1B,$5B,$3C,$9B,$25,$E7,$93,$49,$BB,$78,$9B, $D,$F4,$9A,$CD,$26,$96,$85,$8C,$58,$B3,$AB,$74,$DA,$55,$69,$30,$B6,$93, $B,$48,$E2,$4C,$2E,$E2,$9C,$A9,$34,$36,$97,$FB,$E5,$94,$F9,$4F,$82,$4F,$83,$32,$C7,$29,$F2,$DB,$C1,$AA,$CD,$A5,$3A,$B0,$91,$71,$8D,$15,$8B; 3904
-		dc.b $62,$98,$A7,$AB,$6C,$5B,$4B,$15,$4B,$14,$C4,$C5,$98,$A6,$2B,$55,$A4,$DE,$EA,$D1,$AB,$DD,$44,$56,$12,$12,$5D,$45,$9D,$6C,$53,$14,$F8,$95,$8B,$69,$63,$46,$A5,$8A,$62,$A2,$CC,$53,$15,$89,$A4,$DE,$EA,$EF,$26,$6D,$A4,$18,$56,$D2,$8D,$5B,$56,$E6,$14,$DA,$51,$A4; 3968
-		dc.b $96,$29,$A8,$D2,$6D,$8A,$68,$36,$CB,$DC,$B6,$FE,$4E,$F7,$7F,$75,$C0,  0,  0,$FF,$98,  0,  1,$77,$E8,$AE,$FD,$10,  0, $F,$E1,$13,$AE,$7B,$8B,$F8,$56,$FD,$10,  0,  0,$22,$E2,$E3,$83,$89,$D0,$E3,$57,$93,$DD,  7,$93,$E3,$B1,$4D,$7B,$4A,$F5,$D8,$B7,$B8,$B6,$2D; 4032
-		dc.b $EE,$2E,$D2,$61,$3C,$BB,$49,$EA,$F2,$7C,$2F,$23,$2E,$95,$32,$30,$5D,$11,$4C,$B4,$5F,$E3,$4B,$F8,$EA,$E8,$19,$6C,$27,$11,$95,$E4,$F5,$E8,$23,$57,$43,$43,$78,$C1, $C,$BF,$AF,$27,  0,  2,$FE,$C9,$78,$CB,$B7,$8D,$5F,$1F,$D1,$7E,$D4,$9D,$17,$5B,$61,$38,$9C,$F2; 4096
-		dc.b $BC,$B8,$DF,$7C,$1C,$F1, $D,$1C,$A7,$91,$C7,$62,$99,$68,$5C,$CA,$87,$1D,$21,$D1, $D,  0,$11,$42,$4B,$90,$92,$3D,$17,$74,  0,  0,$C3,$FC,$64,$85,$A4,$10,$91,$74,$54,$B9,$15,$2E,$40,  9,$2D,$FA,$2E,$B6,$59,$FD,$3C,$36,$19,$68,$B7,$E8,$BF,$B3,  0, $B,$3E,$DB; 4160
-		dc.b $3A,$DC,$4E,$2E,$37,$AF,$69,$76,$95,$E5,$FB,$72,$D0,$CB,$B6,$EF,$DB,$92,$11,$FE,$DE,$E7,$AB,$8F,$87,$ED,$48,$DE,$4E,$2E,$32,$38,$38,$9E,$BB, $B,$61,$AF,$69,$5E,$BB,$16,$F5,$7C,$3F,$A2,$5D,$32,$FD,$33,$E5,$69,$59,$FC,$1E,$E5,$BD,$4D,$EE,$C0,$E0,$71,$7B,$AF; 4224
-		dc.b $C3,$A5,$4D,$6F,$2B,$C9,$E5,$69,$7E,$D7,$8C,  0,  9,$D9,$7E,$8A,$3C,$6B,$C6,$BF,$D2,$18,$7E,$D5,$5D,$6E,$62,$73,$CC,$16,$84,$E7,$99,$22,$A0,$75,$B8,$BF,$6E,  7,$ED,$5D,  3,$23,$27,$F1,$A9,$91,$96,$C7,$44,$E3,$D0,$46,$4F,$67,$1A,$29,$BA,  7,  4,$85,$E4,$6A; 4288
-		dc.b $F2,$FE, $A,$BC,$BA,$49,$C5,$B0,$8C,$9E,$4E,$79,$7E,$DD,$78,$E3,$FB,$7F,$D3,$3B,$F6,$6A,$8A,$64,$64,$8B,$CD,$75,$E4,$91,$3C,$8F, $B,$D5,$20,$91,$FD,$9C,$3A,$21,$A4,$10,$93,  4,  0,$65,$FC,$37,$23,$AE,$E9,$4B,$8D,$50,$64,$97,$68,$49,  4,$2D,$30,$47,$24,$1D; 4352
-		dc.b $62,$38,$9B,  0,$FE,$98,$40,$81,$D6,$75,$9D,$6D,$84,$F2,$ED,$71,$74,$93,$F0,$38,$3A,$27,$1D,$20,$F2,$45,$42,$38,$E9,$1B,$39,$74,$75,$80,$53,$24,$8B,$F0,$71,$3F,  7,$41,$2E,$35,$D3,$65,$9C,$B7,$E0,$77,$20,$C9,  6,  9,  3,$86,$90,$FE,$3F,$E9,$1C,$38,$EE,$ED; 4416
-		dc.b $74,$6F,$27,$BA,$E3,  0,$DF,$FA,$2F,$DA,$59,$C0,$9F,$73,$9E,$62,$2E, $A,$71,$70,$87,$5F,$E9,$18,$6E,$BE,$1A,$5C,$83,$24,$10,$38,$E8,$47,$87,$F4,$CB,$4B,$B4,  8,$12,$28,$BF,$C3,$11,$4C,$91,$6F,$61,$92,  5,$30,$5B,  6,$4F,$89,$8E,$9D,$92,$64,$10,$71,$C0,$C9; 4480
-		dc.b $36,$39,$F1,$32,$79,$5E,$48,$46,$46,$A9,  3,$B9,$22,$8A,$FF,$DA,$59,$C9,$91,$C5,$D8,$38,$9E,$46,$AE,$D9,$17,$42,$F2,$71,$3C,$8C,$43,$85,$E5,$A4,$74,$B9,  4,$50,$2E,$83,$F6,$63,$A0,$24,$12,  9,$82,$43,$F6,$70,$FD,$9C,$7A, $B,$A0,$BF,$C6,$48,$5D,$19,$24,$3A; 4544
-		dc.b $22,$90,$40,$A8,$22,$81,  9,$2E,$4C,$90,$21,$26,$1A,  0,  4,$3A,$F8,$FF,$67,$B2,$F2,$E8,$23,$54,$81,$AA,$44,$F2,$30,$32,$45,$D0,  0,$81,$52,$E4,  8,$49,$82,$43,$F6,$6A,$84,$98,$68,  0,  3, $F,$E1,$88,$20,  8,$A9,$14,$C1,$15, $B,$A3, $A,$1B, $A,$96,$74,$B1; 4608
-		dc.b $CD,$C6,$4E,$5F,$CF,$4A,$D8,$91,$96,$25,$22,$C4,$A4,$B6,$5A,$46,$CB,$20,$24,$58,$CA,$D8,$BA,$46,$EA,$48,$F1,$AC,$8E,$B2,$B3, $B,$12,$96,$25,$67,$15,$AE,$91,$59,$6C,$B2,$27,$2D,$8A,$CA,$E8,$DB,  9,$63,$67,$4B,$17,$58,$F9,$3C,$C9,$E4,$CE,$46,$59,$91,$94,$EC; 4672
-		dc.b $79,$66,$47,$A3,  9,$94,$E0,$B6,$D2,$5A, $C,$24,$52,$C6,$CE,$96,$2C,$B1,$F2,$79,$93,$D7,$91,$96,$64,$6C,$CC,$8C,$B3,$23,$26,$42,$8A,$85,$C0,$8E,$1A,$13,$30,$42,$61,$96,$32,$B6,$26,$F3,$7D,$2F,$CE,$B7,$D4,$C9,$85,$99,$1E,$6A,$FC,$8F,$23,$27,$E4,$F1,  3,$CC; 4736
-		dc.b $9E,$79,$BC,$8F,$93,$CC,$9E,$BC,$8C,$B3,$23,$2C,$C8,$CB,$32,$3B,$A9,$91,$80,$64,$79,$93,$CF,$36,$11,$F2,$79,$93,$D7,$91,$96,$64,$65,$99,$19,$66,$47,$75,$32,$30,$AC,$B8,$C9,$3F,$4A,$C2,$3C,$19,$82,$17, $B,$B4,  8,  0,$FF,$A8,$66,$49,$FA,$6B,$91,$78,$13,$17; 4800
-		dc.b $45,$65,$DA, $D,$3F,$EA,  0,$26,$61,$FA,$6B,$BF,$6C,$4C,$56,$13,  9,$85,$FF,$6F,$D3,$13,  9,$84,$C5,$61,$30,$98,$4C,$FD,$99,$26,  8,$5A,  0,$3F,$EA,$CC,$B8,$13,  9,$8A,$C2,$61,$30,$B8,$7F,$CC,  1,$64,$FE,$AF,$E9,$B0,$61,$30,$98,$A9, $F,$D3,$61,$FA,$62,$E8; 4864
-		dc.b $56,$5D,$FB,$31,$FF,$50,$2E,$61,$30,$98,$5C,  9,$84,$C2,$61,$7F,$CC,$47,$F6,$76,$4B,$24,$58,$4C,$54,$2F,$D9,$92,$12,$45,  0,  3,$FE,$A3,$86,  8,$5F,$D6,$2F,$F1,$80, $B,$FE,$79,$26,$5A,$12,$12,$17,$F4,$C9,$15,  9,  0,$8F,$F4,$C9,$2E,$E8,$24,$2D,  9,  9,  9; 4928
-		dc.b   0,  2,$EE,$C0,  0,$1C,$B7,$72,$DD,$FD,$15,$DD,$CB,$F7,$40,  0,  7,$2D,$DC,$B7,$72,$DD,$CB,$70,  0,  1,$86,$EC,$37,  0,  6,$1B,$97,$F7,$57,$F2,$5E,$6E,$5B,$B9,$6E,  0,$47,$FF,$58,$5E,$BD,$9B,$39,$6E,$E5,$D4,$32,$FE,$57,$EA,$CD,$6F,$FD,$BD,$FF,$B7,$5F,$FB; 4992
-		dc.b $EC,$5D,$8B,$FF,$BC,$3F,$55,$FC,$BF,$D3,$7F,$1C,$7E,$DD,$76,$47,$66,$17,$AD,$FC,$B7,$72,$DD,$FF,$C1,$1D,$91,$FF,$BA,$EC,$11,$BD,$6F,$E5,$BB,$96,$EF,$FE, $D,$8B,$B1,$7F,$6E,$BF,$B7,$C2,$F5,$BD,$7B,$39,$6E,$E5,$BB,$AB,$F5,$74,$E5,$13,$87,$ED,$F9,$97,$67,$32; 5056
-		dc.b $F6,$73,$2F,$34,$79,$7F,$6B,$F5,$7B,$A1,$DB,$C2,$BC,$B6,$61,$7E,$C5,$D9,$1F,$DB,$AD,$F1,$BD,$6F,$5E,$5F,$BA,$E4,$3F,$88,$3F,$49,$BF, $D,$9B,$E3,$B1,$77,$8D,$FF,$FB,  3,$F4,$83,$F8,$83,$23,$C8,$FF,$E8,  0,$FE,$A4, $E,  7,$C4,$46,$47,  3,$23,$C2,$56,$95,$A5; 5120
-		dc.b $69,$58,  0,$25,$6F,$DA,$6E,$81,$91,$E2,$DC, $C,$A5,$69,$5A,$5F,$A5,  0, $D,$DC,$B7,$2B,$71,$6F,$4E,$E2,$71,$D7,$16,$E2,$4D,$AB,$6B,$8B,$71,$87,$34,$6F,  0,  0,$16,$F8,$F3,$2F,$65,$EB,$CC,  0,$17,$AF,$67,$32,$F3,$47,$9A,$37,$80,$23,$7A,$F6,$73,$2F,$36,$17; 5184
-		dc.b $80,  2,$F6,$5E,$BC,$CB,$CD,$1E,$65,$E6,$8D,$E0,  5,$BE,$3C,$CB,$CD,$1B,$C0,  3, $B,$F0,$BC,  0,  0, $B,$7C,$79,$A3,$78,  0,  8,$DE,$BD,$9D,$97,$AD,$EB,$78,  0,$47,$F7,$D7,$AF,$EF,$B9,$A3,$CD,$1E,$6C,$2F,  2,$3F,$AE,$6E,$2D,$C5,$B0,$38,$FE,$F8,$8C,$BA,$57; 5248
-		dc.b $F7,$DC,$CB,$7A,$FF,$46,$37,$85,$C5,$B8,$B7,$1F,$D7,$8C, $C,$B1,$69,$19,$19,$1A,$FF,$7A,$FC,$39,$B0,$BE,$2D,$FE,$63,$71,$54,$82,$38,$D2,$3A,$29,$F4,$13,$7F,$3D,$FA,$FF,$CF,$2F,$F4,$61,$FC,$18,$5E,$57,$C0,$E1,$D9,$D9,$1B,$C0,  0,  0,$16,$F8,$DE,$46,$BF,$C1; 5312
-		dc.b $2E,$65,$E6,$5E,$68,$99,$70,$5B,$D8,$F5,$BD,$7F,$6E,$B7,$AF,$67,$61,$95,$E4,$65,$D2,$46,$BD,$24,$C7,$B1,$E6,$5C,$17,$FE,$EB,$B2,$37,$AF,$64,$3A,$63,$7E,  7,$91,$97,$44,$4D,$17,$40,$8A,$7A,$2A,$19,$74,$F4,$17,$F0,$49,$16,$F2,$BE,$26,$A6,  1,$26,$5D,$18,$7E; 5376
-		dc.b $CF, $D,  0,$87,$ED,$AF,$E0,$BF,$F7,$5D,$91,$BD,$7B,$23,$78,$19,$1E,$46,  0,  0,$44,$C8,$C8,$E0,$63,$9B,  3,$8D,$E3,  3,  1,$4D,$4D,$4E,$73,$27,$19,$5F,$CE,$6E,$32,$BC,$AB,$D2,$E3,$AA,$9D,$4D,$C5,$39,$55,$27,$4B,$E7,$39,$D1,$C5,$57,$55,$27,$34,$2A,$BA,$AE; 5440
-		dc.b $A9,$55,$D7,$CF,$7B,$A7,$29,$FA,$67,$71,$4F,$53,$5A,$99,$4E,$85,$58,$38,$C8,$DB,$7D,$5D,$54,$72,$11,$CE,$EA,$9A,$2D,$4C,$AF,$42,$3A,$A1,$5E,$95,$34,$76,$8E,$4A,$A1,$38,$90,$90,$D1,$7A,$B4,$3A,$B5,$CD,$AC,$3A,$9C,$BA,$75,$2B,$6A,$B3,$B4,$93,$A9,$22,$75,$D0; 5504
-		dc.b $A7,$53,$AA,$9D,$49,$2A,$5A,$2B,$91,$A4,$75,$71,$4F,$5D, $E,$A4,$85,$5D,$2A,$68,$4D,$27,$23,$4E,$A8,$E2,$73,$52,$AD,$BD,$67,$4A,$91,$95,$52,$76,$92,$11,$B4,$9A,$46,$49,$3B,$4D,$1A,$70,$AB,$B4,$A9,$A5,$53,$7A,$54,$FA,$8A,$76,$A1,$1A,$A1,$D8,$92,$76,$95,$51; 5568
-		dc.b $86,$5F,$AF,$54,$9D,  9,$AE,$DE,$93,$AA,$39,$AA,$E2,$6A,$14,$F5,$E8,$6B,$91,$D5,$6A,$35, $D,$15,$B6,$24,$27,$23,$51,$ED,$57,$C2,$7D,$EA,$96,$4A,$93,$4A,$8D,$B2,$13,$48,$E0,$6C,$D1,$CD,$A9,$19,$75,$35,$C5,$62,$79,$34,$9C,$C2,$47,$51,$1B,$66,$59,$2D,$C1,$D6; 5632
-		dc.b $54,$62,$31,$E4,$8E,$82,$31,$2D,$3B,$4D,$74,$B2,$B8,$9A,$E4,$B3,$67,$4B,$11,$F0,$47,$56,$8D,$4A,$54,$AD,  6,$95, $A,$D3,$B5,$29,$5B,$29,$D8,$98,$56,$46,$D7,$85,$4C,$91,$59,$42,$9F,$87,$55,$96,$A9,$66,$13,$A8,$D2,$6A,$2B,$D6,$A5,$5B,$7E,$9A,$D5,$2A,$A1,$31; 5696
-		dc.b $18,$4D,$62,$6E,$B7,  5,$6D,$68,$C2,$62,$D4,$ED,$C2,$A9,$62,$7A,$32,$A5,$52,$4E,  9,$52,$AA,$35,$18,$85,$44,$A9,$35,  9,$19,$6A,$93,$51,$84,$84,$CA,$A7,  2,$4B,$30,$AB,$66,$13,$11,$95,$26,$93,$68,$85,$52,$AB,$16,$CC,$4A,$1B,$2A,$DE,  9,$63,$62,$59,$29,$5D; 5760
-		dc.b   9,$3A,$D5,$2C,$95,$6B,$37,$93,$11,$B4,$2B,$12,$32,$1C,$2C,$4C,$42,$B7, $B,$12,$2A,$32,$88,$49,$D6,$94,$2A,$A1,$59,$96,$A9,$54,$98,$85,$62,$A6,$8C,$D2,$CC,$EB,$54,$6D,$18,$84,$85,$55,$AB,$2C,$4C,$A2,$B7,$AC,$BA,$E8,$D4,$B3,$2D, $B,$21,$32,$DA,$30,$90,$98; 5824
-		dc.b $DA,$92,$12,$5A,$AA,$C6,$D3,$AE,$B4,$AD,$16,$96,$4E, $D,$5A,$AB,$15,$B4,$65,$90,$98,$48,$B4,$AC,$19,$6A,$2D,$11,$52,$36,$6B,$11,$AB,$5B,$75,$34,$AA,$55,$6D,$55,$A9,$4C,$98,$DA,$35,$5B,$68,$23,$69,$D7,$A1,$31,$58,$A9,$62,$4B,$2A,$12,$41,$88,$C2,$65,$18,$56; 5888
-		dc.b $42,$4B,$36,$CB,$62,$61,$25,$90,$AC,$C8,$52,$A5,$65,$B5,$55,$B6,$4C,$10,$B8,$55,$68,$96,$62,$B6,$A5,$FA,$56,$4D,$49,$B7,$EE,$6C,$76,$47,$66,$48,$22,$F4,  9,  6,  6,$3D,$38,$B6,$70,  0,  8,$CB,$61,$81,$19,$6C,$30,$30,$7C,$A2,$F6,  0,$82,$E7,$B3,$88,$60,$F0; 5952
-		dc.b $F0, $D,$E3,$81,$A2,$DA,$5C,$6C,$95,$E3,$23,$C1,$EA,$EB,$90,$98,$96,$42,$7A,$A1,$39,  1,$38,$B8,$89,$C8,$49,$6B,$C0,  6,$2E,$D9,$61,$77,  4,$39,$3C,$98,$22,$F9,  0,$22,$F3,$18,$3C,$DF,$2D,$80, $E,  0,$2E,$C5,$7D,$CC,$23,$65,$E4,$6E,$91,$3C,  5,$37,$F1,$91; 6016
-		dc.b $AB,$F5,$6D,$57,$6E,$A4,$92,$D7,$15,$BD,$CF,$FE,$99,$1D,$2B,$CF,$4D,$77,$E0,$60,$C9,$91,$D8,$DD,$7F,$3D,$17,$DD,$B6,$F5,$9B,$3B,$BF,$87,$D4,$DD,$7A,$B7,$E8,$65,$7A,$9B,$1F, $D,$3F,$5F,$35,$75,$E0,$F9,$16,$8F,$FC,$C3,$11,$E5,$CC,$5D,$31,$FF,$9F,$3E,$B4,$6F; 6080
-		dc.b $55,$22,$99,$70,  6,$5B,$23,$8E,$BB,$56,$6D,$5C,$F5,$CE,$62,$37,$33,$FE,$7C,$AB,$4A,$B6,$B3,$8E,  4,$E1,$81,$C0,$FF,$6E,$58,$D3,$F9,$14,$ED,$2E,$66,$74,$CD,$8C,$D9,$EF,$C7,$51,$13,$53,$27,$88,$1B,$FF,$31,$32,$E2,$DD,$50,$8E,$6C,$C8,$C9, $D,$DD,  4,$6E,$D7; 6144
-		dc.b $F7,$7F,$98,$CF, $D,$CB,$BB,$6E,$9B,$B4,$11,$D1,$7B,$23,$FF,$37,$7F,  5,$D9,$A4,$10,$92,$90,$42,$E8,$54,$85,$FA,$2D,$E1, $B,$98,$90,$BF,$A7, $F,$F5,$BB,$6C,$26,$A2,$2F,$70,  5,$A2,$DE,$BC,$D8,$7E,$CF,$8F,$4A,$B2,$7A,$55,$94,$9F,$19,$67,$A9,$96,$A5,$37,$16; 6208
-		dc.b $2D,$91,$19,$4F,$33,$CA,$45,$8E,$8C,$29,$A9,$B5,$6D,$A4,$B4,$18,$48,$9D,$69,$3B,$1B,$16,$35,$3C,$6B,$23,$7D,$27,$7C,$D3,$CD,$C2,$5D, $C,$47,$58,$AC,$B6,$29,$2D,$95,$C5,$2B,$9C,$B6,$CA,$C5,$C5,$6F,$D2,$3A,$5F,$98,$CC,$8E,$98,$99,$3A,$85,$33,$88,$C9,$D0,$71; 6272
-		dc.b $6B,$D4,$6B,$48,$DA,$42,$B2,$2A,$E1,$A9,$63,$2B,$49,$C4,$72,$A1,$19,$54,$8E,$9A,$9B, $A,$92,$D5,$C5,$33,  8,$E4,$BA,$AC,$AC,$B3,$4A,$B2,$27,$15,$6C,$56,$57,$46,$D8,$71,$58,$B8,$9D,$25,$CC,$8E,$98,$9E,$B4,$74,$A6,$71,$1E,$B4,$83,$8A,$5A,$94,$CB,$48,$CC,$BA; 6336
-		dc.b $D4,$AB,$1A,$DD,$AA,$C8,$B1,$29,$AB,$8C,$8E,$54,$D4,$CA,$A4,$74,$29,$98,$54,$2D,$68,$46,$E9,$1F,$EA,$3F,$48,$53,$16,$B3,$2F,$16,$2B,$62,$B2,$BA,$36,$87,$51,$71,$5B,$F4,$8E,$92,$E6,$47,$46,$1C,$B7,$11,$D0,$8C,$B1,$92,$D2,$36,$E2,$A7,$12,$D9,$64,  4,$8B,$19; 6400
-		dc.b $5A,$4E,$91,$CA,$84,$65,$52,$3A,$11,$B0,$A8,$B8,$91,$B0,$8F,$88,$B8,$8A,$56,$5B,$2C,$89,$CB,$62,$B2,$BA,$36,  5,$D4,$30,$EA,  0,  1,  0; 6464
-Nem_TitleSonicTails:dc.b $80,$C1,$80,  4,  4,$14,  5,$25, $E,$35, $F,$45,$12,$55,$15,$66,$32,$73,  0,$81,  3,  1,$15,$11,$27,$75,$38,$F1,$82,  6,$36,$83,  4,  6,$17,$6E,$28,$F4,$84,  6,$2E,$18,$EF,$85,  5,$18,$86,  5,$14,$17,$74,$28,$F6,$87,  5,$10,$17,$72,$88,  6,$38,$89,  6,$34; 0
-					; DATA XREF: ROM:000032A2o
-		dc.b $18,$F3,$8A,  6,$33,$8B,  6,$35,$18,$F0,$8C,  7,$6F,$18,$F2,$8D,  6,$2F,$17,$76,$8E,  5,$13,$17,$73,$8F,  5,$16,$18,$EE,$FF,  0,  0,  6,$44,  0,  0,  3,$22,  0,$1E,$32,$DB,$17,$46,$BD,$F1,$77,$5F,$C9,$2C,$2B,$B2,$7E,$9D, $A,$FF,  5,$CC,$3F,$87,$2F,$D2,$BF; 64
-		dc.b   9,$CB,$C7,$BF,$70,  0,  0,$23,$23,$BA,$2A,$59,$F1,$D8,$A3,$39,$AB,$B1,$56,$5D,$9F,$FA,$55,$8A,$C1,$C5,$6E,$6B,$BD,$36,$60,$2B,$17,$C5,$B6,$71,$4D,$A2,$87,$F4,$48,$50,$B1,$52,$AC,$52,$2E,$28,$6A,$45,$48,  3,$2F,$F9,  0,  0,$19,$17,$F5,$64,$EA,$9B,$32,$14; 128
-		dc.b $FC,$93,$15,$6D,$A2,$F8,$D4,$80,  0,  0,  1,$97,$FC,$80,  0,$3B,$FE,$3F,$F3,  0,  0,$1D,$BA,$4D,$97,$A0,  1,$FE,$2A,$69,$FB,$74,$A2,$7E,$DD,$68,$53,$AC,$3F,$44,$DF,$A2,$60,  0,$FF,$8A,$7F,$4D,$1A,$AC,  0,  0,$7F,$CE,$5F,$A4,$77,$7F,$4B,$B7,$25,$D4,$4D,$B5; 192
-		dc.b $5D,$DB,$69,$A9,$7B,$78,$57,$76,$66,$AD,  3,$5E,$55,$6B,$BF,$A4,  0,  3,$FA,$2B,$FC,$34,$8C,$BD,  0, $F,$F4,$A6,$EE,$9F,$A4,$3D,$E5,$23,$DD,$ED,$FA,$E8,$ED,$E7,$D5,$75,$8A,$FB,$14,$F6,$77,$47,$75,$74,$57,$3D,$F1,$76,$68,$D0,$4F,$D5,$26,$A9,$A5,$F9,$BF,$F2; 256
-		dc.b $47,$7F,$B5,$E0,  0,  1,$11,$97,$A4,$6B,$B8,$AF,$F0,$D0,$A6,$3B,$F9,$5C,$91,$5D,$CA,$DF,$BF,$8A,$F5,$E2, $E,$F6,$58,$3E,$8B,$B3,  5,$A3,$D8,$32,$E8,$6F,$75,$1F,$61,$DC,$99,$E4,$C6,$F0,$BC,$F4,$4B,$D3,$9C,$A7,$2D,$E2,$62,$5B,$4C,  0,  0,  0,  0,$2A,$72,$63; 320
-		dc.b $93,$1C,$98,$8C,$98,$87,$33,$98,$BB,$70,$64,$63,$26,$77,$EB,$D5,$90,$FE,$BB,$C4,$10,  0,$1E,$37,$6E,$D9,$D8,$82,$1A,$9D,$C5,$60,$EB,$9E,$5A,$ED,$B2,$2F,$6B,$9C,$76,$2A,$CF,$6B,$B6,$C8,$80,$2B,$B0,  2,$4C,$13,$60,$32,$A1,$91,  9,$B5,$76,$C8,$A1,$AD,  6,$D5; 384
-		dc.b $E1,$1A,$5A,$F3,$AE,$A1,$36,$DD,$76,$ED,$B4,$6F,$C9,$72,$42,$BD,$F4,$83,$AE,$D9,$A8,$F6,$20,  4,$23,$28,$D7, $E,$32,$35,$29,$17,$EA,$C3,$73,$E9,$59,$A5,$9B,$2C,$33,$A8,$B6,$DF,$53,$94,  0,$83,$A1,$95,$9D,$67,$C1,$21,$7A,$7E,$A2,  9, $C,$70,$9A,$7E,$63,$4A; 448
-		dc.b $41,$74,$9D,$A7,$48,$61,$69,$C9,$D8,$94,$17,$F6,$AD,$77,$F6,$7B,$80,  0,$64,$D5,$6A,$B0,$4B,$9E,$D5,$65,$B9,$95,$96,$ED,$93,$73,$CC,$AE,$DB,$23,$2B,$B6,$73,$77,$EC,$5D,$76,$E2,  0,  0,$3E,$FF,$D5,$BF, $C,$BF,$AB,$73,$3F,$3A,$95,$83,$29,$56,$B9,$4C,$A2,$FE; 512
-		dc.b $EF,$EF, $A,$F2,$7F,$2D,$99,$5A,$1F,$92,$29,$BA,$ED,$90,$BA,$ED,$A2,$EB,$B6,  6,$5B,$1A,$90,  0,$15,$98,$C8,$D6,$62,  0,  1,$94,$2B,$60,$73,$91,$B2,$6B,$9B,$CA,$14,$D7,$3A,$94,$CF,$C2,$B1,$FF,$F7,$F5,$D7,$FA,$5C,$BF,$A3,$F9,$2A,$C4,  0,  0,  9,$CC,$BE,$7D; 576
-		dc.b $26,$F2,$B0,$B3,$A0,$BC,$A5,  3,$95,$B2,$B5,$60,$72,$80,$86,$44,$56,$19,$19,$85,$68,$24,$26,$AC,$86,$96,$77,$E6,$39,$AF,$84,$7F,$77,$15,$F1,$74,$2D,$C7,$F3,$B4,$DA,$86,$5B,$8D,$1C,$61,$BA,$89,$14,$68,$6E,$74,$11,$A1,$B8,$A1, $A,$D0,$71,$7B,$2C,$1C,$D0,$42; 640
-		dc.b  $C,$98,  0,$32,$61,$26,$80,$12,$68,  9,$34,$1A, $E,$64,$6B,$B8,$FD,$7A,$43,$7E,$9D,$52,$16,$29,$FA,$AD,$6C,$53,$37,$90,$B9,$8F,$DD,$1C,$AD,$3B,$E0,$9F,$9A,$2A,$D9,$C3,$34,$A7,$5D,$B3,$86,$69,$FA,$74,$D9,$DD,$60,$99,$C1,$59,$61,$B6,$7A,$32,$33,$99,$19,$19; 704
-		dc.b $20,$E3,$B1,$52,$BF,$B7,$CA,$2E,$EA,  0,  0,  0,  0,  2,$5D,$D2,$62,$96,$96,$64,$25,$95,$93,$30,$ED,$18,$2C,$F7,$F6,$D7,$A8,$4D,$8D,$61,$74,$5F,$43,$73,$45,$4C,$3A,$61,$8A,$94,$E5,$46,$74,$52,$14,$94,$61,$91,  0,  0,  0,$DC,$18,$7E,$CC,$30,$FF,$88,  0,$1C; 768
-		dc.b $98,$8C,$98,$CB,$F2,$44,  0,  4,$8E,$4C,$6A,$58,$D4,$B1,$79,$42,$18,$BC,$A1,$62,$F2,$10,$D4,$A3,$11,$28,$E4,$58,$81,$E8,$19,$FD,$53,$74,$BA,$B6,$44,$10,  0,$15,$F3,$96,$9C,$DF,$A4,$E3,$22,  0,$C8,$D7,$49,$90,$65,$A4,$C4,$DD,$FA,$97,$E9,$FC,$F4,$D2,$C0,$3C; 832
-		dc.b $A6,$9F,$CF,$9F,$9F,$F7,$D2,$C0,$48,$E9,$FD,$F9,$AF,$F3,$E6,$2A,$57,$4B,$75,$4B,$3B,$F9,$CB,$A2,$7E,$BC,$BE,$D1,$7E,$89,$3E,$E7,$E8,$91,$D1,$FF,$A9,$3A,$56,$C7,$41,$23,$60, $E,$99,$1D,$1C,$43,$8E,$8B,$DC,$E3,$A6,$47,$4E,$B2,$B4,$FA,$A9,$5B,$75, $A,$7B,$A5; 896
-		dc.b $3F,$17,$5A,$71,$53,$28,$84,$33,$B3,$8A,$FF,  5,$DC,$E2,$FE,$E9,$17,$45,$DE,$2A,$53,$99,  9,$14,$29,$64,$8B,$AD,$D5,$22,$C5,$63,$BB,$3F,$E1,$72,$BD,$F4,$76,$AB,$49,$6A,$35,$A6,$5A,$D3,$2D,$7A,$57,$C2,$99,$6A,  0,$1A, $A,$E7,$5C,$E3,$A3,$B3,$20,$BF,$38,$88; 960
-		dc.b $AE,$71,  5,$D9,$C4,$2D,  1,$42,$A5,$4E,$CF,$A0,$4D,$9D,$C1,$53,$2A,$2F,$5F,$CC,$1A,$7E,$E9,$F7,$FE,$B2,$93,$A4,  8,  0,$64,$41,$AF,$4E,$AE,$F0,$A2,$97,$EB,$ED,$15,$DB,$45,$E8,$9B,$6E,$F1,$CF,$8F,  7,$C7,$22,$EF,$15,$8A,$D1,$4A,$7B,$24,$52,$95,$A5,$69,$23; 1024
-		dc.b $45,$F1,$58,$80,  5,$48,$22,$23,$AD,$32,$87,$F8,$40, $F,$8F,$27,$C7,$90,  0,$1C,$A9,$FE,$14,$FF,$37,$FC,$57,$FE,$29,$FF,$67,$44,$3E,$3F,$9A,$96,$6B,$E2,$13,$31,$F9,$A0,$32,$32,$8B,$E2,$F8,$BB,$A1,$7D,$13,$67,$74,$4D,$A6,$9D,$17,$69,$A1,$FD,$BE,$3C,$32,$84; 1088
-		dc.b $BF,$4E,$BF,$C7,$4F,$E3,$BB,$90,  0,$3B,$AA,$78,$A7,$42,$BE,$D1,$F6,$8E,$3B,$E3,$9F,$85,$AE,$4F,  7,$F1,$76,$6F,$65,$86,$6A,$CB,$C2,$43,$3C,$A1,$9B,$F3,$73,  6,$5C,$D6,$19,$84,$DC,$E3,$9B,$E3,$4F,$D5,$70,$5F,$F9,$29,$A7,$4F,$C9,$73,$4A,$26,$C9,$34,$8F,$E4; 1152
-		dc.b $B9,$C5,$79,$84,$21,$FB,$F3,$D7,$F9,$50,  4,  7,$C5,$F1,$4A,$38,$AD, $A,$45,$3A,$1B,$8A,$D1, $D,$D6,$4A,$40,$E2,$EB,$25, $F,$7B,$CD,$CE,$B2,$DC,$FB,$2F,$7F,$E9,$6E,$D5,$4F,$4E,$47,$32,$F3,$C8,$BA,$2F,$A3,$8A,$71,$18,$74,$42,$9F,$A4,$8F,$24,$B2,$FF, $D,$39; 1216
-		dc.b $78,$FE,$61, $A,$5B,$9B,$A3,$38,$AF,$5F,$E7,$5B,$99,$EE,$48,$C8,$80,  6,$5F,$9A,$D6,$FE,$5D,$1C,$51,$8A,$9A,$6A,$CB,$1A,$17,$32,$50,$EA,$CE,$63,$AD,$6E,$56,$7D,$9D,$B8,$30,$60,  0,$CF,$C2,$50,$A1,$CF,$C1,$FC,$A8,$73,$D6,$5C,$A9,$FC,$17,$7B,$2F,$5D,$A3, $E; 1280
-		dc.b $8A,$7D,$23,$D2,$7D,$C9,$BA,$5D,$C9,$B5,$2C,$FE,$77,$7E,$BE,$2F,$B7,$37,$4D,$4F,$3F,$D7,$B8,$CC,$80,$85,$E6,$65,$3F,$49, $A,$43,$CC,$32,$B1,$7B,$2B,  2,$F6, $A,$C5,$EC,$FD,$6B,$1C,$FC,$19,$DC,$BA,$67,$C5,$61,$4C,$F5,$3C,$9D,$7C,$3D,$BA,$A1,$A4,$B3,$2F,$8B; 1344
-		dc.b $E2,$91,$7C,$52,$96,$B9, $F,$4B,$F3,$64,$E9,$E0,$91,$4F,  0,$25,$A0,  0,  0,  0,  0,$65,$98,$C8,$8C,$B3,  0,$64,$40,  1,$DF,$BA,$7F,$EA,$86,$60,  0,$3F,$F7,$FF,$1F,$FD,  0,  0,$FD,$DE,$90,$E9,$14,$DA,$6B,$6F,$CD,$6D,$34,$29,$35,$9A,$14,$B2,$E8,$85, $C,$A2; 1408
-		dc.b $FD,$3F,$7C,$85,$7F,$52,$93,  6,$B6,  2,$BA,$1B, $A,$E8,$72,$F3,$FF,$30,$9D,$62,$25,$62,$24,$6A,$47,$39,$59,$7C,$66,$23,$65,$EE,$7F,$72,$97,$F5,$F3,$2B,$FA,$95,$D2,$3F,$D6,$EE,$20,$64,$40,$74,$CD,$6C,$85,$E5,$C5,$22,$9D,$CA,$56,$C5,$3B,$96,$D1,$77,$74,$5C; 1472
-		dc.b $52,$2E,$F1,$58,$E8,$BD,$7C,$D3,$8F,$DF,$D2,$1A,  1,$22,  5,$4A,$59,$E5,$2C,$E8,$B8,$E8,$FB,$3E,$D3,$B4,$A2,$A7,$45,$2A,$6A,$53,$47,$45,$34,$7F,$EA,$40,  0,  0,$97,$FE,$B2,$5D,$35,$19,$6B,$95,$A5,$78,$CA,$77,$8D,$2B,$6B,$C4,$B1,$5B,$CA,$5A,$A4,$65,$8A,$DF; 1536
-		dc.b $11,$5B,$F4,  0,  1,$BF,$2C,$79,$4A,$7A,$E3,$C9,$DA,$A4,$F5,$C7,$92,$5B,$C1,$27,$76,$37,$A7,$77,$82,$1B,$B9,$27,$77,$7B,$B9,$27,$75,$D0,$74,$16,$D2,$E4,$21,$58,$EB,  5,$8F,$30,$E2,$12,$6E,$D6, $F,$81,$52,$B0,$C6,$9C,$35,$D8,$D7,$7E,$80,  0,$32,$69,$6E,$E1; 1600
-		dc.b $ED,$F9,$89,$B9,$A9,$CD,$CD, $F,$14,$68,$27,$ED,$D7,$97,$F0,$D3,$74,$98,$55,$80,  2,$5B,$A4,$DD,$1E,$D4,$93,$50,$29,$56,$A2,$9A,$94,$83,$CA,$41,$A5,  6,$73,$51,$1A,$B0,$15,$DC,  0,$AF,$FC,$FF,$EB,$FB,$D4,$FD,$6B,$EF,$FD,$74,$A2,$9F,$BE,$77,$8A,$4F,$F4,$EE; 1664
-		dc.b $8F,$A4,$32,$68,$64,$D0,$C9,$A1,$93,$40,$2F,$F0,$D3,$77,$27,$F2,$8D,$1D,$17,$50,$3B,$AA,$D1, $B,$A2, $D,$3F,$6E,$E3,$FB,$38,$64,$D0,$CA,$7E,$72,$BC, $E,$C0, $F,$D9,$BF,$F6,$BE,$92,$FD,$2B,$76,$96,$17,$B0,$EC,$B3,$95,$EB,$CE,$51,$4E,$6B,$7A,$95,$9C,$8A,$CE; 1728
-		dc.b $45,$67,$22, $A,$40,$54,$80,$12,  1,$78,$AC,$12,$19,$59,$20,$E9,$AC,$33,$84,$E0,$EB,  4,$D1,$26,$FC, $F,$DE,$FE,$B0,$81,$95,$E1,$5A,$4C,$9E,$8E,$C3,$23,$61,$9D,$86,$4F,$CA,$B3,$B0,$D8,$77,$64,$C2,$E1,$AF,  9,$7B,$F0,$EB,$DF,$78,$CA,$6E,$BD,$F3,$96,$2B,$88; 1792
-		dc.b $2C,$D7,$1C,$9F,$C7,$2B,$3A,$69, $B,$60,$BE,$D7,$66,$9D,$16,$E4,$E4,$99,$D3,$54,$D4,$FE,$69,$DA,$C2,$8E,$F0,$E5,$9C,$A1,$9E,$14,$AD,$D8,$2F,$BB,$53,$34,$29,$65,$CD,$F6,$4D,$5F,$AE,$FF,$C9,$4F,$55,$D6,  9,$A2,$1C,$15,$D3, $A,$57,$59,$62,$38,$97,$E5,$40,$7D; 1856
-		dc.b $E4,$65,$79,$4C,$39,$82,$5E,$53,  3,  9,$86,$4B,$CA,$DE,$AD,$BF,$4E,$34,$38,$4A,$69,$14,$9C,$28,$57,$9A,$9A,$FE,$9C,$A4,$D7,$37,$CD,$73,$85,$2D,$37,$40,$A7,$EF,$90,$AD, $A,$4D,$7A,$40,$CD,$69,$34,$3F,$DE,$A7,$34,$E9,$3A,$24,$FA,$32,$41,$3A,$73,$68,$1A,$73; 1920
-		dc.b $74,$75,$C2,$CE,$89,  4,$B9,$27,  4,$3A,$A5,$D0,$C6,$D6,$67,$5F,$E5,$7A,$15,$B7,$64,$B3,$FF,$5E,$A4,$11,$FC,$10,  0,  0,$7F,$F4,$FF,$BE,$61,$3F,$FA,  0,$AD,$E2,$FA,$CD,$3B,$4B,$F5,$CE,$BE,$85,$19,$3B,$24, $B,$76,$FD,$71,$9B,$73,$5A,$24,$D3,$AD,$26,$91,$FD; 1984
-		dc.b $3C,$E3,$CB,$74,$D7,$7F,$87,$1B,$FC,$33,$75,$D9,$81,$C3,$EE,$CF,$8B,$F8,$42,$EE,$30,$A4,$5D,$98,$4C,$6D,$5B,$E0,$A5,$F7,$80,$EB,$B3,$A9,$5E,$13,$84,$ED,$76,$69,$85,$B1,$BF,$46,$4F,$D6,$B7,$EB,$BF,$5A,$BD,$92,$FA,$F6,  0,$3B,$B4,$AF,$5B,$C7,$EB,$53,$FD,$CD; 2048
-		dc.b $FD,$65,$9F,$F3,$FA,$15,$BB,$C2,$E5,$C5,$D6,$EC,$97,$60,$DA,$FF,$2B,$D2,$DC,$F6,$E7,$B5,$96,$C4,$5A,$B6,  2,$FE,$A1,$FB,$CE,$5B,  0,  2,$5F,$23,$B1,$7D,$E9,$7B,$27,$64,$EC,$BF,$AD,$95,$F2,$D7,$87,$EB,$C6,$E7,$70,$C8,$D2,$E5,$73,$F8,$C2,$DC,$FC,$FF,$2B,$5C; 2112
-		dc.b $D3,$15,$FC,$D0,$FD,$6B,$EF,$FD,$73,$7E,$B5,$28,$EF,$D7,$70,$9F,$D6,$4B,$65,$AE,$76,$7D,$21,$A6,$FF,$D9,$E0, $F,$3A,$94,$F3,$7D,$D1,$4D,$13,$CA,$D7,$21,$4D,$3F,$2A,$96,$EF,$8B,$EC,$97,$21,$4E,$16,$C9,$72,$14,$E1,$6C,$97,$3B,$8E,$EE,$F5,$E5,$DE,$E8,$62,$E4; 2176
-		dc.b $FD,$7A,$60,$A5,$BB,$25,$8A,$DF,$E5,$7A,$7E,$A3,$3E,$99,$C0,  0,$9F,$FC,$FF,$AB,$BC,$56,$32,$22,$A4,  0,$25,$DF,$2B,$BF,$35,$FC,$8D,$F4,$D6,$B7,$99,$5E,$65,$79,$5F,$DE,$17,$7F,$D7,$C4,$75,  4,  0,  0,$9D,$D5,$A6,$FF,$EC, $A,$F6,$95,$F1,$77,$62,$97,$2D,$F1; 2240
-		dc.b $EF,$D5,$2F,$29,$72,$6A,$97,$97,$6A,$96,$29,$DF,$AF,$76,$AE,$DF,$6B,$B5,$B2,$77,$DF,$44,$9E, $D,$D8,$64,$37,$68,$70,$D7,$B5,$DA,$26,$1A,$F5,$3F,$98,$46,$E7,$8C,$B0,$BA,$C5,$D8,$4D,$54,$BB, $F,$2E,$C0,$7F,$E5,$72,$D3, $F,$BB,$40,$D8,$71,$46,$4D,$F8,$76,$99; 2304
-		dc.b $6B,$C2,$32,$99,$8C,$DE,$52,$7B,$65,$B3,$B3,$76,$6E,$6F,$D4,$F3,$E9,$8E,$DB,$E5,$1C,$BB,$F7,$BE,$ED,$6B,$AB,$FF,$58,$96,$B9,$37,$DD,$F9,$5B,$77,$FE,$97,$CF,$5B,$B1,$76,$97,$AE,$7D,$5F,$CE,$E0,$25,$DD,$72,$7E,$F3,$FE,$B3,$F4,$F1,$D7,$F4,$FF,$A5,$B9,$31,$D7; 2368
-		dc.b $B6,$F4,$B6,$B4,$4F,$D6,$63,$54,$BF,$5A,$62,$E5,$FD,$54,$2E,$29,$83,$FB,$DC,$65,$BC,$1C,$88,  3,  0,$57,  9,$BD,$3F,$7D,$E4,$BF,$BE,  0, $F,$D6,$4B,$F4,$BE,$4E,$FD,$4F,$90,  0,  0,$EF,$E6,$3B,$F8,$BE,$49,$FC,$54,$BB,$FD,$97,$6F,$AE,$F4,$DF,$95,$DE,$52,$B9; 2432
-		dc.b $2E,$DE,$FF,$2E,$FD,$F2,$DF,$72,$6F,$97,$90,$DE,  0,  1,$67,$94,$3C,$F9,$FB,$65,$B3,$EF,$FC,$AC,$17,$3B,$FF,$6D,$DB,$A3,$FB,$BF,$7C,$BF,$DD,$69,$E5,$7E,$76,$E3,$1B,$2E,$36,$82,$5F, $F,$CA,$DE,$FF,$D6,$A6,$63,$F9,$57,$CC,$83,$59,$BE, $B,$8D,$7F,$49,$B8,$2C; 2496
-		dc.b $EB,$30,  0,$CB,$FE,$DE,$19,$11,$2B,$D3,$30,$FB,$E6,$FB,$DA,$74,$5E,$D3,$34,$6D,$6F,$E6,$60,$C9,$7C,$D0,$C1,$96,$68,$60,$CF,$A4,$19,$F4,$E7,$7B,$E6,$EB,$DD,$CD,$D7,$A3,$42,$9F,$BE,$6E,$2C,$94,$E4,$BA,$D5,$9C,$52, $E,$99,$48,$23,$29,$48,$23,$3E,$1B,$9F,  6; 2560
-		dc.b $AB,  0,$1C,$D5,$6E,$19,$ED,$49,$BD,$A8,$94,$65,$6A,$25,$19,$19,$28,$9B,$91,$97,$F2,$B4,$46,$46,$93,$23,$57,$D3,$26,  0, $A,$F6,$AD,$E8,$D9,$30,$AD,$E0, $F,$DE,$FE,$F0,  7,$90, $A,$DE,$2F,$79,$75,$EF,$2E,$BC,$5E,$3F,$5A,  0,$1E,$7F,$98,$87,$E6,$98,$62,$BA; 2624
-		dc.b $29,$4B,$5E,$2F,$5C,$21,$4B,$25,$EB,$84,$29,$6A,$94,$B3,$B0,$A5, $D,$4B,$FF,$73,$7F,$EB,  0,  1,$F0,$F2,$BD,$BF,$48,$A6,$E4,$3C,$97,$19,$C2,$96,$9A,$6B,$5B,$D2,$C9, $C,$F0,$7F,$5A,$9A,$94,$C2,$76,$B9,$4C,$BB,$90,$F7,  4,$FD,$3F,$EE,$20,  0,  2,$4D,$D9,$7B; 2688
-		dc.b $69,$39,$17,$DE,  5,$EB,$83,$22,$98,$39,$60,$BF,$AD,$7F,$31,$BF,$F9,$A0,  0,  6,$9C,$43,$3E,$99,$C1,$FE,$52,$FD,$EA,$9B,$64,$6D,$5B,$B1,$FB,$FC,$27,$7E,$22,$87, $B,$FA,$42,$87,$F4,$8E,$FF,$6E,$80,  0,  4,$3C,$F7,$B7,$E9,$10,$A6,$2D,$22,$98,$E2,$45,$31,$C1; 2752
-		dc.b $B3,$8A,$63,$78,$79,$71,$48,$C8,$D7,$FF,$20,  0,  7,$7E,$3F,$77,$84,$29,$CD,$27,$2E,$6A,$5D,$35,$9C,$B9,$A6,$F7,$FE,$B9,$37,$8D,$F5,$F3,$FE,$2E,$80,  0,  6,$5F,$95,$F4,$C3,$2C,$FF,$31,$87,$4D,$CC,$8C,$F9,$A5,$17,$F5,$C1,$28,$D2,$A4,$EF,$17,$A7,$E9,$5B,$F5; 2816
-		dc.b $A0,  0,  0,$40	; 2880
+Nem_SegaLogo:		incbin	"art/nemesis/Other - SEGA Logo.bin"
+			even
+Eni_SegaLogo:		incbin	"mappings/misc/SEGA Logo.bin"
+			even
+Eni_TitleMap:		incbin	"mappings/misc/Title Screen - Logo.bin"
+			even
+Eni_TitleBg1:		incbin	"mappings/misc/Title Screen - Background 1.bin"
+			even
+Eni_TitleBg2:		incbin	"mappings/misc/Title Screen - Background 2.bin"
+			even
+Nem_Title:		incbin	"art/nemesis/Title Screen - Main Graphics.bin"
+			even
+Nem_TitleSonicTails:	incbin	"art/nemesis/Title Screen - Sonic and Tails.bin"
+			even
 ; ---------------------------------------------------------------------------
-; Green Hill Zone stage assets
+; Compressed Graphics - Green Hill Zone
 ; ---------------------------------------------------------------------------
-S1Nem_GHZFlowerBits:dc.b   0,  4,$80,$24, $B,$34, $A,$43,  3,$55,$1E,$74, $D,$8E,  2,  0,$34, $C,$8F,  3,  4,$13,  2,$24, $E,$FF,$9B, $F,$63,$99,$7F,$DE,$B9,$95,$3F,$5D,$58,$D0,$D0,$D0,$D0,$D7,$EB,$AD,$7F,$3B,$F0,  8,$FE,$69, $D,$DD,$F1,$1F,$5F,$F3,$FF,  1,$FE,$FF,$E1,$75,$7E,  9; 0
-		dc.b $AA,$11,$5C,$D0,$E1,$E9,$FE,  3,$FC,  0; 64
-Nem_SwingPlatform:dc.b $80, $E,$80,  4,	 2,$14,	 3,$24,	 4,$36,$37,$45,$1A,$56,$39,$66,$2C,$74,	 5,$81,	 3,  0,$15,$19,$26,$3C,$75,$14,$82,  5,$15,$75,	$C,$83,	 5, $D,$17,$7B,$84,  4,	 7,$17,$7C,$85,	 6,$2D,$77,$7A,$86,  5,$17,$87,	 4,  8,$16,$38,$76,$3A,$88,  6,$36,$89,	 5,$12;	0
-					; DATA XREF: ROM:0001C106o
-		dc.b $16,$3B,$8E,  5,$13,$18,$FA,$8F,  5,$18,$18,$FB,$FF,$D7,$17,$48,$B8,$20,$77,$CF,$EB,$8A,  8,$4C,$76,$59,$9F,$67,  5,$8D,$79,$25,$55,$D6,$65,$BD,$CB,$16,  9,$F6,$97,$21,$31,$2D,$8E,$F9,$9F,$DA,$45,$FE,$B1,$1B,$48,$FF,$50,$5F,$7B,$49,$3E,$C7,$D4,$8F,$F3,$18; 64
-		dc.b $F2,$49,$B4,$14,$C6,$81,$CB,$78,$2C,  5,$5B,  6,$F0,$58,$D7,$92,$3D,$A0,$B0,$7B,$44,$CA,$62,$45,$32,$FA,$12,$3C,$4C,$76,$9F,$AD,$FE,$25,$18,$AC,$A7,$4C,$F5,$46,$2B,$29,$D3,$3D,$51,$85,$FC,$5F,$C5,$95,$4B,$F7,$A5,$50,$6D,$41,  6,$D4,$8A,$F3,$5B,$79,$B4,$72; 128
-		dc.b $2A,$6D,$4A,$A3,$77,$AC,$FF,$66,$55,$1F,$D8,$1D,$33,$D5,$18,$AC,$A7,$4C,$F5,$46,$2B,$29,$D3,$3F,$83,$6F,$C4,$7B,$46,$EE,$3D,$A3,$86,$E5,$A6,$1A,$3F,$2A,$1A,$F6,  3,$1F,$95, $D,$3F,$79,$6E,$BD,$A9,$8B,$1D,$45,$8E,$2C,$71,$63,$DB,$E5,$BF, $F,$F4,$84, $B,$E6; 192
-		dc.b $B3, $F,$CF, $F,$A0,$BC,$3A,$D8,$15,$77,$1C, $E,$43,$A0,$30,$80,$A2,$EE,$59,$2E,$2D,$3F,$D3,$B5,$D0,  0; 256
-Nem_GHZ_Bridge:	dc.b   0, $A,$80,  5,$1A,$15,$19,$24,  9,$46,$39,$74, $B,$81,  5,$1B,$82,  5,$1D,$83,  3,  2,$15,$1E,$28,$FA,$48,$FB,$84,  3,  1,$17,$7C,$85,  3,  0,$14, $A,$86,  3,  3,$15,$18,$87,  4,  8,$16,$38,$FF,$E7,$EA,$7C,$F8,$CA,$7D,$8A,$D2,$7D,  5,$6F,$4B,$A0,$EE,$93; 0
-					; DATA XREF: ROM:0001C100o
-		dc.b $83,$B1,$D8,$50,$10,$EC,$15,  3,$62, $F,$53,  8,$41,$6B,  8,$60,$A0,$C2,$18,$D1,$C1,$55,$A4,$70,$3D,$94,$7F,$4C,$27,$C6,$B9,$FE,$9F,$38,$3E,$9A,$60,$AC,$FB,$F4,$A5,$6A,$90,$61,$6A,$18,$45,$94,$70,$53,  9,$96,$15,$20,$58,$50,$11,$C1,$50,$56,  2,$10,$50,$28; 64
-		dc.b $74,$2D,$78,$74,$15,$AF,$D3,$82,$B2,$3E,$7A,$7E,$AE,$EE,$C8,$7C,$49, $F,$89,$23,$F4,$D9,$DF,$DE,$53,$FD,$BD,$DD,$C3,  5,$4C,$30,$54,$E0,$15,$3F,$B3,$FC,$8E,$70,$6B,$66,$7F,$A9,$95,$4F,$8C,$EF,$EE,$7E, $C,$49, $F,$89,$21,$F1,$24,$3E,$24,$87,$C3,$F9,$F4,$44; 128
-		dc.b $30,$56,$FE,$7D,$EF,$2C,$1F,$4C,$30,$54,$C3,  5,$4C,$30,$54,$C3,  5,$4B,$FF,  0,$87,$C9,$A8,$7C,$9A,$87,$C9,$A8,$FE,$81,$17,$77,$77,$6F,$FC,  2,$1F,$26,$A1,$F2,$6A,$1E,$80,  0,$80,  4,$80,  2,  1,$13,  6,$24, $E,$72,  0,$81,$55,$1E,$82,  3,  5,$83,  3,  4; 192
-		dc.b $FF,$FF,$BE,$F3,$F9,$1F,$F0,$7B,$F6,$1F,$B2,  0,  3,$A7,$ED,$B5,$7F,$6E,$DF,$E8,$4F,$F3,$CF,$EA,$3E,$FC,$97,$F0,$27,$E1,$9F,$D8,$CF,$C3,$6F,$D9,$7E,$10,  0, $E,$FD,$B7,$E1,$7B,$F6,$EF,$E1,$CF,$C3,$BF,$E7,$A0; 256
-S1Nem_GHZRollingBall:dc.b $80,$26,$80,	5,$17,$14,  9,$25,$16,$34, $A,$45,$19,$54,  5,$65,$1A,$72,  0,$81,  4,	4,$16,$38,$82,	4,  6,$16,$39,$26,$3C,$83,  5,$18,$16,$3B,$84,	6,$3A,$17,$7A,$85,  4,	7,$17,$7B,$86,	5,$1B,$18,$F8,$87,  4,	8,$18,$FA,$28,$F9,$FF,	0, $D,$61,$70,$B8; 0
-		dc.b $17, $B,$81,$70,$2E,  0,$5C,  0,$6B,$FE,$7A,$C6,$7B,$AE,$F3,$8C,$F6,  0,  0,  0,  0, $B,$FA,$3C,$FE,$8C,  0,  0,  0,  0,  0,$33,$FF,$30,  0,$D6,$15,$1B,$28,$A8,$2A, $A,$82,$A1,$6E,$5E,$79,$7F,$9B,$45,$20,$C0,$A9,$DF,$ED,$30,$2F,$14,$98,$E6,$53, $D,$2D,$74; 64
-		dc.b $6B,$35,$F0,$D6,$69,$FD,$94,$7E,$96,$CE,$AF,$49,$9E,$25,$E5,$15,$15,$32,$E2, $A,$9A,$FF,$B0,$6A,  3,$F6,$7E,$3F,$EC,$67,$CA,$69,$6A,$F9,$A7,$15,$EB,$F4,$BF,$C7,$BF,$19,$40,$2F,$B0,$27,$E6,$DF,$59,$8C,$ED,$3F,$A5,  0,$1A,$F5,$FD,$60,  0,$D2,$2A,$2A,$2A,$5F; 128
-		dc.b $9A,$E6,$F1,$64,$98,$A6,$54,$98,$A6,$54,$6B,$C1,$64,$57,$B3,$59,$A9,$EE,$EA,$E3,$EC,$FE,$8F,$4E,$2F,$15,$C5,$71,$94,$54,$15,$D5,$EE,$D4,$F7,$48,$FD,$2D,$F8,$A7,$6D,$E5,$A7,$E2,$60,$58,$57,$D3,  0,$2C,$1F, $B,$EF,$BF,$1F,$8E,$FF,$65,$3E,$1E,$57,$ED,$67,$DD; 192
-		dc.b $7B,$2F,$FC,$1B,$F1,$94,  3,$5F,$19,$49,$F8,$94,$8A,$DA,$5E,$2D,$F5,$E4,$C5,$DA,$A1,$62,$59,$58,$56,$15,$FE,$7F,$6D,$E5,$FF,$63,$7E,$72,$C6,$9C,$F7,$4F,$FA,$1E,$9A,$EE,$AD, $F,$6D,$D9,$A7,$6B,$B5,$D8,$6B,$E4,$FA,$B7,$36,$8A,$E6,$63,$2D,$31,$9E,$46, $F,$FB; 256
-		dc.b $1C,$18,$4D,$36,$12,$7D,$D9,$92,$DF,$56,$4A,$82,$D0,$FA,$68,$96,$CC,$10,$74,$F9,$DC,$BA,$A5,$6C,$B2,$4E,$C5,$DA,$C1,$B3,$E2,$BA,$FD,$1F,$ED,$40,  1,  4,$13,$4C,$9A,$63,  6,$62,$71,$3F,$A5,$39,$BA,$2F,$3A,$6B,$A0,$A8,  3,$F5,$FD,$11,$7D,$57,$AB,$A5,$BA,$BF; 320
-		dc.b $18,$A4,$ED,$27,$AB,$23,$D9,$30,$8F,$6E,$9F,$71,$C9,$E9,$52,$FE,$AB,$1C,$5F,$AB,$27,$69,$4E,$96,$EA,$CE,$98,$4B,  0,  0; 384
-S1Nem_GHZRollingSpikesLog:dc.b $80,$2C,$80,  3,	 2,$15,$16,$26,$32,$37,$77,$46,$38,$55,$1A,$65,$14,$73,	 3,$81,	 4,  8,$17,$76,$28,$F8,$47,$7B,$75,$15,$82,  5,$17,$17,$79,$27,$7A,$76,$3A,$83,	 2,  0,$16,$39,$28,$FA,$76,$37,$84,  5,$18,$85,	 5,$13,$86,  6,$36,$87,	 5,$12,$17,$78,$76,$33;	0
-		dc.b $FF,$A4,$A9,$3D,$62,$91,$42,$7C,$4D,$C7,$13,$1E,$88,$B7,$D4,$FB,$FE,$9E,$2F,$5F,$42,$11,$F0,$84,$2F,$A6,$C4,$21,$16,$10,$84,$57,$3E,$AA,$F1,$48,$A7,$34,$93,$63,$D4,$48,$74,$96,$BB,$63,$F6,$76,$85,$FA,$7A,$FC,  8,$5F,$B3,$42,$1B,$42,$10,$8B,  8,$42,$2B,$9F; 64
-		dc.b $55,$6D,$B6,$E9,$2A,$4F,$5B,$4F,$58,$D4,$D4,$7F, $E,$53,$3F,$4E,$B6,$50,$BB,$2F,$13,$32,$F2,$A1,$47,$2B,$13,$D4,$E0,$E3,$9C,$BE,$BB,$52,$3F,$2D,$2F,$79,$FE,$9F,$AA,$B6,$DB,$63,$73,$74,$89,$B8,$FD,$9A,$94,$61,$7E,$9E,$D2,$CB,$B6,$51,$B4,$B8,$96,$47,$7D,$AF; 128
-		dc.b $AF,$3C,$79,$92,$3F,$65,$2C,$BD,$4A,$DD,$B2,$FE,$3F,$55,$6D,$EF,$FC,$7D,$B1,$EE,$F2,$FC,$A8,$B9,$C4,$D4,$D0,$A2,$6A,$7C,$76,$70,$84,$47,$D6,$C8,$5C,$A8,$97,$EC,$6F,$97,$F1,$F6,$B7,$F4,$A7,$7A,$B6,$F7,$C4,$D7,$F1,$ED,$35,$FB,$1B,$17,$84,$65,$CF,$6E,$66,$8E; 192
-		dc.b $36,$BF,$C6,$5E,$32,$94,$16,$92,$95,$A2,$D2,$9F,$79,$29,$AB,$AF,$13,$BE,$5E,$AA,$DB,$DF,$3A,$88,$47,$71,$73,$E4,$C8,$BA,$82,$C5,$E3,$51,$DF,$98,$E6,$E8,$ED,$2D,$BB,$F8,$57,$8C,$BD,$29,$E5,$FD,$13,$58,$71,$4C,$32,$93,$6D,$B6,$F7,$CE,$A2,$10,$85,$78,$B8,$84; 256
-		dc.b $65,$73,$28,$52,$50,$71,$25,$B1,$C4,$AF,$B1,$DE,$F6,$8A,$4B,$2B,$DB,$CA,$92,$F7,$61,$E8,$D4,$53, $D,$B6,$DD,$37,$CE,$A2,$10,$8B,  8,$42,$1B,$10,$84,$58,$42,$11,$5F,$E3,$C5,$E3,$D4,$B6,$2D,$F1,$86,$E0,$D6,$1C,$23,$8C,$32,$91,$4C,$32,$93,$7B,$E7,$52,$C2,$10; 320
-		dc.b $B9,$42,$1B,$42,$10,$8B,  8,$42,$3F,$4D,$EF,$F2,$DF,$D7,$50,$BC,$7A,$B7,$8C,$7C,$36,$A4,$87,$DE,$10,$DE,$87,$AC,$3A,$6F,$9D,$5E,$ED,$BD,$EB,$9F,$5E,$F1,$F9,$5E, $A,$6D,$14,$29,$B3,$8A,$4D,$B6,$DE,$F9,$D5,$EE,$DB,$DE,$B9,$F5,$75,$7F,$76,$97,$1E,$71,$A9,$6A; 384
-		dc.b $F8,$7A,$1B,$6D,$D3,$7C,$EA,$21,  8,$B0,$84,$21,$B1,  8,$45,$84,$21,$15,$CF,$AA,$B6,$F7,$CE,$A5,$84,$21,$72,$84,$36,$84,$21,$16,$10,$84,$57,$3E,$AA,$DB,$6E,$92,$A4,$F5,$B4,$DF,$1B,$76,$7F,$C3,$9E,$27,$9D,$44,$23,$B8,$85,$F4,$DB,$DE,$B9,$F5,$56,$DB,$63,$A4; 448
-		dc.b $87,$49,$14,$BF,$1E,$2F,$FC,$3C,$EA,$21,  8,$B0,$84,$21,$B7,$BD,$73,$EA,$AC,  0; 512
-S1Nem_GHZLogSpikes:dc.b	$80,$12,$80,  4,  7,$14, $C,$25,$16,$35,$1B,$44, $A,$55,$1A,$65,$1C,$74,  2,$81,  3,  2,$15,$1D,$27,$78,$82,  5,$17,$16,$3D,$83,  3,  0,$17,$79,$27,$7C,$84,  4,  8,$18,$FA,$85,  4,  3,$86,  4,  9,$87,  4,  6,$18,$FB,$FF,$B3,$46,$8D,$54,$3F,$9D,$AC,$6D,$83; 0
-		dc.b $A3,$D8,$B2,$A3,$16,$4C,  8,$2A,$6D,$76,$7C, $C,$37,$FD,$17,$8C,$FE,$8E,$7F,$54,$89,$B8,$7A,$93,$D4,$68,$DD,$6C,$31,$8B,  9,$75,$BF,$B3,$1B,$BB,$A7,$56,$83,$D1,$A1,$5E,$75, $B,$91,$F9,$66,$AF,$84,  8,$8C,$B8,$8C,$95,$32,$81,$4D,$91,$4A,$5A,$9B, $E,$A6,$FA; 64
-		dc.b $F6,$BD,$6C,$FD,$93,$39,$BF,$E8,$87,$D6,$7C,$22,$22,$C3,$6B,$EE,$5B,$F2,$B6,$98,$37,$3B,$23,$73,$AE,$92,$DA,$F9,$36,$90,$E9,$B7,$24,$65,  0,$88,$88,$9A,$47, $E,$34,$2F,  7,$BF,$3D,$37,$37,$15,$37,$F1,$6F,$BB,$32,$B3,$3B,$53,$1E,$43,$B3,$9B,$DC,$64, $F,  4; 128
-		dc.b $44,$45,$FA,$5D,$9F,$A2,$C7,$77,$43, $E,$EB,$4B,$4B,$CD,$DC,$63,$4E,$85,$D6,$94,$12,$1A,$82,$5C,$82,$1C,$32,$93,$9A,$BA,$BC,$F2,$E7,$64,$EC,$E8,$E9,$9E,$4E,$9A,$F3,$57,$27,$1B,$1D,$B3,$10,$2D, $D,$2E,$41,$11,$7E,$93,$E6,$2B,$AF,$CB,$33,$98,$B2,$78,$D7,$D9; 192
-		dc.b $21,$A8,$DB,$38,$74,$E2,$A3,$13,$8B, $E,$2E,$46, $A,$1C,$38,$2B,$1F,$D0,$43,  6,$DB,$25,$3F,$B1,$61,$8D,$B9,$7B,$C5,$2E,$5F,$87,$A9,$36,  5,$69,$EB,$B0,$E5,$F2,$5A,$7E,$91,$60; 256
-Nem_GHZ_Rock:	dc.b $80,$18,$80,  4,  7,$14, $A,$25,$16,$36,$36,$45,$17,$55,$18,$65,$1A,$72,  0,$81,  3,  4,$18,$FB,$82,  4,  6,$16,$3C,$83,  5,$19,$87,  6,$3D,$88,  7,$7C,$89,  6,$39,$8B,  8,$FA,$8C,  6,$37,$8D,  6,$3A,$8E,  6,$3B,$8F,  3,  2,$16,$38,$FF,  0,  0, $D,$7B,$A6; 0
-					; DATA XREF: ROM:0001C112o
-		dc.b $BF,$E5,$EF,$EF,$9B,$7A,$D7,$FC,$2B,$61,$A9,$9D,$AC,$C6,$1A,$CD,$5E,$94,$C0,$5D,$8C,$2D,$45,$BE,$DF,$4F,$1F,$75,$D2,$7C,$E2,$3B,$56,$5F,$3F,$9A,$FC,$9E,$FD,$F5,$BB,$FC,$5D,$7E,$C9,$D3,$F8,$AB,$9B,$F9,$31,$C0,  1,$C6,$A7,  5,$95,$4D,$96,$95,$A0,$EA,$D2,$A0; 64
-		dc.b $42,$5A,  0,  6,$B3,$B6,$6C,$CF,$9A,$69,$78,$ED,$4C,$ED,$D2,$FD,$F2,$ED,$8C,$75,$FD,$2E,$A7,$F7,$E1,$78,$40,  0,  2,$5E,$10,  1,$FB,$85,$D6,$16,$10,$52,$7F,$B7,$DD,$D5,$33,$C7,$EF,$ED,$E3,$53,$3B,$6E,$BB,$DF,$F3,$DB,$F7,$E3,$B3,$B5,$70,$C9,$97,$85,$D0,  0; 128
-		dc.b $E8,$FB,$56,$45,$F8,$DA,$6C,$9F,$EF,$F7,$EF,$1D,$5B,$87,$45,$91,$4A,$C8,$A9,$64,$15,$2C,$B0,$B0,$8A,$CB,$CA,$CD,$B2,$F9,$A6,$97,$8E,$D4,$CE,$DC,$7E,$BB,$76,$FA,$B7,$8A,$BF,$45,$C3,$CA,$E2,$A3,$F2,  2,$2D,$2A,  0, $A,$61,$3C,  0,$BC,$A8,  5,$A0,  1,$B3,$6C; 192
-		dc.b $DA,$8D,$4C,$ED,$CF,$E2,$BE,$B9,$FC,$DF,$3F,$40,  1,$E9,$F3,$9C,$28,$69,$5D,$57,$CD,$23,$E6,$97,$CC,$27,$E4,$A4,$E9,$E1,$B2,$1E,  0,$18,$9A,$6D,$B3,$66,$7C,$D3,$4B,$C7,$6A,$67,$FA,  0; 256
-S1Nem_GHZBreakableWall:dc.b $80, $C,$80,  2,  1,$15,$17,$25,$19,$72,  0,$81,  5,$1B,$25,$1C,$82,  4,  8,$15,$18,$25,$1E,$37,$7D,$83,  6,$3B,$84,  4, $A,$85,  4,  9,$16,$3A,$27,$7C,$86,$75,$1A,$87,  5,$16,$FF,$AD,$DB,$F2,$D3,$F9,$40,$96,$3F,$26,$F5,$F8,$6A,$E5,$7E,$5B,$FC,$1B,  0,$21; 0
-		dc.b $F8,$C7,$7B,$AF,$D3,$57,$E4,$73,$F9,$10,$FD,$84,$F7,$6D,$F7,$80,$F8,$C7,$E8,$FF,$4D,$5F,$E1,  0,$3F,$81,$FA,$37,$F6,$BC,$AF,$DB,$7F,  3,$81,$CF,$CA,$7C,  3,$40,  0,$68, $D,  1,$A0,  0,$34,  5,$AF,$1F,$86,$FD,$20,$4E,$18,$CF,$DF,$DA,$BE,$7F,$4E,  0,$7E,$C2; 64
-		dc.b $7D,$6E,$9F,$AF,$E5,$EF,$E0,$98,$B4,$5E,  3,$33,$8C,$CB,$F5,$8B,$5F,$C0,  5,$E3,$FC,$18,$B7,$59,$C3,$F9,$7B,$C0,  0,  0; 128
-S1Nem_GHZWall:	dc.b $80, $C,$80,  4,  9,$14, $B,$25,$1E,$37,$7C,$71,  0,$82,  4, $C,$15,$1B,$57,$7D,$65,$1C,$75,$1D,$83,  4, $A,$85,  4,  8,$87,  5,$1A,$FF,$FD,$9F,$EC,$47,$40,$74,$6E,$F6,$2F,$A0,$3A,$3F,  8,$4C,$7F,$42,$3D,$17,$F8,$1A,$DE,$B3,$58,$F4,$3D,  1,$35,$F4,$7E,$57; 0
-		dc.b $5F,$A5,$D0,$9E,$69,$13,$13, $F,$91,$31,$30,$47,$CC,$F9,$CF,$C2, $B,$DD,$E5,  9,$AF,$A0,$26,$BE,$8B,$DD,$E5, $E,$50, $E,$50,  0; 64
-Nem_EHZ_Fireball:dc.b $80,$10,$80,  3,	2,$13,	3,$24,	8,$35,$1A,$46,$39,$56,$38,$65,$1B,$75,$19,$81,	3,  0,$16,$3C,$28,$F9,$83,  5,$18,$84,	4, $B,$16,$3D,$87,  4,	9,$18,$F8,$8C,	4, $A,$18,$FA,$8D,  3,	1,$15,$1D,$28,$FB,$FF,$CF,  6, $E,$60,$1D,$84,$46,$87,	2,  2,$A4,$59; 0
-					; DATA XREF: ROM:0001C156o
-					; ROM:0001C21Eo
-		dc.b $82,$8B,$19,$E6,$95,$31,$C0,$46, $F,$21,$96, $B,$22,  7,$58,$58,$62,$84,$E8,$21,$18,$47,$67,$83,$16,$C2, $B,$19,$58,$D8,$D4,$C0,$E3,$E6,$2F,$89,$8F,$48,$53,$78,$F8,$61,$4A,$F1,$77,$E7,$B1,$F7,$9C,$9D,$8D,$D4,$1C,$EA,$95,$14,$76,$51,$1A,$3A,$C1,$81,$C8,$D6; 64
-		dc.b $15,$30,$58,$52,$60,$40,$E6,$58,$54,$1D,$EB,$1B,$FC,$9F,$B2,$E6,$25,$9B,$C2,$B5,$6C,$6A,$D0,$41,$5C,$B1,$9E,$67,$2F,$C5,$72,$87,  1,$DB,$B4,$11,$9F,$D2,$68,$7E,$9C,$6B,$E4,$88,$FB,$5F,$63,$92,$2B,$93,$91,$5B,$AE, $E,$60,$E6, $C, $E, $A,$2C,$B3,  6, $D,$70; 128
-		dc.b $20,$14,$7E,$8A,$A6,$7F,$58,$AB,$63,$55,$28,$40,$5F,$8B,$FA,$28,$BF,$D6,$16,$42,$FC,$5A, $C,$A9,$B5,$86,$33,$F8,$67,$3C,$CA,$BE,$70,$BC,$EE,$44,$DA,$F3,$BB,$28,$4F,$B8,$65, $F,$80,$8A,$EF,$85,$18,$EF,  7,$60,$E7,$81,$A3,  6,  3,$3F,$8F,$DE,$23,$1B,$B6,$75; 192
-		dc.b $28,$F9,$15,$1D,$8E,$F3,$D6,$59, $C,$18,$FA,$46,  2,$AE,$D1,$8A,$46,$91,$10,$69, $F,$C1,$18,$10,$10,$31,$6A,$71,$40,$AB,$F8,$54,$E4,$5B,$AE,$65,$D2,$FC,$2B,$B5,$34,$C3,$B9,  8,$6F,$DE,$4F,$C7,$B3,$1E,$7C,$20,$57,$7E,$4B,  0; 256
-Nem_BurningLog:	dc.b $80,$18,$80,  4,  9,$15,$1C,$24,  8,$35,$16,$44, $C,$55,$17,$64,  6,$72,  0,$81,  4, $A,$82,  8,$FA,$83,  5,$1D,$84,  6,$3D,$87,  6,$3C,$88,  3,  2,$89,  4,  7,$8A,  5,$1A,$8C,  7,$7C,$8F,  5,$1B,$FF,  0,$BA,$6D,$AB,$D5,$FC,$A6,$DA,$CA,$84,$DB,$8A,$DF,$3C; 0
-		dc.b $8F,$23,$CB,$6F,$53,$BF,$21,$71,$59,$66,$A6,$8C,$EE,$A7,$BC,$DC,$7C,$B3,$DE,$A3,$DB,$7C,$5D,  9,$51,$EC,$A2,$C8,$64,$CE,$52,$67,$FD,  8,  0,  0,  4,$26,$DB,$6F,$CB,$29,$46,$7D,$73,$64,$6B,$AD,$F3,$95,$1D,$97,$C4,$73,$F3,$36,$F5,  2,$19,$33,$E2,$AC,$A7,  0; 64
-		dc.b $15,$BC,$E6,$DB,$C6,$56,$DF,$14,$7E,$62,$11,$C5,$64,$17,$F0,$BA,$DF,$35,$65,$67,$9A,$9D,$4F,$4D,$2B,$3F,$C8,$78,$F7,$B1,$AE,$FC,$6F,$73,$AB,$88,$84,$32,$67,$29,$33,$FE,$86,$51,$74,$DB,$15,$FC,$B2,$6D,$B6,$EF,$F9,$82,$E8,$19,$11,$A8,$A2,$FF,$99,$2C,$F2,$E5; 128
-		dc.b $DF,$3A,$AE,$A7,$E3,$7A,$E3,$21,$93,$3E,$2A,$CA,$71,$37,$D3,$68,  0,  0,  1,$42,$84,$29,$D7,$D3,$6A,$1E,$8E,$3C,$75,$F5,$DC,$79,$58,$BB,$67,$EC,$A9,$50,$8B,$A1,$93,$39,$4A,$E9,$FF,$43,$CF,$CC,$10,$B9,$56,$FA,$E3,$C3,$EA,$EE,  0,$12,$81,$BE,$9B,$48,$59,$A9; 192
-		dc.b $59,$D1, $E,$5D,$D9,$4B,$DD,$62,$38,$86,$4C,$F8,$AB,  0; 256
-Nem_EHZ_Waterfall:dc.b $80,$18,$80,  2,	 0,$24,	$A,$44,	$D,$65,$1D,$73,	 2,$81,	 3,  3,$82,  5,$1C,$85,	 7,$7C,$86,  8,$FA,$87,	 4, $B,$88,  8,$FB,$89,	 6,$3C,$8A,  3,	 4,$8B,	 6,$3D,$8C,  4,	$C,$FF,$3E,$8F,$A3,$F0,$87,$D5,$78,$70,$E1,$C3,$CD,$87,	$F,$9D,$B2, $D,$10,$95,$83,$A7;	0
-					; DATA XREF: ROM:0001C15Co
-		dc.b $AC,$C2,$CC,$AB,$21,$66,$6C,$2C,$9B,$35,$D3,$1D,$34,$61,$E0,$CF,$7B,$C3,$E1,$C1,$9F,$67,  9,$B2,$B1, $C,$63,$2D,$19,$58,$88,$5D,$5D,$44,$61,$15,$32,$C6,$35,$50,$F0,$F0,$F4,$FB,$AF, $E,$1C,$38,$79,$B0,$E1,$F3,$B6,$41,$A2,$12,$B0,$74,$F5,$98,$59,$95,$64,$2C; 64
-		dc.b $CD,$85,$93,$66,$BA,$63,$A6,$8C,$3C,$19,$EF,$78,$7C,$38,$33,$EC,$E1,$36,$56,$21,$8C,$65,$A3,$2B,$11, $B,$AB,$A8,$8C,$22,$A6,$58,$C6,$AA,$1E,$98,$7A,$44,$42,$D2,$A8,$AA,$6B,$D7,$B1,$25,$AD,$2A,$C5,$AD,$25,$DC,$45,$A4,$8C,$4B,$B6,$91,$85,$AA,$85,$D5,$A5,$53; 128
-		dc.b $5A,$43,$AB,$49,$6C,$49,$75,$91,$24,$8C,$4B,$5D,$66,$DA,$49,$56,$54,$2D,$56,$24,$42,$CB,$2D,$10,$B4,$AA,$2A,$9A,$F5,$EC,$49,$6B,$4A,$B1,$6B,$49,$77,$11,$69,$23,$12,$ED,$A4,$61,$6A,$A1,$75,$69,$54,$D6,$90,$EA,$D2,$5B,$12,$5D,$64,$49,$23,$12,$D7,$59,$B6,$92; 192
-		dc.b $55,$95, $B,$55,$89,  0; 256
-Nem_HTZ_Fireball:dc.b	0,$10,$80,  3,	3,$15,$17,$25,$19,$35,$1B,$47,$7B,$58,$FB,$68,$FA,$74, $A,$86,	6,$39,$8A,  6,$3A,$8B,	5,$18,$8C,  3,	2,$15,$16,$27,$7A,$8D,	2,  0,$16,$38,$28,$F8,$8E,  4,	9,$16,$3B,$28,$F9,$8F,	4,  8,$15,$1A,$26,$3C,$FF,$F6,$23,$22,$C6,$AE,$28,$EE; 0
-					; DATA XREF: ROM:0001C224o
-		dc.b $18,$A7,$F4,$D8,$64,$4F,$3D,$C0,$A2,$79,$EE,  5,$FD,$F1,$62,$30,$BF,$37,$F1,  8,$B3,$2D,$82,$CC,$5C,$3E,$2E,$2C,$95,$F4,$55,$71,$F7,$63,$DC,$61,$1B,$8F,$5B,$58,$5F,$17,$C2,$E1,$F0,$E2,$DC,$65,$42,$37,$88,$B1,$93,$D1,$95,$F0,$B2,$87,$C2,$BF,$17,$47,$D1,$ED; 64
-		dc.b $55,$71,$EC,$F4,$5C,$5A,$98,$62,$8E,$F9,$86,$62,$27,$99,$81,$47,$EF,$A0,$5F,$DF,$14,$7E,$6F,$58,$2D,$16,$84,$D7,$C5,$B0,$C4,$F8,$B5,$C4,$31,$64,$BA,$3E,$8A,$AA,$47,$DC,$58,$DE,$17,$1B,$C4,  8,$CC,$60,$6B,$38,$B1,$B8,$B1,$B5,$84,$6D,$16,$32,$8B,$19,$1D,$8C; 128
-		dc.b $8C,$5B,$43,$16,$4A,$AA,$AA,$AA,$DE,$22,$72,$B5,$3D,$5D,$6A,$7A,$E5,$DA,$3E,$7A,$76,$D7,$C8,$ED,$8F,$18,$FD,$3C,$26,$34,$D5,$D3,$10,$C4,$D3,$19,$74,$D3,$4D,$55,$55,$54,$C6,$3D,$F5,$3A,$59,$E7,$A9,$D2,$BF,$5F,$31,$67,$F3,$AB,$3F,$31,$66,$61,$FA,$65,$D3,$4C; 192
-		dc.b $68,$62,$1A,$B8,$C6,$9D,$9A,$69,$AA,$AA,$DE,$B7,$37,$9A,$BC,$66,$72,$A3,$32,$E6,$EB,$53,$79,$6B,$C9,$72,$35, $A,$3B,$63,$85,$E0,$FF,$79,$17,$19,$67,$66,$31,$97,$4D,$31,$95,$55,$9D,$7D,$CD,$E5,$C7,$D2,$CC,$EE,$5C,$E6,$26,$F3,$A4,$E5,$CF,$89,$F7, $A,$13,$3C; 256
-		dc.b $50,$CB,$C7,$EF,$18,$9D,$86,$5C,$63,$1A,$18,$D3,$4C,  0; 320
-Nem_EHZ_Bridge:	incbin	"art/nemesis/EHZ - Bridge.bin"
-		even
-Nem_HTZ_Lift:	incbin	"art/nemesis/HTZ - Diagonal Lift.bin"
-		even
-Nem_HTZ_AutomaticDoor:dc.b $80,	 4,$80,	 4,  8,$15,$1C,$33,  1,$44, $A,$54, $D,$76,$3E,$81,  3,	 0,$14,	 9,$83,	 4,  7,$85,  5,$17,$86,	 5,$18,$87,  5,$19,$89,	 4,  6,$8A,$15,$1D,$8B,	 5,$16,$8C,  3,	 2,$8F,	 5,$1E,$FF,$FC,$47,$F5,$FF,$10,$3D,$FB,$1F,  8,$FC,$17,$E8,$63,$F0,$55,$35; 0
-					; DATA XREF: ROM:0001C22Ao
-		dc.b $35,$30,  8,$89,$A9,$A9,$80,$44, $D,$1A,$38,$34,$68,$DF,$7E,$BB,$F4, $E,$5F,$9F,$93,$1F,$8E, $E,$39,$7C,$3D,$8A,$EA,$2C,$9B,$3F,$1B,$E1,$EC,$57,$51,$64,$D9,$F8,$DF, $F,$62,$BA,$8B,$26,$CF,$C6,$F8,$7B,$15,$D4,$59,$36,$78,  0; 64
-Nem_HTZ_Seesaw:	incbin	"art/nemesis/HTZ - Seesaw.bin"
-		even
-Nem_HPZ_Bridge:	dc.b $80,$15,$80,  3,  1,$14,  8,$26,$33,$36,$36,$46,$39,$56,$3A,$66,$3B,$73,  2,$81,  3,  0,$15,$1A,$82,  4, $A,$83,  3,  3,$14, $B,$84,  5,$18,$85,  6,$38,$86,  6,$32,$18,$FA,$87,  4,  9,$88,  7,$7A,$89,  7,$79,$8A,  6,$37,$8C,  8,$F8,$8E,  7,$78,$8F,  7,$7B; 0
-					; DATA XREF: ROM:0001C1AEo
-		dc.b $FF,$D9,$FE,$8A,  3,  6,$C8,$A0,$CB,$CF,$2C,$32,$C8,$A1,$8B,$8A,$39,$35,$C8,$7C,$85,$DB,$5D,$8B,$E8,$5F,$42,$90,$CF,$F4,$31,$FA,$1C,$C2,$A1,$D5,$8E,$AC,$2E,$DA,$EC,$72,$C2,$E5,$E4,$6A,$2F,  2,$81,$65,$E3,$2C,$D9,$62,$81,$B2,$18,$8F,$D1,$3F,$D8,$C6,$A2,$C8; 64
-		dc.b $BF,$CA,$40,$38,$E3,$EB,$46,$86,$36,$A3,$8D,$A4,$E5,$B4,$C4,$E7,$24,$40,$E6,$B6,$92,$33,$11,$30,$E0,$44,$82,$E0,$72,$E3,$44,$45,$ED,$A8,$BF,$F8,$DC,$6B,$6B,$80,$75, $F,$91, $C,$89,$81, $E,$26,  6,$60,$CE,$D5,$C8,$80,$67,$39,$89,$DB,$23,$3B,$60,$D6,$D8,$14; 128
-		dc.b $75,$F5,$C6,  8,$8F,$CA,$58,$37,$1A,$8F,$D0,$91,$FA,$22,$2B,$89,$19,  2,$E5,$F1,$26,$46,$54,$E4,$E8,$EA,  4,$31,$44,$1B,$CC,$17,  3,$A0,$87,$41,$C9,  5,$E6,$24,$83,$60,$89,$3A,$87,$13,  0,$87,$43,$F4,$F0, $B,$A0,$5D,  8,$14,$C8,$A6,$44,$7E,$9C,$53,  4,$44; 192
-		dc.b $C3,$8D,$19,  4,$59,  6,$46,$6C,$83,$2C,$74,$10,$E8,$43,$23,$3B,$20,$D0,$70,$23,$47,$46,$5D,$64,$24,$CF, $E,$59,$19,  9,$E2,$81,$F5,$F1,$C7,$BF,$DD,$E1,$9B,$FD,$2C,$A4,$97,$7E,$37,$3B,$E3,$F4,$7C,$3A,$3B,$FA,$F3,$ED,$24,$92,$49,$24,$92,$5E,$B7,$AF,$3F,$8D; 256
-		dc.b $F1,$EF,$CE,$19,$BF,$D2,$CA,$49,$77,$E3,$73,$BE,$3F,$47,$97,$18,$7E,$7C,$7B,$F8,$49,$24,$92,$49,$24,$97,$E2,$FE,$31,$BF,$8F,$5E,$77,$C3,$37,$FA,$59,$49,$2E,$FC,$6E,$77,$C7,$E8,$FE,$BF,$2B,$F9,$FF,$CE,$24,$92,$49,$24,$92,$48; 320
-Nem_HPZ_Waterfall:dc.b $80,$35,$80,  3,	 0,$15,$19,$23,	 1,$35,$17,$45,$1A,$56,$3B,$67,$78,$74,	 4,$81,	 4,  6,$34,  9,$48,$F8,$82,  6,$38,$83,	 4,  5,$17,$7A,$85,  4,	 8,$86,	 6,$39,$87,  4,	 7,$89,	 5,$16,$17,$7B,$8A,  5,$1B,$8B,	 5,$18,$8C,  4,	$A,$8D,	 6,$3A,$8E,  7,$79,$FF;	0
-					; DATA XREF: ROM:0001C1B4o
-		dc.b $14,$30,$30,$30,$5C,$BA,$69,$CC,$20,$83,  9,$A8,$42,$A8,$81,$4A,$86,$2A,$85,$C3,$16,$4D,$36,$9C,$BA,$69,$CC,$20,$83,  9,$A8,$42,$A8,$81,$4A,$86,$2A,$85,$C3,$16,$40,$E8,$5B,$4E,$5D,  3,$A1,$7D,$41,$84,$10,$86,$34,$A8,$55,  2,$A1,$50,$C5,$B4,$C8,$5B,$4E,$5D; 64
-		dc.b   3,$A1,$7D,$41,$84,$10,$86,$34,$A8,$55,  2,$A1,$50,$C5,$B5,$C9,$E5,  3,$97,$41,  6,$10,$42,$21,$8D,$29,$54,$40,$A5,$74,$C5,$B4,$C5,$83,$97,$44,$D3,$97,$41,  6,$10,$42,$21,$8D,$29,$54,$40,$A5,$74,$C5,$B4,$C5,$83,$97,$40,$ED,$4D,$8B,$CD,$E6,$F3,$79,$11,$99; 128
-		dc.b $31,$37,$9B,$C8,$5C,$CD,$E6,$F2,$18,$2C,$9F,$80,$F9,$9B,$C9,$79,$BC,$DE,$6F,$37,$91,$19,$93,$13,$79,$BC,$85,$CC,$DE,$6F,$21,$82,$C9,$F8, $F,$99,$BC,$88,$14,$18,$72,$14,$79,$16,$1E,$47,$5A,$F2,$3A, $A,$3C,$8E,$83, $E,$87,$43,$A3,$D1,$E8,$38,$62,$C8,$28,$60; 192
-		dc.b $6C,$60,$5B,$C7,$9F,$1E,$46,$FC,$75,$A5,$1D, $B,$78,$F3,$A6,$1D,  7,$1B,$18,$1B,$1E,$7C,$79,$D6,$FC,$74,$3A,$3B,$14,$3A,$3D,$1A,$18,$14,$28,$D1,$C1,$F2,$38,$14,$D8,$1E,$4F,$E4,$75,$FA,$1C,$F4,$3C,$C8,$61,$D4,$9E,$A4,$38,$A9,$BC,$8A,$18, $C,$19,$11, $D,$85; 256
-		dc.b $6A,$C2,$85,$B3,$46,$C6,$87,$E6,$BD,$1A,$CB,$6B,$F2,$2F,$CE,$68,$7E,$5F,$9B,$BF,$E5,$57,$91,$68,$E0,$7A,$6C,$C7, $B,$F9,$17,$1C,$73,$97,$E3,$2E,$AE,$B0,$AE,$2A,$D5,$EF,$78,$AB,$FE,$F3,$3F,$9C,$1F,$95,$1B,$B7,$E5,$79,$F5,$65,$CA,$EB,$D5,$FD,$65,$87,$E8,$47; 320
-		dc.b $E4,$43,$7E,$9D,$BF,$6E,$3F,$10,$1F,$F2,$C2,$3F,$11,$C4,$72,$3F,$2D,$D7,$10,$AD,$C8,$C7,$10,$39,$78,$E4,$B5, $B,$30,$83,$CE,$1B,$F1,$1C,  6, $D,$80,$AD,$F9,$21,$81,$F9,$A1,$F9,$14,$EE,$DE,$2D,$AC,$5E,$B3,$8B,$D5,$EB,  6,$B1,$BA,$C1,$AC,$36,$FB,$C0,$B5,$7E; 384
-		dc.b $6C,$A8,$AC, $F,$CD, $B,$1C,$7A,$CD,$8D,$87,$BA,$18,$CD,$B3,  3,  7,$F5,$29,$DF,$E7,$33,$F9,$C1,$8F,$CE,$66,$A3,  3,$D9,$B7,$E6,$FD,$9F,$CE,$66,$8F,$E7,$3F,$37,$5A,$FC,$DA,$22,$22,$77,$6C,$EE,$F6,$CB,$6F,$BE,  7,$BB,$DB,$9B, $B,$56,$33,$58,$B4,$38,$D9,$DD; 448
-		dc.b   6,$E7,$3C,$67,$81,$18,$DD,$96,$AC,$A3, $B,$BB,$3E,$ED,$9B,$2D,$B0,$C2,$C2,$AC,$77,$9A,$16,$1C,$73,$FA,$BB,$56,$16,$3F,$45,$6A,$C3,$28,$FE,$4F,$19,$AC,$70,$3D,$A8,$AC,  5,$DD,$AF,$8F,$5F,$A9,$3E,$D1,$11, $D,$78,$7C,$77,$86,$DF,$7B,$16,$18,$35,$B1,$66,$C1; 512
-		dc.b $C5,$B3,$F9,$B3,$BB,$2E,$77,$5C, $B, $A, $A,$2D,$CF, $B,$9F,$62,$B8,$6E,$5E,$F1,$C0,$8A,$E3,  2,$2C,$A3,$9E,  6,$D6,$D1,$C3,$2F,$1E,$84,$7E,$4B,$9D,$41,$8F,$C9,$43,$88,$BF,$2C,$63,$81,$EA,$C3,$D8,$E1,$73,$F8,$80,$D9,$51,$2A,$66,$F2,$14,$2F,$C0,$51,$37,$97; 576
-		dc.b $61,$F1,$79,$CB,  9, $E,$1E,$6F,$39,$71,$30,$64,$40,$89,$BC,$E6,  4,$DE,$54,$CD,$E4,$28,$5F,$80,$A2,$6F,$2E,$C3,$E2,$F3,$96,$12,$1C,$3C,$DE,$72,$E2,$60,$C8,$81,$13,$79,$CC, $F,$C4,$5B,$AB,$77,$1D,$AA,  5, $A,$8A,$14,$AE,$57,$2A,$C1,$8B,$5D,$83,$16,$D3,$5D; 640
-		dc.b $83,$87, $F,$DB,$87, $F,$DB,$E5,$FB,$81,  2,$13,$F4,$A6,$35,$1D,$AA,  5, $A,$8A,$14,$AE,$57,$2A,$C1,$8B,$5D,$83,$16,$D3,$5D,$83,$87, $F,$DB,$87, $F,$DB,$E5,$FB,$81,  2,$13,$F2,$BC,$DA,$AD,$5F,$A9,$DA,$78,$AF,$14,$89,$BF,$1B,$4E,$ED,$E2,$C8,$88,$31,$E3,  8; 704
-		dc.b $88,$88,$88,$88,$9A,$B7,$8B,$22,$20,$C7,$8C,$27,$74,$30,$30,$30,$5C,$BA,$69,$CC,$20,$83,  9,$A8,$42,$A8,$81,$4A,$86,$2A,$85,$C3,$16,$40,$E8,$5B,$4E,$5D,  3,$A1,$7D,$41,$84,$10,$86,$34,$A8,$55,  2,$A1,$50,$C5,$B5,$C9,$E5,  3,$97,$41,  6,$10,$42,$21,$8D,$29; 768
-		dc.b $54,$40,$A5,$74,$C5,$B4,$C5,$83,$97,$40,$ED,$4D,$8B,$CD,$E6,$F3,$79,$11,$99,$31,$37,$9B,$C8,$5C,$CD,$E6,$F2,$18,$2C,$9F,$80,$F9,$9B,$C8; 832
+S1Nem_GHZFlowerBits:	incbin	"art/nemesis/GHZ - Flower Stalk.bin"
+			even
+Nem_SwingPlatform:	incbin	"art/nemesis/GHZ - Swinging Platform.bin"
+			even
+Nem_GHZ_Bridge:		incbin	"art/nemesis/GHZ - Bridge.bin"
+			even
+Nem_GHZ_UnusedBlock:	incbin	"art/nemesis/GHZ - Unused Block.bin"
+			even
+S1Nem_GHZRollingBall:	incbin	"art/nemesis/GHZ - Wrecking Ball.bin"
+			even
+S1Nem_GHZRollingSpikesLog:	incbin	"art/nemesis/GHZ - Unused Log.bin"
+			even
+S1Nem_GHZLogSpikes:	incbin	"art/nemesis/GHZ - Spiked Log.bin"
+			even
+Nem_GHZ_Rock:		incbin	"art/nemesis/GHZ - Purple Rock.bin"
+			even
+S1Nem_GHZBreakableWall:	incbin	"art/nemesis/GHZ - Breakable Wall.bin"
+			even
+S1Nem_GHZWall:		incbin	"art/nemesis/GHZ - Edge Wall.bin"
+			even
+; ---------------------------------------------------------------------------
+; Compressed Graphics - Emerald Hill Zone and Hill Top Zone
+; ---------------------------------------------------------------------------
+Nem_EHZ_Fireball:	incbin	"art/nemesis/EHZ - Fireball.bin"
+			even
+Nem_BurningLog:		incbin	"art/nemesis/EHZ - Burning Log.bin"
+			even
+Nem_EHZ_Waterfall:	incbin	"art/nemesis/EHZ - Waterfall.bin"
+			even
+Nem_HTZ_Fireball:	incbin	"art/nemesis/HTZ - Fireball.bin"
+			even
+Nem_EHZ_Bridge:		incbin	"art/nemesis/EHZ - Bridge.bin"
+			even
+Nem_HTZ_Lift:		incbin	"art/nemesis/HTZ - Diagonal Lift.bin"
+			even
+Nem_HTZ_AutomaticDoor:	incbin	"art/nemesis/HTZ - Door.bin"
+			even
+Nem_HTZ_Seesaw:		incbin	"art/nemesis/HTZ - Seesaw.bin"
+			even
+; ---------------------------------------------------------------------------
+; Compressed Graphics - Hidden Palace Zone
+; ---------------------------------------------------------------------------
+Nem_HPZ_Bridge:		incbin	"art/nemesis/HPZ - Bridge.bin"
+			even
+Nem_HPZ_Waterfall:	incbin	"art/nemesis/HPZ - Waterfall.bin"
+			even
 Nem_HPZ_Emerald:	incbin	"art/nemesis/HPZ - Emerald.bin"
-		even
-Nem_HPZ_Platform:dc.b $80,$10,$80,  4,	9,$15,$19,$37,$7C,$72,	0,$83,	5,$18,$16,$3B,$84,  2,	1,$26,$3D,$85,	5,$1A,$87,  4,	8,$16,$3C,$36,$38,$89,	4, $B,$8A,  4, $A,$16,$37,$77,$7D,$8B,	6,$39,$8D,  6,$3A,$8E,	6,$36,$FF,$AD,$A3,$6A,$FD,$5B,$89,$EF,$F4,$B0,	1,$FE, $D,$AA; 0
-					; DATA XREF: ROM:0001C1BAo
-		dc.b $69,$FD,$1F,$15,$34,  0,  4,$FE,$3F,$9F,$CF,$FE,$23,$F0,$5C,$FE, $B,$FA,$B1,$A0,  3,$FA,$7A,$C3,$5F,$B4,$C3,$F1,$CA,  0,$1F,$81,$E7,$F2,$3A,$FC,$8E,$B8,$C7,$98,  0,$3F,$EB,$FB,$38,$EE,$3F,$40,$80,  7,$CF,$D0,$EB,$F6,$3C,$63,$CC,  0,$1F,$F5,$FD,$9C,$77, $E; 64
-		dc.b $59,$F4,  0,$2F,$F3,$B7,$53,$B0,  0,  0,$1F,$D0,$65,$3F,$81,$BF,$F0,$22,$77,$B8,$BE,$AF,$7B,  0,  0,  1,$97,$E4,$4D,$65,$CA,$7D,$DE,$EB,$F7,$20,  0,  0,$66,$27,$8C,$B3,$FB,$43,$EF,$5F,$99,$EA,$FF,$5A,  0,  0,  3,$E3,$1E,$C7,$E5,$21,$FD,$3B,$96,$7D,$FA,  0; 128
-Nem_HPZ_PulsingBall:dc.b $80,$22,$80,  3,  2,$14,  6,$25,$12,$34, $A,$45,$18,$55,$1A,$66,$3C,$74,  7,$81,  3,  0,$15,$17,$36,$3B,$82,  4,  8,$83,  3,  1,$15,$19,$27,$7A,$84,  6,$3A,$18,$F8,$85,  5,$16,$15,$1C,$86,  5,$1B,$87,  5,$13,$17,$7B,$FF,$7D,  3,$40,$C0,$90,$8B,$ED,$84,$34; 0
-					; DATA XREF: ROM:0001C1C0o
-		dc.b $ED,$5B,$EA,$65,  8,$11,$D2,$32,$D9,$45,  8,$43,$66,$BD,$EA,$7E,  4,$5E,$83,$A3,$83,$A0,$EC,$70, $B,$E7,  1,$67,  1,$1D,$5D,$FB,$8F,$E0,$E5,$1D,$66,$B7,$EA,$B6,$51,$C6,$70,$5D,$DD,$DD,$DD,$DD,$DD,$F4,$71,$9C,$14,$77,$5E,$B7,$59,$D1,$59,$FE, $C,$76,$F7,$D1; 64
-		dc.b $43,$19,$43,$19,$72,$30,$5D,$86,$8E, $B,$A0,$F4,$50,$F2,$7A,$F7,$47,$61,$40,$45,$1D,$C8,$AE,$A0,$40,$46,$7D,$6E,$AD,$36,$80,$DB,$BC,  9,  8,$22,$88,$77,$A0,$68,$18,$12,$11,$79,$B0,$86,$F8,$AE,$74,$50,$8B,$DB,$13,$89,  8,$46,$6C,$1B,$7D,$6B,$72,$12, $F,$A0; 128
-		dc.b $E8,$B0,$62,$C6,$43,$42,$45,$19,  3,$23,$59,$62,$C1,$67,  1,$1D,$5D,$FB,$8F,$E0,$E5,$1D,$66,$A7,$EA,$A6,$5B,$D3,$96,$ED,$AF,$57,$6F,$DB,$CA,$75,$35,$36,$BB,$4D,$83,  7,$A0,$C1,$A6,$D7,$69,$A9,$D4,$E5,$FB,$76,$BD,$5D,$BB,$62,$FE,$98,$CE,$BD,$4E,$B3,$A2,$B3; 192
-		dc.b $FC,$18,$ED,$EF,$A2,$86,$32,$83,$16,$CD,$19,$11,$22,$8C,$86,$84,$8B,$16, $C,$5D,  7,$D0,$90,$96,$F5,$D6,$D8,$34,$CA,$81,$28,$9E,$2D,$78,  8,$F5,$CA,$F8,$68, $D,$3B,$C0,$90,$82,$28,$87,$77,$77,$C5,$B5,$CC,$73,$1C,$42,$5C,$42,$DE,  6,$E2,$16,$1A,$11,$42,$C8; 256
-		dc.b $2E,$4B,$3A,$3E,  6,$B3, $F,$D2,$63,$F4,$AD,$FF,$5F,$D2,$CB,$8D,$72,$18,$1B,$42,$80,$7A,$9A,$9D,$ED,$31,$F9,$29,$FE,$58,$23,$68,$9B,$46,$67,$83,$5F,$A1,$95,$DA,$18,$36,$70,$68,$22,$C3,$41,$7C,$73,$F2,$DE,$FF,$4B,$8F,$EA,$E3,$F8,$BD,$B7,$32,$D7,$AF,$4B,$FA; 320
-		dc.b $28,$C2,$FD,$3A,$FD, $C,$4B,$DA,$EE,$53,$41,$AE,$D3,$59,$61,$83,$53, $C,$50,$90,$D7,$BF,$CB,$73,$E1,$DD,$ED,$E7,$3C,$E6,  2,$E6,  2,$E4,$A1,$E0,$2E,$30,$F0,$4D, $D,$43,$71,$4D,$D4,$F1,$FA,$40,$D6,$77,$7B,$6A,$C7,$16,$3B,$AB,$1D,$D5,$8E,$D0,$91,$DA,$10,$D6; 384
-		dc.b $F0,$ED,  8,$D1,$56,$56,$6B,$EC,$36,$E5,$9A,$28,$F8,$1A,$CD,$1B,$BC,$B9,$56,$DE,$7F,$6A,$7F,$4D,$2B,$6D,$AF,$F9,$26,$19,$8F,$D0,$98,$43,$F4,$F0,$DC,$C7,$5F,$92,$FD, $F,$C1,$BA,$CA,$21,$65,$AE,$8B,$5E,$11,$57,$60,$E5,  7,$C6,$7F,$8F,$EB,$92,$FD,$36,$79,$5F; 448
-		dc.b $96,$B2,$B7,$E4,$AE,$DC,$BC,$1B,$B7,$E9,$C4,$1E,$D7,$B1,$19,$57,$53,$41,$65,  5,$3A,$28,$29,$DD,$8A,$12,$BA,$2E,$85,  4,$5D,$7F,$1F,$F2,$D6,$77,$7E,$6A,$CA,$DA,$B2,$B5,  5,$6C,$10,$B9,$20,$F0,$17,$1A,$68,$EA,$68,$35,$A4,$1A,$D8,$2F,$40,  0; 512
-Nem_HPZ_Various:dc.b $80,$16,$80,  3,  1,$14,  8,$26,$38,$36,$3A,$45,$1B,$56,$3D,$66,$3B,$74,  9,$81,  3,  0,$14, $A,$82,  4, $B,$18,$F8,$83,  3,  2,$15,$1A,$84,  6,$3C,$85,  5,$18,$86,  5,$19,$18,$F9,$87,  3,  3,$16,$39,$38,$FA,$FF,$FC,$7F,$E2,$FF,$7F,$F8,$CF,$C7,$FF,$55,$E2; 0
-					; DATA XREF: ROM:0001C1C6o
-		dc.b $66,$66,$7F,$A7,$85,$81,$FB,$5B,$C7,$D2,$E5,$4C,$CC,$CF,$FD,$7F,$65,$9F,$8C,$A3,$A9,$99,$99,$EB, $F,$F2,$BF,$59,$7F,$3F,$4B,$95,$F5,$33,$33,$3F,$F5,$C5,$8C,$56,  6,$1F,$F5,$66,$66,$65,$63,$FA,$77,$8B,$4F,$F1,$DA,$FD,$2E,$8A,$F3,$B7,$33,$33,$FA,$3F,$3F,$14; 64
-		dc.b $7F,$15,$F8,$EF,$DE,$7E,$DB,$8D,$7E,$88,$42,$22,$78,$10,$88,$9E,  4,$22,$27,$81, $A,$76,$21,$4E,$C4,$C8,$93,$6B,$F4,$54,$B9,$F9,$17,$80,$68,$BC,$F4, $D,$38,  6,$99,$A3,$4C,$88,$A6,$44,$53,$22,$11,$64,$11,$1E,$30,$6B,$8C,$66,$8A,$E3,$10,$B7,$63,$BF,$8E,$EE; 128
-		dc.b $48,$C7,$F5,$9F,$FC,$72,$87,$40,$8B,$11,$50,$2C,$D4,$32,$10,$E9,$90,$8A,$2C,$B2,$15,$8E,$4B,$35,$1C,$96,$3C,$20,$F3,$96,$A0,$43,$5D,$3C,$AE,$BE,$56,$F2,$BD,$5B,$FC,$AF,$E9,$B9,$C1,$FD, $D,$A3,$50,$8E,$84,$23,$A1,  8,$E8,$16,$8E,$81,$71,$A0,$5C,$68,$17,  0; 192
-		dc.b $82,$CB,$8F,  3,$3C,$C2,$79,$E4,$88,$4E,  7,$4B,$2F,$D5,$F3,$EA,$CF,$6A,$3F,$A7,  3,$FC,$C0,$DF,$EC,$6C,$BB,$51,$A8,$76,$75,  0,$B0,$BA,  5,$82,  8,$20,$B1,$6A,$88,$2D,$45,$10,$FC,$28,$D6,$71,$C2,$8C,$6C,$5E,$FE,$3D,$BD,$8E,$C7,$7F,$A2,$D6,$C1,$50,$24,$82; 256
-		dc.b $A0,$49,  5,$40,$9E,$14,  9,$E1,$40,$9F,$44,$FA,$27,$D5,$FE,$21,$FE,$60,$6F,$F6,$36,$5D,$A8,$D4,$3B,$3A,$80,$58,$5D,  2,$C1,  4,$10,$58,$B5,$44,$16,$A2,$88,$7E,$14,$6B,$38,$E1,$46,$36,$2F,$7F,$1E,$DE,$C7,$7F,$1F,$A3,$85,$CF,$C8,$BC,  3,$45,$E7,$A0,$69,$C0; 320
-		dc.b $34,$CD,$1A,$64,$45,$32,$22,$99,$10,$8B,$20,$88,$F1,$83,$5C,$63,$34,$57,$18,$85,$BB,$1D,$FC,$77,$72,$40; 384
-Nem_UnusedDust:	dc.b   0,$18,$80,  5,$17,$14,  8,$25,$1B,$35,$19,$45,$1C,$56,$3A,$67,$7A,$72,  0,$83,  4,  6,$14, $A,$28,$F9,$38,$FA,$84,  3,  2,$14,  9,$25,$18,$37,$7B,$58,$F8,$85,  4,  7,$15,$16,$26,$3C,$35,$1A,$46,$3B,$58,$FB,$FF,$CF,$CE,$EB, $D,$7A,$9F,$29,$77,$4B,$B6,$9D; 0
-		dc.b $26,$5F,$77,$69,$D5,$26,$C3,$DE,$A7,$CA,$5A,$57,$69,$7C,$57,$C5,$7C,$5F,$F8,$73,$1F,$D3,$3F,$A7, $A,$BD,$B3,$CE,$A7,$C5,$A5,$FE,$5C,$7F,$D7,$FE,$B6,$5F,$E5,$4E,$B5,$8D,$7F,$D1,$3A,$79,$AC,$7F,$CE,$EC,  7,$A5,$EA,$7A,$B4,$E7,$C9,$BA,$BB,$E3,$3E,$7F,$11,$D3; 64
-		dc.b $E2,$25,$D6,$6C,$DC,$4C,$B8,$C0,  6,$EB,$2D,$8A,$85,$69,$6B,$AD,$4D,$D6,$93,$DD,$69,$3D,$D9,$77, $D,$36,$5B,$6F,$79,$FA,  0,  3,$33,$FC,$3F,$86,$F7,$DC,$FD,$AE,$D3,$AE,$D7,$DC,$F9,$86,$F8,$6B,$B6,$2B,$7F,$40,  4,$37,$A5,$F3,$9B,$2A,$DE,$93,$47,$78,$7F,$7F; 128
-		dc.b $33,$F5, $C,$9B,$94,  0,  0,$43,$AE,$6B,$6B,$B8,$5D,$C3,$2B,$26,$DC,$D6,$69,  2,$F4,$E0,  3,$F5,$68,$78,$56,$BA,$75,$76,$4F,  9,$A1,$90,$10,$9D,$42,$8B,$28,$50,$C9,$80, $D,$DB,$AF,$39,$65,$94,$F5, $A,$28,$2F,$2C,$9E,$EF,$D2,$B7,$2C,$9B,$32,  0,$1E,$AC,$B9; 192
-		dc.b $65,$CC,$43,$F5,$60,$37,$6E,$A4,$2E,$80, $B,$74,$9F,$2E,$43,$C3,$81,$D2,$7D,$BE,$D1,$74,  0,  6,$6D,$D4,$C2,$38,$83,$A4,  0,$70; 256
-Nem_CPZ_FloatingPlatform:dc.b	0,$10,$80,$73,	0,$81,	4,  5,$15,$12,$26,$2E,$36,$3A,$46,$3B,$74,  6,$82,  5,$14,$26,$34,$36,$33,$83,	4,  2,$16,$39,$25, $F,$35,$10,$84,  4,	3,$15,$16,$26,$32,$37,$78,$46,$35,$85,	4,  4,$15,$13,$86,  5, $E,$28,$FA,$87,	6,$36,$88,  5,$11,$16,$3D,$89; 0
-					; DATA XREF: ROM:0001C12Eo
-		dc.b $27,$79,$8A,$15,$18,$28,$FB,$8B,  7,$7C,$16,$2F,$8C,  5,$15,$8D,  6,$37,$8E,  6,$38,$FF,$7E,$BA,$15,$1F,$9C,$34,$2A,$3E,$F9,$5F,$2F,$92,$BF,$BB,$EE,$F8,$B7,$DD,$7E,$70,$D0,$A8,$FC,$E1,$A1,$53,$93,$CD,$F9,$95,$1F,$9C,$34,$2A,$3D,$BF,$21,$2C,$FF,$61,$D7,$F4; 64
-		dc.b $24,  0,  0,  0,  0,$19,$7F,$16,  6,$56,$79,$96,$50,$32,$B2,$DF,$D7,$E2,$AF,$EB,$1F,$3A,$FB,$EB,$F7,$50,$32,$B3,$CC,$B2,$81,$95,$9E,$65,$64,$81,$91,$C0,$CB,$28,$19,$59,$E6,$59,$37,$37,$68,$CC,$DF,$C0,$F3,$FE, $F,$C4,$80,  0,  0, $F,$DA,$FE,$DB,$C2,$1C,$F5; 128
-		dc.b $43,$4F,  8,$73,$FB,$EF,$1D,$E3,$BC,$77,$F7,$E1, $E,$7A,$A1,$A6,$55,$B9,$35,$43,$4C,$AB,$72,$6A,$86,$9E,$10,$E7,$AA,$1A,$31,$5A,$6C,$CD,$77,$F2,$63,$BC,$7C,$C6,$BC,$7B,$F8, $F,$DC,$FE,$A3,$F6,$1E,$78,$FF,  7,$E2,$40,  0, $F,$A9,$D9,$66,$E9,$1C,$A6,$EA,$A9; 192
-		dc.b $CA,$6E,$AB,$90,$97, $E,$54,$FD,$7E,$1C,$A7,$76,$1D,$53,$FD,$7E,$1D,$52,$6B,$B9,$5F,$D2,$AF,$2A,$85,$42,$49,$21,$3A,$8E,$24,$54,$FC,$B5,$3F,$2C,$8A,$7F,$C6,$32,$52,$FA,$25,$E5,$5E,$D2,$2B,$4F,$E9,$99,$A3,$C4,$77,$8E,$D1,$DA,$BF,$C8,$D9,$DB,$FB,$BF,$BB,$3B; 256
-		dc.b $88,$D6,$3C,$7B,$B7,$9F,$D4,$6F,$1F,$D0,$7F,$24,  0,  0; 320
-Nem_HPZ_WaterSurface:dc.b   0,$18,$80,	3,  4,$16,$38,$26,$3C,$37,$7A,$73,  5,$86,  5,$1A,$16,$3A,$87,	4, $C,$16,$3B,$88,  2,	1,$16,$39,$27,$7B,$38,$F8,$89,	2,  0,$15,$1B,$FF,$B6,$DB,$FE, $D,$79,$FF,$6F,$D3,$76,$EB,$F6,$FE,$F1,$EF,$9D,$A6,  9,$C8,$88,$EE,$10,$83,  8,$42,$6E,$10; 0
-					; DATA XREF: ROM:0001C1D2o
-		dc.b $B6,$D9,$D7,$AF,$DB,$4F,$EB,$67,$ED,$B3,$F8,$DD,$F5,$CF,$7A,$E7,$3F,$B1,$8E,$72,$23,$8E,$D1,$13,$92,  9,$37,  4,$4E,  8,$42,$1E,$88,$5B,$67,$7F,$D0,$C7,$3F,$81,$9E,$F3,$C7,$3E,$3B,$18,$CF,$70,$4F,$81,$13,$E0,$44,$77,  4,$83,  4,$49,$B8,$42,$1C,$1E,$10,$E0; 64
-		dc.b $F0,$B6,$DB,$6C,$73,$AF,$5F,$C8,$D6,$68,$FE,$47,$48,$8F,$68,$CF,$67,$22,$41,$DC,$21, $E,  8,$42,$1C,$10,$87,$A2,$DB,$6D,$BE,$75,$9A,$CD,$67,$59,$D3,$FB,$7F,$E4,$7E,$9C,$44,$F8,$11,$1D,$A4,$11,$84,$20,$EE,$10,$87,$A2,$DB,$6D,$FF,$B7,$5D,$EB,$35,$FB,$77,$F8; 128
-		dc.b $EF,$7F,$C8,$13,$91,$13,$91,$11,$DA,$24,$38,$12, $E,$E1,  8,$70,$5B,$6D,$FE,$86,$BF,$4F,$EB,$FE,$EE,$73,$8F,$62,$38,$E7,$22,$23,$B4,$44,$88,$88,$EE,$10,$48,$89,  9,$BE,$1E, $B,$6D,$B6,$CC,$FF,  7,$ED,$F5,$9A,$C3,$E3,$4E,$93, $E,$73,$46,$18,$23,  4,$83,$BF; 192
-		dc.b   8,$70,$41,$21,$E8,$85,$B6,$DB,$6C,$CF,$DB,$77,$D6,$3F,$A7,$F7,$A7,$39,$CD,$A2,$43,$21,$86,$13,$70,$F0,$E0,$84,$38,$3F,$80,$52,$DB,$6D,$99,$D6,$71,$D7,$E9,$F5,$9D,$38,$F7,$F0,$7B,$26,$D1,$11,$84,$21,$C1,  8,$43,$D1, $E, $F,$E0,$16,$DB,$6D,$9A,$CF,$E8,$7F; 256
-		dc.b $1D,$CF,$66,$39,$EC,$4C,$73,$68,$88,$C2,  9,$37,  4,$87,$F4,  8,$7A,$2D,$B6,$DB,$E6,$6B,$FA,$1C,$E6,$9D,$38,$67,$3A,$CE,$91,$C7,$1D,  9,$86, $C,$21,$83,$B8,$42,$1C,$1E,$10,$E0,$84,$2C,  0,  0; 320
-Nem_Button:	dc.b $80,$10,$80,  3,  2,$24, $A,$34, $C,$72,  0,$81,  4, $D,$13,  3,$26,$3C,$86,  6,$3B,$78,$FB,$87,  7,$7A,$27,$7C,$88,  7,$7B,$28,$FA,$89,$76,$3A,$8E,  6,$38,$16,$39,$8F,  4, $B,$13,  4,$FF,$FA,$F9,$DF,$AF,$38,$9B,$74,$D4,$A6,$A5,$35,$29,$A9,$4D,$4A,$D4,$F8; 0
-		dc.b $E8,  0, $F,$B6,$B7,$2D,$3C,$B4,$F2,$D3,$CB,$4F,$2D,$3C,$DE,$7F,$9F,$F8,$9F,$F4,$57,$BF,$CC,$FE,$58,$5F,$98,$D5,$6C,  3,$B9,$CE,$FF,$43,$53,$C6,$AF,$1A,$BC,$6A,$F1,$AB,$C6,$BF,$BF,$CE,$FF,$A3,$F1,$3F,$96,$FC,$CF,$B2,$9D,$AD,$FC,$C0,  2,$DF,$C8,$47,$EE,$F6; 64
-		dc.b $71,$E4,$4E,$A2,$75,$13,$A8,$9D,$44,$EB,$86,$B6,$BA,  0,  0,  0,  3,$EB,$E7,$7E,$BC,$E2,$6D,$D3,$52,$9A,$94,$D4,$A6,$A5,$35,$2B,$53,$E3,$A0,  0,$3E,$DA,$DC,$B4,$F2,$D3,$CB,$4F,$2D,$3C,$B4,$F3,$79,$FE,$7F,$40,  0,$7D,$E6,$A7,$8D,$5E,$35,$78,$D5,$E3,$57,$8D; 128
-		dc.b $7F,$7F,$9D,$E8,  0, $F,$5D,$FC,$FA,$BD,$9C,$79,$13,$A8,$9D,$44,$EA,$27,$51,$3A,$E1,$AD,$A0,  0; 192
+			even
+Nem_HPZ_Platform:	incbin	"art/nemesis/HPZ - Platform.bin"
+			even
+Nem_HPZ_PulsingBall:	incbin	"art/nemesis/HPZ - Glowing Orb.bin"
+			even
+Nem_HPZ_Various:	incbin	"art/nemesis/HPZ - Unknown Cork.bin"
+			even
+; ---------------------------------------------------------------------------
+; Compressed Graphics - Chemical Plant Zone
+; ---------------------------------------------------------------------------
+Nem_UnusedDust:		incbin	"art/nemesis/CPZ - Unknown Dust.bin"
+			even
+Nem_CPZ_FloatingPlatform:	incbin	"art/nemesis/CPZ - Floating Platform.bin"
+			even
+Nem_HPZ_WaterSurface:	incbin	"art/nemesis/General - Water Surface.bin"
+			even
+Nem_Button:		incbin	"art/nemesis/CPZ - Button.bin"
+			even
 
 ; ---------------------------------------------------------------------------
 ; Compressed Graphics - General
 ; ---------------------------------------------------------------------------
-Nem_VSpring2:	incbin	"art/nemesis/General - Vertical Spring.bin"
-		even
-Nem_HSpring2:	incbin	"art/nemesis/General - Horizontal Spring.bin"
-		even
-Nem_DSpring:	incbin	"art/nemesis/General - Diagonal Spring.bin"
-		even
-Nem_HUD:	dc.b $80,$18,$80,  4,  6,$14, $A,$24, $C,$34, $B,$48,$FB,$55,$1D,$65,$1C,$72,  0,$81,  3,  2,$18,$F9,$25,$1B,$36,$3D,$8C,  4,  7,$16,$3C,$38,$FA,$8D,  3,  4,$15,$1A,$38,$F8,$FF,$2B,$E9,$53,$DC,$59,$AE,$C6,$D2,$67,$A8,$C8,$C7,$A8,$9B,$C4,$FD,$8F,$6F,$73,$3E,$3E; 0
-					; DATA XREF: ROM:0001C0A4o
-		dc.b $6B,$D0, $F,$BF,$A5,$4F,$71,$66,$B8,$8D,$33,$B4,$4D,$BB,$F1,$19,$1E,$DE,$E2,$AF,$85,$9E,$80,$7D,$FD,$2A,$7B,$8B,$35,$C4,$63,$B4,$4E,$D1,  5,$47,$B7,$B8,$AB,$E1,$67,$A0,$17,$FC,$C5,$C8,$B3,$5C,$5D,$8E,$D1,$3D,$C5,$9A,$68,$AD,  5,$EA,$B5,$5B,$6D,$80,$57,$F3; 64
-		dc.b $17,$22,$CD,$71,$76,$3B,$46,$7B,$9F,$35,$1D,$A2,  1,$B5,$5A,$AD,$B6,$C0,$33,$C5,$4E,  0,$CE,$D1,$33,$80,$56,$B3,$4D,$BA,$F9,  0,$75,$9E,$21,$A0,$E3,$DC,$C7,$68,$9A,$71,$4E,$29,$C4,$6A,$96,$6C,  3,$3E,$95,$3D,$C5,$9A,$E2,$34,$CE,$DA,$78,$C8,$C7,$EC,$7B,$7B; 128
-		dc.b $8A,$BE,$16,$7A,  1,$7F,$DC,$43,$79,$5A,$E7,$C9,$4E,$D1,  0,$5E,$BB,$B0, $B,$F1,$57,$80, $E,$D1,$33,$B4,  0,$D6,$69,$B7,$5B,  0,$57,$E2,$26,$3D,$BB,$3F,$5C,$95,$14,$68,$AD,$45,$D4,$15,$AE,$EC,  2,$BF,$B8,$8C,$F8,$FB,$F7,$27,$89,$9E,$E2,$CF,$D6,$F7,$77,$3F; 192
-		dc.b $58,$86,$FE,$ED,$7F,$84,  6,  0; 256
-Nem_Lives:	incbin	"art/nemesis/General - Sonic Lives Counter.bin"
-		even
-Nem_Ring:	incbin	"art/nemesis/General - Ring.bin"
-		even
-Nem_Monitors:	incbin	"art/nemesis/General - Monitor and Contents.bin"
-		even
-Nem_VSpikes:	incbin	"art/nemesis/General - Spikes.bin"
-		even
-Nem_Points:	incbin	"art/nemesis/General - Points Text.bin"
-		even
-Nem_Lamppost:	incbin	"art/nemesis/General - Checkpoint.bin"
-		even
-Nem_Signpost:	incbin	"art/nemesis/General - Signpost.bin"
-		even
+Nem_VSpring2:		incbin	"art/nemesis/General - Vertical Spring.bin"
+			even
+Nem_HSpring2:		incbin	"art/nemesis/General - Horizontal Spring.bin"
+			even
+Nem_DSpring:		incbin	"art/nemesis/General - Diagonal Spring.bin"
+			even
+Nem_HUD:		incbin	"art/nemesis/General - HUD.bin"
+			even
+Nem_Lives:		incbin	"art/nemesis/General - Sonic Lives Counter.bin"
+			even
+Nem_Ring:		incbin	"art/nemesis/General - Ring.bin"
+			even
+Nem_Monitors:		incbin	"art/nemesis/General - Monitor and Contents.bin"
+			even
+Nem_VSpikes:		incbin	"art/nemesis/General - Spikes.bin"
+			even
+Nem_Points:		incbin	"art/nemesis/General - Points Text.bin"
+			even
+Nem_Lamppost:		incbin	"art/nemesis/General - Checkpoint.bin"
+			even
+Nem_Signpost:		incbin	"art/nemesis/General - Signpost.bin"
+			even
 ; ---------------------------------------------------------------------------
 ; Compressed Graphics - Sonic 2 Enemies
 ; This block is present in the final, but is reduced to only the Buzzer,
 ; Masher, Aquis, and Octus due to the rest being deleted
 ; ---------------------------------------------------------------------------
-Nem_Crocobot:	dc.b   0,$2C,$80,  5,$11,$16,$2A,$26,$30,$36,$33,$47,$76,$58,$EF,$67,$70,$74,  4,$81,  3,  0,$14,  6,$26,$2E,$36,$35,$48,$F2,$57,$6C,$77,$78,$82,  4,  2,$15,$13,$27,$74,$38,$F7,$83,  4,  3,$15, $B,$26,$2B,$47,$6F,$58,$F6,$84,  5,$14,$17,$6E,$85,  6,$31,$17,$6D; 0
-					; DATA XREF: ROM:0001C1E6o
-		dc.b $86,  5,$16,$17,$71,$87,  5, $F,$16,$34,$88,  5, $A,$17,$72,$89,  5,$12,$17,$7A,$8A,  5, $E,$17,$73,$8C,  6,$32,$18,$F3,$8D,  5,$10,$16,$2F,$27,$75,$38,$EE,$FF,$44,$44,$44,$44,$44,$38,$AF,$30,$63,$78,$30,$7F,$B4,$9E,$FB,$47,$F8,$56,$7C,$7F,$C3,$56,$3F,$CD; 64
-		dc.b $C3,$F8,$A8,$88,$88,$88,$89,$DF,$3E,$C4,$BC,$C9,$74,$CD,$F3,$3C,$F4,$DB,$98,$B6,$30,$CC,$5B,$6E,$7F,$F3,$5D, $F,$FE,$9B,$EC,$BF,$7B,$3E,$7E,$3F,$FB,$8F,$F7,$72,$8F,$F1,$6F,$EF,$DA,$88,$88,$99,$F4,$CC,$AB,$23,$89,$7F,$50,$A9,$FF,$3D,$B3,$AF,$17,$F1,$79,$6D; 128
-		dc.b $FD,$B6,$97,$B7,$1D,$2F,$6B,$7E,$9F,$6F,$1F,$D3,$A9,$78,$AB,$45,$17,$EC,$FD,$D7,$62,$5C,$CE,$CF,$FE,$17,$8F,$FE,$FF,$F3,$FF,$BF,$F5,$C3,$CB, $F,$2C,  7,$EA,$46,$7A,$A2,$24,$FB,$65,$43,$2C,$32,$81,$D0,$CA,$AB,$D7,$43,$28,$F4,$5D, $C,$2E,$6B,$A1,$83,$E8,$74; 192
-		dc.b $32,$1D,$17,$31,$35,$93,$C8,$7F, $A,$E2,$17,$96,$D6,$86,$5D,$C2,$19,$5B,$2B,$F1,$19,$5B,$CE,$18,$D9,$FF,$AC,$86,$8A,$97,$55,$39,$4E,$7F,$E9,$5D,$25,$49,$5E,$36,$73,$FF, $C,$BC,$22,$E2,$BC, $C,$18,$5D,$46, $C,$2E,$AE,$8B,$A1,$D4,$40,$97,$43,$89,$31,$2E,$95; 256
-		dc.b $13,$12,$F0,$B9,$78,$29,$9E,$75,$68,$38,$97,$6B,$BB,$29,$B3,$D1,$B8, $E, $A,$EF,$D1,$11,$11,$11,$13,$BD,$FC,$1E,$AA,$9F,$55,$D5,$3D,$42,$CD,$1B,$AC,$FB,$F2,$BB,$F9,$B9,$77,$6D,$44,$44,$44,$3E,$14,$3E,$F3,$A1,$F6,$5D, $E,$1E,$70,$AE,$87,$94,$2C,$4B,$DC,$70; 320
-		dc.b $67,$AF,$71,$97,$12,$5E,$E3,$B8,$97,$BB,$57,$AE,$97,$71,$25,$C7,$C8,$8E,$2A,$F2,$FD,$3E,$BC,$6A,$D9,$87,$96,$7A,$D4,$F8,$EB,$53,$D4,$2C,$D1,$BA,$CF,$86,$42,$CD,$7F,$9D,$9E,$21,$E7,$FF,$DD,$BD,$76,$DD,$FA,$51,$FA,$91,$9E,$A8,$88,$88,$88,$91,$AF,$3B,$D6,$58; 384
-		dc.b $7E,$99,$65,$50,$B6,$8B,$2C,$86,$9C,$8C,$A0,$4F,$E4,$E3,$28,$1F,$B9,$CE,$87,$33,$21,$ED,$31,$EC,$43,$A2,$E6,$3F,$84,$F2,$6F,$70,$57,$75,$28,$5D, $F,$3B,$DA,$19,$5B,$28,$62,$21,$95,$B2,$86,$36,$7F,$EB,$21,$A2,$A5,$D5,$4E,$53,$9F, $D,$AE,$92,$A4,$AF,$1B,$39; 448
-		dc.b $FF,$86,$5E,$12,$39,$67,$FA,$C8,$61,$97,$75,$59,$7F,$37,$F8,$50,$9E,$F2,$3D,$D6,$FE,$A7,$E9,$BF,$48,$74,$FF,$9F,$F8,$DB,$78,$A1,$8A,$DE,$BA,$10,$58,$23,$1A,$5C,$41,$F6,$7A,$84,$1B,$4B,$38,$41,$21,$C2,$1C,$21,$C2,$15,$79,$E1,$3C,$AF,$C1,$65,$7E,$1B,$8C,$A1; 512
-		dc.b $81,$EE,$32,$BE,$35,$D0,$CA,$11,$F6,$28,$D6,$F5,$94,$6B, $B,$9E,$C2,$3E,$EC,$6B,$EB,$8A,$E6,$74,$FF,$9F,$F8,$DB,$78,$A1,$8A,$DE,$BA,$10,$58,$23,$1A,$5C,$41,$F6,$7A,$84,$1B,$4B,$38,$41,$4D,$CC,$5F,$C5,$43,$F6,$6A,$96,$C7,$6C,$55,$DC,$D4,$CE,$6E,$4F, $A,$F4; 576
-		dc.b $CF,$12,$F0, $E,$9F,$F3,$FF,$1B,$6F,$14,$31,$5B,$D7,$42, $B,  4,$63,$4B,$88,$3E,$CF,$50,$83,$69,$67,  8,$29,$B9,$8B,$F8,$A8,$7E,$CD,$52,$D8,$ED,$8A,$BB,$9B,$D9,$CC,$E5,$3C,$2B,$D3,$28,$4B,$C0,$3D,$C6,$57,$C6,$BA,$19,$42,$3E,$C5,$1A,$DE,$B2,$8D,$61,$73,$D8; 640
-		dc.b $47,$DD,$8D,$7D,$71,$5C,$EF,$C4,$E6,$D5,$93,$7A,$D7,$F5,$2E,$D7,$90,$53,$28,$72, $A,$67, $F,$DD,$2A,$42,$43,$F5,$5B,$24,$E4,$44,$4D,$F8,$19,$5C,$55,$16,$A5,$53,$17,$66,$91,$66,$D2,$9E, $E,$65,$90,$8A,$98,$8E,$4F, $A, $E,$98,$54,$9C,$1D,$D0,$45,$A7,$98,$E0; 704
-		dc.b $7B,$8C,$AF,$8D,$74,$32,$84,$7D,$8A,$35,$BD,$65,$1A,$C2,$E7,$B0,$8F,$BB,$1A,$FA,$E2,$B9,$DF,$89,$CD,$AB,$26,$92,$B5,$F5,$CB,$5F,$41,$CC,$A1,$27,  7,$33,$83,$B9,$39,$52,$12, $A,$E7,$E5,$26,$44,$44,$DF,$81,$95,$C5,$51,$6A,$55,$31,$76,$69,$16,$77,$19,$60,$E1; 768
-		dc.b $25,$90,$8B,$83,$88,$C3,$E4,$E6,$9C,$94,$1C,$DD,  4,$43,$BB,$DD,$C0,$F7,$19,$5F,$1A,$E8,$65,  8,$FB,$14,$6B,$7A,$CA,$35,$85,$CF,$61,$1F,$76,$35,$F5,$C5,$73,$BF,$13,$9B,$56,$4C,$A9,$6B,$2E,$4E,$D7,$D0,$73,$28,$49,$C1,$CC,$E1,$CF,$F5,$12,$12, $E,$E5,$E5,$E8; 832
-		dc.b $22,$22,$6F,$C0,$CA,$E2,$A8,$B5,$2A,$98,$BB,$5C,$59,$B4,$8B,$37,  9,$19,$60,$E6,$59,$4A,$2E,$62,$30,$F0,$E0,$E9,$85,$33,$BD,$E5,$11,$C0; 896
-Nem_Buzzer:	incbin	"art/nemesis/Badniks - Buzzer.bin"
-		even
-Nem_BBat:	incbin	"art/nemesis/Badniks - BBat.bin"
-		even
-Nem_Octopus:	dc.b   0,$3A,$80,  6,$31,$16,$2B,$26,$32,$36,$33,$48,$F3,$56,$37,$66,$30,$73,  0,$81,  3,  1,$14,  6,$26,$36,$37,$74,$58,$F6,$68,$F2,$82,  4,  4,$14,  7,$25,$11,$37,$75,$58,$F7,$83,  4,  5,$15,$16,$26,$35,$37,$72,$47,$76,$57,$77,$84,  5,$12,$16,$34,$85,  7,$73; 0
-		dc.b $86,  5,$10,$16,$38,$87,  5,$13,$88,  6,$2F,$89,  6,$2E,$8C,  5,$14,$8D,  6,$2A,$8E,  7,$7A,$17,$78,$FF,  0,  0,$30,$4C,$13,  9,$EE,$87,$14,$CD, $A,$49,$32,$42,$86,$11,$B2,$19,$6B,$A2,$95,$F7,$2A,$9D,  0,$F3,$8D,$71,$D7,$14,$EE,$9F,$F3,$FF,$1C,$ED,  9,$F6; 64
-		dc.b $FD,$34,$F9,$37,$1C,$9B,$8E,$4D,  9,$EA,$9F,$A6,$9D,$A0,$57,$F2,$FA,$A1,$EE,$87,$B8,$11,$F3,$D6,$35,$F2,$8E,$3D,$DD,$7F,$49,$AA,$69, $D,$2C,$92,$FD,$34,$AC,$9A,$43,$48,$2A,$2F,$E9,$14,$AA,$7F,$8D,$3F,$C6,$9D,$A0,$A9,$D8,$BF,$77,  0,  0,$13,  4,$C1,$30,$7D; 128
-		dc.b $DF,$77,$DD,$F7,$7D,$DF,$74,$C2,$27,$23,$8B,  0,  0,  3,$24,$97,$9D,$93,$2E,$A6,$B8,$B5,$6E,$D5,$C4,$E4,$8A,$D9,$BC, $E,$70,$64,$EE,$63,$CB,$13,$EF,$5B,$75,$CD,$9E,$BF,$6A,$A9,$C5,$2A,$A5,$5F,$95,$A7,$E9,$69,$54,$90,$CA, $A,$92,$42,$92,$54,$28,$56,$4A,$8C; 192
-		dc.b $F2,$7D,$91,$5C,$E2,$D1,$39,$B9,$1B,$F6,$8D,$BF,$E5,$7C,$EF,$BA,$37,$F0,$67,$73,$DF,  3,$3B,$EE,$6B,$8C,$EF,$B9,$BF,$5B,$4A,$9A,$AF,$D2,$D2,$AF,$D2,$F1,$69,$41,$4E,$88,$51,$64,$92,$54,$64,$5D,$15,$36,$4D,$51,$B1,$28,$AF,$99,$7D,$E0,$77,$4C,  8,  3, $E,$77; 256
-		dc.b $6F,$4E,$7B,$D0,$EF,$A1,$F3,$28,$A7,$34,$2E,$72,$92,$17,$35,$D9, $B,$9C,$51,$53,$12,$EC,$F5,$94,$38,$C0,$E5,  2,  0,  0,  1,$9F,$2C,$97,$AE,$50,$E8,  0,  2,$27,$23,$8B,  0,  0,$C2,$C8,$CB,$16,$B4,$93,$65,$D1,$7A,$43,$60,  0,  5,$3B,$98,$F2,$C4,$FB,$D6,$DD; 320
-		dc.b $73,$67,$AF,$DA,$AA,$71,$4A,$A9,$52,$F1,$25,$4A,$55,$2D,$5C,$C9,$7A,$B2,$FF,$C4,  0,  7,$68,$DB,$FE,$57,$CE,$FB,$A3,$7F,  6,$77,$3D,$F0,$33,$BE,$E6,$B8,$CE,$FB,$9B,$F5,$B4,$A9,$AA,$E3,$9D,$2A,$84,$B9,$C9,$59,$3F,$68,$AD,$19,$43,$C8,  0,  2,$60,$40,$18,$73; 384
-		dc.b $C2,$9C,$F7,$A7,$F0,$6B,$92,$A7,$F0,$79,$27,$94,$F6,  0,  0,  0,  0,  1,$D7,$33,$D7,$2E,$93,  0,  0,  0,  0,  0,$36,$CF,$69,$67,$79,$81,  0,  1,$13,$91,$C5,$80,  0,$61,$B2,$E8,$DA,$6A,$65,$AC,$7F,$E2,$40,  0,$14,$EE,$63,$CB,$13,$EF,$5B,$75,$CD,$9E,$BF,$6A; 448
-		dc.b $A9,$C5,$2A,$A5,$4C,$B2,$82,$A3,$2C,$96,$25,$24,$BD,$4C,$3C,$80,  0,$76,$8D,$BF,$E5,$3B,$A7,$74,$67,  3,$3B,$EE,$7B,$E6,$7F,$31,$73,$5D,$79,$BE,$E6,$FD,$6D,$2A,$6A,$97,$48,$39,$D7,$48,$2A,$1E,$5A,$2A,$79,$40,  0,  2,$60,$40,$18,$73,$C2,$9C,$F7,$7E,$95,$97; 512
-		dc.b $5F,$64,$D7,$FE,$26,$F0,  0,  0,  0,  0,$1B,$79,$F4,$CF,$6F,$C5,  0,  0,  0,  0,  0,$1A,$A6,$56,$8E,$53,$E8,  0,  2,$27,$23,$8B,  0,  0,$C1,$F6,$54,$DB,$4B,$1F,$D2,$6A,$90,$F2,  0,  0,$53,$B9,$8F,$2C,$4F,$BD,$6D,$D7,$36,$7A,$FD,$AA,$A7,$14,$AA,$95,$6A,$57; 576
-		dc.b $45,$72,$B2,$B3,$94,$59,$2B,$F4,$86,$C0,  0,$3B,$46,$DF,$F2,$9C,$27,$74,$66,$61,$F9,$7B,$9E,$F8,$19,$DF,$73,$5D,$7C,$CD,$CD,$FA,$DA,$54,$D5,$32,$2E,$88,$51,$92,$D2,$8B,$3D,$BF,$E2,  0,  1,$30,$20, $C,$39,$E1,$4E,$7B,$C7,$6A,$D9,$EC,$C9,$B4,$56,$1E,$40,  0; 640
-		dc.b   0,  0,  0,$3A,$66,$BD,$32,$9E,$D3,  0,  0,  0,$C5,$F2,$8D,$AB,$4E,$D8,$A7,$74,$FF,$1A,$6A,$F6,$4B,$46, $A,$96,$7E,$14,$D9,$B8,$53,$66,$84,$F5,$4F,$D3,$4D,$65,  2,$BF,$97,$B3,$9E,$C5, $F,$60,  0,  0,  1,$5F,$EF,$32,$FE,$E5,$7F,$DC,$AF,$FB,$95,$FF,$73,$2F; 704
-		dc.b $DE,  0,  0,  0, $F,$3F,$19,$F8,$E3,$C5,$7E,$BF,$6D,$EB,$1F,$5F,$D6,$F1,$FD,$6F,$58,$FA,$FD,$B7,$AA,$FC,$71,$E3,$3F,$19,  0,  0; 768
-Nem_Triceratops:dc.b   0,$32,$80,  5,$15,$16,$30,$26,$2E,$36,$33,$47,$71,$57,$75,$67,$76,$74,  6,$81,  3,  1,$15,$13,$27,$74,$36,$36,$46,$2D,$78,$F3,$82,  6,$2F,$17,$6E,$83,  4,  8,$17,$6B,$26,$34,$84,  5,$12,$16,$2C,$27,$70,$38,$F5,$48,$F6,$85,  7,$77,$86,  5,$14,$17,$72,$87; 0
-					; DATA XREF: ROM:0001C1F8o
-		dc.b   4,  7,$17,$73,$88,  4,  4,$17,$6F,$48,$F7,$89,  3,  0,$16,$31,$27,$6A,$38,$F2,$8A,  4,  5,$16,$32,$27,$78,$8C,$18,$F4,$FF,$AB,$E6,$A9,$57,$B9,$51,$51,$F0,$54,$5D,$F4,$4F,$E5,$25,$10,$7E,$E9,$39,$A0,$51,$97,$F5,  7,$F5,$23,$82,$72,$49,$44,$9F,$F4,$CE,$B2; 64
-		dc.b $89,$FE,$99,$25,$13,$E4,$E9,$2B,$D3,$F4,$E8,$B2,$BE,$17,$7A,$CA,$37,$47,$A9,$FE,$1C,$A6,$A8,$A3,$34,$F0,$2E,$F0,$14,$E1,$FB,$A0,$A5,$14,$28,$50,$8E,$14,$28,$4A,$3A,$85,  9,$47,$D4,$A9,$47,$53,$25,$4E,$6A, $C,$2F,$35,$C4,$C4,$B2,$D4,$75,$D8,$14,$18,$E0,$B8; 128
-		dc.b $ED,$20,$A0,$EF,$21,$71,$A2,$15,$21,$41,$C1,$3A,$A2,$F1,$47,$1C,$5D,$70,$A5,$C8,$32,$22,$CC,$55,$39, $F,$55,$A3,$A0,$B3,$5B,$A5,$16,$51,$BB,$22,$B1,$FB,$27,$51,$1F,$B2,$7C,$7F,$86,$A1,$E5,$FB,$35,  7,$D9,$71,$A7,$FB,$3F,$8D,$E9,$46,$66,$69,$76,$E1,$C7,$5D; 192
-		dc.b $99,$EE,$89,$66,$37,$44,$AE,$1B,$A2,$57, $F,$D1,$44,$B0,$12,$D2,$58, $B,$34,$95,$47,$AC,$4A,$BF,$AC,$FD,$6F,$79,$7F,$33,$F3,$BD,$FA,$D0,$60,$B8,$53,$9D,$55,$30,$2F,$2A,$BD,$1E,$A5,$E2,$A9,$47,$B2,$2F,$AE,$5A,$6E,$AC,$B4,$FD,$15,$46,$52,$D0,$26,$5E,$AB,$CF; 256
-		dc.b $2B, $A,$51,$D0,$4F,$7D,$11,$48,$C9,$28,$8A, $E,$2A,$EA,$30,$38,$B8,$EB,$8F,$1F,$69,$A5,$A8, $F,$B8,$3E,$39,$3A,$6E, $E,$81,$E9,$B8,$82,$F4,$4D,$75,$28,$E8,$BA,$E7,$FD,$46,$66,$66,$66,$62,$EA,$45,$F0,$72,$22,$F3,$12,$2A,$12,$24,$65,$B9,$28,$F6,$17,$4B,$DD; 320
-		dc.b $3A,$20,$84,$DB,$4B,$65,$85,$B7,$5B,$75,$B7,$5B,$9E,$D9,$ED,$C7,$A7,$62,$DE,$D3,$4B,$50,$1F,$7D,$5F,$DA,$FF,$C8,$BC,$82,  8,$BD,$F0,$E1,$B9,$2B,$C3,$76,$BC,$4A,$A6,$80,$A7,$3A,$6B,$C5,$C5,$10,$5C,$2B,$45,$EA,$8C,$CD,$71,$75,$22,$F8,$39,$11,$79,$89,$6A,$48; 384
-		dc.b $91,$96,$28,$E9,$61,$BD,$28,$9B,$24,$25,$A3,$5D,$BA,$EB,$6C,$61,$6D,$D6,$DD,$6E,$7B,$67,$B7,$1E,$9D,$8B,$7B,$4D,$2D,$40,$7D,$F5,$7F,$68,$2F,$FE,$48,$20,$82,$19,$99,$99,$99,$99,$8B,$A9,$17,$C1,$C8,$8B,$E0,$CA,$78,$C1,$B0,$2E,$29,$61,$D4,$51,$D2,$62,$69,$44; 448
-		dc.b $35,$B0,$A3,$A1,$AD,$87,$F4,$47,$85,$EE,$90,$62,$CB,$D0,$41,$8B,$37,$6B,$3A,$E5,$FB,$33,$E4,$8A,  8,$21,$E8,$EA,$6A, $B,$8A,$29,$CD,$C3,$B3,$33,$33,$37,$6B,$38,$D9,$18,$2E,$14,$B2,$AA,$98,$17,$95,$5E,$8F,$52,$F1,$54,$A3,$D9,$17,$D7,$2D,$37,$56,$5A,$7E,$8A; 512
-		dc.b $A3,$29,$68,$13,$2F,$55,$E7,$95,$85,$28,$E8,$27,$BE,$88,$A4,$64,$94,$45,  7,$15,$75,$18,$1C,$5C,$75,$C5,$99,$99,$99,$9B,$AB,$E6,$A9,$57,$B9,$51,$51,$F0,$54,$5D,$F4,$4F,$E5,$25,$10,$7E,$E9,$39,$A0,$51,$92,$7B, $B,$23,$84,$4A,$F8,$B2,$89,$2D,$76,$72,$75,$E0; 576
-		dc.b $7F,$4C,$92,$89,$F2,$74,$95,$E9,$FA,$74,$59,$5F, $B,$BD,$65,$1B,$A3,$D4,$FF, $E,$53,$F6,$9A,$5A,$80,$FB,$EA,$FE,$D0,$5F,$FC,$90,$41,  4,$33,$33,$33,$33,$33,$2A,$28,$CD,$3C, $B,$BC,  5,$38,$7E,$E8,$29,$45, $A,$14,$23,$85, $A,$12,$8E,$A1,$42,$51,$F5,$2A,$51; 640
-		dc.b $D4,$C9,$53,$9A,$83, $B,$CD,$71,$31,$2C,$B5,$1D,$76,  5,  6,$38,$2E,$3B,$48,$28,$3B,$C8,$5C,$68,$85,$48,$50,$75,$4F,$79,$E4,$BF,$C2,$C8,$7F, $B,$92,$7F, $B,$7A,$FF, $C,$6C,$E8,$6E,$B6,$EB,$6E,$B6,$EB,$6E,$B7,$3D,$B3,$DB,$8F,$4E,$C5,$8F,$E3,$7D,$3F,$7B,$3F; 704
-		dc.b $EE,$CF,$FA,$BE,$73,$13,$D5,$30,$71,$20,$89,$89,$82,$27,$A9,$48,$9E,$39,$6C,$26,$BB,  5,$29,$68,$54,$FE,$8A,$3F,$9F,$9D,$D6,$FF,$F7,$FF,$BF,$F5,$F3,$FE,$4F,$4C,$4E,$A9,$E5,$35,$13,$CB,$F5,  2,$7E,$E2,$7B,$E7,$4E,$9B,$CF,$22, $A,$3D,$1C,$83,$57,$A3,$91,$3A; 768
-		dc.b $F4,$13,$C2,$DB,$BA,$71,$EF,$DB,$BF,$6E,$F2,$EA,$6F,$97,$19,$45,$F2,$CE,$C8,$BE,$45,$6B,$C2, $A,$3A,$F0,$29,$CD,$6C,$3E,$55,$9F,$93,$33,$33,$36,  7,$F1,$BE,$9F,$BD,$9F,$F7,$67,$FD,$5E,$83,$FA,$22,$7A,$A6, $E,$A9,$89,$F9,$11,$30,$42,$EC,$26,$BB,  3,$BF,$61; 832
-		dc.b $FA,$8B,$42,$FF,$87,$2F,$3F,$3B,$AD,$FF,$EF,$FF,$7F,$EB,$E7,$FC,$9B,$7C,$BA,$78,$41,$3F,  5,$C4,$D5,$27,$41,$3F,$D4,$1A,$6D,$BE,$8F,$6F,$22, $D,$7F,$4E,$44,$EB,$D0,$4F,  3,$8C,$EE,$E9,$C7,$BF,$6E,$FD,$BB,$CB,$A9,$BE,$5C,$65,$17,$CB,$3B,$22,$F9,$15,$AF,  8; 896
-		dc.b $28,$EB,$C0,$A7,$35,$B0,$F9,$56,$7E,$4C,$CC,$CC,$CC,$CC,$CC,$CC,$CD,$76,$BE,$31,$F8,$CD,$2E,$A7,$EB,$35,$E1,$CB,$F1,$9F,$B3,$AC,$7E,$33,$4C,$F5,$B3,$33,$33,$33,$33,$75,$D3,$38,$F4,$D3, $E,$5E,$9A,$56,$9F,$BC,$FD,$9F,$A6,$97,$68,$D9,$80,  0; 960
-Nem_Redz:	incbin	"art/nemesis/Badniks - Redz.bin"
-		even
-Nem_BFish:	incbin	"art/nemesis/Badniks - BFish.bin"
-		even
-Nem_Seahorses:	incbin	"art/nemesis/Badniks - Seahorse & Skyhorse.bin"
-		even
-Nem_UnusedRollingBall:dc.b   0,$1B,$80,	 5,$14,$15,$15,$26,$34,$36,$31,$57,$73,$76,$32,$82,  4,	 6,$17,$75,$27,$71,$83,	 3,  0,$16,$2F,$27,$79,$37,$7A,$47,$77,$84,  3,	 1,$15,$13,$26,$33,$37,$6E,$47,$72,$58,$F7,$86,	 7,$74,$17,$76,$87,  6,$30,$17,$78,$88,	 5,$12,$17,$6F,$89,  3,	 2; 0
-		dc.b $17,$70,$8A,  4,  8,$17,$6A,$8B,  4,  7,$16,$2E,$26,$36,$37,$6B,$48,$F6,$78,$F8,$8D,  5,$16,$FF,$CB,$9E,$AC,$77,$69,$3E,$C6,$BE,$F5,$23,$75,  8,$20,$83,$4F,$24,$1B,$DB,$C9,$BD,$83,$7F,$4D,$83,  6,$BD,$AC,$C1,$83,$10,$D6,$E2,$1C,$D9,$AC,$C5,$E1,$F7,$3C,$2F; 64
-		dc.b $68,$51,$47,$4E,$9F,$85,$2E,$4E,$9D,$56,$E4,$E9,$EB,$B1, $B,$4B,$81,$18,$CC,$1E,$64,$65,$FC,$AF,$31,$FB,$84, $F,$EA,$3C,$4B,$81,$DF,$87,$4F,$11,$39,$61,$DB,  9,$4E,$51,$87,$4F,$13,$94,$7E,$9E,$53,$8F,$1B,$9E,$25,$9F,$42,$A3,$DD,$4B,$93,$CB,$30,$46,$A9,$82; 128
-		dc.b  $A,$83,$DE,$11,$60,$D7,$A8,$21,$83,  5, $F,$C4,$37,  7,$1C,$6C,$9D,$38,$6B,$33,$A7,$5A,$CB,$A7,$5B,  9,$A7,$57,$7B,$DD,$CB,$6C,$AF,$E6,$7C,$E2,$A7,$7E,$92,$84,$6F,$AE,$12,$85,$3A,$FE,$A2,$3F,$53,$4C,$D4,$3A,$A7,$4D,$CA,$EE,$4E,$9F,$DE,$E2,  8,$9A,$70,$41; 192
-		dc.b   6,$EE,$E5,$3F,$73,$73,  6,$BD,$D3,$8E,$21,$CD,$1A,$CD,$B1,$A5,$9B,$63,$5D,$73,$AE,$D3,$D2,$E9,$E3,$76,$59,$65,$88,$38,$FA,$D3,$BD,$43,  6, $D,$51,$D4,$30,$A2,$6B,$35,$BA,$D1,$43,$5B,$AF, $F,$D5,$7E,$A6,$16,$A9,$44,$A2,$4B,$F5,$52,$8D,$EB,$35,$28,$97,$25; 256
-		dc.b $AA,$7D,$A7,$A8,$83,$79,$51,$3F,$46,$29,$7B,$5E,$62,$85,$83,  2,$AA,$18,$30,$55,$21,$AF,$7D,  8,$60,$F8,$CE,$EE,$77,$65,$EF,$C2,$7D,$B3,$44,$6E,$DE,  8,$9A,$C2,$5E,$97,$E9,$DA,$F5,$87,$E9,$99,$47,$F1,$D4,$4B,$94,$4B,$3E,$C6,$5F,$E4,$97,$FD,  8,$20,$89,$82; 320
-		dc.b   8,$22,$7F,$D3,$21,$83,$79,$2C,$18,$30,$62,$38,$86,$10,$43,$59,$AC,$C9,$C8,$6B,$35,$B8,$7F,$6D,$3A,$75,$F1,$F1,$F1,$B6,$48,$F3,$84,$46,$32,$84,$46,$9B,$E1,$11,$5C,$25,$A9,$1A,$CA,$25,$AA,$74,$9F,$EA,$9C,$D3,$38,$75,$76,$70,$9D,$3E,$E7,$57,  2, $A,$74,$E4; 384
-		dc.b $10,$EA,$EF,$57,$23,$E9,$D3,$90,$C3,$59,$E3,$B1,$A7,$51,$B1,$A3, $D,$8D,$75,$CE,$BA,$CE,$9A,$F1,$BB,$2C,$B2,$C5,$36,$3C,$3A,$E8,$A3,$F5,$15,$5A,$B7,$E1,$55,$9E,$FA,$4F,$B4,$E5,$4F,$FA,$10,$46,$E0,$41,$13,  4,$10,$44,$C1,  4,$1F,$F9,$DE,$C1,$83,$5E,$C1,$83; 448
-		dc.b   6,$BF,$88,$EA,$68,$2C,$D6,$EA,$F4,$22,$CD,$60,$F5,$F6,$55,$D6,$9F,$4F,$6C,$75,$F3,$73,$97,$AD,$C3,$B0,$6F,$3F,$B2, $D,$7F,$F5,$E5,$84,$B0,$FD,$37,$89,$7E,$9F,$A7,$89,$61,$BF,$F4,$F9,$C6,$FC,$33,$E8,$A2,$5C,$94,$A3,$92,$8C,$C1, $F,$29,$82, $B,$C1,$EE,$F0; 512
-		dc.b $58,$35,$EF,  4,$30,$60,$E9,$C7,$EC,$B8,$39,$16,$6B,$7E,$A5,$C8,$B3,$3A,$75,$AD,$3A,$F8,$F8,$F6,$FF,$A7,$FD,$32,$9F,$33,$1C,$31,$FD,$44,$2D,$30,$DF,$A9,$57,$F7,$10,$AB,$9C,$B5,$2A,$74,$DD, $A,$9C,$A1,$7F,$91,$4C,$11,$37,$20,$82, $A,$3D,$CB,$9E,$E5,$16, $D; 576
-		dc.b $7D,$C7,$F6,$42,$E3,$C4,$6D,$4B,$30,$D7,$4F,$ED,$D7,$FB,$75,$F6,$D3,$5E,$33,$CB,$98,  0; 640
-Nem_UnusedMotherBubbler:dc.b $80,$18,$80,  3,  0,$14, $A,$24,  7,$36,$30,$46,$38,$57,$78,$66,$39,$74,  5,$81,  4,  3,$16,$36,$27,$7A,$82,  4,  8,$17,$76,$83,  5,$13,$84,  7,$74,$85,  7,$79,$86,  4,  4,$87,  4,  2,$16,$37,$88,  5,$19,$89,  5,$17,$8A,  7,$75,$8B,  6,$31,$17,$7B,$8C,  5; 0
-		dc.b $1A,$17,$77,$8D,  5,$12,$8E,  4,  6,$8F,  5,$16,$18,$F8,$FF,$55,$55,$5F,$1F,$94,$C3,$F2,$88,$4F,$D0,$93,$6C,  9,  8,$E8,$BF,$44,$D9,  8,$6F,$23,  5,$6C,$25,$C1,$86,  9,$6D,$83,$4C,$13, $F,$89,$98,$4B,$4A,$1B,$52,$40,$72,$D3,$90,$31,$BF,$16,$73,$B9,$DA,$3F; 64
-		dc.b $2C,$63,$32,$89,$EA,$CF,$B4,  9,$F7,$3F,$F6,$D7,$F0,$68,$FC,$1B,$70,$62,$ED,$CD,$DB,$9B,$97,$E9,$B8,$F4,$AA,$AA,$BC,$9A,$FF, $C,$7F,$86,$71,$37,$FC,$F7,$EC,$43,$7E,$69,$97,$6C,$9B,$7E,$69,$BB,  2,$3F,$CF, $F,$38,$18,$31,$E6,$8B,$D0,$2B,$57,$AD,$E5,$60,$47; 128
-		dc.b $44,$D1,$6C,$32,$1A,$88,$17,$82,$B4,$85,$9E,$DD,$45,$A6,$3E,$3A,$A1,$CE,$BA,$E9,$24,$25,$DD,$3F,$3A,$24,$24,$24,$F1,$48,$F1,$7A,$C7,$83,$D0,$90,$8B,$F9,$74,$8B,$F5,$B2,$16,$22,$FD,$7D,$FF,  7,$15,$55,$A3,$5E,$4D,$57,$C1,$74,$E5,$3F,$67,$D3,$71,$FB,$14,$1D; 192
-		dc.b $3F,$83,$E6,$65,$B7,$EB,$CE,$C5,$F9,$36,$1F,$9A,$24,$F3,$4C,$3F,$5C,$50,$7D,$23,$6B,$17,$E6,  8,$7E,$9E,$DF,$9D,$46,$79,$19,$26,$2C,$E8,$49,$7A,$FD,$38,$3B,$44,$88,$6D,$56,$9C,$B3,$61,$B0,$89,$88,$F8,$64,$BE,$2D,$38,$17,$74,$CC,$E3, $F,$CA,$C4,$F9,$8C,$DD; 256
-		dc.b  $B,$E3,$DD,$F2,$49,$ED,$55,$55,$79,$CA,$F8,$FC,$C2,$F8,$CA,$AA,$F3,$D3,$92,$E8,$3F,$72,$37,$BC,$CD,$AD,$74,$29,$C5,$8C,$59,  1,$B1,$8D,$AA,$D2,$D8,$5B,$7A,$FD,$7B,$90,$B3,$18,$20,$41, $B,$23,$7A,$F7,$78,$21,$68,$98,$81,$2B,$75,$1F,$93,$1F,$93,$8A,$FD,$18; 320
-		dc.b $C6,$63,$22,$62,$E2,$2B,$22,$E1,$33,$EA,$F4,$4A,$AA,$AA,$AA,$BC,$F7,$5D,$71,$15,$DF, $E,$CA,$B0,$25,$5F,$98,$73,$C3,$22,  6,$87,$EA,  4,$1E,$B0,$81,$27,$ED,$B3,$C0,$31,$27,$D8,$4B, $F,$D6,$AA,$F1,$DD,$7B,$E1, $F,$AC,$3B,$56,$B8,$85,$81,$A1,$FB,$81,  2,$4F; 384
-		dc.b $97,$3F,$D4,$54,$1E,$B0,$81,$27,$ED,$B5,$76,  6,$25,$5E,$BF,$3A,$FF,$AD,$55,$24,$2C, $B,$4D,$A2,$73,$9C,$A6,$6E,$73,$94,$CD,$CB,$4D,$A2,$C0,$90,$95,$70,$24,  8,$4E,$6D,$8B,$1B,$A4,$DA,$68,$E9,$36,$9A,$39,$B6,$2C,$6E,$48,$10,$96,$B7,$7D,$E8,$D0,$21,$D1,  6; 448
-		dc.b $C5,$81,$52,$4D,$A6,$8E,$93,$69,$A5,$10,$6C,$58,$15,$1A,  4,$3A,$DD,$F7,$7F,$D3,$F0,$46,$4E,$43,$16,$C4,$15,$24,$E5,$34,$74,$9C,$A6,$94,$43,$16,$C4,$13,$91,$97,$1F,$A7,$A0,  0; 512
-Nem_UnusedBubbler:dc.b	 0,$18,$80,  3,	 0,$14,	 9,$25,$18,$36,$38,$46,$3B,$56,$3A,$67,$7A,$75,$19,$86,	 4, $B,$17,$7B,$87,  4,	 6,$16,$39,$88,	 4,  7,$16,$3C,$89,  4,	 8,$15,$1A,$28,$FA,$8A,	 3,  2,$16,$36,$28,$F8,$8E,  3,	 1,$16,$37,$8F,	 4, $A,$18,$F9,$FF,$CE,	$D,$76,$65,$F8;	0
-		dc.b $AE,$8B,$8D,$DC,$38,$DD,$81, $F,$4E,$99,$3D, $A,$D9,$D3,$E7,$3C,$1A,$EC,$CB,$F1,$42,$9F,  7,$E5,$8D, $A,  7,$90,$FF,$23,$67,$F8,$EB,$DF,$67,$58,$BA,$30,$F2,$7C,$AD,$A4,$BA,$86,$20,$BB,$3E,$98,$A8,$7D,$18,$7F,$A5, $F,$15,$87,$52,$F4,$1E,$50,$54,$10,$34,$13; 64
-		dc.b $40,$4F, $E,$CB,$F9,$2E,$CF,$FB,$94,$34,$F1,$B4,$E9,$D6,$96,$73,$EB,$DF,$77,$CF,$77,$E7,$16,$69,$62,$D9,$DA,$A4,$FE,$9F,$C9,$AE,$7C,$42,$F7,$F1,$45,$F2,$A9,$43,$16,$DB,$9A,$8A,$DA,$1D,$A1,$83,$79,  9,$94,$AD,$26,$80,$A3,$6D,$3E,$73,$7E,$9E,$FA,$57,$3F,$2C; 128
-		dc.b $15,$C1,  4,$37,$D3,$27, $E,$DA,$79,$4E,$D1,$BD,$27, $D,$7C,$A7,$42, $B,$3A,$79,$62,$CA,$14,  6,$8E,$54,$6D, $F,$FB,$95,$AF,$ED,$42,$8F,$8F,$AC,$FA,$BE,$AA,$F8,$DA,$94,$A6,$D8,$A9,$4C,$B9,$43,$95,$50,$98,$32,$A8,$B8,$41,$94,$35,$C2,  9,$E3,$DF,$E0,$63,$6B; 192
-		dc.b $8F,$7F,$81,$B4,$DA,$6B,$8B,$4D,$B4,$35,$AB,$78,$7A,$F8,$67,$4D,$1F,$BA,$67,$6F,$DD,$66,$E8,$B4,$2A,$61,$A6,$85,$4C,$A3,$66,$AF,$8E,$53,$B2,$A6,$5A,$75,$AE,$7C,$50,$D6,$BC,$50,$DE,$FE,$21,$BF,$4C,$A3,$F2,$3F,$B6,$86,$FC,$8F,$ED,$A2,$FF,  3,$1F,$B6,$D7,$ED; 256
-		dc.b $BF,$4F,$FC,$A8,$64,$EB,$F5,$1F,$49,$F4,$9E,$32,$1B,$A7,$9A,$38,$71,$F2,$5E,$76,$A8, $F,$30,$9A,$36,$96,$8F,$86,$9B,$68,$55,$C8,$F7,$15,  1,$85,$B4,$34,$3B, $B,$6D,$27,$96,$8B,$AB,$87,$11,$7B,$3D,$F8,$5D,$3A,$84,$ED,  9,$F4,$84,$34,$28,$5A,$96,$E1,$B3,$DB; 320
-		dc.b $76,$D3,$EF,$A6,$9E,$41,$93,$8B,$F5,$7D,$37,$BE,$1A,$77,  7, $C,  8,$7E,$2F,$B3,$83,$83,$E8,$E1,$D6, $F,$9D,$7E,$BA,$9A,$4E,$1A,$4F,$6C, $A,$E8,$A1,$5C,$19,$F9,$46,$24,$CB,$4B,$62,  1,$81,$4D,$18,$89,$2D,$31,$86,  9,$97, $F,$D2,$C2,$70,$BD,$2C,$B6,$71,$52; 384
-		dc.b $EC,$65,  7,$C1,  8,$38,$60,$42,$60,$F2,$E1,$B4,$E1,$D8,$E1,$67,$36,$CF,$2C,$23, $B,$D6,$D1,$DB,$E1, $D,$B1, $F,$2E,$18,$1A, $F,$C3,$43,$8A,$CF,$A3,$D1,  7,$A3,$82,$37,  4,$6E,  8,$32,$41,  4,$19,$20,$83,$24,$11,$FA,$E9,$23,$70,$41,  4,$6F,$C6,$E3,$7F,$47; 448
-		dc.b $39,$CE, $E,$64,$F0,$78,$20,$F4,$46,$F8,$20,$83,$82,$37,  6,$77,$1B,$F0,$41,  6,$48,$20,$E3,$70,$64,$82,  8,$38,$23,$70,$7B,$DF,$39,$C0; 512
-Nem_Snail:	incbin	"art/nemesis/Badniks - Snail.bin"
-		even
-Nem_Sandcrab:	incbin	"art/nemesis/Badniks - Sandcrab (Crawler).bin"
-		even
-Nem_Masher:	incbin	"art/nemesis/Badniks - Masher.bin"
-		even
+Nem_Crocobot:		incbin	"art/nemesis/Badniks - Gator.bin"
+			even
+Nem_Buzzer:		incbin	"art/nemesis/Badniks - Buzzer.bin"
+			even
+Nem_BBat:		incbin	"art/nemesis/Badniks - BBat.bin"
+			even
+Nem_Octopus:		incbin	"art/nemesis/Badniks - Octus.bin"
+			even
+Nem_Triceratops:	incbin	"art/nemesis/Badniks - Stego.bin"
+			even
+Nem_Redz:		incbin	"art/nemesis/Badniks - Redz.bin"
+			even
+Nem_BFish:		incbin	"art/nemesis/Badniks - BFish.bin"
+			even
+Nem_Seahorses:		incbin	"art/nemesis/Badniks - Seahorse & Skyhorse.bin"
+			even
+Nem_UnusedRollingBall:	incbin	"art/nemesis/Badniks - Rolling Ball.bin"
+			even
+Nem_UnusedMotherBubbler:	incbin	"art/nemesis/Badniks - Bubbler's Mother.bin"
+			even
+Nem_UnusedBubbler:	incbin	"art/nemesis/Badniks - Bubbler.bin"
+			even
+Nem_Snail:		incbin	"art/nemesis/Badniks - Snail.bin"
+			even
+Nem_Sandcrab:		incbin	"art/nemesis/Badniks - Sandcrab (Crawler).bin"
+			even
+Nem_Masher:		incbin	"art/nemesis/Badniks - Masher.bin"
+			even
 ; ---------------------------------------------------------------------------
 ; Compressed Graphics - Bosses
 ; ---------------------------------------------------------------------------
-Nem_BossShip:	incbin	"art/nemesis/Bosses - Eggman.bin"
-		even
+Nem_BossShip:		incbin	"art/nemesis/Bosses - Eggman.bin"
+			even
 Nem_CPZ_ProtoBoss:	incbin	"art/nemesis/Bosses - CPZ Boss.bin"
-		even
+			even
 Nem_BigExplosion:	incbin	"art/nemesis/Bosses - Explosion.bin"
-		even
+			even
 Nem_BossShipBoost:	incbin	"art/nemesis/Bosses - Exhaust.bin"
-		even
-Nem_Smoke:	incbin	"art/nemesis/Bosses - Smoke Trail.bin"
-		even
-Nem_EHZ_Boss:	incbin	"art/nemesis/Bosses - EHZ Boss.bin"
-		even
+			even
+Nem_Smoke:		incbin	"art/nemesis/Bosses - Smoke Trail.bin"
+			even
+Nem_EHZ_Boss:		incbin	"art/nemesis/Bosses - EHZ Boss.bin"
+			even
 Nem_EHZ_Boss_Blades:	incbin	"art/nemesis/Bosses - Helicopter Blades.bin"
-		even
+			even
 ; ---------------------------------------------------------------------------
 ; Compressed Graphics - Sonic 1 Enemies
 ; ---------------------------------------------------------------------------
-S1Nem_Ballhog:	incbin	"art/nemesis/Badiks - Ballhog.bin"
-		even
-Nem_Crabmeat:	incbin	"art/nemesis/Badniks - Crabmeat.bin"
-		even
+S1Nem_Ballhog:		incbin	"art/nemesis/Badniks - Ballhog.bin"
+			even
+Nem_Crabmeat:		incbin	"art/nemesis/Badniks - Crabmeat.bin"
+			even
 Nem_GHZBuzzbomber:	incbin	"art/nemesis/Badniks - Buzz Bomber.bin"
-		even
+			even
 Nem_UnknownGroundExplosion:	incbin	"art/nemesis/Badniks - Buzz Bomber & Ballhog Explosion.bin"
-		even
+			even
 S1Nem_LZBurrobot:	incbin	"art/nemesis/Badniks - Burrobot.bin"
-		even
+			even
 Nem_GHZ_Piranha:	incbin	"art/nemesis/Badniks - Chopper.bin"
-		even
-Nem_S1LZJaws:	incbin	"art/nemesis/Badniks - Jaws.bin"
-		even
+			even
+Nem_S1LZJaws:		incbin	"art/nemesis/Badniks - Jaws.bin"
+			even
 Nem_S1SYZRoller:	incbin	"art/nemesis/Badniks - Roller.bin"
-		even
-Nem_Motobug:	incbin	"art/nemesis/Badniks - Motobug.bin"
-		even
-Nem_S1Newtron:	incbin	"art/nemesis/Badniks - Newtron.bin"
-		even
-S1Nem_SYZSnail:	incbin	"art/nemesis/Badniks - Yadrin.bin"
-		even
-S1Nem_MZBat:	incbin	"art/nemesis/Badniks - Basaran.bin"
-		even
-S1Nem_Splats:	incbin	"art/nemesis/Badniks - Splats.bin"
-		even
-S1Nem_Bomb:	incbin	"art/nemesis/Badniks - Bomb.bin"
-		even
-S1Nem_Orbinaut:	incbin	"art/nemesis/Badniks - Orbinaut.bin"
-		even
+			even
+Nem_Motobug:		incbin	"art/nemesis/Badniks - Motobug.bin"
+			even
+Nem_S1Newtron:		incbin	"art/nemesis/Badniks - Newtron.bin"
+			even
+S1Nem_SYZSnail:		incbin	"art/nemesis/Badniks - Yadrin.bin"
+			even
+S1Nem_MZBat:		incbin	"art/nemesis/Badniks - Basaran.bin"
+			even
+S1Nem_Splats:		incbin	"art/nemesis/Badniks - Splats.bin"
+			even
+S1Nem_Bomb:		incbin	"art/nemesis/Badniks - Bomb.bin"
+			even
+S1Nem_Orbinaut:		incbin	"art/nemesis/Badniks - Orbinaut.bin"
+			even
 S1Nem_Caterkiller:	incbin	"art/nemesis/Badniks - Caterkiller.bin"
-		even
+			even
 ; ---------------------------------------------------------------------------
 ; Compressed Graphics - General 2
 ; ---------------------------------------------------------------------------
 Nem_S1TitleCard:	incbin	"art/nemesis/General - Title Cards.bin"
-		even
-Nem_Explosion:	incbin	"art/nemesis/General - Explosion.bin"
-		even
-Nem_GameOver:	incbin	"art/nemesis/General - Game & Time Over.bin"
-		even
-Nem_HSpring:	incbin	"art/nemesis/GHZ - Horizontal Spring.bin"
-		even
-Nem_VSpring:	incbin	"art/nemesis/GHZ - Vertical Spring.bin"
-		even
-Nem_BigFlash:	incbin	"art/nemesis/Other - Giant Ring Flash.bin"
-		even
+			even
+Nem_Explosion:		incbin	"art/nemesis/General - Explosion.bin"
+			even
+Nem_GameOver:		incbin	"art/nemesis/General - Game & Time Over.bin"
+			even
+Nem_HSpring:		incbin	"art/nemesis/GHZ - Horizontal Spring.bin"
+			even
+Nem_VSpring:		incbin	"art/nemesis/GHZ - Vertical Spring.bin"
+			even
+Nem_BigFlash:		incbin	"art/nemesis/Other - Giant Ring Flash.bin"
+			even
 Nem_S1BonusPoints:	incbin	"art/nemesis/Other - Hidden Points at End of Stage.bin"
-		even
+			even
 ; ---------------------------------------------------------------------------
 ; Compressed Graphics - Continue Screen
 ; ---------------------------------------------------------------------------
 S1Nem_SonicContinue:	incbin	"art/nemesis/Continue - Sonic on the Continue Screen.bin"
-		even
+			even
 S1Nem_MiniSonic:	incbin	"art/nemesis/Continue - Small Sonic Icon.bin"
-		even
+			even
 ; ---------------------------------------------------------------------------
 ; Compressed Graphics - Animals
 ; ---------------------------------------------------------------------------
-Nem_Bunny:	incbin	"art/nemesis/Animals - Pocky.bin"
-		even
-Nem_Chicken:	incbin	"art/nemesis/Animals - Cucky.bin"
-		even
-Nem_Penguin:	incbin	"art/nemesis/Animals - Pecky.bin"
-		even
-Nem_Seal:	incbin	"art/nemesis/Animals - Rocky.bin"
-		even
-Nem_Pig:	incbin	"art/nemesis/Animals - Picky.bin"
-		even
-Nem_Flicky:	incbin	"art/nemesis/Animals - Flicky.bin"
-		even
-Nem_Squirrel:	incbin	"art/nemesis/Animals - Ricky.bin"
-		even
+Nem_Bunny:		incbin	"art/nemesis/Animals - Pocky.bin"
+			even
+Nem_Chicken:		incbin	"art/nemesis/Animals - Cucky.bin"
+			even
+Nem_Penguin:		incbin	"art/nemesis/Animals - Pecky.bin"
+			even
+Nem_Seal:		incbin	"art/nemesis/Animals - Rocky.bin"
+			even
+Nem_Pig:		incbin	"art/nemesis/Animals - Picky.bin"
+			even
+Nem_Flicky:		incbin	"art/nemesis/Animals - Flicky.bin"
+			even
+Nem_Squirrel:		incbin	"art/nemesis/Animals - Ricky.bin"
+			even
 ; ---------------------------------------------------------------------------
 ; Compressed Data - 8x8 Tiles, 16x16 Blocks, 128x128 Chunks
 ; ---------------------------------------------------------------------------
-Map16_EHZ:	incbin	"mappings/16x16/EHZ.bin"
-		even
-Nem_EHZ:	incbin	"art/nemesis/8x8 Tiles - EHZ.bin"
-		even
-Map16_HTZ:	incbin	"mappings/16x16/HTZ.bin"
-		even
-Nem_HTZ:	incbin	"art/nemesis/8x8 Tiles - HTZ.bin"
-		even
-Nem_HTZ_AniPlaceholders:dc.b $80,$2E,$80,  3,  1,$14,  5,$25,$11,$35,$15,$45,$16,$55,$18,$67,$72,$73,  0,$81,  4,  4,$16,$33,$27,$7A,$82,  5,$13,$17,$78,$83,  4,  7,$17,$73,$84,  7,$70,$17,$74,$85,  5,$14,$17,$75,$86,  6,$32,$17,$76,$87,  4,  6,$17,$6F,$28,$EF,$48,$F6,$78,$F7,$88,  5; 0
-					; DATA XREF: ROM:0001C218o
-		dc.b $17,$18,$F2,$89,  5,$10,$18,$F3,$8A,  6,$35,$8B,  7,$71,$8C,  6,$34,$8D,  6,$36,$8E,  5,$12,$28,$EE,$8F,  7,$6E,$FF,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,$17,$B5,$3A,$38,$5E,$D4,$E8,$E0,  0,  0,  0,  0,  5,$69,$DA,$95,$A7,$6A,  0,  0,  2,$B2,$DD,$A5; 64
-		dc.b   0,$A6,$54,$E1,$74,$10,$57,$8C,$E2,$8A,$F1,$42,$8D,$5F,$D2,$3D,$34,$EA,  6,$25,$B8,  1,$C9,$35,$7C,$48,$47,$83,$CC,$4D,$7A,$32,$C0,$3F,  9,$A2,$EB,$66,$8E,$FC,$A9,$C1,$F2,$A0,$12,$E2,  6,$B0,  2,$B3,$11,$EB,$C9,$D7,$5B,$74,$B3,$96, $E,$BB,$14, $B,$4E,$3A; 128
-		dc.b $F0,$A7,$47,  0,  0,  0,  1,$78,$CB,$74,$B4,$D7,$80,$AD,$EB,$2B,$4F,$2C,$76,$7B,$EB,$3B,$C0,$45,$C6,$1C,$A2,$B6,$54,  9,$19,$BC,$50, $E,$76,$60,$50,$A2,$A3,$24,$5D,$53,$9A,$FE,$DD,$79,$AF,$F9,$F2,$EA,$DC,$37,$D9,$EB,$CF,$37,$9A,  1,$C9,$E6,$C5,$B0,$D1,$45; 192
-		dc.b $CD,$84,$52,$28,$AE,$2C,$8E,$79,$85,$F7,$FD,$BF,$E9,$93, $D,$54,$E6,$CA,$8B,$E8,$14,$28,$39,$5F,$8C,$58,$ED,$64,$59,$84,$8B,$96,$30,$2F,$58,$55,$D2,$79,$BD,$B5,$7A,$B4,$A1,$1F,$EB,$F8,$E0,$C9,$96,$F2,$96,$CC,$BC,$50,$BC,$50,$B2,$BC,$59,$50,$E7,$5D,$5E,$E2; 256
-		dc.b $D7,$3A,$FA,$2D,$86,$AB,$E6,$5A,$C8,$51,$5E,$DC,$C1,$7D,$F9,$7B,$55,$A1,$7C,$9B,$B2,  2,$99,$7E,$6A,$FB,$A1,$69,$AA, $A,$CD,$5A,$28,$35,$8A,$78,$59,$1B,$B2,$DD,$CA,$1F,$1A,$D5,$A7,$AB,$C6,$50,$2E, $B,$D6, $B,$EF,$BD,$7A,$65,$A4,$DD,$AE,$52,$56,$43,$28, $C; 320
-		dc.b $66,$12,$28,$12,$D2,$AB,$87,$B3,$D7,$6E,$52, $E,$2C,$8B,$BD,$77,$E4,$DE,$1A,$8A,$FF,$A2,$47,$3F,$B2,$39,$99,$AC,$CF,$FC,$7D,$FF,$7D,$5F,$DF,$7B,$FE,$C6,$BF,$B1,$3F,$E7,$87,$71,$EE,$B7,$FB,$A2,$C5,$8E,$F2,$C5,$8B,$2B,$14,$28,$5B,$D1,$49,$BE,$47,$F6,$3E,$15; 384
-		dc.b $D1,$50,$CD,$1D, $E,$66,$7F,$B7,$F4,$7F,$7D,$DE,$92,$8F,$73,$1F,$EF,$7F,$5D,$61,$EC,$BF,$DE,$AF,$EF,$8E,$F9,$1D,$EB,$E6,$7B,$D7,$F3,$CC,$5A,$46,$46,$47,$7C,$8C,$8C,$93,$A7,$6E,$F4,$9B,$FF,  5,$CE,$67,$D4,$E3,$99,$43,$FC,$13,$9C,$7F,$AE,$77,$9F,$CF,$1F,$69; 448
-		dc.b $42,$50,$94,$25,  3, $F,$EF,$19,$7B,$C5, $A,$14,$EF,$C9,$B2,$6C,$8F,$FF,$8F,$F7, $E,$8B,$A1,$D0,$DF,$86,$5C,$2F,$95,$F2,$28,$F9,$CC,$CD, $F,$A8,$A1,$FF, $A,$FE,$DC,$F7,$D5,$BF,$DC,$65,  9,$43,$B9,$60,$7D,$8C,$97,$7A,$FF,$5E,$2C,$7D,$A1,$38,$7E,$8A,$4B,$FA; 512
-		dc.b $C3,$A1,$97,$EB,$25,$3E,$EF,$CE,$1E,$E5,$FC,$DF,$EA,$78,$F5,$1F,$F2,$16,$62,$DF,$B2,$A3,$4E,$95,$69,$E1,$97,$51,$56,$5D,$6A,$D3,$5F,$D9,$51,$A7,$4B,$31,$61,$FF,$21,$E1,$66,  0,$8F,$FC,$80,  0,  1,$FF,$20,  7,$EC,$FF,$62,  4,$7C,$AD,$7F,$CF,$DE,$30,$4F,$D7; 576
-		dc.b $DD,$7C,$D0,$FE,$7E,$F1,$82,$2E,$E5,$F3,$5D,$CB,  4,$C6,$6A,$87,$74,$7C,$CE,$65,$20,$B0,$8C,$23,$C5,$B2,$C5,$12,$DC,$4D,$31,$C5,$B1,$A6,$34,$29,$64,$E5,$B2,$5D,$74,$D9,$76,$5D, $A,$6C,$61,$B6,$87,$3B,$D1,$37, $D, $E,$77,$A2,$6E,$3A,$14,$D8,$C3,$65,$D3,$65; 640
-		dc.b $DB,$1B,$25,$EC,$9C,$B4,$29,$8D,  6,$80,  8,$FE,$76,$DB,$21,$A5,$6E,$98,$A7,$95,$2D,$D4,$F5,$B5,$3C,$AB,$4B,$94,$1C,$92,$D7,$C5, $F,$95,$A8,$3A,$80,  6,$21,$73,$FA,$85,$4D,$C6,$F9,$DD,$77,$2F,$9A,$5F,$33, $F,$29,$6E,$FC,$F1,$82,$1D,$D6,$82,$1F,$CF,$D6,$19; 704
-		dc.b $9D,$D5,$81,$4C,$40,$A6,$20,$40; 768
-Map128_EHZ:	incbin	"mappings/128x128/EHZ.bin"
-		even
-Map16_HPZ:	incbin	"mappings/16x16/HPZ.bin"
-		even
-Nem_HPZ:	incbin	"art/nemesis/8x8 Tiles - HPZ.bin"
-		even
-Map128_HPZ:	incbin	"mappings/128x128/HPZ.bin"
-		even
-Map16_CPZ:	incbin	"mappings/16x16/CPZ.bin"
-		even
-Nem_CPZ:	incbin	"art/nemesis/8x8 Tiles - CPZ.bin"
-		even
-Nem_CPZ_Unknown:dc.b   0,  8,$80,$12,  0,$73,  4,$82,$15,$1A,$87,$13,  2,$88,$13,  3,$89,$13,  5,$8A,$15,$1B,$8B,$15,$1C,$8C,$16,$3E,$8D,$15,$1D,$8E,$14, $C,$75,$1E,$FF,$92,$49,$24,$36,$6C,$A5,$18,$C4,$29,$24,$85,$28,$C7, $A,$51,$8E,$14,$A3,$1C,$29,$46,$38,$52,$8C,$73,$AF,$AF; 0
-					; DATA XREF: ROM:0001C128o
-		dc.b $AF,$AF,$FF,$BD,$7D,$7A,$5A,$5F,$F2,$D3,$D3,$D2,$D2,$FF,$E7,$CB,$E5,$F2,$F9,$7F,$F3,$8B,$8B,$8B,$8B,$FF,$7C,$5C,$5B,$CD,$E7,$FE,$B6,$B6,$AE,$5C,$FF,$CD,$55,$3C,$79,$FF,$85,$8B,$16,$2C,$FF,$BF,$BD,$EF,$78,  0; 64
-Map128_CPZ:	incbin	"mappings/128x128/CPZ.bin"
-		even
-Map16_GHZ:	incbin	"mappings/16x16/GHZ.bin"
-		even
-Nem_GHZ:	incbin	"art/nemesis/8x8 Tiles - GHZ1.bin"
-		even
-Nem_GHZ2:	incbin	"art/nemesis/8x8 Tiles - GHZ2.bin"
-		even
-Map128_GHZ:	incbin	"mappings/128x128/GHZ.bin"
-		even
-		dc.b	$7F,  0, $B,$FA,  0,  0,  0,  0		; duplicate ending to Green Hill's chunk data
+Map16_EHZ:		incbin	"mappings/16x16/EHZ.bin"
+			even
+Nem_EHZ:		incbin	"art/nemesis/8x8 Tiles - EHZ.bin"
+			even
+Map16_HTZ:		incbin	"mappings/16x16/HTZ.bin"
+			even
+Nem_HTZ:		incbin	"art/nemesis/8x8 Tiles - HTZ.bin"
+			even
+Nem_HTZ_AniPlaceholders:	incbin	"art/nemesis/HTZ - Animated Placeholders.bin"
+			even
+Map128_EHZ:		incbin	"mappings/128x128/EHZ.bin"
+			even
+Map16_HPZ:		incbin	"mappings/16x16/HPZ.bin"
+			even
+Nem_HPZ:		incbin	"art/nemesis/8x8 Tiles - HPZ.bin"
+			even
+Map128_HPZ:		incbin	"mappings/128x128/HPZ.bin"
+			even
+Map16_CPZ:		incbin	"mappings/16x16/CPZ.bin"
+			even
+Nem_CPZ:		incbin	"art/nemesis/8x8 Tiles - CPZ.bin"
+			even
+Nem_CPZ_Unknown:	incbin	"art/nemesis/CPZ - Animated Placeholders.bin"
+			even
+Map128_CPZ:		incbin	"mappings/128x128/CPZ.bin"
+			even
+Map16_GHZ:		incbin	"mappings/16x16/GHZ.bin"
+			even
+Nem_GHZ:		incbin	"art/nemesis/8x8 Tiles - GHZ1.bin"
+			even
+Nem_GHZ2:		incbin	"art/nemesis/8x8 Tiles - GHZ2.bin"
+			even
+Map128_GHZ:		incbin	"mappings/128x128/GHZ.bin"
+			even
+			dc.b	$7F,  0, $B,$FA,  0,  0,  0,  0		; duplicate ending to Green Hill's chunk data
 ; ---------------------------------------------------------------------------
 ; Compressed Graphics - Ending/Credits
 ; ---------------------------------------------------------------------------
-S1Nem_TryAgain:	incbin	"art/nemesis/Ending - Try Again (partial).bin"
-		even
+S1Nem_TryAgain:		incbin	"art/nemesis/Ending - Try Again (partial).bin"
+			even
 S1Kos_EndingFlowers:	incbin	"art/kosinski/Ending - Flowers.bin"
-		even
+			even
 S1Nem_EndingGraphics:	incbin	"art/nemesis/Ending - Flowers.bin"
-		even
+			even
 S1Nem_CreditsFont:	incbin	"art/nemesis/Ending - Credits.bin"
-		even
+			even
 S1Nem_EndingSONICText:	incbin	"art/nemesis/Ending - SONIC Logo.bin"
-		even
+			even
 
 ; --------------------------------------------------------------------------------------
 ; ToeJam & Earl REV00 data, likely due to it once occupying the cartridge, best
