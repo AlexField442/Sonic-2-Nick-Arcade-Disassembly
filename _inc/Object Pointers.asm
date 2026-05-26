@@ -14,7 +14,7 @@ objptr macro *,pointer
 Obj_Index:
 ObjID_Sonic:		objptr Obj_Sonic	; Sonic
 ObjID_Tails:		objptr Obj_Tails	; Tails
-ObjID_Pathswapper:	objptr Obj03		; Collision plane/layer switcher
+ObjID_Pathswapper:	objptr Obj_Pathswapper	; Collision plane/layer switcher
 ObjID_WaterSurface:	objptr Obj_WaterSurface	; Surface of the water
 ObjID_TailsTails:	objptr Obj_TailsTails	; Tails' tails
 ObjID_Spiral:		objptr Obj_Spiral	; Twisting spiral pathway in EHZ
@@ -25,8 +25,8 @@ ObjID_SmallBubbles:	objptr Obj0A		; Small bubbles from Sonic's face while underw
 ObjID_TippingFloor:	objptr Obj_TippingFloor	; Section of pipe that tips you off from CPZ
 ObjID_CPZPlatform:	objptr Obj_CPZPlatform	; Strange floating/falling platform object from CPZ
 ObjID_Signpost:		objptr Obj0D		; End of level signpost
-ObjID_TitleCharacters:	objptr Obj0E		; Sonic and Tails from the title screen
-ObjID_Unknown0F:	objptr Obj0F		; Mappings test?
+ObjID_TitleCharacters:	objptr Obj_TitleCharacters	; Sonic and Tails from the title screen
+ObjID_Unknown0F:	objptr Obj_Unknown0F	; Mappings test?
 ObjID_SonAniTest:	objptr Obj_SonAniTest	; (S1) Sonic animation test object (removed)
 ObjID_Bridge:		objptr Obj_Bridge	; Bridges in GHZ, EHZ and HPZ
 ObjID_HPZEmerald:	objptr Obj_HPZEmerald	; Emerald from Hidden Palace Zone
@@ -37,7 +37,7 @@ ObjID_HTZLift:		objptr Obj_HTZLift	; Diagonally moving lift from HTZ
 ObjID_SpikeHelix:	objptr Obj_SpikeHelix	; (S1) GHZ rotating log helix spikes
 ObjID_Platform:		objptr Obj18		; Stationary/moving platforms from GHZ and EHZ
 ObjID_Platform2:	objptr Obj19		; Platform from CPZ
-ObjID_CollapsingPltfm:	objptr Obj1A		; Collapsing platform from GHZ and HPZ
+ObjID_CollapsingLedge:	objptr Obj_CollapsingLedge	; Collapsing ledge from GHZ and HPZ
 			dc.l ObjNull
 ObjID_Scenery:		objptr Obj_Scenery	; Stage decorations in GHZ, EHZ, HTZ and HPZ
 			dc.l ObjNull
@@ -70,8 +70,8 @@ ObjID_LostRings:	objptr Obj_LostRings	; Scattering rings (generated when Sonic o
 ObjID_Barrier:		objptr Obj_Barrier	; Shield and invincibility stars
 ObjID_GameOver:		objptr Obj_GameOver	; Game Over/Time Over text
 ObjID_Results:		objptr Obj_Results	; (S1) End of level results screen
-ObjID_PurpleRock:	objptr Obj3B		; (S1) Purple rock from GHZ
-ObjID_BreakableWall:	objptr Obj3C		; (S1) Breakable wall
+ObjID_PurpleRock:	objptr Obj_PurpleRock	; (S1) Purple rock from GHZ
+ObjID_BreakableWall:	objptr Obj_BreakableWall	; (S1) Breakable wall
 ObjID_GHZBoss:		objptr Obj3D		; (S1) GHZ boss
 ObjID_EggPrison:	objptr Obj3E		; Egg prison
 ObjID_BossExplosion:	objptr Obj3F		; Boss explosion
@@ -95,7 +95,7 @@ ObjID_Seahorse:		objptr Obj_Seahorse	; Seahorse/Aquis from HPZ
 ObjID_Skyhorse:		objptr Obj_Skyhorse	; Skyhorse from HPZ
 ObjID_BFish:		objptr Obj_BFish	; BFish from HPZ
 ObjID_Masher:		objptr Obj_Masher	; Masher from EHZ
-ObjID_Snail:		objptr Obj54		; Snail badnik from EHZ
+ObjID_Snail:		objptr Obj_Snail	; Snail badnik from EHZ
 ObjID_EHZBoss:		objptr Obj55		; EHZ boss
 ObjID_EHZBoss2:		objptr Obj56		; EHZ boss part 2
 ObjID_EHZBoss3:		objptr Obj57		; EHZ boss part 3

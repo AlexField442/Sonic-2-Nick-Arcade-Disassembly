@@ -265,25 +265,25 @@ Debug_GHZ:	debugheader
 		debugobj Map_Obj2B, ObjID_Chopper, 0, 0, $470
 		debugobj Map_Obj36, ObjID_Spikes, 0, 0, $4A0
 		debugobj Map_Obj18, ObjID_Platform, 0, 0, $4000
-		debugobj Map_Obj3B, ObjID_PurpleRock, 0, 0, $66C0
+		debugobj MapUnc_PurpleRock, ObjID_PurpleRock, 0, 0, $66C0
 		debugobj MapUnc_Motobug, ObjID_Motobug, 0, 0, $4E0
 		debugobj Map_obj41_GHZ, ObjID_Spring, 0, 0, $4A8
 		debugobj Map_obj42, ObjID_Newtron, 0, 0, $249B
 		debugobj Map_obj44, ObjID_GHZWall, 0, 0, $434C
 		debugobj MapUnc_Checkpoint, ObjID_Checkpoint, 1, 0, $26BC
-		debugobj Map_Obj03, ObjID_Pathswapper, 0, 0, $26BC
+		debugobj MapUnc_Pathswapper, ObjID_Pathswapper, 0, 0, $26BC
 Debug_GHZ_End:
 
 Debug_CPZ:	debugheader
 		debugobj MapUnc_Ring, ObjID_Ring, 0, 0, $26BC
 		debugobj Map_Obj26, ObjID_Monitor, 0, 0, $680
 		debugobj Map_obj41_GHZ, ObjID_Spring, 0, 0, $4A8
-		debugobj Map_Obj03, ObjID_Pathswapper, 0, 0, $7BC
+		debugobj MapUnc_Pathswapper, ObjID_Pathswapper, 0, 0, $7BC
 		debugobj MapUnc_TippingFloor, ObjID_TippingFloor, 0, 0, $E000
 		debugobj MapUnc_CPZPlatform, ObjID_CPZPlatform, 0, 0, $E418
 		debugobj Map_Obj15_CPZ, ObjID_SwingingPlatform, 8, 0, $2418
-		debugobj Map_Obj03, ObjID_Pathswapper, 9, 1, $26BC
-		debugobj Map_Obj03, ObjID_Pathswapper, $D, 5, $26BC
+		debugobj MapUnc_Pathswapper, ObjID_Pathswapper, 9, 1, $26BC
+		debugobj MapUnc_Pathswapper, ObjID_Pathswapper, $D, 5, $26BC
 		debugobj Map_Obj19, ObjID_Platform2, 1, 0, $6400
 		debugobj Map_Obj36, ObjID_Spikes, 0, 0, $2434
 		debugobj Map_obj41, ObjID_Spring, $81, 0, $45C
@@ -297,7 +297,7 @@ Debug_EHZ:	debugheader
 		debugobj MapUnc_Ring, ObjID_Ring, 0, 0, $26BC
 		debugobj Map_Obj26, ObjID_Monitor, 0, 0, $680
 		debugobj MapUnc_Checkpoint, ObjID_Checkpoint, 1, 0, $47C
-		debugobj Map_Obj03, ObjID_Pathswapper, 0, 0, $26BC
+		debugobj MapUnc_Pathswapper, ObjID_Pathswapper, 0, 0, $26BC
 		debugobj MapUnc_EHZWaterfall, ObjID_EHZWaterfall, 0, 0, $23AE
 		debugobj MapUnc_EHZWaterfall, ObjID_EHZWaterfall, 2, 3, $23AE
 		debugobj MapUnc_EHZWaterfall, ObjID_EHZWaterfall, 4, 5, $23AE
@@ -311,7 +311,7 @@ Debug_EHZ:	debugheader
 		debugobj Map_obj41, ObjID_Spring, $30, 7, $43C
 		debugobj Map_obj41, ObjID_Spring, $40, $A, $43C
 		debugobj MapUnc_Buzzer, ObjID_Buzzer, 0, 0, $3E6
-		debugobj Map_obj54, ObjID_Snail, 0, 0, $402
+		debugobj MapUnc_Snail, ObjID_Snail, 0, 0, $402
 		debugobj MapUnc_Masher, ObjID_Masher, 0, 0, $41C
 Debug_EHZ_End:
 		debugobj MapUnc_Redz, ObjID_Redz, 0, 0, $500
@@ -328,7 +328,7 @@ Debug_HTZ:	debugheader
 		debugobj MapUnc_Ring, ObjID_Ring, 0, 0, $26BC
 		debugobj Map_Obj26, ObjID_Monitor, 0, 0, $680
 		debugobj MapUnc_Checkpoint, ObjID_Checkpoint, 1, 0, $47C
-		debugobj Map_Obj03, ObjID_Pathswapper, 0, 0, $26BC
+		debugobj MapUnc_Pathswapper, ObjID_Pathswapper, 0, 0, $26BC
 		debugobj Map_obj18_EHZ, ObjID_Platform, 1, 0, $4000
 		debugobj Map_obj18_EHZ, ObjID_Platform, $A, 1, $4000
 		debugobj Map_Obj36, ObjID_Spikes, 0, 0, $2434
@@ -342,7 +342,7 @@ Debug_HTZ:	debugheader
 		debugobj MapUnc_HTZLift, ObjID_Scenery, 4, 1, $43E6
 		debugobj MapUnc_HTZLift, ObjID_Scenery, 5, 2, $43E6
 		debugobj MapUnc_Buzzer, ObjID_Buzzer, 0, 0, $3E6
-		debugobj Map_obj54, ObjID_Snail, 0, 0, $402
+		debugobj MapUnc_Snail, ObjID_Snail, 0, 0, $402
 		debugobj MapUnc_Masher, ObjID_Masher, 0, 0, $41C
 Debug_HTZ_End:
 
@@ -351,8 +351,8 @@ Debug_HPZ:	debugheader
 		debugobj Map_Obj26, ObjID_Monitor, 0, 0, $680
 		debugobj MapUnc_HPZOrb, ObjID_Scenery, $21, 3, $E485
 		debugobj MapUnc_HPZWaterfall, ObjID_HPZWaterfall, 4, 4, $E415
-		debugobj Map_Obj1A_HPZ, ObjID_CollapsingPltfm, 0, 0, $4475
-		debugobj Map_Obj03, ObjID_Pathswapper, 0, 0, $26BC
+		debugobj MapUnc_HPZCollapsingLedge, ObjID_CollapsingLedge, 0, 0, $4475
+		debugobj MapUnc_Pathswapper, ObjID_Pathswapper, 0, 0, $26BC
 		debugobj MapUnc_Redz, ObjID_Redz, 0, 0, $500
 		debugobj MapUnc_BFish, ObjID_BFish, 0, 0, $2530
 		debugobj MapUnc_Seahorse, ObjID_Seahorse, 0, 0, $2570
