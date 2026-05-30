@@ -128,7 +128,8 @@ locret_1730:
 ; Subroutine to decompress and dump a specified number of Nemesis-compressed
 ; PLC tiles from the PLC process list to VRAM. These are called from VBlank,
 ; probably done to smooth out level loading because of how slow Nemesis is.
-; (Note: Process"D"PLC is an old misnomer!)
+;
+; (note: Process"D"PLC is an old misnomer!)
 ; ---------------------------------------------------------------------------
 ; sub_1732: ProcessDPLC:
 ProcessPLC_9Tiles:
