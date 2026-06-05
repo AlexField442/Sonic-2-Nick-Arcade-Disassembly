@@ -146,6 +146,8 @@ locret_7382:
 
 LevelLayoutLoad:
 		lea	(Level_Layout).w,a3
+		; in Sonic 1, this incorrectly assumed the loop counter as a word,
+		; causing it to clear twice as much RAM as it should've
 		move.w	#(Level_Layout_End-Level_Layout)/4-1,d1
 		moveq	#0,d0
 

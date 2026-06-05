@@ -20,7 +20,7 @@ ObjID_TailsTails:	objptr Obj_TailsTails	; Tails' tails
 ObjID_Spiral:		objptr Obj_Spiral	; Twisting spiral pathway in EHZ
 			dc.l ObjNull
 ObjID_WaterSplash:	objptr Obj_WaterSplash	; Water splash in HPZ
-ObjID_SSPlayer:		objptr Obj09		; (S1) Sonic in the Special Stage
+ObjID_SSPlayer:		objptr Obj_SSPlayer	; (S1) Sonic in the Special Stage
 ObjID_SmallBubbles:	objptr Obj0A		; Small bubbles from Sonic's face while underwater
 ObjID_TippingFloor:	objptr Obj_TippingFloor	; Section of pipe that tips you off from CPZ
 ObjID_CPZPlatform:	objptr Obj_CPZPlatform	; Strange floating/falling platform object from CPZ
@@ -73,7 +73,7 @@ ObjID_Results:		objptr Obj_Results	; (S1) End of level results screen
 ObjID_PurpleRock:	objptr Obj_PurpleRock	; (S1) Purple rock from GHZ
 ObjID_BreakableWall:	objptr Obj_BreakableWall	; (S1) Breakable wall
 ObjID_GHZBoss:		objptr Obj3D		; (S1) GHZ boss
-ObjID_EggPrison:	objptr Obj3E		; Egg prison
+ObjID_Capsule:		objptr Obj_Capsule	; (S1) Animal capsule at end of zone
 ObjID_BossExplosion:	objptr Obj3F		; Boss explosion
 ObjID_Motobug:		objptr Obj_Motobug	; (S1) Motobug from GHZ
 ObjID_Spring:		objptr Obj41		; Spring
